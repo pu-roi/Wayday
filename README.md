@@ -15,6 +15,15 @@ Wayday is a proposed mobile errand planner for Philippine cities. It will help u
 
 These are the current foundation decisions, not implemented capabilities. Product details and design remain open to refinement.
 
+## Application folders
+
+| Folder | Intended application |
+| --- | --- |
+| [apps/mobile](apps/mobile) | Flutter frontend organized by feature, with views, view models, and repositories |
+| [services/api](services/api) | FastAPI backend organized as a modular monolith with domain services |
+
+Both folders currently contain only a `.gitkeep` marker so Git can retain them. Internal source directories, manifests, dependencies, and runnable projects remain deferred. The architecture document describes the intended internal layout.
+
 ## Documentation
 
 | Document | Purpose |
@@ -53,8 +62,16 @@ There are no mobile or backend run commands yet. See the development guide befor
 
 Repository skills live under `.agents/skills/`:
 
-- `wayday-mobile`: mobile architecture, offline behavior, and location reminder work.
-- `wayday-planning`: place selection, timing constraints, route planning, and solver verification.
+| Skill | Responsibility |
+| --- | --- |
+| [wayday-ui](.agents/skills/wayday-ui/SKILL.md) | Screen design, interactions, visual components, and accessibility |
+| [wayday-mobile](.agents/skills/wayday-mobile/SKILL.md) | Flutter state, offline behavior, native integration, and reminders |
+| [wayday-backend](.agents/skills/wayday-backend/SKILL.md) | Domain services, provider adapters, and backend orchestration |
+| [wayday-api](.agents/skills/wayday-api/SKILL.md) | Client-server contracts, validation, error semantics, and OpenAPI |
+| [wayday-database](.agents/skills/wayday-database/SKILL.md) | Local/server storage, spatial queries, imports, and migrations |
+| [wayday-planning](.agents/skills/wayday-planning/SKILL.md) | Place selection, timing constraints, routing, and solver verification |
+
+Invoke a skill by name, for example `$wayday-ui`. Select only the skills relevant to the requested change; combine them for work crossing responsibilities.
 
 Skills guide authorized work; they do not start application development or install dependencies.
 

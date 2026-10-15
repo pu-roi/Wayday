@@ -10,6 +10,8 @@ Recorded: 2026-10-15 (Asia/Manila).
 
 Create documentation, repository configuration, and agent skills. Application development is deferred. Do not create mobile/backend skeletons, install SDKs, or deploy services under this phase. A later request can authorize the next stage without repeating approval for work already requested.
 
+The owner subsequently authorized creating the frontend/backend root folders. Reserve `apps/mobile/` and `services/api/` with `.gitkeep` markers only; runnable project scaffolding and internal source trees remain deferred.
+
 ## D02 — Wayday naming and historical Asikaso material
 
 **Status:** Confirmed.
@@ -54,7 +56,7 @@ Support saved trips and tasks offline rather than full fresh regional planning. 
 
 Use Flutter features with MVVM/repositories and a FastAPI modular monolith containing domain services. This keeps related code together without managing a separate deployed service for every feature. Use Riverpod, Drift/SQLite, PostgreSQL/PostGIS, Valhalla, and OR-Tools as described in the stack inventory.
 
-Revisit after feasibility measurements or a concrete team constraint. Domain services are not a commitment to microservices, and the initial repository does not need empty future directories.
+Revisit after feasibility measurements or a concrete team constraint. Domain services are not a commitment to microservices. The owner-requested application roots are reserved; create further internal directories when their implementation is authorized and needed.
 
 ## D09 — Local backend first, cloud later
 

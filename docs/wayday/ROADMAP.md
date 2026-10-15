@@ -4,7 +4,9 @@ This roadmap describes sequencing, not authorization to begin application develo
 
 ## Stage 0: foundation — current
 
-Deliver repository guidance, configuration, stack evaluation, product boundaries, architecture, cost/data inventory, setup guidance, and two focused agent skills. Preserve the abstract, both HTML prototypes, and screenshots.
+Deliver repository guidance, configuration, stack evaluation, product boundaries, architecture, cost/data inventory, setup guidance, and focused agent skills for UI, mobile integration, backend services, API contracts, databases, and itinerary planning. Preserve the abstract, both HTML prototypes, and screenshots.
+
+Reserve the owner-requested frontend/backend roots at `apps/mobile/` and `services/api/` with `.gitkeep` markers. Internal application structure and runnable scaffolding remain future work.
 
 Exit checks: documents agree on scope, local links resolve, skills validate, source references remain trackable, and prototype checks still pass. No app/backend scaffolding or installations are included.
 

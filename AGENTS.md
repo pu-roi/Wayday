@@ -4,6 +4,8 @@
 
 This repository is in the foundation and planning phase. The user explicitly deferred application development. Work on documentation, repository configuration, and project skills within the current request. Begin application code, backend code, scaffolding, installations, or deployment only when a later user request authorizes that work. Do not repeatedly ask for authorization already present in the conversation.
 
+The user has authorized trackable directory placeholders at `apps/mobile/` and `services/api/`. Their `.gitkeep` markers reserve the agreed frontend/backend locations; they do not authorize generating application projects or populating internal source trees.
+
 ## Sources of truth
 
 - Read [the product scope](docs/wayday/PRODUCT.md) and [decisions](docs/wayday/DECISIONS.md) before changing product assumptions.
@@ -27,7 +29,18 @@ This repository is in the foundation and planning phase. The user explicitly def
 
 The planned frontend is Flutter organized by feature, with views, view models, and repositories. The planned backend is a FastAPI modular monolith with services inside domain modules. Do not split it into microservices without a demonstrated need.
 
-Use `$wayday-mobile` for work affecting mobile features, local persistence, platform permissions, offline behavior, or reminders. Use `$wayday-planning` for work affecting interpretation rules, place candidates, route matrices, scheduling, or replanning. Load both for changes crossing those boundaries. Ordinary documentation edits do not require loading unrelated skills.
+Select project skills by the responsibility being changed:
+
+| Skill | Use for |
+| --- | --- |
+| `$wayday-ui` | Screen layout, interactions, visual components, and accessibility |
+| `$wayday-mobile` | Flutter state, feature wiring, offline behavior, native map integration, permissions, and reminders |
+| `$wayday-backend` | FastAPI domain services, orchestration, provider adapters, and bounded computation |
+| `$wayday-api` | REST/JSON contracts, validation, errors, OpenAPI, and client API integration |
+| `$wayday-database` | Drift/SQLite and PostGIS storage, repositories, spatial queries, imports, and migrations |
+| `$wayday-planning` | Interpretation rules, candidate places, matrices, timing constraints, solver behavior, and replanning |
+
+Combine skills only when the requested change crosses those boundaries. Do not load the entire collection for every task. Ordinary documentation edits do not require loading unrelated skills. Skills support the current request; they do not independently authorize scaffolding, installations, deployments, or application development.
 
 ## Verification and reporting
 

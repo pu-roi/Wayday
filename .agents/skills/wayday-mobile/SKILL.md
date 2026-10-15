@@ -1,6 +1,6 @@
 ---
 name: wayday-mobile
-description: Plan, implement, or review Wayday mobile features involving local task state, Flutter architecture, offline trips, map display, or location reminders. Use for these mobile concerns, not standalone backend solver changes.
+description: Plan, implement, or review Wayday Flutter state, feature architecture, offline trips, platform permissions, map integration, and reminders. Use wayday-ui for purely visual work and dedicated API/database skills for contract or schema changes.
 ---
 
 # Wayday mobile
@@ -17,6 +17,8 @@ Read the repository's `AGENTS.md` and respect the current phase and latest user 
 ## Apply Wayday's mobile boundaries
 
 Organize Flutter work by feature with views, view models, and repositories. Keep SQL and provider requests out of widgets. Load the planning skill as well when a change affects itinerary semantics.
+
+Use `wayday-ui` for visual and interaction design, `wayday-api` for client-server contracts, and `wayday-database` for schema/migration work. Combine only the skills relevant to the change; do not make every mobile task load the entire skill collection.
 
 Preserve the five transportation choices: walking, biking, motorcycle (motor), sedan (low clearance), and truck (high clearance). Public commute is excluded. Keep the selected profile with saved trips and invalidate incompatible plan estimates when it changes. Treat clearance labels as requirements awaiting validation, not as proof of road suitability or numeric vehicle dimensions.
 

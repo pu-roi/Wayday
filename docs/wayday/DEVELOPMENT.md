@@ -2,7 +2,7 @@
 
 ## What exists today
 
-The repository contains planning documents, configuration, project skills, and the existing Asikaso HTML prototypes. There is no Flutter project, Python package, API, database migration, container configuration, or deployment pipeline.
+The repository contains planning documents, configuration, project skills, and the existing Asikaso HTML prototypes. The frontend root `apps/mobile/` and backend root `services/api/` each contain only a `.gitkeep` marker. There is no Flutter project, Python package, API, database migration, container configuration, or deployment pipeline.
 
 The user has deferred application development. The prerequisites and future checks below describe a later phase; this guide is not an instruction to install or scaffold them now.
 
@@ -33,7 +33,7 @@ Then open `http://127.0.0.1:8766/V2.html`. Stop the helper with Ctrl+C. Read its
 - Review product scope against the decision log, especially AI, travel modes, offline behavior, and cost policy.
 - Check that original reference files retain their contents.
 - Use `git check-ignore --no-index` on representative source, generated, data, and secret paths. The original documents and screenshots must remain trackable.
-- Validate both project skills with the installed skill-creator's `scripts/quick_validate.py`. Also inspect their trigger descriptions and document references.
+- Validate project skills with the installed skill-creator's `scripts/quick_validate.py`. Also inspect their trigger descriptions and document references. The current collection covers UI, mobile integration, backend services, API contracts, databases, and itinerary planning.
 - Run the existing prototype check when verifying the initial foundation or when changing its inputs.
 
 There is no required Markdown formatter, global Python setup, or CI subscription for this phase. The skill validator is an authoring-time check, not an application dependency.

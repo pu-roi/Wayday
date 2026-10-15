@@ -1,6 +1,6 @@
 # Planned architecture
 
-Status: design for later implementation. No application, API, database schema, native bridge, or infrastructure is created by this foundation.
+Status: design for later implementation. The frontend and backend roots exist at `apps/mobile/` and `services/api/`, each with only a `.gitkeep` marker. No application, API, database schema, native bridge, or infrastructure is created by this foundation.
 
 ## Responsibility map
 
@@ -24,7 +24,7 @@ The phone owns personal state and reminder delivery. The backend provides fresh 
 
 Organize the mobile application around errands, templates, planning, trips, places, and settings. Views display state; Riverpod-backed view models coordinate actions; repositories own data access and caching. Extract domain logic when scheduling or editing behavior would otherwise spread across view models. Avoid a separate abstraction for every simple function.
 
-The following is an intended layout, not directories to create now:
+The frontend root is reserved at `apps/mobile/`. Its internal layout below is planned for later development and has not been created:
 
 ```text
 apps/mobile/lib/
@@ -46,6 +46,8 @@ Keep limited text parsing on the phone so note entry and correction work offline
 ## Backend: modular monolith
 
 Use a single FastAPI application with places, routing, and planning modules. HTTP handlers validate and delegate; services perform domain operations; repositories access PostGIS; adapters translate Valhalla responses. OR-Tools belongs behind the planning module's solver boundary.
+
+The backend root is reserved at `services/api/`. The internal source/test directories and infrastructure folder below remain planned:
 
 ```text
 services/api/
