@@ -1,0 +1,705 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-13T08:58:25+00:00",
+  "title": "Design System: Asikaso",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "warm-surface": {
+        "role": "neutral",
+        "displayName": "Warm Surface",
+        "canonical": "#F6F6F4",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "warm-surface-pressed": {
+        "role": "neutral",
+        "displayName": "Warm Surface Pressed",
+        "canonical": "#EDEDEA",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#191919",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "canonical": "#3F3F3D",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#6B6B68",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#E7E7E4",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "#D9D9D5",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "route-blue": {
+        "role": "primary",
+        "displayName": "Route Blue",
+        "canonical": "#2F5CFF",
+        "tonalRamp": [
+          "oklch(15% 0.2 267)",
+          "oklch(25% 0.2 267)",
+          "oklch(38% 0.2 267)",
+          "oklch(50% 0.2 267)",
+          "oklch(62% 0.2 267)",
+          "oklch(74% 0.2 267)",
+          "oklch(86% 0.2 267)",
+          "oklch(95% 0.2 267)"
+        ]
+      },
+      "route-blue-ink": {
+        "role": "primary",
+        "displayName": "Route Blue Ink",
+        "canonical": "#2448D8",
+        "tonalRamp": [
+          "oklch(15% 0.19 267)",
+          "oklch(25% 0.19 267)",
+          "oklch(38% 0.19 267)",
+          "oklch(50% 0.19 267)",
+          "oklch(62% 0.19 267)",
+          "oklch(74% 0.19 267)",
+          "oklch(86% 0.19 267)",
+          "oklch(95% 0.19 267)"
+        ]
+      },
+      "route-blue-wash": {
+        "role": "primary",
+        "displayName": "Route Blue Wash",
+        "canonical": "#ECF0FF",
+        "tonalRamp": [
+          "oklch(15% 0.05 267)",
+          "oklch(25% 0.05 267)",
+          "oklch(38% 0.05 267)",
+          "oklch(50% 0.05 267)",
+          "oklch(62% 0.05 267)",
+          "oklch(74% 0.05 267)",
+          "oklch(86% 0.05 267)",
+          "oklch(95% 0.05 267)"
+        ]
+      },
+      "fits-green": {
+        "role": "tertiary",
+        "displayName": "Fits Green",
+        "canonical": "#1A7F4B",
+        "tonalRamp": [
+          "oklch(15% 0.12 155)",
+          "oklch(25% 0.12 155)",
+          "oklch(38% 0.12 155)",
+          "oklch(50% 0.12 155)",
+          "oklch(62% 0.12 155)",
+          "oklch(74% 0.12 155)",
+          "oklch(86% 0.12 155)",
+          "oklch(95% 0.12 155)"
+        ]
+      },
+      "fits-green-wash": {
+        "role": "tertiary",
+        "displayName": "Fits Wash",
+        "canonical": "#E6F3EB",
+        "tonalRamp": [
+          "oklch(15% 0.03 155)",
+          "oklch(25% 0.03 155)",
+          "oklch(38% 0.03 155)",
+          "oklch(50% 0.03 155)",
+          "oklch(62% 0.03 155)",
+          "oklch(74% 0.03 155)",
+          "oklch(86% 0.03 155)",
+          "oklch(95% 0.03 155)"
+        ]
+      },
+      "tight-amber": {
+        "role": "tertiary",
+        "displayName": "Tight Amber",
+        "canonical": "#9A5B00",
+        "tonalRamp": [
+          "oklch(15% 0.12 70)",
+          "oklch(25% 0.12 70)",
+          "oklch(38% 0.12 70)",
+          "oklch(50% 0.12 70)",
+          "oklch(62% 0.12 70)",
+          "oklch(74% 0.12 70)",
+          "oklch(86% 0.12 70)",
+          "oklch(95% 0.12 70)"
+        ]
+      },
+      "tight-amber-wash": {
+        "role": "tertiary",
+        "displayName": "Tight Wash",
+        "canonical": "#FFF3DD",
+        "tonalRamp": [
+          "oklch(15% 0.04 80)",
+          "oklch(25% 0.04 80)",
+          "oklch(38% 0.04 80)",
+          "oklch(50% 0.04 80)",
+          "oklch(62% 0.04 80)",
+          "oklch(74% 0.04 80)",
+          "oklch(86% 0.04 80)",
+          "oklch(95% 0.04 80)"
+        ]
+      },
+      "late-red": {
+        "role": "tertiary",
+        "displayName": "Late Red",
+        "canonical": "#C2302F",
+        "tonalRamp": [
+          "oklch(15% 0.17 27)",
+          "oklch(25% 0.17 27)",
+          "oklch(38% 0.17 27)",
+          "oklch(50% 0.17 27)",
+          "oklch(62% 0.17 27)",
+          "oklch(74% 0.17 27)",
+          "oklch(86% 0.17 27)",
+          "oklch(95% 0.17 27)"
+        ]
+      },
+      "late-red-wash": {
+        "role": "tertiary",
+        "displayName": "Late Wash",
+        "canonical": "#FCEBEA",
+        "tonalRamp": [
+          "oklch(15% 0.03 20)",
+          "oklch(25% 0.03 20)",
+          "oklch(38% 0.03 20)",
+          "oklch(50% 0.03 20)",
+          "oklch(62% 0.03 20)",
+          "oklch(74% 0.03 20)",
+          "oklch(86% 0.03 20)",
+          "oklch(95% 0.03 20)"
+        ]
+      },
+      "tight-amber-signal": {
+        "role": "tertiary",
+        "displayName": "Tight Amber Signal",
+        "canonical": "#E19A1C",
+        "tonalRamp": [
+          "oklch(15% 0.15 70)",
+          "oklch(25% 0.15 70)",
+          "oklch(38% 0.15 70)",
+          "oklch(50% 0.15 70)",
+          "oklch(62% 0.15 70)",
+          "oklch(74% 0.15 70)",
+          "oklch(86% 0.15 70)",
+          "oklch(95% 0.15 70)"
+        ]
+      },
+      "control-off": {
+        "role": "neutral",
+        "displayName": "Control Off",
+        "canonical": "#8E8D88",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "stroke-add": {
+        "role": "neutral",
+        "displayName": "Add Stroke",
+        "canonical": "#B9B8B2",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "map-ground": {
+        "role": "neutral",
+        "displayName": "Map Ground",
+        "canonical": "#EFEEEA",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "map-road": {
+        "role": "neutral",
+        "displayName": "Map Road",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "map-edge": {
+        "role": "neutral",
+        "displayName": "Map Road Edge",
+        "canonical": "#E0DED8",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      },
+      "map-water": {
+        "role": "neutral",
+        "displayName": "Map Water",
+        "canonical": "#D3DFE8",
+        "tonalRamp": [
+          "oklch(15% 0.02 240)",
+          "oklch(25% 0.02 240)",
+          "oklch(38% 0.02 240)",
+          "oklch(50% 0.02 240)",
+          "oklch(62% 0.02 240)",
+          "oklch(74% 0.02 240)",
+          "oklch(86% 0.02 240)",
+          "oklch(95% 0.02 240)"
+        ]
+      },
+      "map-park": {
+        "role": "neutral",
+        "displayName": "Map Park",
+        "canonical": "#E2EADB",
+        "tonalRamp": [
+          "oklch(15% 0.025 130)",
+          "oklch(25% 0.025 130)",
+          "oklch(38% 0.025 130)",
+          "oklch(50% 0.025 130)",
+          "oklch(62% 0.025 130)",
+          "oklch(74% 0.025 130)",
+          "oklch(86% 0.025 130)",
+          "oklch(95% 0.025 130)"
+        ]
+      },
+      "map-label": {
+        "role": "neutral",
+        "displayName": "Map Label",
+        "canonical": "#7A7973",
+        "tonalRamp": [
+          "oklch(15% 0.004 95)",
+          "oklch(25% 0.004 95)",
+          "oklch(38% 0.004 95)",
+          "oklch(50% 0.004 95)",
+          "oklch(62% 0.004 95)",
+          "oklch(74% 0.004 95)",
+          "oklch(86% 0.004 95)",
+          "oklch(95% 0.004 95)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen titles and the done heading."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The one-sentence plan verdict."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section heads, sheet titles, template and stop names, button labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default UI text and list items."
+      },
+      "body-sm": {
+        "displayName": "Body Sm",
+        "purpose": "Secondary sentences, control labels, toast text."
+      },
+      "headline-trip": {
+        "displayName": "Headline Trip",
+        "purpose": "Current leg destination on the trip screen."
+      },
+      "sheet-title": {
+        "displayName": "Sheet Title",
+        "purpose": "Bottom-sheet headings."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Numbers inside 20px round badges."
+      },
+      "note": {
+        "displayName": "Note",
+        "purpose": "The notepad only; loose leading reads as writing."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Sentence-case field labels and group heads in muted ink."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Chips, tags, count pills, tab labels; tabular numerals."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 1px 2px rgba(25,25,25,.06), 0 8px 24px rgba(25,25,25,.10)",
+        "purpose": "Map buttons and the place-picker search card."
+      },
+      {
+        "name": "sheet-over-map",
+        "value": "0 -6px 24px rgba(0,0,0,.08)",
+        "purpose": "Plan sheet rising over the map (.10 on the place-picker panel)."
+      },
+      {
+        "name": "modal-sheet",
+        "value": "0 -10px 40px rgba(0,0,0,.12)",
+        "purpose": "Bottom sheets over the ink scrim rgba(20,20,20,.32)."
+      },
+      {
+        "name": "segmented-thumb",
+        "value": "0 1px 2px rgba(0,0,0,.08), 0 0 0 1px #E7E7E4",
+        "purpose": "Selected segment lift."
+      },
+      {
+        "name": "toggle-knob",
+        "value": "0 1px 2px rgba(0,0,0,.2)",
+        "purpose": "Toggle knob."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px #ECF0FF",
+        "purpose": "Input and notepad focus halo paired with a route-blue stroke."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.2,.8,.2,1)",
+        "purpose": "Single easing for every transition and entrance."
+      },
+      {
+        "name": "hover",
+        "value": "150ms",
+        "purpose": "Row, button and border hover changes."
+      },
+      {
+        "name": "control",
+        "value": "200ms",
+        "purpose": "Segmented thumb and toggle."
+      },
+      {
+        "name": "chevron",
+        "value": "250ms",
+        "purpose": "Accordion chevron rotation; scrim fade."
+      },
+      {
+        "name": "toast",
+        "value": "300ms",
+        "purpose": "Toast slides up 16px and fades in."
+      },
+      {
+        "name": "sheet",
+        "value": "340ms",
+        "purpose": "Modal sheet slides up from 102%."
+      },
+      {
+        "name": "chip-land",
+        "value": "450ms",
+        "purpose": "Read-out chips fade up from a 4px blur after the 1s shimmer."
+      },
+      {
+        "name": "plan-rise",
+        "value": "550ms",
+        "purpose": "Plan sheet rises from 40% over the map."
+      },
+      {
+        "name": "route-draw",
+        "value": "1100ms after 250ms",
+        "purpose": "Route line draws in along the street grid."
+      },
+      {
+        "name": "pin-drop",
+        "value": "380ms",
+        "purpose": "Map picker pin drops 14px."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "prefers-reduced-motion collapses all motion; the route shows fully drawn."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "full-bleed",
+        "value": "max-width: 760px"
+      },
+      {
+        "name": "device-frame",
+        "value": "min-width: 761px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink-filled full-width commit button; one per footer.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3.5l1.7 5 5 1.7-5 1.7-1.7 5-1.7-5-5-1.7 5-1.7z\"/><path d=\"M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z\"/></svg>Plan my day</button>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-btn-primary{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;height:50px;width:320px;border:0;border-radius:12px;background:var(--ink);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:transform .12s var(--ease),background .15s} .ds-btn-primary:hover{background:#000} .ds-btn-primary:active{transform:scale(.985)} .ds-btn-primary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Warm-surface button; the destructive variant keeps the fill with red text.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-btn-sec ds-del\">Delete</button><button class=\"ds-btn-sec\">Move to tomorrow</button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-row{display:flex;gap:8px} .ds-btn-sec{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;height:50px;padding:0 16px;border:0;border-radius:12px;background:var(--surface);color:var(--ink);font-size:16px;font-weight:600;cursor:pointer;transition:background .15s} .ds-btn-sec:hover{background:var(--surface-2)} .ds-btn-sec:focus-visible{outline:2px solid var(--accent);outline-offset:2px} .ds-del{color:var(--bad)}"
+    },
+    {
+      "name": "Choice Chips",
+      "kind": "chip",
+      "refersTo": "choice-chip",
+      "description": "Single-select options; the selected one fills ink.",
+      "html": "<div class=\"ds-choices\"><button class=\"ds-choice\">30 min</button><button class=\"ds-choice\">45 min</button><button class=\"ds-choice\" aria-pressed=\"true\">1h</button><button class=\"ds-choice\">1h 30m</button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-choices{display:flex;flex-wrap:wrap;gap:6px} .ds-choice{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--bg);font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer} .ds-choice:hover{border-color:var(--ink-2)} .ds-choice:focus-visible{outline:2px solid var(--accent);outline-offset:2px} .ds-choice[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented",
+      "description": "Warm track with a lifted paper thumb.",
+      "html": "<div class=\"ds-seg\"><button aria-pressed=\"true\">Write</button><button aria-pressed=\"false\">Pick</button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-seg{display:flex;width:320px;background:var(--surface);border-radius:10px;padding:3px;gap:2px} .ds-seg button{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;flex:1;padding:7px 8px;border:0;border-radius:8px;background:none;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;transition:background .2s var(--ease),color .2s} .ds-seg button:hover{color:var(--ink)} .ds-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px} .ds-seg button[aria-pressed=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}"
+    },
+    {
+      "name": "Errands Tools Row",
+      "kind": "custom",
+      "refersTo": "button-clear",
+      "description": "Write/Pick segmented control beside a ghost Clear; Clear empties the day and offers Undo in a toast.",
+      "html": "<div class=\"ds-tools\"><div class=\"ds-seg2\"><button aria-pressed=\"true\">Write</button><button aria-pressed=\"false\">Pick</button></div><button class=\"ds-clear\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/></svg>Clear</button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-tools{display:flex;gap:8px;align-items:center;width:340px} .ds-seg2{flex:1;display:flex;background:var(--surface);border-radius:10px;padding:3px;gap:2px} .ds-seg2 button{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;flex:1;padding:7px 8px;border:0;border-radius:8px;background:none;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer} .ds-seg2 button[aria-pressed=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)} .ds-clear{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;height:38px;padding:0 10px;border:0;border-radius:10px;background:none;font-size:14px;font-weight:500;color:var(--ink-2);display:flex;align-items:center;gap:4px;cursor:pointer} .ds-clear:hover{background:var(--surface);color:var(--ink)} .ds-clear:focus-visible,.ds-seg2 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px} .ds-clear[disabled]{opacity:.4;cursor:not-allowed;background:none}"
+    },
+    {
+      "name": "Errand Accordion",
+      "kind": "custom",
+      "refersTo": "errand-accordion",
+      "description": "Pick mode and template editor: numbered rows with one plain tag; fields and the type switch only when expanded.",
+      "html": "<div class=\"ds-acc-list\"><div class=\"ds-acc\"><button aria-expanded=\"false\"><span class=\"ds-n\">1</span><b>Kuha data sa registrar</b><span class=\"ds-tag\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/></svg>Before 4:00 PM</span><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9.5l6 6 6-6\"/></svg></button></div><div class=\"ds-acc\"><button aria-expanded=\"false\"><span class=\"ds-n\">2</span><b>Grocery for Mom</b><span class=\"ds-tag\">Any branch</span><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9.5l6 6 6-6\"/></svg></button></div><div class=\"ds-acc\"><button aria-expanded=\"false\"><span class=\"ds-n\">3</span><b>Bayad Meralco</b><span class=\"ds-tag ds-warn\">Needs a place</span><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9.5l6 6 6-6\"/></svg></button></div><button class=\"ds-add\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>Add errand</button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-acc-list{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;width:340px;color:var(--ink)} .ds-acc{border:1px solid var(--line);border-radius:10px;margin-top:8px} .ds-acc>button{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;gap:8px;width:100%;padding:11px 12px;border:0;background:none;text-align:left;font-size:15px;color:var(--ink);cursor:pointer} .ds-acc>button:hover{background:#FAFAF8} .ds-acc>button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:10px} .ds-acc>button svg:last-child{color:var(--muted);flex:none} .ds-acc b{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .ds-n{width:20px;height:20px;border-radius:10px;background:var(--surface);font-size:11.5px;font-weight:700;color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;flex:none;font-variant-numeric:tabular-nums} .ds-tag{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;padding:3px 7px;border-radius:6px;background:var(--surface);color:var(--ink-2);flex:none;font-variant-numeric:tabular-nums} .ds-warn{background:var(--warn-soft);color:var(--warn)} .ds-add{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;margin-top:10px;height:44px;border:1.5px dashed #B9B8B2;border-radius:10px;width:100%;background:none;font-size:15px;font-weight:500;color:var(--ink-2);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer} .ds-add:hover{border-color:var(--ink-2);color:var(--ink)} .ds-add:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Notepad and Read-out",
+      "kind": "custom",
+      "refersTo": "notepad",
+      "description": "Signature: errands typed as a note, read back as chip-tagged rows.",
+      "html": "<div class=\"ds-np\"><textarea class=\"ds-note\" aria-label=\"Errands\">Kuha data sa registrar, before 4pm\nCapstone pitch 11-2 sa PLP</textarea><div class=\"ds-ro-head\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3.5l1.7 5 5 1.7-5 1.7-1.7 5-1.7-5-5-1.7 5-1.7z\"/><path d=\"M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z\"/></svg>Asikaso understood<span>2 ready</span></div><div class=\"ds-ro\"><span class=\"ds-n\">1</span><div><b>Kuha data sa registrar</b><div class=\"ds-chips\"><span class=\"ds-chip\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/></svg>Before 4:00 PM</span><span class=\"ds-chip\">45m</span></div></div></div><div class=\"ds-ro\"><span class=\"ds-n\">2</span><div><b>Capstone pitch sa PLP</b><div class=\"ds-chips\"><span class=\"ds-chip ds-fixed\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"5.5\" y=\"11\" width=\"13\" height=\"9.5\" rx=\"2\"/><path d=\"M8.5 11V8a3.5 3.5 0 0 1 7 0v3\"/></svg>11:00–2:00 PM</span><span class=\"ds-chip ds-review\">Which branch?</span></div></div></div></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-np{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;width:330px;color:var(--ink)} .ds-note{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;display:block;width:100%;box-sizing:border-box;min-height:96px;resize:none;border:0;outline:0;background:var(--surface);border-radius:10px;padding:10px 12px;font-size:15.5px;line-height:1.7;color:var(--ink);caret-color:var(--accent);transition:box-shadow .15s} .ds-note:focus{box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 3px var(--accent-soft)} .ds-ro-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);padding:12px 0 6px} .ds-ro-head span{margin-left:auto;font-weight:500} .ds-ro{display:grid;grid-template-columns:20px 1fr;gap:8px;padding:9px 0;border-top:1px solid var(--line)} .ds-ro b{font-weight:500;font-size:14.5px} .ds-n{width:20px;height:20px;border-radius:10px;background:var(--surface);font-size:11.5px;font-weight:700;color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums} .ds-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px} .ds-chip{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;line-height:1;padding:5px 6px;border-radius:7px;background:var(--surface);color:var(--ink-2);font-variant-numeric:tabular-nums} .ds-fixed{background:var(--ink);color:#fff} .ds-review{background:var(--warn-soft);color:var(--warn);cursor:pointer} .ds-review:hover{filter:brightness(.97)}"
+    },
+    {
+      "name": "Route Card",
+      "kind": "card",
+      "refersTo": "route-card",
+      "description": "Signature: From, Errands, To and trip times in one hairline card.",
+      "html": "<div class=\"ds-rc\"><button class=\"ds-rc-row\"><span class=\"ds-ring\"></span><span><span class=\"ds-lab\">From</span><br><b>PLP</b> <i>· Kapasigan</i></span><span class=\"ds-end\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 4.5L3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2z\"/><path d=\"M9 4.5v13M15 6.5v13\"/></svg>Map</span></button><button class=\"ds-rc-row ds-mid\"><span class=\"ds-ic\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6.5h11M9 12h11M9 17.5h11\"/><circle cx=\"4.8\" cy=\"6.5\" r=\".9\"/><circle cx=\"4.8\" cy=\"12\" r=\".9\"/><circle cx=\"4.8\" cy=\"17.5\" r=\".9\"/></svg></span><span><b>Errands</b> <em>5</em><br><span class=\"ds-lab\">1 only if there&#39;s time</span></span><span></span></button><div class=\"ds-meta\"><div><span class=\"ds-lab\">Leave</span><b>8:30 AM</b></div><div><span class=\"ds-lab\">Home by</span><b>6:00 PM</b></div><div><span class=\"ds-lab\">Travel</span><b>Motorcycle</b></div></div></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-rc{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;width:340px;border:1px solid var(--line);border-radius:12px;overflow:hidden;color:var(--ink);font-size:15px} .ds-rc-row{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:12px 14px;width:100%;border:0;background:var(--bg);text-align:left;cursor:pointer;color:var(--ink);transition:background .15s} .ds-rc-row:hover{background:#FAFAF8} .ds-rc-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px} .ds-mid{border-top:1px solid var(--line)} .ds-rc-row b{font-weight:600;font-size:15px} .ds-rc-row i{font-style:normal;color:var(--muted)} .ds-rc-row em{font-style:normal;font-size:12.5px;font-weight:600;background:var(--surface);color:var(--ink-2);padding:2px 7px;border-radius:10px} .ds-lab{font-size:13px;color:var(--muted)} .ds-ring{width:13px;height:13px;border-radius:50%;border:3.5px solid var(--ink);box-sizing:border-box;margin-left:4px} .ds-ic{color:var(--ink-2);display:flex} .ds-end{display:flex;align-items:center;gap:4px;font-size:13.5px;font-weight:500;color:var(--accent-ink)} .ds-meta{display:flex;border-top:1px solid var(--line)} .ds-meta>div{flex:1;padding:10px 14px} .ds-meta>div+div{border-left:1px solid var(--line)} .ds-meta .ds-lab{font-size:12.5px;display:block} .ds-meta b{font-weight:600;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "Labelled field; route-blue stroke and wash halo on focus.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-in\">What</label><input id=\"ds-in\" class=\"ds-in\" value=\"Lunch with her\"></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-field{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;width:320px} .ds-field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px} .ds-in{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;width:100%;box-sizing:border-box;height:44px;border:1px solid var(--line-2);border-radius:10px;padding:0 12px;background:var(--bg);font-size:15px;color:var(--ink);caret-color:var(--accent)} .ds-in:focus{border-color:var(--accent);outline:0;box-shadow:0 0 0 3px var(--accent-soft)}"
+    },
+    {
+      "name": "Toggle",
+      "kind": "custom",
+      "refersTo": "toggle-on",
+      "description": "Gray off, ink on, white knob.",
+      "html": "<div class=\"ds-tg-row\"><button class=\"ds-tg\" role=\"switch\" aria-checked=\"true\" aria-label=\"Avoid tolls\"></button><button class=\"ds-tg\" role=\"switch\" aria-checked=\"false\" aria-label=\"Off example\"></button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-tg-row{display:flex;gap:16px} .ds-tg{width:44px;height:26px;border:0;border-radius:13px;background:#8E8D88;position:relative;cursor:pointer;transition:background .2s var(--ease)} .ds-tg:after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s var(--ease)} .ds-tg[aria-checked=true]{background:var(--ink)} .ds-tg[aria-checked=true]:after{transform:translateX(18px)} .ds-tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Toast with Undo",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Ink card confirming an action, with an underlined Undo.",
+      "html": "<div class=\"ds-toast\" role=\"status\"><span>Added Weekly Stock</span><button class=\"ds-undo\">Undo</button></div>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-toast{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;width:340px;box-sizing:border-box;background:var(--ink);color:#fff;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:center} .ds-undo{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;margin-left:auto;background:none;border:0;color:#fff;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:2px 4px;cursor:pointer} .ds-undo:hover{opacity:.8} .ds-undo:focus-visible{outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Three tabs; active is ink with a heavier icon stroke.",
+      "html": "<nav class=\"ds-tabs\"><button aria-current=\"page\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6.5h11M9 12h11M9 17.5h11\"/><circle cx=\"4.8\" cy=\"6.5\" r=\".9\"/><circle cx=\"4.8\" cy=\"12\" r=\".9\"/><circle cx=\"4.8\" cy=\"17.5\" r=\".9\"/></svg>Today</button><button><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16.5 3l3 3-3 3\"/><path d=\"M4.5 11V9.5a3.5 3.5 0 0 1 3.5-3.5h11.5\"/><path d=\"M7.5 21l-3-3 3-3\"/><path d=\"M19.5 13v1.5a3.5 3.5 0 0 1-3.5 3.5H4.5\"/></svg>Recurring</button><button><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2\"/><circle cx=\"9\" cy=\"17\" r=\"2\"/></svg>Settings</button></nav>",
+      "css": ":host{--bg:#FFFFFF;--surface:#F6F6F4;--surface-2:#EDEDEA;--ink:#191919;--ink-2:#3F3F3D;--muted:#6B6B68;--line:#E7E7E4;--line-2:#D9D9D5;--accent:#2F5CFF;--accent-ink:#2448D8;--accent-soft:#ECF0FF;--ok:#1A7F4B;--ok-soft:#E6F3EB;--warn:#9A5B00;--warn-soft:#FFF3DD;--bad:#C2302F;--bad-soft:#FCEBEA;--radius:12px;--shadow:0 1px 2px rgba(25,25,25,.06),0 8px 24px rgba(25,25,25,.10);--ease:cubic-bezier(.2,.8,.2,1)} .ds-tabs{display:flex;width:360px;height:60px;border-top:1px solid var(--line);background:var(--bg)} .ds-tabs button{font-family:Figtree,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer} .ds-tabs button:hover{color:var(--ink-2)} .ds-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px} .ds-tabs button[aria-current=page]{color:var(--ink)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Errand Sheet",
+    "overview": "Asikaso looks like the apps it sits next to on a phone: a Notion-calm note surface for writing the day, and a Maps/Life360 map-plus-sheet for reading the plan. It is the category standard executed at full craft, not a themed world. White paper, warm-gray wells, near-black ink, one route blue, and state color only where the plan has something true to say (fits, tight, didn't fit).\n\nDensity is comfortable phone density: 20px screen gutters, 12-14px row padding, hairline-divided lists rather than stacked cards. Hierarchy comes from weight and ink depth (ink, ink-soft, muted) far more than from size or color. Filled black is the language of \"chosen\" and \"commit\": the primary button, the selected choice chip, the on toggle, the fixed-time chip. Blue is the language of \"where you are going\": the route line, its numbered pins and timeline nodes, the branch radio, links, focus and caret.\n\nThe user rejected decorative worlds twice before landing here; the visual stance is \"simple, little color\", and the look is never derived from the app's name.",
+    "keyCharacteristics": [
+      "White ground, warm-gray wells, hairline dividers; no tinted backgrounds beyond state washes.",
+      "One blue for route and wayfinding; black for selection and commitment.",
+      "Figtree throughout, tabular numerals on every time, count and duration.",
+      "Map on top, sheet rising over it; sheets carry the content, floating layers carry the only real shadows.",
+      "Drawn single-stroke line icons (1.75 stroke, 24 grid, round caps and joins)."
+    ],
+    "rules": [
+      {
+        "name": "The Blue Is the Route Rule",
+        "body": "Route Blue marks wayfinding only: route, pins, stop nodes, branch choice, links, focus. It never fills a button or a selected chip.",
+        "section": "colors"
+      },
+      {
+        "name": "The Black Means Chosen Rule",
+        "body": "Selection and commitment are filled ink (`ink` on `paper` text): primary button, selected choice, on toggle, fixed time. A second \"selected\" color is not introduced.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Earns Color Rule",
+        "body": "Green, amber and red appear only when the plan reports fit, tightness or failure. Categories, errand types and decoration never get a color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Time Rule",
+        "body": "Every clock time, duration, count and stop number uses tabular numerals so columns of times align on the timeline.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "Labels and group heads are sentence case at 13px/600 in muted ink. No uppercase tracked labels in the UI; the only tracked caps are street and district names drawn on the map itself, as a map convention.",
+        "section": "typography"
+      },
+      {
+        "name": "The Only Floaters Cast Rule",
+        "body": "If it does not sit over the map or over other content, it has no shadow. Route card, rows, chips and buttons are flat.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep Route Blue for the route, pins, stop nodes, branch choice, links and focus only.",
+      "**Do** show selection and commitment as filled ink with white text.",
+      "**Do** use state color only for fit (green), tight (amber, deep `#9A5B00` text) and didn't fit (red), each with its wash.",
+      "**Do** set every time, duration, count and stop number in tabular numerals.",
+      "**Do** draw icons as single-stroke line icons: 24 grid, 1.75 stroke, round caps and joins, currentColor.",
+      "**Do** separate content with hairlines and warm-gray wells; reserve shadows for layers floating over the map or content.",
+      "**Do** keep labels sentence case at 13px/600 muted.",
+      "**Do** keep the map desaturated so the blue route is the only saturated line on it.",
+      "**Do** pair bulk destructive actions (Clear) with a toast Undo instead of a confirmation dialog."
+    ],
+    "donts": [
+      "**Don't** fill buttons or selected chips with blue.",
+      "**Don't** color-code errand categories or types.",
+      "**Don't** add shadows to the route card, rows, chips or buttons.",
+      "**Don't** introduce uppercase tracked labels or eyebrows above titles in the UI; tracked caps belong only to map place names.",
+      "**Don't** use a second typeface; Figtree carries display through caption.",
+      "**Don't** nest bordered cards inside bordered cards, except the errand accordions (Pick mode and the template editor).",
+      "**Don't** reuse the desktop presentation frame's bezel colors, 44px radius or drop shadow in app surfaces."
+    ]
+  }
+}
