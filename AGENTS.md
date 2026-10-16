@@ -2,9 +2,13 @@
 
 ## Current phase
 
-This repository is in the foundation and planning phase. The user explicitly deferred application development. Work on documentation, repository configuration, and project skills within the current request. Begin application code, backend code, scaffolding, installations, or deployment only when a later user request authorizes that work. Do not repeatedly ask for authorization already present in the conversation.
+The owner authorized the Android Flutter app shell and Today module, then added Recurring and UI refinements on 2026-10-16. Use one light Cornflower theme without appearance controls, compact errand lists, focused editing, numeric time entry, and clearly labeled map placeholders. Basic in-memory editing, reusable groups, manual copying to Today, and navigation are in scope. Repeat settings are metadata, not an automatic scheduler. Backend development, real planning, place services, durable persistence, notifications, deployment, and iOS remain deferred unless a later request authorizes them. Do not repeatedly ask for authorization already present in the conversation.
 
-The user has authorized trackable directory placeholders at `apps/mobile/` and `services/api/`. Their `.gitkeep` markers reserve the agreed frontend/backend locations; they do not authorize generating application projects or populating internal source trees.
+The owner also authorized smoother list motion, optional free-form errand notes, and refined in-app feedback on 2026-10-16. Notes copy independently from Recurring into Today. Respect reduced motion, preserve continuous-entry focus, and make ordinary feedback expire automatically. In-app snackbars are not Android reminder notifications; reminder integration remains deferred.
+
+The frontend lives at `apps/mobile/`. The backend root `services/api/` remains reserved with a `.gitkeep` marker; the UI milestone does not authorize backend scaffolding.
+
+Android is the first implementation and verification target. iOS comes later and is not a prerequisite for starting Android work.
 
 ## Sources of truth
 
@@ -44,7 +48,7 @@ Combine skills only when the requested change crosses those boundaries. Do not l
 
 ## Verification and reporting
 
-- Current executable check: `node docs/Asikaso-Prototype/docs/v2-planner-checks.cjs` from the repository root.
+- Mobile checks: run `flutter analyze` and `flutter test` from `apps/mobile/`; see its README for local-tool support. The preserved prototype check is `node docs/Asikaso-Prototype/docs/v2-planner-checks.cjs` from the repository root.
 - For foundation edits, check links, decision consistency, skill validity, and ignore rules. Do not invent mobile/backend checks before those projects exist.
 - When runtime development is authorized, use the relevant acceptance cases in the product and architecture documents. Test behavior and constraints rather than matching implementation wording.
 - Report what changed, what was checked, and any actual limitation. Distinguish planned, implemented, and verified capabilities.
