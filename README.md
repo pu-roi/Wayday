@@ -28,6 +28,8 @@ The mobile folder contains the Flutter application; see its [run instructions](a
 
 | Document | Purpose |
 | --- | --- |
+| [Planning](PLANNING.md) | Project task board, milestones, assignees, and task status |
+| [Progress](PROGRESS.md) | Activity log, contributor attribution, and milestone progress |
 | [Product](docs/wayday/PRODUCT.md) | Current scope, user flows, and acceptance criteria |
 | [Design](DESIGN.md) | Implemented mobile theme, components, and interaction rules |
 | [Stack](docs/wayday/STACK.md) | Technology comparisons, dependency inventory, costs, and sources |
@@ -65,6 +67,7 @@ Repository skills live under `.agents/skills/`:
 
 | Skill | Responsibility |
 | --- | --- |
+| [wayday-task-tracker](.agents/skills/wayday-task-tracker/SKILL.md) | Task status, assignee tracking, and activity logging with Git identity |
 | [wayday-ui](.agents/skills/wayday-ui/SKILL.md) | Screen design, interactions, visual components, and accessibility |
 | [wayday-mobile](.agents/skills/wayday-mobile/SKILL.md) | Flutter state, offline behavior, native integration, and reminders |
 | [wayday-backend](.agents/skills/wayday-backend/SKILL.md) | Domain services, provider adapters, and backend orchestration |
