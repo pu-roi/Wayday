@@ -185,10 +185,16 @@ class _ErrandComposerState extends State<ErrandComposer>
   final _text = TextEditingController();
   final _focus = FocusNode();
   final _field = GlobalKey();
-  late final _follow = AnimationController(vsync: this)
-    ..addListener(_keepVisible);
+  late final AnimationController _follow;
   bool _open = false;
   bool _scrollPending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _follow = AnimationController(vsync: this)..addListener(_keepVisible);
+  }
+
   @override
   void dispose() {
     _text.dispose();
