@@ -2,11 +2,11 @@
 
 Wayday is a proposed mobile errand planner for Philippine cities. It will help users choose suitable places, order several stops, and see whether their errands fit the time available.
 
-**Status: foundation and planning only.** The Flutter application and backend have not been scaffolded. The existing Asikaso HTML files are design prototypes with simulated places, parsing, maps, and travel times.
+**Status: Android UI shell, Today, and Recurring.** The Flutter application includes one light Cornflower theme, compact errand lists, focused editing, numeric time entry, map placeholders, and in-memory reusable groups that can be copied into Today. Real maps, route planning, persistence, and the backend remain future work. The preserved Asikaso HTML files use simulated places, parsing, maps, and travel times.
 
 ## Current direction
 
-- Target Android and iOS with Flutter.
+- Build for Android first with Flutter; iOS implementation and verification come later.
 - Plan a local FastAPI backend with PostgreSQL/PostGIS, Valhalla, and OR-Tools.
 - Plan for walking, biking, motorcycle (motor), sedan (low clearance), and truck (high clearance), using one profile per trip. Public commute is excluded.
 - Use editable, rule-based suggestions for English, Filipino, and Taglish errand input. AI is deferred.
@@ -22,13 +22,14 @@ These are the current foundation decisions, not implemented capabilities. Produc
 | [apps/mobile](apps/mobile) | Flutter frontend organized by feature, with views, view models, and repositories |
 | [services/api](services/api) | FastAPI backend organized as a modular monolith with domain services |
 
-Both folders currently contain only a `.gitkeep` marker so Git can retain them. Internal source directories, manifests, dependencies, and runnable projects remain deferred. The architecture document describes the intended internal layout.
+The mobile folder contains the Flutter application; see its [run instructions](apps/mobile/README.md). The API folder still contains only a `.gitkeep` marker. The architecture document distinguishes the current shell from the broader planned application.
 
 ## Documentation
 
 | Document | Purpose |
 | --- | --- |
 | [Product](docs/wayday/PRODUCT.md) | Current scope, user flows, and acceptance criteria |
+| [Design](DESIGN.md) | Implemented mobile theme, components, and interaction rules |
 | [Stack](docs/wayday/STACK.md) | Technology comparisons, dependency inventory, costs, and sources |
 | [Architecture](docs/wayday/ARCHITECTURE.md) | Responsibilities, future layout, interfaces, and offline boundaries |
 | [Development](docs/wayday/DEVELOPMENT.md) | What works today and prerequisites for a later development phase |
@@ -56,7 +57,7 @@ With Node.js available, run the existing prototype checks from the repository ro
 node docs/Asikaso-Prototype/docs/v2-planner-checks.cjs
 ```
 
-There are no mobile or backend run commands yet. See the development guide before setting up future tooling.
+Run the mobile application and its checks using [the mobile guide](apps/mobile/README.md). There are no backend run commands yet.
 
 ## Project skills
 

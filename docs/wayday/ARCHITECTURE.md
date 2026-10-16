@@ -1,6 +1,6 @@
 # Planned architecture
 
-Status: design for later implementation. The frontend and backend roots exist at `apps/mobile/` and `services/api/`, each with only a `.gitkeep` marker. No application, API, database schema, native bridge, or infrastructure is created by this foundation.
+Status: the Android UI shell, Today, and Recurring are implemented at `apps/mobile/` with in-memory state. The architecture below remains the target for later capabilities. The backend root `services/api/` contains only a `.gitkeep` marker; no API, database schema, native bridge, or backend infrastructure exists yet.
 
 ## Responsibility map
 
@@ -24,7 +24,7 @@ The phone owns personal state and reminder delivery. The backend provides fresh 
 
 Organize the mobile application around errands, templates, planning, trips, places, and settings. Views display state; Riverpod-backed view models coordinate actions; repositories own data access and caching. Extract domain logic when scheduling or editing behavior would otherwise spread across view models. Avoid a separate abstraction for every simple function.
 
-The frontend root is reserved at `apps/mobile/`. Its internal layout below is planned for later development and has not been created:
+The frontend root is `apps/mobile/`. The shell uses `app/`, shared `core/widgets/`, `features/errands/` for common models/list/editor, and `features/today/` plus `features/recurring/` with Riverpod controllers and in-memory repositories. The broader feature layout below remains planned; create directories when their implementation needs them:
 
 ```text
 apps/mobile/lib/
@@ -40,6 +40,8 @@ apps/mobile/lib/
 ```
 
 Widgets do not call SQL or provider APIs directly. Repository contracts return application models rather than provider-specific objects. Cross-feature operations use shared contracts or explicit application services rather than importing another feature's widgets.
+
+The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Notes, drafts, and copies remain in memory until durable storage is implemented.
 
 Keep limited text parsing on the phone so note entry and correction work offline. Store the original note, explicit edits, and suggestions distinctly. The backend validates the submitted structured constraints; it does not reparse and overwrite confirmed values.
 

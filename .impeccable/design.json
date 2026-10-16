@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T11:33:38.891Z",
+  "title": "Design System: Wayday mobile",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "tonalRamp": [
+          "oklch(15% 0.00395 106.47)",
+          "oklch(27% 0.00395 106.47)",
+          "oklch(39% 0.00395 106.47)",
+          "oklch(51% 0.00395 106.47)",
+          "oklch(63% 0.00395 106.47)",
+          "oklch(75% 0.00395 106.47)",
+          "oklch(87% 0.00395 106.47)",
+          "oklch(95% 0.00395 106.47)"
+        ]
+      },
+      "mist": {
+        "role": "neutral",
+        "displayName": "Mist",
+        "tonalRamp": [
+          "oklch(15% 0.01190 239.92)",
+          "oklch(27% 0.01190 239.92)",
+          "oklch(39% 0.01190 239.92)",
+          "oklch(51% 0.01190 239.92)",
+          "oklch(63% 0.01190 239.92)",
+          "oklch(75% 0.01190 239.92)",
+          "oklch(87% 0.01190 239.92)",
+          "oklch(95% 0.01190 239.92)"
+        ]
+      },
+      "cornflower": {
+        "role": "primary",
+        "displayName": "Cornflower",
+        "tonalRamp": [
+          "oklch(15% 0.09891 245.95)",
+          "oklch(27% 0.09891 245.95)",
+          "oklch(39% 0.09891 245.95)",
+          "oklch(51% 0.09891 245.95)",
+          "oklch(63% 0.09891 245.95)",
+          "oklch(75% 0.09891 245.95)",
+          "oklch(87% 0.09891 245.95)",
+          "oklch(95% 0.09891 245.95)"
+        ]
+      },
+      "action-ink": {
+        "role": "neutral",
+        "displayName": "Dark primary content",
+        "tonalRamp": [
+          "oklch(15% 0.05472 245.36)",
+          "oklch(27% 0.05472 245.36)",
+          "oklch(39% 0.05472 245.36)",
+          "oklch(51% 0.05472 245.36)",
+          "oklch(63% 0.05472 245.36)",
+          "oklch(75% 0.05472 245.36)",
+          "oklch(87% 0.05472 245.36)",
+          "oklch(95% 0.05472 245.36)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "tonalRamp": [
+          "oklch(15% 0.00000 0.00)",
+          "oklch(27% 0.00000 0.00)",
+          "oklch(39% 0.00000 0.00)",
+          "oklch(51% 0.00000 0.00)",
+          "oklch(63% 0.00000 0.00)",
+          "oklch(75% 0.00000 0.00)",
+          "oklch(87% 0.00000 0.00)",
+          "oklch(95% 0.00000 0.00)"
+        ]
+      },
+      "link-blue": {
+        "role": "primary",
+        "displayName": "Readable blue",
+        "tonalRamp": [
+          "oklch(15% 0.08825 245.81)",
+          "oklch(27% 0.08825 245.81)",
+          "oklch(39% 0.08825 245.81)",
+          "oklch(51% 0.08825 245.81)",
+          "oklch(63% 0.08825 245.81)",
+          "oklch(75% 0.08825 245.81)",
+          "oklch(87% 0.08825 245.81)",
+          "oklch(95% 0.08825 245.81)"
+        ]
+      },
+      "selected-blue": {
+        "role": "neutral",
+        "displayName": "Pale blue selection",
+        "tonalRamp": [
+          "oklch(15% 0.01690 242.43)",
+          "oklch(27% 0.01690 242.43)",
+          "oklch(39% 0.01690 242.43)",
+          "oklch(51% 0.01690 242.43)",
+          "oklch(63% 0.01690 242.43)",
+          "oklch(75% 0.01690 242.43)",
+          "oklch(87% 0.01690 242.43)",
+          "oklch(95% 0.01690 242.43)"
+        ]
+      },
+      "text-light": {
+        "role": "neutral",
+        "displayName": "Main text",
+        "tonalRamp": [
+          "oklch(15% 0.02998 243.19)",
+          "oklch(27% 0.02998 243.19)",
+          "oklch(39% 0.02998 243.19)",
+          "oklch(51% 0.02998 243.19)",
+          "oklch(63% 0.02998 243.19)",
+          "oklch(75% 0.02998 243.19)",
+          "oklch(87% 0.02998 243.19)",
+          "oklch(95% 0.02998 243.19)"
+        ]
+      },
+      "text-muted-light": {
+        "role": "neutral",
+        "displayName": "Supporting text",
+        "tonalRamp": [
+          "oklch(15% 0.03214 243.54)",
+          "oklch(27% 0.03214 243.54)",
+          "oklch(39% 0.03214 243.54)",
+          "oklch(51% 0.03214 243.54)",
+          "oklch(63% 0.03214 243.54)",
+          "oklch(75% 0.03214 243.54)",
+          "oklch(87% 0.03214 243.54)",
+          "oklch(95% 0.03214 243.54)"
+        ]
+      },
+      "outline-light": {
+        "role": "neutral",
+        "displayName": "Quiet outline",
+        "tonalRamp": [
+          "oklch(15% 0.01266 236.63)",
+          "oklch(27% 0.01266 236.63)",
+          "oklch(39% 0.01266 236.63)",
+          "oklch(51% 0.01266 236.63)",
+          "oklch(63% 0.01266 236.63)",
+          "oklch(75% 0.01266 236.63)",
+          "oklch(87% 0.01266 236.63)",
+          "oklch(95% 0.01266 236.63)"
+        ]
+      },
+      "field-light": {
+        "role": "neutral",
+        "displayName": "Field fill",
+        "tonalRamp": [
+          "oklch(15% 0.00669 233.64)",
+          "oklch(27% 0.00669 233.64)",
+          "oklch(39% 0.00669 233.64)",
+          "oklch(51% 0.00669 233.64)",
+          "oklch(63% 0.00669 233.64)",
+          "oklch(75% 0.00669 233.64)",
+          "oklch(87% 0.00669 233.64)",
+          "oklch(95% 0.00669 233.64)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Today and Recurring titles; numeric hour/minute entry."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Sheet headings, group names, and editor title fields."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Section labels and endpoint values."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Explanations and empty-state support."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Date, descriptions, and supporting text."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "Semibold compact errand title."
+      },
+      "detail": {
+        "displayName": "Detail",
+        "purpose": "Timing, endpoint labels, trip labels, and preview notes."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Trip values and text actions."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Filled action text."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "list-enter",
+        "value": "260ms",
+        "purpose": "Errand insertion, disclosure opening, chevrons, and feedback entry."
+      },
+      {
+        "name": "list-exit",
+        "value": "180ms",
+        "purpose": "Errand removal, disclosure closing, and feedback dismissal."
+      },
+      {
+        "name": "deceleration",
+        "value": "Curves.easeOutCubic",
+        "purpose": "Shared native list and disclosure easing."
+      },
+      {
+        "name": "disclosure-reverse",
+        "value": "Curves.easeInCubic",
+        "purpose": "Native disclosure reversal curve."
+      },
+      {
+        "name": "remove-animations",
+        "value": "0ms",
+        "purpose": "Immediate shared spatial transitions when the platform disables animations."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "navigation-rail",
+        "value": "840px"
+      },
+      {
+        "name": "trip-properties-stack",
+        "value": "320px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Cornflower filled action with dark content. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<button class=\"ds-primary\" type=\"button\">Plan my day</button>",
+      "css": ".ds-primary{display:block;width:100%;min-width:48px;min-height:56px;border:0;border-radius:18px;background:#6AA6DA;color:#102D44;font-family:Figtree,sans-serif;font-size:16px;font-weight:600;cursor:pointer}.ds-primary:hover{background:#639ed2}.ds-primary:focus-visible{outline:2px solid #285C86;outline-offset:2px}.ds-primary:active{background:#5d97ca}.ds-primary:disabled{background:#DEE7ED;color:#5A6C7B;cursor:default}"
+    },
+    {
+      "name": "Text action",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Readable-blue action with a 48-unit minimum target. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<button class=\"ds-text\" type=\"button\">Add errand</button>",
+      "css": ".ds-text{min-width:48px;min-height:48px;padding:0 12px;border:0;border-radius:20px;background:transparent;color:#285C86;font-family:Figtree,sans-serif;font-size:14px;font-weight:600;cursor:pointer}.ds-text:hover{background:rgb(40 92 134 / 8%)}.ds-text:focus-visible{outline:2px solid #285C86;outline-offset:2px}.ds-text:active{background:rgb(40 92 134 / 12%)}.ds-text:disabled{color:#5A6C7B;opacity:.38}"
+    },
+    {
+      "name": "Filled field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Quiet fill with readable-blue focus stroke and focused floating label. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<div class=\"ds-field-group\"><label class=\"ds-field-label\" for=\"ds-place\">Place name</label><input class=\"ds-field\" id=\"ds-place\" value=\"Home\"></div>",
+      "css": ".ds-field-label{display:block;margin-bottom:6px;color:#5A6C7B;font-family:Figtree,sans-serif;font-size:12px}.ds-field{padding:16px;border:1.5px solid transparent;border-radius:14px;background:#F0F5F8;color:#1D2C38;font-family:Figtree,sans-serif;font-size:16px}.ds-field:hover{border-color:#DEE7ED}.ds-field:focus-visible{outline:none;border-color:#285C86}.ds-field-group:focus-within .ds-field-label{color:#285C86}"
+    },
+    {
+      "name": "Bottom navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Three labeled destinations with an indicator around the selected icon; rail from 840 logical pixels. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<nav class=\"ds-navigation\" aria-label=\"Wayday\"><button aria-current=\"page\"><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1\"/></svg></span>Today</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"m17 2 4 4-4 4M3 11V6h18M7 22l-4-4 4-4m14-1v5H3\"/></svg></span>Recurring</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M3 6h4m4 0h10M3 12h10m4 0h4M3 18h2m4 0h12M7 3v6m6 0v6m-8 0v6\"/></svg></span>Settings</button></nav>",
+      "css": ".ds-navigation{display:flex;min-height:76px;background:#FBFBF8;border-top:1px solid #DEE7ED}.ds-navigation button{display:grid;justify-items:center;align-content:center;gap:4px;flex:1;min-height:76px;border:0;background:transparent;color:#1D2C38;font-family:Figtree,sans-serif;font-size:12px;font-weight:600;cursor:pointer}.ds-navigation span{display:grid;place-items:center;min-width:64px;height:32px;border-radius:20px;color:#5A6C7B}.ds-navigation [aria-current] span{background:#E5F0F9;color:#285C86}.ds-navigation button:hover span{background:#E5F0F9}.ds-navigation button:focus-visible{outline:2px solid #285C86;outline-offset:-2px}.ds-navigation button:active span{background:#DBE3E9}"
+    },
+    {
+      "name": "Grouped trip footer",
+      "kind": "custom",
+      "refersTo": "trip-settings",
+      "description": "Leave, Home by, and Travel share one tinted footer; source stacks the properties on narrow layouts or larger text. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<div class=\"ds-trip\"><button><span>Leave</span><strong>8:30 AM</strong></button><button><span>Home by</span><strong>6:00 PM</strong></button><button><span>Travel</span><strong>Motorcycle</strong></button></div>",
+      "css": ".ds-trip{display:flex;container-type:inline-size;overflow:hidden;border-radius:0 0 24px 24px;background:linear-gradient(rgb(229 240 249 / 45%),rgb(229 240 249 / 45%)),#FFFFFF;font-family:Figtree,sans-serif}.ds-trip button{flex:1;padding:14px;border:0;background:transparent;color:#285C86;text-align:left;font-family:inherit;cursor:pointer}.ds-trip span{display:block;color:#5A6C7B;font-size:12px;line-height:1.33}.ds-trip strong{display:block;margin-top:6px;font-size:14px;line-height:1.43;font-weight:600}.ds-trip button:hover{background:rgb(40 92 134 / 8%)}.ds-trip button:focus-visible{outline:2px solid #285C86;outline-offset:-2px}.ds-trip button:active{background:rgb(40 92 134 / 12%)}"
+    },
+    {
+      "name": "Shared section surface",
+      "kind": "card",
+      "refersTo": "section-surface",
+      "description": "White outlined group shared by Today, Recurring, and group editing. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<section class=\"ds-section\" aria-label=\"Recurring list\"><h3>Weekly essentials</h3><p>Weekly · Saturday</p><div>Stock up on groceries</div><div>Pick up the laundry</div></section>",
+      "css": ".ds-section{overflow:hidden;border:1px solid #DEE7ED;border-radius:24px;background:#FFFFFF;color:#1D2C38;font-family:Figtree,sans-serif}.ds-section h3{margin:16px 20px 6px;font-size:21px;line-height:1.27;font-weight:600;letter-spacing:-.35px}.ds-section p{margin:0 20px 16px;color:#5A6C7B;font-size:14px;line-height:1.4}.ds-section div{padding:8px 20px;font-size:14px;line-height:1.4;font-weight:600}.ds-section div:last-child{padding-bottom:20px}"
+    },
+    {
+      "name": "Errand notes",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Optional multiline plain-text notes in the focused editor; copied independently into Today. Documentation translation only; Flutter owns runtime behavior.",
+      "html": "<div class=\"ds-notes-group\"><label for=\"ds-notes\">Notes (optional)</label><textarea id=\"ds-notes\" rows=\"4\">Vegetables\nFruits\nMeat</textarea></div>",
+      "css": ".ds-notes-group{font-family:Figtree,sans-serif}.ds-notes-group label{display:block;margin-bottom:6px;color:#5A6C7B;font-size:12px}.ds-notes-group textarea{display:block;width:calc(100% - 35px);min-height:96px;padding:16px;border:1.5px solid transparent;border-radius:14px;background:#F0F5F8;color:#1D2C38;font-family:inherit;font-size:16px;line-height:1.5;resize:vertical}.ds-notes-group textarea:hover{border-color:#DEE7ED}.ds-notes-group textarea:focus-visible{outline:none;border-color:#285C86}.ds-notes-group:focus-within label{color:#285C86}"
+    },
+    {
+      "name": "Transient feedback",
+      "kind": "custom",
+      "refersTo": "feedback",
+      "description": "Floating Material feedback: four seconds normally, six with Undo; accessible navigation retains actions. Static documentation preview only.",
+      "html": "<div class=\"ds-feedback\" role=\"status\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m7 12 3 3 7-7\"/></svg><span>Errands cleared.</span><button type=\"button\">Undo</button></div>",
+      "css": ".ds-feedback{display:flex;align-items:center;gap:12px;padding:0 16px;border-radius:18px;background:#E5F0F9;color:#285C86;font-family:Figtree,sans-serif;font-size:14px;line-height:1.4}.ds-feedback svg{flex-shrink:0}.ds-feedback span{flex:1;padding:14px 0}.ds-feedback button{min-width:48px;min-height:48px;padding:0 8px;border:0;border-radius:18px;background:transparent;color:#285C86;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}.ds-feedback button:hover{background:rgb(40 92 134 / 8%)}.ds-feedback button:focus-visible{outline:2px solid #285C86}.ds-feedback button:active{background:rgb(40 92 134 / 12%)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A clear day, in order",
+    "overview": "Wayday keeps everyday errands calm and easy to scan. Warm Canvas, white grouped surfaces, Cornflower actions, and compact Figtree text give the list a clear rhythm. This records the implemented Android Flutter shell, Today, and Recurring interface after the owner's approved system change on 2026-10-16: one light theme with no appearance controls.\n\nThe reusable character is quiet grouping, compact numbered rows, and details revealed in focused editors. Short list transitions preserve the consecutive-entry flow; optional notes stay inside the editor, and floating feedback clears after ordinary use. The Today-specific From/Errands/To composition remains in [the surface brief](.impeccable/surfaces/mobile-today.md); it is not a required composition for every future screen.",
+    "keyCharacteristics": [
+      "One light Canvas/Cornflower theme with readable dark text.",
+      "Compact shared errand rows and simple Anytime-default quick add.",
+      "Quiet outlined groups, focused editors, and familiar Material states.",
+      "Numeric time entry and explicitly illustrative map previews.",
+      "Visible labels, content-driven sizing, and scrollable forms.",
+      "State-preserving disclosure, reduced-motion support, and transient in-app feedback."
+    ],
+    "rules": [
+      {
+        "name": "The Readable Blue Rule",
+        "body": "Use `link-blue` for action text, icons, focus strokes, and focused floating labels; use Cornflower with `action-ink` for filled primary actions.",
+        "section": "colors"
+      },
+      {
+        "name": "The Hierarchy Before Decoration Rule",
+        "body": "Establish hierarchy through type role, weight, spacing, and secondary text color; keep the compact list free of competing display treatments.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Surface Rule",
+        "body": "Separate resting content with tone, spacing, and subtle outlines; keep the shared errand containers free of custom shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** read semantic colors and typography from the single Flutter theme.",
+      "**Do** reuse compact numbered rows, Anytime-default quick add, and focused editing across Today and Recurring.",
+      "**Do** let titles wrap, trip properties stack, and forms scroll with larger text and keyboard insets.",
+      "**Do** preserve Material states, visible labels, tooltips, and system Back.",
+      "**Do** preserve composer state and focus during consecutive entry, and honor Remove animations for shared spatial transitions.",
+      "**Do** keep optional notes in the focused editor and indicate their presence compactly in rows.",
+      "**Do** replace stale feedback, expire ordinary messages, and preserve accessible Undo actions.",
+      "**Do** keep map illustrations explicitly labeled as previews and retain honest unavailable-feature copy.",
+      "**Do** preserve historical Asikaso references and attribution."
+    ],
+    "donts": [
+      "**Don't** reintroduce palette selectors, device-following appearance, or dark-mode controls in this MVP.",
+      "**Don't** use Cornflower as small action text on white; use the readable link role.",
+      "**Don't** turn each compact errand row into a permanent form or separate card.",
+      "**Don't** present illustrative map geometry as geographic data, search results, or a calculated route.",
+      "**Don't** imply that changes survive restart or that repeat metadata schedules automatic additions.",
+      "**Don't** treat native screenshots as verification of TalkBack, predictive Back, or performance."
+    ]
+  }
+}

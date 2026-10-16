@@ -4,13 +4,15 @@ Recorded: 2026-10-15 (Asia/Manila).
 
 **Confirmed** means explicit owner direction. **Selected recommendation** means the technical direction captured by the agreed foundation plan; it is not implemented. **Default assumption** is a planning choice that needs validation before it becomes a release promise.
 
-## D01 — Foundation work only
+## D01 — Foundation work and limited UI authorization
 
-**Status:** Confirmed.
+**Status:** Foundation restriction partially superseded by the owner's UI implementation request on 2026-10-16.
 
 Create documentation, repository configuration, and agent skills. Application development is deferred. Do not create mobile/backend skeletons, install SDKs, or deploy services under this phase. A later request can authorize the next stage without repeating approval for work already requested.
 
 The owner subsequently authorized creating the frontend/backend root folders. Reserve `apps/mobile/` and `services/api/` with `.gitkeep` markers only; runnable project scaffolding and internal source trees remain deferred.
+
+On 2026-10-16 the owner authorized building the Android Flutter app shell, theme options, and Today module. That request permits mobile scaffolding and the tooling needed to build and verify it. Use example errands on first launch, as confirmed by the owner. Basic editing and navigation can work in memory; backend scaffolding, real routing, place services, persistence, reminders, deployment, and iOS are outside this milestone. A Flutter web target is a convenience for reviewing the same widgets, not a new product platform commitment.
 
 ## D02 — Wayday naming and historical Asikaso material
 
@@ -26,9 +28,9 @@ Target zero spending. Free tiers, freemium offerings, and free trials are accept
 
 ## D04 — Mobile target and framework
 
-**Status:** Android/iOS confirmed; Flutter is the selected recommendation and owner's preference.
+**Status:** Android first, iOS later, confirmed by the owner on 2026-10-16; Flutter is the selected recommendation and owner's preference.
 
-Use Flutter/Dart for a shared mobile application. React Native remains viable if team experience changes the tradeoff. Neither choice removes native geofence integration or macOS requirements for iOS builds. Access to a Mac and distribution arrangements are not established.
+Use Flutter/Dart, with Android as the first implementation and verification target. Defer iOS implementation, device verification, and distribution planning to a later phase; access to a Mac or iPhone is not an Android development prerequisite. React Native remains viable if team experience changes the tradeoff. Neither choice removes native geofence integration or macOS requirements for eventual iOS builds. Access to a Mac and distribution arrangements are not established.
 
 ## D05 — AI deferred; limited rules remain possible
 
@@ -88,9 +90,35 @@ Use V2's compact list, focused editor, recurring groups, and map/timeline as the
 
 Do not choose a license for the team's original work automatically. Record third-party licenses separately, including map data and any future fonts/assets. Creating this foundation does not grant redistribution rights to all supplied material.
 
+## D14 — Today UI and palette options
+
+**Status:** Initial owner-requested reference direction, 2026-10-16; appearance options superseded by D15.
+
+Adapt V2's From/Errands/To structure into a clean Android Flutter screen with a compact numbered list. The supplied image informs spacing, quiet surfaces, and primary-action hierarchy; its booking/payment functionality is outside Wayday's requirements. Offer Canvas, Blue, and Ink appearance choices using the supplied Canvas `#FBFBF8`, Mist `#DBE3E9`, Cornflower `#6AA6DA`, and black references. Interpret the supplied five-digit black value as `#000000`. Use a darker derived blue when text contrast requires it. Preserve historical prototype files and screenshots.
+
+## D15 — Refined MVP interface and Recurring
+
+**Status:** Confirmed owner refinement, 2026-10-16.
+
+Use one light Cornflower/Canvas theme; remove dark/light mode selectors and alternate palette choices from the MVP. Keep the interface clean and refined. Replace the default clock dial with numeric hour/minute entry, AM/PM, and quick choices. Keep quick add simple and default to Anytime, with customization on a separate focused screen. Group Leave, Home by, and Travel within the route surface.
+
+Provide map buttons for From, To, and errand locations. They open an explicitly illustrative placeholder with manual place names; no geocoding, search, live map, or routing capability is implied.
+
+Implement Recurring using the same compact numbered errand structure as Today. Support named reusable lists, direct item editing, draft group editing, create/delete/undo, descriptive repeat settings, and manual Add to Today. Copies retain timing and priority, receive independent IDs, and preserve source item IDs to prevent duplicate addition. Today edits must not rewrite a source group. Automatic recurrence and durable storage remain deferred.
+
+## D16 — Errand notes, motion, and transient feedback
+
+**Status:** Confirmed owner refinement, 2026-10-16.
+
+Keep optional free-form, multiline notes inside the focused errand editor, shared by Recurring and Today. A compact note icon indicates that details exist without expanding the main list. Notes copy into Today with the other errand fields; subsequent edits remain independent. Notes are plain text and stay in memory for this prototype; interactive shopping checklists and durable storage are not implemented.
+
+Animate row insertion/removal and list disclosure with short, interruptible transitions. Preserve the quick-add field and keyboard focus during consecutive entries, and keep the composer visible as rows grow. Today, Recurring group headers, and repeat details use coordinated expansion; honor the platform's Remove animations preference.
+
+Use a shared, themed floating Material snackbar for in-app feedback. Ordinary messages expire after four seconds; messages with Undo expire after six seconds and replace stale feedback rather than queueing it. Preserve actionable messages when the platform requests accessible navigation. These messages are separate from the deferred Android reminder/notification integration.
+
 ## Revisit before implementation or release
 
-- Mac/iPhone access and publishing approach.
+- Mac/iPhone access and publishing approach before the later iOS phase, rather than before Android development.
 - Real place/hour coverage and corrections for the pilot area.
 - Motorcycle route restrictions and accuracy of static travel estimates.
 - Bicycle access, the intended truck class, vehicle parameters, and actual engine/data support for ground-clearance requirements.

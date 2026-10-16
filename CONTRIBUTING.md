@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Wayday is establishing its foundation. Application development has not started. Documentation, repository configuration, and project skills are the current deliverables. A roadmap stage describes future work; it does not authorize starting that stage.
+Wayday has an authorized Android UI shell, Today, and Recurring milestone, with one light Cornflower theme and placeholder map selection. Later backend, real-planning, persistence, automatic recurrence, and platform work remain deferred. A roadmap stage describes future work; it does not authorize starting that stage. See the [mobile README](apps/mobile/README.md) for the current app and its checks.
 
 Read the [product scope](docs/wayday/PRODUCT.md), [decisions](docs/wayday/DECISIONS.md), and [agent instructions](AGENTS.md) before proposing changes.
 

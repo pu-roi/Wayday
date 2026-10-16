@@ -1,4 +1,6 @@
 # Local environment and credentials
+.tools/
+.impeccable/review/
 .env
 .env.*
 !.env.example
@@ -13,7 +15,7 @@ key.properties
 *.mobileprovision
 *.provisionprofile
 
-# Flutter / Dart generated files (for the future application)
+# Flutter / Dart generated files
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies

@@ -1,12 +1,14 @@
 # Wayday product scope
 
-Last updated: 2026-10-15 (Asia/Manila).
+Last updated: 2026-10-16 (Asia/Manila).
 
 ## Purpose and status
 
 Wayday will help people complete several errands in one trip by choosing suitable places, ordering stops, and checking timing constraints. Initial users are people running errands in Philippine cities, with Pasig/Ortigas as the proposed pilot area.
 
-The current phase creates documentation, configuration, and agent skills only. Every application capability below is planned. There is no working mobile app or backend yet.
+The current implementation is an Android Flutter UI shell with a single light Cornflower theme, Today, and Recurring. Basic editing, optional multiline errand notes, and reusable groups use in-memory example data. Notes copy independently into Today. List insertion and disclosure have short transitions that honor reduced motion; themed in-app feedback expires automatically under ordinary navigation. Map selection is an illustrative placeholder with manual labels; time entry uses hour/minute fields. The full application capabilities below remain planned; there is no backend, durable storage, automatic recurrence scheduler, or real route calculation yet.
+
+Build and verify Android first. iOS remains a later target; iOS tooling and device access do not block Android development.
 
 ## Current product direction
 
@@ -62,7 +64,7 @@ Fresh place discovery and full replanning require the backend. If unavailable, s
 
 ## Design reference
 
-The current reference is [Asikaso V2](../Asikaso-Prototype/V2-NOTES.md): From/Errands/To, compact numbered rows, focused editing, recurring groups, and a map with a timeline. White/gray/ink surfaces and restrained route blue are a starting direction, not a finalized Wayday design.
+The interaction reference is [Asikaso V2](../Asikaso-Prototype/V2-NOTES.md): From/Errands/To, compact numbered rows, focused editing, recurring groups, and a future map with a timeline. The owner's refined MVP direction uses a single light Canvas/Cornflower theme with no palette or dark-mode controls. Today and Recurring share compact rows and a focused editor; every quick-added errand starts as Anytime. See the [current design system](../../DESIGN.md).
 
 The [original abstract](../ASIKASO_ABSTRACT.md) emphasizes public commuting. That ambition is excluded from current scope. Preserve the original rather than rewriting project history.
 
