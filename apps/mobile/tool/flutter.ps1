@@ -1,4 +1,6 @@
-param([Parameter(ValueFromRemainingArguments = $true)][string[]]$FlutterArguments)
+# Keep this a simple script: advanced-script parameters consume Flutter flags
+# such as -d (PowerShell's Debug parameter) and -v (Verbose).
+$FlutterArguments = @($args)
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))

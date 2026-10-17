@@ -19,7 +19,7 @@ class RecurringView extends ConsumerStatefulWidget {
 }
 
 class _RecurringViewState extends ConsumerState<RecurringView> {
-  final _collapsed = <String>{};
+  final _expanded = <String>{};
   void _edit(BuildContext context, ErrandGroup group, {bool isNew = false}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     Navigator.of(context, rootNavigator: true).push<void>(
@@ -162,8 +162,8 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
                               Expanded(
                                 child: InkWell(
                                   onTap: () => setState(() {
-                                    if (!_collapsed.remove(group.id)) {
-                                      _collapsed.add(group.id);
+                                    if (!_expanded.remove(group.id)) {
+                                      _expanded.add(group.id);
                                     }
                                   }),
                                   child: Padding(
@@ -185,9 +185,9 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
                                             const SizedBox(width: 8),
                                             AnimatedRotation(
                                               turns:
-                                                  _collapsed.contains(group.id)
-                                                  ? 0
-                                                  : .5,
+                                                  _expanded.contains(group.id)
+                                                  ? .5
+                                                  : 0,
                                               duration: WaydayMotion.duration(
                                                 context,
                                               ),
@@ -227,7 +227,7 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
                         ),
                         SmoothDisclosure(
                           key: ValueKey('group-${group.id}'),
-                          expanded: !_collapsed.contains(group.id),
+                          expanded: _expanded.contains(group.id),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -318,7 +318,7 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Example lists · Changes reset when the app restarts.',
+                'Your lists stay on this device.',
                 style: context.type.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),

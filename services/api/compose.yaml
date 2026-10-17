@@ -1,0 +1,16 @@
+name: wayday-pilot
+services:
+  places-db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_DB: wayday
+      POSTGRES_USER: wayday
+      POSTGRES_PASSWORD: ${WAYDAY_DB_PASSWORD:?Set a local password outside version control}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - wayday-places:/var/lib/postgresql/data
+    shm_size: 128mb
+    mem_limit: 512m
+volumes:
+  wayday-places:

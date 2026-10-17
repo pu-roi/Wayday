@@ -1,6 +1,6 @@
 # Planned architecture
 
-Status: the Android UI shell, Today, and Recurring are implemented at `apps/mobile/` with in-memory state. The architecture below remains the target for later capabilities. The backend root `services/api/` contains only a `.gitkeep` marker; no API, database schema, native bridge, or backend infrastructure exists yet.
+Status: the Android UI shell, Today, and Recurring are implemented at `apps/mobile/` with repositories backed by the M1 local workspace when bootstrapped in the app. Unit/widget tests can inject memory repositories. The architecture below remains the target for later capabilities. The backend at `services/api/` now provides a local FastAPI places module, a bounded OSM importer, a PostGIS baseline/adapter and an explicitly configured file snapshot read model for development. M2-03 local PostGIS runtime is verified and is the default catalog mode; routes, scheduling, native reminders and sharing are not operational. The mobile SQLite schema is implemented separately. M2 maps/manual review are described in [MAP_REVIEW_HANDOFF.md](MAP_REVIEW_HANDOFF.md): native map/location adapters stay separate from structured review drafts and future interpretation/planning. Review uses the existing day JSON aggregate and revision-checked confirmation, without a new disk schema.
 
 ## Responsibility map
 
@@ -24,7 +24,7 @@ The phone owns personal state and reminder delivery. The backend provides fresh 
 
 Organize the mobile application around errands, templates, planning, trips, places, and settings. Views display state; Riverpod-backed view models coordinate actions; repositories own data access and caching. Extract domain logic when scheduling or editing behavior would otherwise spread across view models. Avoid a separate abstraction for every simple function.
 
-The frontend root is `apps/mobile/`. The shell uses `app/`, shared `core/widgets/`, `features/errands/` for common models/list/editor, and `features/today/` plus `features/recurring/` with Riverpod controllers and in-memory repositories. The broader feature layout below remains planned; create directories when their implementation needs them:
+The frontend root is `apps/mobile/`. The shell uses `app/`, shared `core/widgets/`, `features/errands/` for common models/list/editor, and `features/today/` plus `features/recurring/` with Riverpod controllers, local repository adapters and memory implementations for isolated tests. The broader feature layout below remains planned; create directories when their implementation needs them:
 
 ```text
 apps/mobile/lib/
@@ -41,7 +41,7 @@ apps/mobile/lib/
 
 Widgets do not call SQL or provider APIs directly. Repository contracts return application models rather than provider-specific objects. Cross-feature operations use shared contracts or explicit application services rather than importing another feature's widgets.
 
-The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Notes, drafts, and copies remain in memory until durable storage is implemented.
+The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. The M1 workspace hydrates before rendering and serializes transactional SQLite snapshots. Version 1 stores three versioned aggregates (active day, ordered groups and saved places) in a Drift table. Mutations queue in order; save failure exposes Retry. Empty persisted lists never trigger reseeding. Malformed/unsupported data blocks hydration without resetting it. This is one active dated draft, not calendar history. Keep generated schema snapshots and test upgrades before future version changes.
 
 Keep limited text parsing on the phone so note entry and correction work offline. Store the original note, explicit edits, and suggestions distinctly. The backend validates the submitted structured constraints; it does not reparse and overwrite confirmed values.
 
@@ -49,11 +49,11 @@ Keep limited text parsing on the phone so note entry and correction work offline
 
 Use a single FastAPI application with places, routing, and planning modules. HTTP handlers validate and delegate; services perform domain operations; repositories access PostGIS; adapters translate Valhalla responses. OR-Tools belongs behind the planning module's solver boundary.
 
-The backend root is reserved at `services/api/`. The internal source/test directories and infrastructure folder below remain planned:
+The implemented backend root is `services/api/` with source at `src/wayday_api/`, `places/`, tests, SQL migration and Compose configuration. Routing/planning modules and a separate infrastructure folder below remain planned:
 
 ```text
 services/api/
-  src/wayday/
+  src/wayday_api/
     core/              settings, database, common errors
     places/            catalog search and source metadata
     routing/           Valhalla adapter and matrix cache
@@ -79,7 +79,7 @@ Use REST/JSON under `/v1`, with Pydantic models and generated OpenAPI. These are
 
 Represent the five user-facing choices as transportation profiles: walking, biking, motorcycle, sedan (low clearance), and truck (high clearance). Keep the selected profile separate from engine costing and any validated vehicle parameters. Thread the profile through planning, replanning, saved itinerary metadata, and route-cache identity. Include relevant restrictions and graph version in cache keys so incompatible matrices cannot be reused after a profile change. Public-commute routing is excluded.
 
-Before implementing clearance constraints, establish the truck class and the engine/data support. Ground clearance is not overall vehicle height. A missing road restriction or surface attribute is unknown, not a verified passability result. The profile labels alone must not generate invented dimensions or a guarantee that a road is suitable.
+Truck means pickup/light truck per the owner. Before implementing clearance constraints, establish the required dimensions and engine/data support. Ground clearance is not overall vehicle height. A missing road restriction or surface attribute is unknown, not a verified passability result. The profile labels alone must not generate invented dimensions or a guarantee that a road is suitable.
 
 Separate invalid input, missing place data, no road connection, proven infeasibility, solver timeout, and dependency outage. A response that needs review must not be presented as a fully confirmed plan. Exact error objects and limits are an implementation contract task, not invented compatibility guarantees in this foundation.
 
@@ -129,3 +129,21 @@ Later, the API and route engine can move to suitable compute while PostgreSQL mo
 - Exercise all five profiles, bicycle access, confirmed vehicle restrictions, missing clearance data, and profile changes that invalidate cached matrices. Verify that high ground clearance does not bypass truck access or overhead restrictions.
 - Exercise SQLite migrations and offline restart with completed stops and edited templates.
 - Verify maps and reminders on physical Android/iOS devices, including airplane mode, cache eviction, permission changes, and reboot. Simulator checks alone cannot establish background delivery.
+
+## Approved sharing extension
+
+[The implementation plan](IMPLEMENTATION_PLAN.md) adds a later sharing module. Personal data stays local unless selected for publication. Owner-authorized shares hold restricted snapshots, latest location, durable confirmed events and subscriptions. Sharing-only authentication, expiring/revocable bearer links, publication preview, private-note exclusion, native FCM and browser/app-link viewing are required. Never log tokens or personal payloads. Protect owner writes and guest reads separately; no personal cloud sync is introduced. Public HTTPS, backup, quota and availability gates precede deployment.
+
+
+## M2 search and map refinement
+
+Follow [the local API guide](../../services/api/README.md) and decision D22. Search consumes real imported names, addresses and aliases, independently of errand interpretation. The Flutter repository owns HTTP decoding and bounded requests; the chooser debounces queries and rejects stale results. Selected source IDs, addresses, source dates and coordinate kinds persist in the existing version-1 JSON workspace as optional backward-compatible fields; no SQL schema migration is needed. Distinct branches sharing a name retain separate saved-place identities.
+
+The search screen and full map are separate focused routes. Manual selection uses a center pin and read-only coordinates. Canonical source identity is retained within one metre of an existing anchor. Beyond it, optional imported MultiPolygon footprints support containing-place matches; a single mapped point within 10 metres can also match. Containing places take precedence, broad administrative/place boundaries are excluded, and ambiguity requires explicit selection. The pin retains its chosen coordinates with selected_in_mapped_area or near_mapped_point provenance. Unknown pins remain user selections. This does not verify entrances. Android maps use TextureView composition for Flutter overlays. Location is one-time and opt-in; cancellation invalidates the pending result, the overall UI wait is bounded, and stale fixes cannot overwrite later manual choices.
+
+The API stores no personal task database or location history. Local file mode loads a maximum of 20,000 imported pilot records once and never silently replaces a failing PostGIS service. API listeners remain loopback-only, HTTP access logs are disabled, and debug Android HTTP access is separate from a future HTTPS release configuration. Public deployment, accounts and billing remain outside this task. M2-03 database imports, correction retention, rollback, metric queries and outage/restart behavior are now verified; see [the contributor handoff](M2_DATABASE_HANDOFF.md).
+
+
+## Session-only endpoint refinement
+
+As of 2026-10-18, From and To remain in the running day model for editing/review but are serialized as empty unresolved values in personal snapshots. Hydration validates the whole workspace, then clears any legacy persisted endpoints transactionally without altering errands, saved places or template contents. This revises draft endpoint persistence, not the future saved-itinerary contract. Recurring disclosure starts collapsed in view state. SQL migration 002 independently adds optional imported place footprints for map identity; it does not change SQLite's schema or errand interpretation. See decision D25 and [contributor run modes](RUNNING_WAYDAY.md).

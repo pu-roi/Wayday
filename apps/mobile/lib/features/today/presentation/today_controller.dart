@@ -1,21 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../core/database/local_workspace.dart';
+import '../../places/domain/place_intent.dart';
 import '../data/day_repository.dart';
 import '../domain/day.dart';
 
-final dayRepositoryProvider = Provider<DayRepository>(
-  (ref) => MemoryDayRepository(),
-);
+final dayRepositoryProvider = Provider<DayRepository>((ref) {
+  final workspace = ref.watch(localWorkspaceProvider);
+  return workspace == null
+      ? MemoryDayRepository()
+      : LocalDayRepository(workspace);
+});
 final todayProvider = NotifierProvider<TodayController, DayPlan>(
   TodayController.new,
 );
 
 class TodayController extends Notifier<DayPlan> {
-  int _nextId = 0;
   @override
   DayPlan build() => ref.read(dayRepositoryProvider).read();
 
   void _commit(DayPlan day) {
+    day = day.copyWith(revision: state.revision + 1);
     ref.read(dayRepositoryProvider).save(day);
     state = day;
   }
@@ -27,7 +33,7 @@ class TodayController extends Notifier<DayPlan> {
       state.copyWith(
         errands: [
           ...state.errands,
-          Errand(id: 'new-${_nextId++}', title: title),
+          Errand(id: const Uuid().v4(), title: title, originalText: title),
         ],
       ),
     );
@@ -43,6 +49,18 @@ class TodayController extends Notifier<DayPlan> {
   );
   int addGroup({required String groupId, required List<Errand> errands}) {
     final copies = <Errand>[];
+    final idMap = <String, String>{
+      for (final item in errands)
+        item.id:
+            state.errands
+                .where(
+                  (e) =>
+                      e.sourceGroupId == groupId && e.sourceItemId == item.id,
+                )
+                .firstOrNull
+                ?.id ??
+            const Uuid().v4(),
+    };
     for (final item in errands) {
       if (state.errands.any(
         (existing) =>
@@ -52,7 +70,11 @@ class TodayController extends Notifier<DayPlan> {
         continue;
       }
       copies.add(
-        item.copyForToday(newId: 'copy-${_nextId++}', groupId: groupId),
+        item.copyForToday(
+          newId: idMap[item.id]!,
+          groupId: groupId,
+          idMap: idMap,
+        ),
       );
     }
     if (copies.isNotEmpty) {
@@ -67,14 +89,25 @@ class TodayController extends Notifier<DayPlan> {
     ),
   );
   void restore(DayPlan day) => _commit(day);
+  bool applyReview(DayPlan day, {required int expectedRevision}) {
+    if (state.revision != expectedRevision) return false;
+    _commit(day);
+    return true;
+  }
+
   void clear() => _commit(state.copyWith(errands: []));
-  void loadExample() => _commit(exampleDay());
-  void setEndpoint({required bool start, required String value}) {
+  void setDate(DateTime value) =>
+      _commit(state.copyWith(date: calendarDate(value)));
+  void setEndpoint({
+    required bool start,
+    required String value,
+    PlaceIntent? place,
+  }) {
     if (value.trim().isEmpty) return;
     _commit(
       start
-          ? state.copyWith(from: value.trim())
-          : state.copyWith(to: value.trim()),
+          ? state.copyWith(from: value.trim(), fromPlace: place)
+          : state.copyWith(to: value.trim(), toPlace: place),
     );
   }
 
