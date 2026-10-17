@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/widgets/feedback.dart';
-import '../features/today/presentation/today_controller.dart';
+import '../core/widgets/section_surface.dart';
 import 'theme.dart';
 
-class SettingsView extends ConsumerWidget {
+class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
-    appBar: AppBar(title: const Text('Settings')),
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      toolbarHeight: 64,
+      title: Text('Settings', style: context.type.headlineLarge),
+    ),
     body: Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -16,45 +17,52 @@ class SettingsView extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Icon(Icons.route_rounded, size: 36, color: context.wayday.link),
+            Text('On this device', style: context.type.titleMedium),
+            const SizedBox(height: 12),
+            SectionSurface(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your lists stay with you',
+                      style: context.type.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Errands, notes, recurring lists and saved places are stored locally.',
+                      style: context.type.bodyMedium?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Text('Trip time zone', style: context.type.bodyMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Asia/Manila',
+                      style: context.type.bodyMedium?.copyWith(
+                        color: context.wayday.link,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
-              'Wayday',
-              style: context.type.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your list. A little more on the way.',
-              style: context.type.bodyLarge?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            Text('Try an example', style: context.type.titleMedium),
-            const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.restart_alt_rounded),
-              title: const Text('Reload example day'),
-              onTap: () {
-                ref.read(todayProvider.notifier).loadExample();
-                showFeedback(context, 'Example day restored.');
-              },
-            ),
-            const SizedBox(height: 24),
-            Text('About this preview', style: context.type.titleMedium),
-            const SizedBox(height: 12),
-            Text(
-              'Errands and recurring lists work in memory. Changes reset when the app restarts. Add recurring lists to Today whenever you choose; they are not added automatically.',
+              'Uninstalling Wayday or clearing its storage removes this data. Recurring lists are added to Today only when you choose.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
             ),
+            const SizedBox(height: 32),
+            Text('About Wayday', style: context.type.titleMedium),
             const SizedBox(height: 12),
             Text(
-              'Maps are visual placeholders. Search, route planning, saved data, and reminders come later.',
+              'Search places in the Pasig/Ortigas pilot, choose a map pin and review your stop order. Place search uses a local development service. Routes and reminders are not connected yet. Times use Asia/Manila.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),

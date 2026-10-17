@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-16T11:33:38.891Z",
+  "generatedAt": "2026-10-17T14:44:13.230Z",
   "title": "Design System: Wayday mobile",
   "extensions": {
     "colorMeta": {
@@ -162,7 +162,7 @@
     "typographyMeta": {
       "headline": {
         "displayName": "Headline",
-        "purpose": "Today and Recurring titles; numeric hour/minute entry."
+        "purpose": "Today, Recurring, Profile, and Settings titles; numeric hour/minute entry."
       },
       "title": {
         "displayName": "Title",
@@ -174,11 +174,11 @@
       },
       "body-large": {
         "displayName": "Body Large",
-        "purpose": "Explanations and empty-state support."
+        "purpose": "Larger explanatory text."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Date, descriptions, and supporting text."
+        "purpose": "Date, descriptions, compact Today empty prompt, and supporting text."
       },
       "row-title": {
         "displayName": "Row Title",
@@ -186,7 +186,7 @@
       },
       "detail": {
         "displayName": "Detail",
-        "purpose": "Timing, endpoint labels, trip labels, and preview notes."
+        "purpose": "Timing, endpoint labels, trip labels, and map status."
       },
       "label": {
         "displayName": "Label",
@@ -202,17 +202,27 @@
       {
         "name": "list-enter",
         "value": "260ms",
-        "purpose": "Errand insertion, disclosure opening, chevrons, and feedback entry."
+        "purpose": "Errand insertion, disclosure opening, chevrons, feedback entry, and module entry."
       },
       {
         "name": "list-exit",
         "value": "180ms",
-        "purpose": "Errand removal, disclosure closing, and feedback dismissal."
+        "purpose": "Errand removal, disclosure closing, feedback dismissal, and module reverse duration."
       },
       {
         "name": "deceleration",
         "value": "Curves.easeOutCubic",
-        "purpose": "Shared native list and disclosure easing."
+        "purpose": "Shared native list, disclosure, and module easing."
+      },
+      {
+        "name": "module-slide",
+        "value": "Offset(0.025, 0) to Offset.zero",
+        "purpose": "A slight horizontal content slide; shell navigation stays stationary."
+      },
+      {
+        "name": "module-opacity",
+        "value": "Interval(0.15, 1, curve: Curves.easeOutCubic)",
+        "purpose": "Destination content fades in after the first 15 percent of the module transition, including Add from a recurring list."
       },
       {
         "name": "disclosure-reverse",
@@ -241,7 +251,7 @@
       "name": "Primary action",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Cornflower filled action with dark content. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "description": "Cornflower filled action with dark content. Plan my day opens manual review; Find your way is a placeholder that currently commits locally without starting a trip, routing or tracking. Documentation translation of native Flutter UI; Material rendering remains authoritative.",
       "html": "<button class=\"ds-primary\" type=\"button\">Plan my day</button>",
       "css": ".ds-primary{display:block;width:100%;min-width:48px;min-height:56px;border:0;border-radius:18px;background:#6AA6DA;color:#102D44;font-family:Figtree,sans-serif;font-size:16px;font-weight:600;cursor:pointer}.ds-primary:hover{background:#639ed2}.ds-primary:focus-visible{outline:2px solid #285C86;outline-offset:2px}.ds-primary:active{background:#5d97ca}.ds-primary:disabled{background:#DEE7ED;color:#5A6C7B;cursor:default}"
     },
@@ -257,16 +267,16 @@
       "name": "Filled field",
       "kind": "input",
       "refersTo": "input",
-      "description": "Quiet fill with readable-blue focus stroke and focused floating label. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
-      "html": "<div class=\"ds-field-group\"><label class=\"ds-field-label\" for=\"ds-place\">Place name</label><input class=\"ds-field\" id=\"ds-place\" value=\"Home\"></div>",
+      "description": "Quiet fill with readable-blue focus stroke and focused floating label. Search places or landmarks opens source-backed suggestions before full-map confirmation; coordinates are read-only and saving a place is optional. Unavailable search retains map and saved-place alternatives. Documentation translation of native Flutter UI; Material rendering remains authoritative.",
+      "html": "<div class=\"ds-field-group\"><label class=\"ds-field-label\" for=\"ds-place\">Search places or landmarks</label><input class=\"ds-field\" id=\"ds-place\" value=\"PLP\" type=\"search\"></div>",
       "css": ".ds-field-label{display:block;margin-bottom:6px;color:#5A6C7B;font-family:Figtree,sans-serif;font-size:12px}.ds-field{padding:16px;border:1.5px solid transparent;border-radius:14px;background:#F0F5F8;color:#1D2C38;font-family:Figtree,sans-serif;font-size:16px}.ds-field:hover{border-color:#DEE7ED}.ds-field:focus-visible{outline:none;border-color:#285C86}.ds-field-group:focus-within .ds-field-label{color:#285C86}"
     },
     {
       "name": "Bottom navigation",
       "kind": "nav",
       "refersTo": "navigation",
-      "description": "Three labeled destinations with an indicator around the selected icon; rail from 840 logical pixels. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
-      "html": "<nav class=\"ds-navigation\" aria-label=\"Wayday\"><button aria-current=\"page\"><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1\"/></svg></span>Today</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"m17 2 4 4-4 4M3 11V6h18M7 22l-4-4 4-4m14-1v5H3\"/></svg></span>Recurring</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M3 6h4m4 0h10M3 12h10m4 0h4M3 18h2m4 0h12M7 3v6m6 0v6m-8 0v6\"/></svg></span>Settings</button></nav>",
+      "description": "Four labeled destinations: Today, Recurring, Profile, and Settings, with an indicator around the selected icon; rail from 840 logical pixels. Navigation stays fixed during module transitions. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "html": "<nav class=\"ds-navigation\" aria-label=\"Wayday\"><button aria-current=\"page\"><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1\"/></svg></span>Today</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"m17 2 4 4-4 4M3 11V6h18M7 22l-4-4 4-4m14-1v5H3\"/></svg></span>Recurring</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/></svg></span>Profile</button><button><span><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M3 6h4m4 0h10M3 12h10m4 0h4M3 18h2m4 0h12M7 3v6m6 0v6m-8 0v6\"/></svg></span>Settings</button></nav>",
       "css": ".ds-navigation{display:flex;min-height:76px;background:#FBFBF8;border-top:1px solid #DEE7ED}.ds-navigation button{display:grid;justify-items:center;align-content:center;gap:4px;flex:1;min-height:76px;border:0;background:transparent;color:#1D2C38;font-family:Figtree,sans-serif;font-size:12px;font-weight:600;cursor:pointer}.ds-navigation span{display:grid;place-items:center;min-width:64px;height:32px;border-radius:20px;color:#5A6C7B}.ds-navigation [aria-current] span{background:#E5F0F9;color:#285C86}.ds-navigation button:hover span{background:#E5F0F9}.ds-navigation button:focus-visible{outline:2px solid #285C86;outline-offset:-2px}.ds-navigation button:active span{background:#DBE3E9}"
     },
     {
@@ -281,7 +291,7 @@
       "name": "Shared section surface",
       "kind": "card",
       "refersTo": "section-surface",
-      "description": "White outlined group shared by Today, Recurring, and group editing. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
+      "description": "White outlined group shared by Today, Recurring, Profile personal details, Settings, group editing, and review conflict feedback. Today starts empty only for new workspaces, preserves existing data, and uses a compact left-aligned body prompt with no example loader. Profile is a read-only Jace Bellen sample with unset contact details and no connected account or sharing. Documentation translation of native Flutter UI; not a runtime control. Material rendering remains authoritative.",
       "html": "<section class=\"ds-section\" aria-label=\"Recurring list\"><h3>Weekly essentials</h3><p>Weekly · Saturday</p><div>Stock up on groceries</div><div>Pick up the laundry</div></section>",
       "css": ".ds-section{overflow:hidden;border:1px solid #DEE7ED;border-radius:24px;background:#FFFFFF;color:#1D2C38;font-family:Figtree,sans-serif}.ds-section h3{margin:16px 20px 6px;font-size:21px;line-height:1.27;font-weight:600;letter-spacing:-.35px}.ds-section p{margin:0 20px 16px;color:#5A6C7B;font-size:14px;line-height:1.4}.ds-section div{padding:8px 20px;font-size:14px;line-height:1.4;font-weight:600}.ds-section div:last-child{padding-bottom:20px}"
     },
@@ -289,7 +299,7 @@
       "name": "Errand notes",
       "kind": "input",
       "refersTo": "input",
-      "description": "Optional multiline plain-text notes in the focused editor; copied independently into Today. Documentation translation only; Flutter owns runtime behavior.",
+      "description": "Optional multiline plain-text notes in the focused editor; copied independently into Today and persisted locally after Save. Unsaved editor drafts are discarded. Documentation translation only; Flutter owns runtime behavior.",
       "html": "<div class=\"ds-notes-group\"><label for=\"ds-notes\">Notes (optional)</label><textarea id=\"ds-notes\" rows=\"4\">Vegetables\nFruits\nMeat</textarea></div>",
       "css": ".ds-notes-group{font-family:Figtree,sans-serif}.ds-notes-group label{display:block;margin-bottom:6px;color:#5A6C7B;font-size:12px}.ds-notes-group textarea{display:block;width:calc(100% - 35px);min-height:96px;padding:16px;border:1.5px solid transparent;border-radius:14px;background:#F0F5F8;color:#1D2C38;font-family:inherit;font-size:16px;line-height:1.5;resize:vertical}.ds-notes-group textarea:hover{border-color:#DEE7ED}.ds-notes-group textarea:focus-visible{outline:none;border-color:#285C86}.ds-notes-group:focus-within label{color:#285C86}"
     },
@@ -300,16 +310,23 @@
       "description": "Floating Material feedback: four seconds normally, six with Undo; accessible navigation retains actions. Static documentation preview only.",
       "html": "<div class=\"ds-feedback\" role=\"status\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m7 12 3 3 7-7\"/></svg><span>Errands cleared.</span><button type=\"button\">Undo</button></div>",
       "css": ".ds-feedback{display:flex;align-items:center;gap:12px;padding:0 16px;border-radius:18px;background:#E5F0F9;color:#285C86;font-family:Figtree,sans-serif;font-size:14px;line-height:1.4}.ds-feedback svg{flex-shrink:0}.ds-feedback span{flex:1;padding:14px 0}.ds-feedback button{min-width:48px;min-height:48px;padding:0 8px;border:0;border-radius:18px;background:transparent;color:#285C86;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}.ds-feedback button:hover{background:rgb(40 92 134 / 8%)}.ds-feedback button:focus-visible{outline:2px solid #285C86}.ds-feedback button:active{background:rgb(40 92 134 / 12%)}"
+    },
+    {
+      "name": "Manual review stop",
+      "kind": "custom",
+      "description": "Vertical review visit with wrapped title, separate place action, timing/duration and explicit priority. Options provides Move earlier/later alongside native dragging; this static documentation translation implements neither reordering nor a browser map. Flutter owns behavior.",
+      "html": "<div class=\"ds-review-stop\"><div class=\"ds-review-spine\"><span>1</span><i></i></div><div class=\"ds-review-content\"><div class=\"ds-review-heading\"><button class=\"ds-review-title\" type=\"button\">Coffee and a quiet moment</button><button class=\"ds-review-options\" type=\"button\" aria-label=\"Options for Coffee and a quiet moment\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"5\" cy=\"12\" r=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><circle cx=\"19\" cy=\"12\" r=\"2\"/></svg></button></div><button class=\"ds-review-place\" type=\"button\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/></svg><span>Choose a place</span><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 5 7 7-7 7\"/></svg></button><p>Anytime · 15 min assumed</p><p class=\"ds-review-priority\">Optional · if there’s time</p><p>Map pin needed</p></div></div>",
+      "css": ".ds-review-stop{display:flex;max-width:560px;color:#1D2C38;font-family:Figtree,sans-serif}.ds-review-spine{display:flex;flex:0 0 40px;flex-direction:column;align-items:center;padding-top:18px}.ds-review-spine span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#E5F0F9;color:#285C86;font-size:12px;font-weight:500}.ds-review-spine i{flex:1;width:1px;background:#DEE7ED}.ds-review-content{flex:1;min-width:0;padding-bottom:16px}.ds-review-heading{display:flex;align-items:center}.ds-review-title{flex:1;min-width:0;min-height:48px;padding:12px 0;text-align:left;color:#1D2C38;font-family:inherit;font-size:16px;font-weight:600;line-height:1.5;letter-spacing:.15px}.ds-review-options{display:grid;place-items:center;flex:0 0 48px;min-height:48px;color:#5A6C7B}.ds-review-stop button{border:0;background:transparent;cursor:pointer}.ds-review-place{display:flex;align-items:center;gap:6px;width:100%;min-height:48px;padding:8px 0;border-radius:12px;color:#285C86;text-align:left;font-family:inherit;font-size:14px;line-height:1.4;letter-spacing:.25px}.ds-review-place span{flex:1;min-width:0}.ds-review-place svg{flex-shrink:0}.ds-review-content p{margin:0;color:#5A6C7B;font-size:12px;line-height:1.33;letter-spacing:.4px}.ds-review-content .ds-review-priority{color:#285C86}.ds-review-stop button:hover{background:rgb(40 92 134 / 8%)}.ds-review-stop button:focus-visible{outline:2px solid #285C86;outline-offset:1px}.ds-review-stop button:active{background:rgb(40 92 134 / 12%)}"
     }
   ],
   "narrative": {
     "northStar": "A clear day, in order",
-    "overview": "Wayday keeps everyday errands calm and easy to scan. Warm Canvas, white grouped surfaces, Cornflower actions, and compact Figtree text give the list a clear rhythm. This records the implemented Android Flutter shell, Today, and Recurring interface after the owner's approved system change on 2026-10-16: one light theme with no appearance controls.\n\nThe reusable character is quiet grouping, compact numbered rows, and details revealed in focused editors. Short list transitions preserve the consecutive-entry flow; optional notes stay inside the editor, and floating feedback clears after ordinary use. The Today-specific From/Errands/To composition remains in [the surface brief](.impeccable/surfaces/mobile-today.md); it is not a required composition for every future screen.",
+    "overview": "Wayday keeps everyday errands calm and easy to scan. Warm Canvas, white grouped surfaces, Cornflower actions, and compact Figtree text give the list a clear rhythm. This records the implemented upright-portrait Android Flutter shell, Today, Recurring, read-only sample Profile, Settings, place search, full-map confirmation, and manual day review on 2026-10-17. The light theme and visual tokens established on 2026-10-16 remain unchanged, with no appearance controls.\n\nThe reusable character is quiet grouping, compact numbered rows, and details revealed in focused editors. Short list transitions preserve the consecutive-entry flow; optional notes stay inside the editor, and floating feedback clears after ordinary use. The Today-specific From/Errands/To composition, manual review sequence, and search-to-map flow remain in [their](.impeccable/surfaces/mobile-today.md) [surface](.impeccable/surfaces/mobile-review.md) [briefs](.impeccable/surfaces/mobile-places.md); they are not required compositions for every future screen.",
     "keyCharacteristics": [
       "One light Canvas/Cornflower theme with readable dark text.",
       "Compact shared errand rows and simple Anytime-default quick add.",
       "Quiet outlined groups, focused editors, and familiar Material states.",
-      "Numeric time entry and explicitly illustrative map previews.",
+      "Numeric time entry, real map pins, and an editable manual visit sequence.",
       "Visible labels, content-driven sizing, and scrollable forms.",
       "State-preserving disclosure, reduced-motion support, and transient in-app feedback."
     ],
@@ -338,15 +355,16 @@
       "**Do** preserve composer state and focus during consecutive entry, and honor Remove animations for shared spatial transitions.",
       "**Do** keep optional notes in the focused editor and indicate their presence compactly in rows.",
       "**Do** replace stale feedback, expire ordinary messages, and preserve accessible Undo actions.",
-      "**Do** keep map illustrations explicitly labeled as previews and retain honest unavailable-feature copy.",
+      "**Do** keep map credits visible, explain missing pins and unavailable data, and retain map selection and saved-place alternatives when search fails.",
+      "**Do** pair visit dragging with labeled move controls and distinguish saving a reviewed itinerary from calculated travel or tracking.",
       "**Do** preserve historical Asikaso references and attribution."
     ],
     "donts": [
       "**Don't** reintroduce palette selectors, device-following appearance, or dark-mode controls in this MVP.",
       "**Don't** use Cornflower as small action text on white; use the readable link role.",
       "**Don't** turn each compact errand row into a permanent form or separate card.",
-      "**Don't** present illustrative map geometry as geographic data, search results, or a calculated route.",
-      "**Don't** imply that changes survive restart or that repeat metadata schedules automatic additions.",
+      "**Don't** invent map geometry, business results, route lines, checked hours, or arrival estimates when services have not supplied them.",
+      "**Don't** imply that unsaved editor drafts survive restart or that repeat metadata schedules automatic additions.",
       "**Don't** treat native screenshots as verification of TalkBack, predictive Back, or performance."
     ]
   }

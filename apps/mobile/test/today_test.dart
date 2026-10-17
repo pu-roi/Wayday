@@ -11,11 +11,22 @@ import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'package:wayday/features/recurring/presentation/recurring_controller.dart';
 import 'package:wayday/core/widgets/feedback.dart';
 
+import 'package:wayday/features/today/data/day_repository.dart';
+import 'fixtures/example_day.dart';
+import 'fixtures/test_map.dart';
+import 'fixtures/test_place_search.dart';
+import 'package:wayday/features/places/data/place_search_repository.dart';
+import 'package:wayday/features/maps/presentation/place_map.dart';
+import 'package:wayday/features/maps/data/location_reader.dart';
+
 const captureKey = Key('capture');
 Future<ProviderContainer> launch(
   WidgetTester tester, {
   Size size = const Size(390, 844),
   double scale = 1,
+  bool empty = false,
+  LocationReader? locate,
+  PlaceSearchRepository? places,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -29,7 +40,23 @@ Future<ProviderContainer> launch(
   await (FontLoader(
     'MaterialIcons',
   )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [
+      placeMapBuilderProvider.overrideWithValue(testMap),
+      placeSearchRepositoryProvider.overrideWithValue(
+        places ?? const TestPlaceSearch(),
+      ),
+      locationReaderProvider.overrideWithValue(
+        locate ??
+            () async => throw const LocationUnavailable(
+              'Location permission is unavailable. Move the map to choose your pin.',
+            ),
+      ),
+      dayRepositoryProvider.overrideWithValue(
+        MemoryDayRepository(initial: empty ? newDay() : exampleDay()),
+      ),
+    ],
+  );
   addTearDown(container.dispose);
   await tester.pumpWidget(
     UncontrolledProviderScope(
@@ -59,6 +86,11 @@ Future<void> capture(WidgetTester tester, String name) async {
 }
 
 Future<void> reveal(WidgetTester tester, Finder finder) async {
+  if (finder.evaluate().isNotEmpty) {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    return;
+  }
   await tester.scrollUntilVisible(
     finder,
     160,
@@ -79,6 +111,8 @@ void main() {
   ) async {
     final container = await launch(tester);
     await tester.tap(find.text('Recurring'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Weekly essentials'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Stock up on groceries'));
     await tester.pumpAndSettle();
@@ -179,8 +213,6 @@ void main() {
       expect(container.read(todayProvider).errands.length, 5);
       await tester.tap(find.text('Recurring'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Weekly essentials'));
-      await tester.pumpAndSettle();
       expect(find.text('Stock up on groceries'), findsNothing);
       await capture(tester, 'v3-collapsed');
       await tester.tap(find.text('Weekly essentials'));
@@ -193,9 +225,7 @@ void main() {
     'clear feedback times out and new messages replace old feedback',
     (tester) async {
       final container = await launch(tester);
-      await tester.tap(find.byTooltip('Day options'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Clear errands'));
+      await tester.tap(find.byKey(const Key('clear-errands')));
       await tester.pumpAndSettle();
       expect(find.text('Errands cleared.'), findsOneWidget);
       expect(find.text('Undo'), findsOneWidget);
@@ -341,36 +371,34 @@ void main() {
       findsOneWidget,
     );
   });
-  testWidgets(
-    'map previews edit endpoints and errand locations without geocoding',
-    (tester) async {
-      final container = await launch(tester);
-      await tester.tap(find.byKey(const Key('from-map')));
-      await tester.pumpAndSettle();
-      expect(find.text('Map preview'), findsOneWidget);
-      await capture(tester, 'v2-map');
-      await tester.enterText(
-        find.byKey(const Key('place-name')),
-        'Campus entrance',
-      );
-      await tester.tap(find.text('Use this place'));
-      await tester.pumpAndSettle();
-      expect(container.read(todayProvider).from, 'Campus entrance');
-      await tester.tap(find.text('Capstone presentation'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Open map'));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('place-name')),
-        'University hall',
-      );
-      await tester.tap(find.text('Use this place'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
-      expect(container.read(todayProvider).errands[1].place, 'University hall');
-    },
-  );
+  testWidgets('manual map selection edits endpoints and errand places', (
+    tester,
+  ) async {
+    final container = await launch(tester);
+    await tester.tap(find.byKey(const Key('from-map')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose on map'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('test-map-pin')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm location'));
+    await tester.pumpAndSettle();
+    expect(container.read(todayProvider).from, 'Dropped pin');
+    expect(container.read(todayProvider).fromPlace.latitude, 14.58);
+    await tester.tap(find.text('Capstone presentation'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open map'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose on map'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('test-map-pin')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm location'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(container.read(todayProvider).errands[1].place, 'Dropped pin');
+  });
   testWidgets('all five transportation profiles remain selectable', (
     tester,
   ) async {
@@ -391,6 +419,8 @@ void main() {
       await tester.tap(find.text('Recurring'));
       await tester.pumpAndSettle();
       await capture(tester, 'v2-recurring');
+      await tester.tap(find.text('Weekly essentials'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Add to Today').first);
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).errands.length, 8);
@@ -482,6 +512,7 @@ void main() {
       final container = await launch(tester);
       await tester.tap(find.text('Capstone presentation'));
       await tester.pumpAndSettle();
+      await reveal(tester, find.text('Remove errand'));
       await tester.tap(find.text('Remove errand'));
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).errands.length, 4);
@@ -494,11 +525,12 @@ void main() {
     tester,
   ) async {
     final container = await launch(tester);
-    await tester.tap(find.byTooltip('Day options'));
+    await tester.tap(find.byKey(const Key('clear-errands')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Clear errands'));
-    await tester.pumpAndSettle();
-    expect(find.text('What’s on your way today?'), findsOneWidget);
+    expect(
+      find.text('Start with one errand. Add details later.'),
+      findsOneWidget,
+    );
     await capture(tester, 'v2-empty');
     expect(
       tester.widget<FilledButton>(find.byType(FilledButton).first).onPressed,
@@ -531,6 +563,8 @@ void main() {
     final container = await launch(tester);
     await tester.tap(find.text('Recurring'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Weekly essentials'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Stock up on groceries'));
     await tester.pumpAndSettle();
     expect(find.text('Edit errand'), findsOneWidget);
@@ -558,18 +592,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(recurringProvider).length, 2);
   });
-  testWidgets('planning still explains unavailable calculations honestly', (
+  testWidgets('planning opens a manual review and Back preserves Today', (
     tester,
   ) async {
-    await launch(tester);
+    final container = await launch(tester);
+    final before = container.read(todayProvider);
     await tester.tap(find.text('Plan my day'));
     await tester.pumpAndSettle();
+    expect(find.text('Review your day'), findsOneWidget);
     expect(
-      find.textContaining('Route calculations, branch suggestions'),
+      find.textContaining('Travel times and opening hours'),
       findsOneWidget,
     );
-    await tester.tap(find.text('Keep editing'));
+    await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.text('Get documents from the registrar'), findsOneWidget);
+    expect(container.read(todayProvider), same(before));
   });
 }

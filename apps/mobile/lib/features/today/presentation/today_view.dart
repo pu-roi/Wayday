@@ -10,6 +10,7 @@ import '../../../core/widgets/time_entry_sheet.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
 import '../domain/day.dart';
+import '../../review/presentation/day_review_view.dart';
 import 'today_controller.dart';
 
 IconData profileIcon(TravelProfile profile) => switch (profile) {
@@ -66,9 +67,12 @@ class _TodayViewState extends ConsumerState<TodayView> {
       context,
       title: start ? 'Starting point' : 'Final destination',
       initial: start ? day.from : day.to,
+      initialIntent: start ? day.fromPlace : day.toPlace,
     );
     if (value != null && mounted) {
-      ref.read(todayProvider.notifier).setEndpoint(start: start, value: value);
+      ref
+          .read(todayProvider.notifier)
+          .setEndpoint(start: start, value: value.label, place: value);
     }
   }
 
@@ -138,39 +142,16 @@ class _TodayViewState extends ConsumerState<TodayView> {
       ),
     ),
   );
-  void _planning() => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    builder: (sheetContext) => SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.route_rounded, size: 32, color: context.wayday.link),
-              const SizedBox(height: 20),
-              Text('Your day starts here.', style: context.type.titleLarge),
-              const SizedBox(height: 12),
-              Text(
-                'This build is for shaping your day. Route calculations, branch suggestions, and travel times are coming later.',
-                style: context.type.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(sheetContext),
-                  child: const Text('Keep editing'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+  Future<void> _planning() async {
+    final saved = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const DayReviewView()));
+    if (saved == true && mounted) {
+      showFeedback(context, 'Reviewed day saved on this device.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final day = ref.watch(todayProvider);
@@ -179,28 +160,15 @@ class _TodayViewState extends ConsumerState<TodayView> {
         toolbarHeight: 64,
         title: Text('Today', style: context.type.headlineLarge),
         actions: [
-          PopupMenuButton<String>(
-            tooltip: 'Day options',
-            onSelected: (value) {
-              if (value == 'clear') {
-                _clear();
-              } else {
-                ref.read(todayProvider.notifier).loadExample();
-              }
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                value: 'example',
-                child: Text('Load example day'),
-              ),
-              if (day.errands.isNotEmpty)
-                const PopupMenuItem(
-                  value: 'clear',
-                  child: Text('Clear errands'),
-                ),
-            ],
-          ),
-          const SizedBox(width: 8),
+          if (day.errands.isNotEmpty) ...[
+            TextButton.icon(
+              key: const Key('clear-errands'),
+              onPressed: _clear,
+              icon: const Icon(Icons.clear_all_rounded, size: 20),
+              label: const Text('Clear'),
+            ),
+            const SizedBox(width: 12),
+          ],
         ],
       ),
       body: Align(
@@ -212,12 +180,27 @@ class _TodayViewState extends ConsumerState<TodayView> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                child: Text(
-                  MaterialLocalizations.of(
-                    context,
-                  ).formatFullDate(DateTime.now()),
-                  style: context.type.bodyMedium?.copyWith(
-                    color: context.colors.onSurfaceVariant,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('trip-date'),
+                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                    label: Text(
+                      MaterialLocalizations.of(
+                        context,
+                      ).formatFullDate(DateTime.parse(day.date)),
+                    ),
+                    onPressed: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.parse(day.date),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (date != null && mounted) {
+                        ref.read(todayProvider.notifier).setDate(date);
+                      }
+                    },
                   ),
                 ),
               ),
@@ -277,23 +260,23 @@ class _TodayViewState extends ConsumerState<TodayView> {
                         children: [
                           SmoothDisclosure(
                             expanded: day.errands.isEmpty,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'What’s on your way today?',
-                                    style: context.type.titleMedium,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  8,
+                                  20,
+                                  4,
+                                ),
+                                child: Text(
+                                  'Start with one errand. Add details later.',
+                                  key: const Key('today-empty-prompt'),
+                                  textAlign: TextAlign.left,
+                                  style: context.type.bodyMedium?.copyWith(
+                                    color: context.colors.onSurfaceVariant,
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Add an errand. The details can wait.',
-                                    style: context.type.bodyMedium?.copyWith(
-                                      color: context.colors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
@@ -352,7 +335,7 @@ class _TodayViewState extends ConsumerState<TodayView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Example lists · Changes reset when the app restarts.',
+                'Your lists stay on this device.',
                 style: context.type.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),
@@ -425,7 +408,14 @@ class EndpointRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(value, style: context.type.titleMedium),
+                Text(
+                  value.isEmpty
+                      ? (start
+                            ? 'Choose a starting point'
+                            : 'Choose a destination')
+                      : value,
+                  style: context.type.titleMedium,
+                ),
               ],
             ),
           ),

@@ -1,59 +1,51 @@
-# Wayday roadmap
+# Wayday roadmap and delivery status
 
-This roadmap describes sequencing. The owner has authorized the Android UI shell, Today, and in-memory Recurring module; later backend, planning, persistence, automatic recurrence, and platform milestones still require their own implementation scope.
+Last updated: 2026-10-18. The owner approved [the implementation plan](IMPLEMENTATION_PLAN.md). This document describes sequencing; [PLANNING.md](../../PLANNING.md) owns task status and [PROGRESS.md](../../PROGRESS.md) records actual checks. A task is not complete solely because source exists.
 
-## Stage 0: foundation — established
+## Current delivery
 
-Deliver repository guidance, configuration, stack evaluation, product boundaries, architecture, cost/data inventory, setup guidance, and focused agent skills for UI, mobile integration, backend services, API contracts, databases, and itinerary planning. Preserve the abstract, both HTML prototypes, and screenshots.
+**M0 and M1 complete; M2 maps, manual review and local pilot place search are implemented, with M2-03 PostGIS runtime verification complete and physical-location/coverage gates still open.** M2 prerequisite findings are recorded in [FEASIBILITY.md](FEASIBILITY.md). Later milestone gates remain outstanding.
 
-Reserve the owner-requested frontend/backend roots at `apps/mobile/` and `services/api/` with `.gitkeep` markers. Internal application structure and runnable scaffolding remain future work.
+The Android Flutter shell, Today, Recurring, notes and list interactions already exist. M1 adds local Drift persistence, versioned storage, stable IDs, saved places, structured place intent, duration, date/time-zone metadata and reviewed rule suggestions. Verification results and platform limitations are recorded in the progress log. Real map display and manual pins connect to an editable vertical day review. Bounded local catalog search is implemented with real OSM data. PostGIS runtime verification is complete; field coverage checks, physical-location checks, branch recommendations, road routes, trip execution and native reminders remain pending. See [the database handoff](M2_DATABASE_HANDOFF.md). The owner confirmed map/manual review first, independently of another contributor’s interpretation work; see [the handoff](MAP_REVIEW_HANDOFF.md). This does not complete M2 or M3. The local FastAPI service is documented in [its guide](../../services/api/README.md); no public service is deployed.
 
-Exit checks: documents agree on scope, local links resolve, skills validate, source references remain trackable, and prototype checks still pass. No app/backend scaffolding or installations are included.
+## Milestones
 
-## Stage 1: feasibility — future
+| Stage | Delivery | Gate |
+| --- | --- | --- |
+| M0 | Contributor plan, task board, reconciled baseline and decisions | Documentation distinguishes implemented and verified work |
+| M1 | Durable personal errands, Recurring, notes, saved places and structured input | Restart/offline tests, independent copies, safe failure and Android verification |
+| M2 | Real MapLibre map and bounded regional OSM/PostGIS place search | Attribution, actual coordinates, coverage/hours honesty and local infrastructure readiness |
+| M3 | Valhalla matrices/geometry and OR-Tools branch/time scheduling | Regional resource benchmark, five-profile validation, independently checked schedules |
+| M4 | Active itinerary, per-leg external navigation, confirmed progress, replanning and local nudges | Physical Android journey, permission, background, battery and disconnection checks |
+| M5 | Expiring itinerary links, sharing-only sign-in and browser viewer | Public HTTPS/zero-spend hosting gate, authorization, expiry/revocation and app-link fallback |
+| M6 | Explicit live location and follower event alerts | Freshness, offline event outbox, FCM deduplication and physical background verification |
+| M7 (optional) | Evaluate embedded guidance only after the external-navigation experience works | Separate decision before implementation; native/off-route and physical-route checks if pursued |
 
-Before building full workflows:
+## Immediate sequence
 
-- Start feasibility on Android. Defer macOS/iPhone access and iOS verification to the later iOS phase; they do not block Android work.
-- Assess regional OSM coverage for the owner's example errands, including wet markets, barbers, and coffee shops; inspect actual opening-hours coverage.
-- Measure whether a small Valhalla graph and PostGIS catalog fit existing hardware. Validate walking, biking, motorcycle, sedan, and truck routing against sampled local journeys and restrictions.
-- Establish the truck class, required vehicle parameters, and available road/surface data. Investigate the low/high ground-clearance requirement separately from overhead height restrictions; document unsupported checks before promising clearance-aware routing.
-- Verify MapLibre offline downloads on Android under provider limits, including all style resources. Verify iOS cache behavior in the later iOS phase.
-- Demonstrate background reminders on physical devices with denial, reboot, and termination cases.
-- Define a small English/Filipino/Taglish rule corpus with expected output and ambiguous cases. Do not reintroduce AI as a hidden prerequisite.
+M1 is complete. Finish M2-02 physical-location checks and M2-04 place-quality checks; M2-03 local database runtime is verified. Start with one local active dated draft, not a calendar/history product. Keep Asia/Manila explicit. Manual saved labels remain unresolved until a real coordinate is chosen. English/Filipino/Taglish suggestions require review and do not silently replace corrected fields.
 
-Exit: record measured results, limitations, and any required changes to the chosen stack. Validate all five profiles or record a product decision for any unsupported capability. Do not promise global coverage, live traffic, clearance suitability, or motorcycle-route reliability from a successful demo alone.
+For M2, measure a bounded Pasig/Ortigas catalog and routing graph on existing hardware. Import regional OSM extracts rather than using community endpoints as the application's catalog. Preserve provenance, unknown hours and manual corrections. Do not fill failed searches with simulated businesses.
 
-## Stage 2: scaffold and local task management — UI shell implemented; persistence remains future work
+For M3, validate walking, biking, motorcycle, sedan and pickup/light truck separately. Ground clearance is not overhead height or permission to ignore restrictions. Use Google Maps/Waze handoff as the planned navigation experience. Embedded guidance is optional later work, not a requirement for releasing the itinerary workflow. Extend coverage toward Laguna before promising field-trip optimization there.
 
-An initial Android UI shell can be built before routing, place-data, offline-map, and reminder feasibility is complete, once application development is authorized. Recreate the provisional V2 interactions in Flutter: Today with From/Errands/To, a focused errand editor, recurring templates, settings, and a sample plan timeline. Use in-memory data and explicitly labeled sample plan results. Basic navigation, editing, and template copying can work without a backend. Use a map placeholder initially. This milestone validates the interface and Android behavior; it does not establish routing feasibility or persistent offline support.
+## Planned Find your way journey
 
-Current authorized subset: app shell, single light Cornflower theme, Today, and in-memory Recurring lists. Template management and independent manual copies to Today are implemented. Place entry uses an illustrative map preview; time entry uses numeric fields. Planning shows its unavailable state. Durable storage, automatic recurrence, real map integration, and plan results remain future work.
+The current change is a label-only placeholder: Find your way still saves the reviewed draft with existing guards and does not start a trip. The stages below are planned work.
 
-Create the Flutter/FastAPI projects and local infrastructure only after development is authorized. Pin compatible versions and add working commands. Build local errands, templates, saved places, structured corrections, persistence, and basic platform permissions before integrating the full planner.
+- **M3:** calculate and save an actual road-based map/timeline and reviewed itinerary snapshot.
+- **M4:** Find your way opens an active itinerary with the current stop, remaining errands and next destination. A per-leg Open in Google Maps / Open in Waze action launches external guidance. Returning to Wayday restores the same progress; opening navigation does not mark arrival or completion. Preserve a readable address/coordinate fallback if no navigation app is available. An active trip resumes from its durable itinerary snapshot independently of session-only Today endpoints.
+- **M4 arrival/completion:** manual I'm here remains available. Whether/how GPS detects arrival is still an open decision; any future detection is an opt-in suggestion with manual fallback. The user explicitly marks Done to finish an errand and advance to the next task. Leaving a navigation app or crossing a geofence never silently completes work.
+- **M5:** add itinerary-link publishing/revocation and the share action to the trip screen.
+- **M6:** add opt-in live location and confirmed-event follower alerts through the same share entry point.
+- **M7 (optional):** evaluate embedded spoken guidance separately. The map overview stays inside Wayday while external apps provide the planned turn-by-turn experience.
 
-For a UI-only milestone, scaffold only the Flutter application and leave FastAPI and local data services for the work that needs them. Add durable local persistence after the initial in-memory editing flow is usable.
+## Sharing and operating gates
 
-Exit: tasks and progress survive restart and connectivity loss; template copies stay independent; basic checks run locally.
+Personal planning remains local and account-free. Sharing publishes selected fields only; notes remain private by default. Owners/followers sign in for publication/native alerts, while guest links work in browsers. Defaults: 24-hour expiry, immediate revocation, latest location only, stale after 90 seconds, explicit Pause/Stop and confirmed activity events. Teacher/bus location represents group progress. See the implementation plan for retention, update targets and event rules.
 
-## Stage 3: place discovery and itinerary planning — future
+Before public sharing, validate HTTPS, access controls, quotas, backups, recovery and compute capacity. Supabase is a possible database/Auth provider, not Python or Valhalla hosting. A sleeping laptop is an unavailable backend. Maintain zero spending; no billing, accounts or public deployment are part of the current local implementation batch.
 
-Import the regional place catalog, integrate Valhalla matrices, and implement OR-Tools scheduling behind the documented API boundaries. Add branch override, infeasibility reporting, and remaining-trip replanning. Store itineraries for offline reading.
+## Deferred
 
-Exit: mandatory timing/dependencies hold, optional omissions are explained, timeout/outage statuses remain honest, and tiny cases match exhaustive baselines. Route geometry and travel estimates use real regional data.
-
-## Stage 4: reminders and field evaluation — future
-
-Integrate native geofences, local time reminders, and downloaded map coverage with the saved trip. Refine the UI using the prototype as a reference and test with representative users.
-
-Exit: physical-device background behavior is documented; offline fallback works; route efficiency, completion, travel-time error, and user feedback are measured against a stated baseline.
-
-## Stage 5: deployment decision — future
-
-Evaluate free-tier hosting using measured workloads. Supabase is a candidate for the database, not a complete deployment for Python planning and Valhalla. Establish access controls, TLS, rate limits, backups, quota handling, and trial exit paths before public exposure.
-
-Exit: the complete deployment has a documented operating cost, limits, recovery path, and Android/iOS distribution plan. No permanent zero-cost hosting guarantee is assumed.
-
-## Deferred research
-
-AI interpretation, live traffic, full offline route computation, account synchronization, and in-app turn-by-turn navigation require separate product and feasibility decisions. Public commute, including jeepney/bus/rail journey planning, is excluded from current scope. Sedan/truck profiles and clearance feasibility belong to the active transportation scope above.
+Android first. iOS, AI, live traffic, automatic recurrence and full personal cloud synchronization remain later work. Fresh offline route optimization remains deferred. Public commute is excluded. Embedded navigation is optional M7 work and is not a dependency of the active itinerary or external navigation handoff.

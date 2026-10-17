@@ -1,8 +1,10 @@
 # Contributing to Wayday
 
+Start with [Running Wayday](docs/wayday/RUNNING_WAYDAY.md). UI and interpretation work needs no Docker; real place search can use explicit file mode or the full PostGIS setup.
+
 ## Current phase
 
-Wayday has an authorized Android UI shell, Today, and Recurring milestone, with one light Cornflower theme and placeholder map selection. Later backend, real-planning, persistence, automatic recurrence, and platform work remain deferred. A roadmap stage describes future work; it does not authorize starting that stage. See the [mobile README](apps/mobile/README.md) for the current app and its checks.
+The owner approved [the functional implementation plan](docs/wayday/IMPLEMENTATION_PLAN.md) on 2026-10-17. Implement the staged Android planner, starting with M1 local persistence alongside a small M2 data/routing feasibility spike. Follow [PLANNING.md](PLANNING.md) and its completion gates; later sharing needs hosting and physical-device validation. iOS, AI, live traffic, automatic recurrence and full personal cloud synchronization remain deferred. No purchase, billing activation, external account creation or public deployment is authorized. See the [mobile README](apps/mobile/README.md) for the current app and its checks.
 
 Read the [product scope](docs/wayday/PRODUCT.md), [decisions](docs/wayday/DECISIONS.md), and [agent instructions](AGENTS.md) before proposing changes.
 

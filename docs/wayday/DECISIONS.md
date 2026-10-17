@@ -116,7 +116,88 @@ Animate row insertion/removal and list disclosure with short, interruptible tran
 
 Use a shared, themed floating Material snackbar for in-app feedback. Ordinary messages expire after four seconds; messages with Undo expire after six seconds and replace stale feedback rather than queueing it. Preserve actionable messages when the platform requests accessible navigation. These messages are separate from the deferred Android reminder/notification integration.
 
-## Revisit before implementation or release
+## D17 — Functional planner implementation and sequencing
+
+**Status:** Confirmed owner approval, 2026-10-17; supersedes earlier UI-only deferrals.
+
+Implement [the approved plan](IMPLEMENTATION_PLAN.md) in milestones M0–M7, beginning with durable local errands and a small regional data/routing feasibility spike. Start with a private Pasig/Ortigas pilot. Use a map/dashboard before embedded turn-by-turn guidance; hand off navigation legs initially. Truck means pickup/light truck, subject to access and dimensional validation rather than automatic heavy-goods costing. AI, live traffic, automatic recurrence, iOS and full cloud synchronization remain deferred.
+
+## D18 — Sharing boundaries
+
+**Status:** Confirmed owner direction, 2026-10-17; narrowly extends the previous account/cloud deferral.
+
+Personal planning stays local and account-free. Publishing and following for native alerts require sign-in. Browser viewing uses a read-only expiring link without installation/login. Publish only previewed fields; notes stay private by default. Default expiry is 24 hours, adjustable earlier; revoke immediately and remove published data within 24 hours after expiry/revocation. Store latest location rather than breadcrumb history. Teacher/bus-phone sharing represents group progress, not each child's presence. GPS suggests arrival; the traveler/teacher confirms activity before confirmed recipient alerts. Explicit sharing controls, freshness, offline event deduplication and Android foreground verification are required.
+
+## D19 — Personal persistence and interpretation defaults
+
+**Status:** Implementation defaults for M1, 2026-10-17.
+
+Store the active day draft, Recurring and saved places in a versioned, transactional Drift/SQLite workspace. This first storage release has one active dated draft, not a multi-day calendar. Keep its chosen date on restart; do not silently discard yesterday's work. The pilot uses Asia/Manila explicitly. Fifteen minutes is an editable assumed visit duration, not an observed fact. Save original text, confirmed fields, structured unresolved/specific/saved/search intent and input revision. Rule suggestions are reviewed explicitly in the editor; quick entry stays Anytime. Save failures stay visible and retryable. Never reseed malformed or unsupported saved data. Native Android automatic backup is disabled to preserve the local-only default. Browser storage belongs to its origin and is independent of Android storage.
+
+## D20 — Pre-map interface refinement and sample identity
+
+**Status:** Confirmed owner refinement, 2026-10-17.
+
+Remove example-day loading from Today and Settings. A new workspace begins with an empty day; existing saved data is preserved. Use a compact, left-aligned inline prompt instead of a large empty-state headline. Expose Clear with Undo as a labeled action when errands exist.
+
+Keep Today, Recurring, Profile and Settings as labeled shell destinations. Module changes, including Add from a recurring list, use the shared short fade and slight slide while navigation stays fixed; Remove animations makes the change immediate. Preserve the established Figtree and light Cornflower system.
+
+Profile is a read-only local sample named Jace Bellen, selected by the owner. Unset email, phone and home area are explicit; no invented contact details, edit affordances, authentication or operational sharing are implied. Real identity and sharing remain tied to the later sharing milestones. Settings describes local storage, time zone and current limitations.
+## D21 — Manual map and pre-trip review before interpretation integration
+
+**Status:** Confirmed owner scope, 2026-10-17; supersedes the earlier illustrative-map boundary.
+
+Implement a real MapLibre/OpenFreeMap map with manual pins, coordinate entry, saved-place selection and opt-in one-time foreground location. Keep interpretation unchanged and independently owned by another contributor. Do not introduce a public search endpoint or simulated business alternatives. Retain provider attribution and an honest map-failure fallback.
+
+Plan my day opens a V2-inspired vertical draft review: fixed endpoints, reorderable errands, required/optional priority and focused place changes. Provide move controls as an alternative to dragging. Preserve original text, notes, timing and dependencies. Confirmation saves the reviewed day with a revision guard; Back discards it. Unresolved places may be saved as a draft. Never imply optimized order, checked hours, arrival times or live trip execution. The full M2 catalog and M3 scheduling gates remain outstanding; see [the integration handoff](MAP_REVIEW_HANDOFF.md).
+
+## D22 — Search-first places and explicit local pilot read model
+
+**Status:** Confirmed owner refinement and implementation choice, 2026-10-17; supersedes D21's manual-only chooser boundary.
+
+Use a familiar search list for place names, landmarks and addresses, followed by a dedicated full-screen map with a fixed center pin. Results supply their own names. Remove custom-name and coordinate-entry forms; coordinates may be read-only. A manual selection is a Dropped pin, with nearby landmarks as context rather than a fabricated address or entrance. Preserve saved places, including distinct branches with the same displayed name. Keep interpretation unchanged.
+
+Implement a local FastAPI places module and import bounded OSM source data. PostgreSQL/PostGIS remains the target catalog store. An explicitly configured, bounded file snapshot read model supports local development while the existing Docker engine is unavailable. It is not an automatic failover and does not add another personal database. Retain the PostGIS schema/adapter as a separate runtime gate; do not claim full M2 completion from the file-mode implementation. No public community search endpoint, account, billing or deployment is introduced. See [the local service guide](../../services/api/README.md).
+
+Bound the complete location wait, provide Cancel, ignore stale search/location results and allow manual selection during failures. Use Android TextureView map composition for Flutter overlays. Emulator renderer issues remain distinct from physical GPS accuracy and do not justify a permanent production renderer opt-out.
+
+## D23 — Portrait-only Android application
+
+**Status:** Confirmed owner direction, 2026-10-17.
+
+Lock Wayday to upright portrait on the supported Android phone, including startup. Landscape is not an application feature; do not develop a separate landscape layout. Keep larger-text, keyboard and scrolling checks in portrait. Verify that device rotation does not rotate the app. The native activity requests portrait and Flutter applies portraitUp before starting the UI. Android 16 can override orientation restrictions on large displays at least 600 dp wide; that platform exception is outside the current phone target and is not a verified tablet release. Browser previews remain development surfaces rather than a promise of landscape mobile support.
+
+## D24 — Verified local PostGIS runtime and contributor handoff
+
+**Status:** Owner-authorized M2-03 completion, 2026-10-17; updates D22's temporary runtime limitation.
+
+Use local PostgreSQL/PostGIS as the default catalog mode now that Docker is operational and the runtime checks passed. Keep file mode explicit (`start-places.ps1 -Mode file`), never automatic failover. Scripts must reject a server already running in another mode. Persist local credentials through Windows-user DPAPI under ignored `data/local`; do not include passwords or connection URLs in tracked files, mobile code or logs. Each contributor creates their own local credential and catalog.
+
+Repeat imports, same-extract snapshot removals, correction retention, transaction rollback, metric query plans and outage/restart recovery passed against actual PostGIS. Use isolated synthetic databases for destructive verification rather than clearing the pilot catalog. Source-date readiness describes the active catalog. Keep search corrections source-linked and separate from imported data; the current correction table supports aliases only.
+
+This batch leaves interpretation implementation, related Flutter behavior and tests unchanged. M2-04 field coverage and M2-02 physical-location checks remain open. No route graph, scheduling, hosting, account, billing or public deployment is implied. See [the handoff](M2_DATABASE_HANDOFF.md).
+
+## D25 — Session endpoints, collapsed lists and mapped pin identity
+
+**Status:** Confirmed owner direction, 2026-10-18; revises draft-endpoint persistence in M1 and D22's generic moved-pin label.
+
+From and To belong to the running application session, clear on cold launch or Flutter hot restart, and are excluded from future personal snapshots. Legacy persisted endpoints are removed during hydration after all workspace sections validate. Preserve errands, their places, notes, saved places, templates, date and other trip settings. Background/resume and module navigation do not reset the session. Recurring groups start collapsed; disclosure state is a view concern, not template metadata.
+
+Retain imported OSM MultiPolygon footprints for mapped-area identity. Name a manual pin from a unique containing place, or otherwise a unique mapped point within 10 metres; prefer mapped areas over nearby points, exclude broad city/place boundaries, and require explicit choice for ambiguity or merely nearby landmarks. Keep the chosen coordinates and explicit coordinate-kind metadata. Unknown/offline matches remain usable as Dropped pin. No match verifies an entrance or current opening hours. Migration 002 is additive and optional footprints preserve compatibility with older point-only snapshots.
+
+Include named residential areas and place/neighbourhood records in the bounded importer. Grand Monaco La Impreza was already in the source extract but excluded by the prior category filter; importing its actual source record fixes the reported omission without guessed data. M2-04 still requires real coverage and correction checks. The lookup and UI changes do not modify errand interpretation. Contributors can run app/local tests without Docker, use explicit file-mode search without Docker, or run the full local PostGIS stack. See [the run guide](RUNNING_WAYDAY.md).
+
+## D26 — Active itinerary with external leg navigation
+
+**Status:** Owner direction, 2026-10-18. Current implementation scope is the review action label only; trip behavior below is planned.
+
+Use Find your way as the review action placeholder for both fully pinned and incomplete drafts. Preserve the existing local commit, stale-revision guard, disabled states and honest draft/missing-place copy. It does not yet open an active trip or start tracking.
+
+M3 provides real route/timeline data and a durable reviewed snapshot. M4 provides the active itinerary, manual arrival, explicit Done per errand, next-stop progression and per-leg Google Maps/Waze launch with return-to-trip recovery. Wayday keeps the overview and progress while external apps handle navigation. Opening/returning from navigation is not proof of arrival or completion, and external paths may differ from Wayday's estimates/restrictions. Restore active trips independently of session-only Today endpoints. The automatic-arrival policy remains open; any later GPS-based suggestion needs opt-in, confirmation and manual fallback.
+
+Add sharing entry points in M5 for links and M6 for opt-in live sharing/confirmed-event alerts. Starting navigation never starts sharing. Embedded turn-by-turn guidance remains optional later evaluation, not a prerequisite for the selected external-navigation workflow. See [the updated roadmap](ROADMAP.md) and [implementation plan](IMPLEMENTATION_PLAN.md).
+
+## Remaining release checks
 
 - Mac/iPhone access and publishing approach before the later iOS phase, rather than before Android development.
 - Real place/hour coverage and corrections for the pilot area.

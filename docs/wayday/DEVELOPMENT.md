@@ -1,10 +1,12 @@
 # Development and verification guide
 
+Start with [Running Wayday](RUNNING_WAYDAY.md) for current Android commands and app-only, Docker-free search, or full PostGIS development modes.
+
 ## What exists today
 
-The repository contains planning documents, configuration, project skills, preserved Asikaso prototypes, and the Android Flutter shell at `apps/mobile/`. The shell supports Today editing, recurring lists and independent copies to Today, illustrative map pickers with manual labels, numeric time entry, grouped trip settings, and navigation in a single light Cornflower theme. Data is in memory and resets when the app restarts. Repeat settings do not automatically add lists. The backend root `services/api/` contains only `.gitkeep`; there is no API, database migration, backend infrastructure, or deployment pipeline.
+The repository contains planning documents, configuration, project skills, preserved Asikaso prototypes, and the Android Flutter shell at `apps/mobile/`. The shell supports Today editing, recurring lists and independent copies to Today, real MapLibre/OpenFreeMap display with name/landmark search, full-screen center-pin selection and read-only coordinates, numeric time entry, grouped trip settings, and navigation in a single light Cornflower theme. M2 adds a manual vertical itinerary review with place overrides, stop reordering, required/optional priorities and revision-guarded confirmation; pilot catalog search is implemented, while routing remains pending and M2-03 PostGIS runtime verification is complete. M1 adds a hydrated Drift/SQLite workspace, stable IDs, saved places, structured intent, durations and reviewed rule suggestions. See PROGRESS.md for verified results. The active dated draft stays selected on restart; this is not a calendar/history interface. Repeat settings do not automatically add lists. The backend at `services/api/` now contains a local FastAPI places service, an importer and PostGIS baseline/adapter. PostGIS is the verified default local mode; explicit file mode remains available for lightweight testing. Coverage checks and public deployment remain outstanding. See [the database handoff](M2_DATABASE_HANDOFF.md). The mobile SQLite schema and its migration baseline are separate.
 
-The owner authorized the shell and Today module, then added Recurring and UI refinements on 2026-10-16. Later capabilities remain deferred. See [the mobile README](../../apps/mobile/README.md) for runnable commands and [the decision log](DECISIONS.md) for this milestone's boundary.
+The owner authorized the shell and Today module, then added Recurring and UI refinements on 2026-10-16. The owner approved staged functional implementation on 2026-10-17; follow [the implementation plan](IMPLEMENTATION_PLAN.md) and live task board. Later milestones retain their resource, hosting and platform verification gates. See [the mobile README](../../apps/mobile/README.md) for runnable commands and [the decision log](DECISIONS.md) for this milestone's boundary.
 
 ## Current mobile checks
 
@@ -16,7 +18,7 @@ From `apps/mobile/`, use the installed Flutter SDK or the PowerShell wrapper tha
 ./tool/flutter.ps1 run -d <android-device-id>
 ```
 
-Flutter widget tests check consecutive quick add, save/cancel, timing preservation, numeric time validation, manual map labels, navigation, five travel choices, undo, recurring creation/copy independence/duplicate prevention, planning-unavailable behavior, forced light appearance, and small screens with larger text. Renderer captures can be generated with `$env:WAYDAY_CAPTURE = '1'` before the test command; they are written under the ignored `.impeccable/review/` directory. They are distinct from `native-*.png` captures taken using ADB on the connected Android phone.
+Flutter widget tests check consecutive quick add, save/cancel, timing preservation, numeric time validation, manual map coordinates/labels, navigation, five travel choices, undo, recurring creation/copy independence/duplicate prevention, independent review drafts, dependency ordering, stale revision rejection, location-denial fallback and late-fix protection, forced light appearance, and small screens with larger text. Renderer captures can be generated with `$env:WAYDAY_CAPTURE = '1'` before the test command; they are written under the ignored `.impeccable/review/` directory. They are distinct from `native-*.png` captures taken using ADB on the connected Android phone.
 
 Refinement checks also cover rapid additions retaining input focus and visibility, disclosure interruption, the platform's Remove animations preference, multiline note save/cancel/clear and copy independence, and snackbar replacement/automatic dismissal. Timed in-app feedback is distinct from native reminder delivery. Widget tests establish these state and timing behaviors; they do not establish physical-device frame rates or TalkBack behavior.
 
@@ -88,7 +90,7 @@ For local phones, document how to reach the computer over the chosen network. Co
 | Planner | Fixed-matrix scenarios, tiny exhaustive comparisons, independent itinerary validation, bounded runtime |
 | Platforms | Physical-device permissions, geofences, local notifications, restart, airplane mode, downloaded-map completeness |
 
-Flutter analysis and widget tests are runnable now as described above. Backend, real-planner, persistence, and physical-device checks remain future work until their components and test environments exist.
+Flutter analysis and widget tests are runnable now as described above. Local persistence and interpretation tests now exist. The backend API and isolated PostGIS checks are runnable with `.\tool\verify-places-db.ps1` from the repository root. Real-planner and physical background checks remain later work.
 
 ## Future cloud readiness
 

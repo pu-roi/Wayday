@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Reproducible third-party browser runtime; prepare with tool/prepare-storage-web.ps1.
+/web/drift_worker.js
+/web/sqlite3.wasm
+/web/*.download
