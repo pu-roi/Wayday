@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import '../../../core/data/persist_safely.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/day_repository.dart';
@@ -13,11 +16,23 @@ final todayProvider = NotifierProvider<TodayController, DayPlan>(
 class TodayController extends Notifier<DayPlan> {
   int _nextId = 0;
   @override
-  DayPlan build() => ref.read(dayRepositoryProvider).read();
+  DayPlan build() {
+    final day = ref.read(dayRepositoryProvider).read();
+    _nextId = _nextSequence(day.errands.map((item) => item.id), const [
+      'new-',
+      'copy-',
+    ]);
+    return day;
+  }
 
   void _commit(DayPlan day) {
-    ref.read(dayRepositoryProvider).save(day);
     state = day;
+    unawaited(
+      persistSafely(
+        ref.read(dayRepositoryProvider).save(day),
+        label: 'Today errands',
+      ),
+    );
   }
 
   void add(String text) {
@@ -82,4 +97,16 @@ class TodayController extends Notifier<DayPlan> {
       _commit(state.copyWith(profile: value));
   void setTimes({int? departure, int? deadline}) =>
       _commit(state.copyWith(departure: departure, deadline: deadline));
+}
+
+int _nextSequence(Iterable<String> ids, List<String> prefixes) {
+  var next = 0;
+  for (final id in ids) {
+    for (final prefix in prefixes) {
+      if (!id.startsWith(prefix)) continue;
+      final sequence = int.tryParse(id.substring(prefix.length));
+      if (sequence != null && sequence >= next) next = sequence + 1;
+    }
+  }
+  return next;
 }

@@ -1,3 +1,27 @@
+System.clearProperty("ANDROID_PREFS_ROOT")
+System.clearProperty("android.prefs.root")
+
+runCatching {
+    val pe = Class.forName("java.lang.ProcessEnvironment")
+    for (fName in listOf("theEnvironment", "theCaseInsensitiveEnvironment")) {
+        runCatching {
+            val f = pe.getDeclaredField(fName)
+            f.isAccessible = true
+            (f.get(null) as? MutableMap<*, *>)?.keys?.removeIf { it.toString().equals("ANDROID_PREFS_ROOT", ignoreCase = true) }
+        }
+    }
+    runCatching {
+        val f = pe.getDeclaredField("theUnmodifiableEnvironment")
+        f.isAccessible = true
+        val unmod = f.get(null)
+        if (unmod != null) {
+            val mF = unmod.javaClass.getDeclaredField("m")
+            mF.isAccessible = true
+            (mF.get(unmod) as? MutableMap<*, *>)?.keys?.removeIf { it.toString().equals("ANDROID_PREFS_ROOT", ignoreCase = true) }
+        }
+    }
+}
+
 pluginManagement {
     val flutterSdkPath =
         run {

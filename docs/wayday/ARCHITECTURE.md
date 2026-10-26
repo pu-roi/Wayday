@@ -1,6 +1,6 @@
 # Planned architecture
 
-Status: the Android UI shell, Today, and Recurring are implemented at `apps/mobile/` with in-memory state. The architecture below remains the target for later capabilities. The backend root `services/api/` contains only a `.gitkeep` marker; no API, database schema, native bridge, or backend infrastructure exists yet.
+Status, 2026-10-27: the Android shell, Today, Recurring, and local Drift/SQLite persistence are implemented at `apps/mobile/`; M1-01 records emulator restart verification. The browser preview remains in memory. Maps are placeholders and examples are still seeded. The selected map/place/trip architecture below is planned. The backend root `services/api/` still contains only a `.gitkeep` marker. See [the implementation plan](PLANNING.md#task-specifications) for dependency gates.
 
 ## Responsibility map
 
@@ -9,22 +9,24 @@ flowchart TD
     UI[Flutter views] --> VM[Feature view models]
     VM --> REPO[Repositories]
     REPO --> LOCAL[Drift / SQLite: tasks and saved trips]
-    REPO --> API[FastAPI: places and planning]
-    API --> POI[PostgreSQL / PostGIS: regional catalog]
+    REPO --> CATALOG[Installed regional POI catalog and search index]
+    REPO --> API[Later FastAPI: travel estimates and planning]
+    API --> POI[PostgreSQL / PostGIS when server catalog queries need it]
     API --> ROAD[Valhalla: road matrix and geometry]
     API --> SOLVER[OR-Tools: branches and schedule]
     UI --> MAP[MapLibre: map rendering]
-    MAP --> TILES[OpenFreeMap or downloaded coverage]
+    MAP --> TILES[Protomaps regional PMTiles and local style resources]
+    VM --> NAV[Explicit Google Maps navigation handoff]
     VM --> REMINDERS[Native geofences and local notifications]
 ```
 
-The phone owns personal state and reminder delivery. The backend provides fresh place and planning calculations. Map tiles, road routing, and stop scheduling are independent responsibilities.
+The phone owns personal state and, in the next slice, installed regional map/catalog data and search. A later backend provides real road estimates and automatic planning after feasibility. Map rendering, place search, road routing, stop scheduling, and external navigation are separate responsibilities. Reminder delivery remains later platform work.
 
 ## Frontend: features with MVVM
 
 Organize the mobile application around errands, templates, planning, trips, places, and settings. Views display state; Riverpod-backed view models coordinate actions; repositories own data access and caching. Extract domain logic when scheduling or editing behavior would otherwise spread across view models. Avoid a separate abstraction for every simple function.
 
-The frontend root is `apps/mobile/`. The shell uses `app/`, shared `core/widgets/`, `features/errands/` for common models/list/editor, and `features/today/` plus `features/recurring/` with Riverpod controllers and in-memory repositories. The broader feature layout below remains planned; create directories when their implementation needs them:
+The frontend root is `apps/mobile/`. The shell uses `app/`, `core/data/` for the Drift database and local startup, shared `core/widgets/`, `features/errands/` for common models/list/editor, and `features/today/` plus `features/recurring/` with Riverpod controllers and repositories. Android repositories persist user changes in SQLite; web preview repositories remain in memory. The broader feature layout below remains planned; create directories when their implementation needs them:
 
 ```text
 apps/mobile/lib/
@@ -32,7 +34,7 @@ apps/mobile/lib/
   core/                database, network, platform adapters
   features/
     errands/           presentation, domain, data as needed
-    templates/
+    recurring/
     planning/
     trips/
     places/
@@ -41,11 +43,21 @@ apps/mobile/lib/
 
 Widgets do not call SQL or provider APIs directly. Repository contracts return application models rather than provider-specific objects. Cross-feature operations use shared contracts or explicit application services rather than importing another feature's widgets.
 
-The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Notes, drafts, and copies remain in memory until durable storage is implemented.
+The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Today settings, errands, and Recurring groups/items are stored locally on Android. The current app seeds examples only when no Today settings row exists; M2-01 removes future seeding while preserving saved rows. Web preview state remains in memory; no synchronization outbox or account system is present.
 
 Keep limited text parsing on the phone so note entry and correction work offline. Store the original note, explicit edits, and suggestions distinctly. The backend validates the submitted structured constraints; it does not reparse and overwrite confirmed values.
 
-## Backend: modular monolith
+## Next local place and trip boundaries — planned
+
+Use a provider-independent confirmed-place value for start/end and errands: label, coordinates, optional address, source identity, and source snapshot date. Preserve unresolved legacy labels without inventing coordinates. Add a migration from the existing schema version rather than rebuilding the personal database. Recurring copies retain independent place values.
+
+Keep the searchable POI catalog separate from the basemap: vector tiles omit or simplify source attributes and are not the search database. Use bounded indexed queries over an installed regional catalog. Personal pins, notes, and corrections remain separate from replaceable public data. Source updates retain provenance, resolve duplicates deliberately, and never overwrite personal edits.
+
+A map package includes PMTiles, the matching style schema, fonts/glyphs, sprites, region bounds, versions, checksums, and license/attribution metadata. Install compatible map/catalog packages atomically and retain the last valid version after interruption or corruption. Record readiness and age. Complete offline rendering must be verified on Android; a remote PMTiles URL is still online.
+
+Save the reviewed automatically planned trip snapshot before external navigation; user order/place changes are explicit overrides that invalidate affected estimates until recalculated. It includes stop coordinates, order, relevant errand details, profile, date/timezone, input revision, and completion state. Edits mark the snapshot stale. External Maps links do not establish arrival, completion, timing feasibility, or synchronization of a user's changes in Google Maps back into Wayday. Use next-stop handoff as primary and bounded whole-trip handoff as optional.
+
+## Backend: modular monolith — later, conditional
 
 Use a single FastAPI application with places, routing, and planning modules. HTTP handlers validate and delegate; services perform domain operations; repositories access PostGIS; adapters translate Valhalla responses. OR-Tools belongs behind the planning module's solver boundary.
 
@@ -62,7 +74,7 @@ services/api/
 infra/                 future local deployment configuration
 ```
 
-The initial API stores the regional catalog and reusable route-cache data. Personal tasks and trip history remain on the phone; plan requests are calculations, not an implicit cloud backup. Avoid logging full notes, home coordinates, or request bodies by default.
+The later API may retain reusable route-cache data. Add a server regional catalog only when measured place-query needs require it; initial regional search uses the installed phone catalog. Personal tasks and trip history remain on the phone; plan requests are calculations, not an implicit cloud backup. Avoid logging full notes, home coordinates, or request bodies by default.
 
 Set a solver time limit and bound concurrent work. Keep CPU-bound solves off the async event loop. Start without Redis, a message broker, or separately deployed application microservices; add a worker only if measured load requires one. Hosting Valhalla separately is an engine boundary, not a reason to split every domain module into a service.
 
@@ -79,9 +91,11 @@ Use REST/JSON under `/v1`, with Pydantic models and generated OpenAPI. These are
 
 Represent the five user-facing choices as transportation profiles: walking, biking, motorcycle, sedan (low clearance), and truck (high clearance). Keep the selected profile separate from engine costing and any validated vehicle parameters. Thread the profile through planning, replanning, saved itinerary metadata, and route-cache identity. Include relevant restrictions and graph version in cache keys so incompatible matrices cannot be reused after a profile change. Public-commute routing is excluded.
 
-Before implementing clearance constraints, establish the truck class and the engine/data support. Ground clearance is not overall vehicle height. A missing road restriction or surface attribute is unknown, not a verified passability result. The profile labels alone must not generate invented dimensions or a guarantee that a road is suitable.
+The high-clearance category includes pickup/light and heavy delivery vehicle subtypes. Establish the relevant subtype, required dimensions/weight/access parameters, and actual engine/data support before enabling associated restrictions. Ground clearance is not overall vehicle height. A missing road restriction or surface attribute is unknown, not a verified passability result. The profile labels alone must not generate invented dimensions or a guarantee that a road is suitable.
 
 Separate invalid input, missing place data, no road connection, proven infeasibility, solver timeout, and dependency outage. A response that needs review must not be presented as a fully confirmed plan. Exact error objects and limits are an implementation contract task, not invented compatibility guarantees in this foundation.
+
+The first usable release requires system-recommended candidates, selected branches, ordered stops, and estimated timings. Add provider-independent planning input fields for errand category/interpretation state, flexible versus fixed destination, visit-duration estimate/user override, and relevant vehicle subtype/parameters. Keep original text and user-confirmed values; unresolved category or destination information triggers a focused clarification rather than requiring manual itinerary construction.
 
 Use stable errand IDs for dependencies and template copies. Record dates and the IANA timezone (`Asia/Manila` initially); do not reuse the prototype's minutes-after-midnight fields as a complete date model. Treat durations as durations and appointments as local date/time constraints. Define overnight and recurrence edge cases before implementing them.
 
@@ -95,7 +109,7 @@ Use stable errand IDs for dependencies and template copies. Record dates and the
 6. Enforce hard feasibility first, then favor optional completion and lower travel time. Do not rely on an arbitrary penalty that permits dropping mandatory work.
 7. Validate the returned schedule independently of solver construction. Obtain road geometry for the chosen sequence and attach estimate/source metadata.
 
-Respect business hours for the entire visit. Unknown hours require a visible warning or user-supplied assumption; the model cannot prove real-world availability from missing data. Report a feasible solution as an optimized estimate, not a proof of global optimality. A time-limited search that finds nothing is not proof that no solution exists.
+Respect known business hours for the entire visit. Unknown hours may produce a provisional plan with a visible check-hours notice or explicitly sourced user correction; the model cannot prove availability from missing data. Visit durations use editable, labeled category estimates unless the user provides a value. Record estimate policy/version separately from observed business facts. Report a feasible solution as an optimized estimate, not a proof of global optimality. A time-limited search that finds nothing is not proof that no solution exists.
 
 Replanning starts at the actual current location/time and retains completed history. Do not reroute through completed tasks or replace local edits with an obsolete in-flight response.
 

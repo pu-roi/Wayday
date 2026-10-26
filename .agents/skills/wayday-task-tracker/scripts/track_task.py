@@ -2,7 +2,7 @@
 """
 Wayday Task Tracker CLI & Automation Tool
 
-Tracks tasks across PLANNING.md and PROGRESS.md, automatically capturing
+Tracks tasks across docs/wayday/PLANNING.md and docs/wayday/PROGRESS.md, automatically capturing
 the contributor's Git and GitHub identity.
 """
 
@@ -27,7 +27,7 @@ def get_repo_root() -> Path:
     except Exception:
         current = Path.cwd().resolve()
         for p in [current, *current.parents]:
-            if (p / ".git").exists() or (p / "PLANNING.md").exists():
+            if (p / ".git").exists() or (p / "docs" / "wayday" / "PLANNING.md").exists():
                 return p
         return current
 
@@ -122,7 +122,7 @@ def parse_tasks(planning_content: str):
 
 def update_progress_summary(repo_root: Path, tasks: list):
     """Update the Progress Summary table in PROGRESS.md."""
-    progress_file = repo_root / "PROGRESS.md"
+    progress_file = repo_root / "docs" / "wayday" / "PROGRESS.md"
     if not progress_file.exists():
         return
 
@@ -178,7 +178,7 @@ def update_progress_summary(repo_root: Path, tasks: list):
 
 def cmd_list(repo_root: Path):
     """List tasks in PLANNING.md."""
-    planning_file = repo_root / "PLANNING.md"
+    planning_file = repo_root / "docs" / "wayday" / "PLANNING.md"
     if not planning_file.exists():
         print(f"Error: {planning_file} not found.")
         sys.exit(1)
@@ -202,7 +202,7 @@ def cmd_list(repo_root: Path):
 
 def cmd_start(repo_root: Path, task_id: str):
     """Mark a task as IN_PROGRESS and assign to current user."""
-    planning_file = repo_root / "PLANNING.md"
+    planning_file = repo_root / "docs" / "wayday" / "PLANNING.md"
     if not planning_file.exists():
         print(f"Error: {planning_file} not found.")
         sys.exit(1)
@@ -237,8 +237,8 @@ def cmd_start(repo_root: Path, task_id: str):
 
 def cmd_done(repo_root: Path, task_id: str, notes: str = ""):
     """Mark a task as DONE, record Git contributor, and append to PROGRESS.md."""
-    planning_file = repo_root / "PLANNING.md"
-    progress_file = repo_root / "PROGRESS.md"
+    planning_file = repo_root / "docs" / "wayday" / "PLANNING.md"
+    progress_file = repo_root / "docs" / "wayday" / "PROGRESS.md"
 
     if not planning_file.exists():
         print(f"Error: {planning_file} not found.")

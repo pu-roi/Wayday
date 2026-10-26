@@ -5,7 +5,7 @@ description: Design, change, or review Wayday REST/JSON requests, responses, val
 
 # Wayday API contracts
 
-Read the root `AGENTS.md`, [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the relevant [Product](../../../docs/wayday/PRODUCT.md) behavior. The documented `/v1` endpoints are proposals until implemented; do not claim an existing wire contract or compatibility obligation that has not been established.
+Read the root `AGENTS.md`, [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the relevant [Product requirements](../../../docs/wayday/README.md#product-requirements). [Planning](../../../docs/wayday/PLANNING.md#task-specifications), especially M5-02, owns the input/result contract prerequisites and acceptance cases. The documented `/v1` endpoints are proposals until implemented; do not claim an existing wire contract or compatibility obligation that has not been established.
 
 ## Define the observable behavior
 
@@ -17,6 +17,7 @@ Inspect any existing Pydantic/OpenAPI definitions and client models before editi
 - Validate bounded search areas, input size, coordinate ranges, duration/time rules, and reference consistency where relevant. Do not publish guessed limits as established product decisions; define justified limits with the implementation.
 - Distinguish malformed input, missing place information, no road connection, infeasible constraints, solver timeout, and service outage. A timed-out search is not a successful empty itinerary or proof of impossibility.
 - Return the estimate age, warnings, omissions, and source information needed by the UI to explain uncertainty. Do not wrap an incomplete plan in an unqualified success state.
+- Preserve explicit visit durations versus editable defaults, provisional missing-hours notices, and the relevant pickup/heavy-vehicle subtype and restriction parameters across the wire. Define these fields through the input-contract task rather than inferring verified capabilities from profile labels.
 - Let clients correlate a result with the input revision that requested it. Preserve stable local task identities during replan and avoid making plan calculations an implicit server-persistence operation.
 - Keep credentials and provider secrets out of client payloads and error details. Do not introduce account/authentication flows or expose a local development API publicly as a side effect of a contract change.
 

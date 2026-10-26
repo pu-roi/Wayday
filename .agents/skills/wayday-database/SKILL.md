@@ -5,12 +5,14 @@ description: Plan, implement, or review Wayday Drift/SQLite persistence, Postgre
 
 # Wayday database
 
-Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The current foundation has no application database or migration history; do not create one unless runtime work is authorized.
+Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The Android app already has Drift/SQLite schema version 1 for Today and Recurring. Inspect existing data and migration history before changes. The selected regional catalog and confirmed-place/trip schemas are future tasks; documentation planning does not authorize runtime implementation.
+
+[Planning](../../../docs/wayday/PLANNING.md#task-specifications) owns storage-task prerequisites and acceptance criteria; [Contributing](../../../docs/wayday/CONTRIBUTING.md#regional-maps-and-data) owns package/import practices. Sample-data cleanup removes future seeding/reset behavior while preserving existing rows, including user-edited examples. Repeat settings remain metadata; storage work does not authorize an automatic scheduler.
 
 ## Choose the correct data owner
 
 - Drift/SQLite owns personal errands, template copies, saved places, saved itineraries, reminder identities, and trip progress on the phone.
-- PostgreSQL/PostGIS owns the regional place catalog and suitable reusable route-cache data. Backend calculation requests are not permission to persist personal tasks or history.
+- A replaceable installed regional catalog owns public POIs for the next local-search milestone; keep its refreshes separate from personal data. PostgreSQL/PostGIS is a later option when server catalog/cache queries require it. Backend calculations are not permission to persist personal tasks or history.
 - Supabase is a future PostgreSQL hosting option. Do not introduce its auth, synchronization, or client database access merely to add storage.
 
 Load `wayday-mobile` for changes to local behavior, `wayday-backend` for server repository/transaction work, and `wayday-planning` when stored fields change itinerary meaning. Keep API serialization decisions in `wayday-api`.
