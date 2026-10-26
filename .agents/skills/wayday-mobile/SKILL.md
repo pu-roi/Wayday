@@ -9,10 +9,11 @@ Read the repository's `AGENTS.md` and respect the current phase and latest user 
 
 ## Read the relevant context
 
-- Read [Product](../../../docs/wayday/PRODUCT.md) for current scope and correction behavior.
+- Read [Product requirements](../../../docs/wayday/README.md#product-requirements) for current scope and correction behavior.
 - Read [Architecture](../../../docs/wayday/ARCHITECTURE.md) for feature boundaries, local persistence, and platform adapters.
 - Read [Stack](../../../docs/wayday/STACK.md) before selecting a map/location dependency or service.
 - Consult [Decisions](../../../docs/wayday/DECISIONS.md) when historical Asikaso behavior conflicts with current direction.
+- Follow dependencies in [Planning](../../../docs/wayday/PLANNING.md#task-specifications) and verification practices in [Contributing](../../../docs/wayday/CONTRIBUTING.md#development-practices). The [mobile README](../../../apps/mobile/README.md) owns runnable commands. Do not recreate removed Product, Roadmap, or Development files.
 
 ## Apply Wayday's mobile boundaries
 
@@ -26,9 +27,11 @@ Preserve original errand text and user-confirmed rules. Treat parsing as a limit
 
 Keep tasks, template copies, trip progress, and saved itineraries local. A copied template is independently editable; remap its internal dependency IDs. A stale network result must not overwrite newer input or completed-stop history.
 
+Android Today and Recurring persistence already exists; the browser preview remains in memory. Removing future sample seeding must preserve saved rows, including examples the user may have edited. Real maps, place search, saved trips, and automatic planning remain future work. Manual place selection is an override or development checkpoint; the first usable release must recommend stores, choose branches/order, and estimate schedules.
+
 Keep offline map availability separate from offline routing. Check downloaded map completeness, styles/fonts/sprites, provider limits, and iOS cache eviction. Preserve required attribution outside overlapping map sheets.
 
-Use native geofences for background location events and local notifications for reminders. Do not assume a foreground location stream proves killed-app delivery. Verify native engine release licensing before adopting any tracking plugin. Account for permission denial, approximate location, reboot, delayed events, duplicate alerts, and stale reminders after replanning.
+Reminders are later work; ordinary in-app feedback does not authorize reminder integration. When reminders are requested, use native geofences for background location events and local notifications. Do not assume a foreground location stream proves killed-app delivery. Verify native engine release licensing before adopting any tracking plugin. Account for permission denial, approximate location, reboot, delayed events, duplicate alerts, and stale reminders after replanning. Android remains first; iOS verification belongs to its later phase.
 
 Use the V2 prototype as a provisional interaction reference. Preserve its source; do not treat simulated data, rendered times, or screenshot dimensions as production constraints.
 

@@ -14,6 +14,10 @@ The owner subsequently authorized creating the frontend/backend root folders. Re
 
 On 2026-10-16 the owner authorized building the Android Flutter app shell, theme options, and Today module. That request permits mobile scaffolding and the tooling needed to build and verify it. Use example errands on first launch, as confirmed by the owner. Basic editing and navigation can work in memory; backend scaffolding, real routing, place services, persistence, reminders, deployment, and iOS are outside this milestone. A Flutter web target is a convenience for reviewing the same widgets, not a new product platform commitment.
 
+On 2026-10-26 the owner authorized continuing runtime development after the shell was complete. D17 records the next local-persistence slice; it does not authorize backend, routing, place services, reminders, deployment, or iOS work.
+
+On 2026-10-27 the owner requested a documentation audit and implementation plan for real user data, consistent controls, Philippine maps/places, saved trips, and Google Maps handoff. D18–D22 record the revised direction. This request starts documentation/planning, not runtime implementation.
+
 ## D02 — Wayday naming and historical Asikaso material
 
 **Status:** Confirmed.
@@ -50,7 +54,7 @@ The profiles are product requirements; their routing implementation is still sub
 
 **Status:** Confirmed.
 
-Support saved trips and tasks offline rather than full fresh regional planning. Keep templates, saved places, progress, downloaded map coverage, and local reminders on the phone. Background location reminders are desired with acknowledged OS limits. Fresh discovery and full replanning need the backend; permission denial and service loss require visible fallback.
+Support saved trips and tasks offline rather than full fresh regional planning. Keep templates, saved places, progress, downloaded map coverage, and local reminders on the phone. Background location reminders are desired with acknowledged OS limits. The original direction placed fresh discovery and full replanning behind the backend. D19 revises initial regional discovery to permit an installed local catalog; later automatic road-based replanning remains conditional on backend/routing feasibility. Permission denial and service loss require visible fallback.
 
 ## D08 — Frontend and backend structure
 
@@ -68,9 +72,9 @@ There is no dedicated server. Start the future backend on the existing computer 
 
 ## D10 — Maps, roads, and planning are separate
 
-**Status:** Selected recommendation.
+**Status:** Historical recommendation; map/provider and initial catalog choices superseded by D19. Later routing/solver candidates remain subject to feasibility.
 
-Use MapLibre/OpenFreeMap for map display, regional OSM-derived places in PostGIS, Valhalla for road routes/matrices, and OR-Tools for branch/stop scheduling. Defer live traffic. Keep public demo/community endpoint policies separate from software licenses and avoid assuming unlimited shared service capacity.
+The original recommendation was MapLibre/OpenFreeMap for map display, regional OSM-derived places in PostGIS, Valhalla for road routes/matrices, and OR-Tools for branch/stop scheduling. Defer live traffic. Keep public demo/community endpoint policies separate from software licenses and avoid assuming unlimited shared service capacity.
 
 ## D11 — Pilot region and personal data
 
@@ -104,17 +108,107 @@ Use one light Cornflower/Canvas theme; remove dark/light mode selectors and alte
 
 Provide map buttons for From, To, and errand locations. They open an explicitly illustrative placeholder with manual place names; no geocoding, search, live map, or routing capability is implied.
 
-Implement Recurring using the same compact numbered errand structure as Today. Support named reusable lists, direct item editing, draft group editing, create/delete/undo, descriptive repeat settings, and manual Add to Today. Copies retain timing and priority, receive independent IDs, and preserve source item IDs to prevent duplicate addition. Today edits must not rewrite a source group. Automatic recurrence and durable storage remain deferred.
+Implement Recurring using the same compact numbered errand structure as Today. Support named reusable lists, direct item editing, draft group editing, create/delete/undo, descriptive repeat settings, and manual Add to Today. Copies retain timing and priority, receive independent IDs, and preserve source item IDs to prevent duplicate addition. Today edits must not rewrite a source group. D17 supersedes this decision's earlier deferral of durable storage; automatic recurrence remains deferred.
 
 ## D16 — Errand notes, motion, and transient feedback
 
 **Status:** Confirmed owner refinement, 2026-10-16.
 
-Keep optional free-form, multiline notes inside the focused errand editor, shared by Recurring and Today. A compact note icon indicates that details exist without expanding the main list. Notes copy into Today with the other errand fields; subsequent edits remain independent. Notes are plain text and stay in memory for this prototype; interactive shopping checklists and durable storage are not implemented.
+Keep optional free-form, multiline notes inside the focused errand editor, shared by Recurring and Today. A compact note icon indicates that details exist without expanding the main list. Notes copy into Today with the other errand fields; subsequent edits remain independent. Notes are plain text; interactive shopping checklists remain unimplemented. D17 supersedes the in-memory-only storage boundary for notes and other Today/Recurring fields.
 
 Animate row insertion/removal and list disclosure with short, interruptible transitions. Preserve the quick-add field and keyboard focus during consecutive entries, and keep the composer visible as rows grow. Today, Recurring group headers, and repeat details use coordinated expansion; honor the platform's Remove animations preference.
 
 Use a shared, themed floating Material snackbar for in-app feedback. Ordinary messages expire after four seconds; messages with Undo expire after six seconds and replace stale feedback rather than queueing it. Preserve actionable messages when the platform requests accessible navigation. These messages are separate from the deferred Android reminder/notification integration.
+
+## D17 — Local persistence for Today and Recurring
+
+**Status:** Confirmed owner authorization, 2026-10-26; implemented and verified 2026-10-27.
+
+Persist Today settings and errands, plus Recurring groups and their items, in an on-device Drift/SQLite database. Seed the example day and example groups only when the database has no saved Today settings; do not repopulate intentionally emptied lists on later launches. Preserve item order, timing, notes, repeat metadata, source group/item IDs, and independent Today copies. Keep the browser preview in memory. Do not add cloud synchronization, accounts, a backend, or automatic recurrence as part of this slice. Flutter analyzer and tests pass; ARM64 and x86_64 debug APKs build successfully. Today and Recurring data survived force-stop and relaunch on an API 37 x86_64 emulator on 2026-10-27.
+
+## D18 — User-created startup data
+
+**Status:** Owner direction confirmed 2026-10-27; implementation pending.
+
+Remove production sample errands/lists, example-reset actions, and fabricated endpoint defaults. Start new Android databases and browser previews empty; examples may remain as explicit test fixtures. Preserve existing stored rows because their origin and user edits cannot be safely inferred from sample IDs or titles. D18 supersedes D17's future first-launch example seeding without changing its persistence implementation or verification history.
+
+## D19 — Open mapping and regional place search
+
+**Status:** Selected direction for the requested implementation plan, 2026-10-27; packages and coverage not yet verified in Wayday.
+
+Use MapLibre for rendering, Protomaps regional PMTiles and local style assets for the basemap, a custom Wayday map design, and a separate searchable OSM POI catalog. Overture may supplement records only after measured pilot coverage, provenance, deduplication, and license checks. Begin with Pasig/Ortigas; no nationwide completeness claim is established.
+
+OSM data does not require the default openstreetmap.org appearance. The owner rejected OpenFreeMap as the preferred design/provider direction; do not reinstate it or adopt MapTiler Cloud as the default without a new reason and recorded decision. Free/open software does not guarantee free hosting, distribution, or updates. Favor existing hardware and bounded local packages, with no account, billing, purchase, or public deployment implied.
+
+Public Overpass is for bounded exploration rather than the consumer app backend. Public Nominatim prohibits autocomplete and systematic POI enumeration. Regional package refresh is public-data maintenance, not account/cloud synchronization of personal errands.
+
+## D20 — Consistent selection controls
+
+**Status:** Proposed implementation defaults from the owner's UX research request, 2026-10-27; validate the interaction in Android.
+
+Use visible radio rows for short timing/repeat sets, a shared selection sheet for weekdays, and validated numeric input for monthly day 1–31. Keep occasional commands in an overflow menu. Share labels, selected states, touch targets, focus/cancellation rules, and the existing Material 3 theme. This is a planned refinement, not a claim that the old dropdown widgets have been replaced. The application remains light Cornflower; selectable map styles apply only to the map.
+
+## D21 — Reviewable trips and external navigation
+
+**Status:** Owner direction recorded 2026-10-27; implementation pending.
+
+Wayday owns errand selection, trip review, saved stops, and local progress. The user explicitly launches Google Maps with confirmed locations. Next-stop navigation is primary; whole-trip URLs are optional within platform/mode/waypoint limits. Provide a browser or readable-destination fallback. Returning to Wayday does not automatically complete a stop.
+
+The later owner clarification in D23 requires automatic recommendations, branch choice, ordering, and estimated scheduling for the first usable release. Manual ordering may be an internal development checkpoint or explicit override; it is not the release goal. Do not invent road geometry, travel times, or feasibility; real road estimates and independent schedule validation remain prerequisites. Maps links are navigation handoff, not a route-data service or a guarantee of truck/clearance suitability.
+
+## D22 — Document ownership and implementation sequencing
+
+**Status:** Documentation decision for the owner's audit request, 2026-10-27; document locations superseded by D27.
+
+Keep root files as entry points, team records, design guidance, or contributor instructions. docs/wayday/ holds full product/technical specifications and the chronological decision log. Root PRODUCT.md retains the design-tool schema marker and links to the full product document. Preserve historical Asikaso content and existing document paths.
+
+The original layout separated task status from detailed task specifications. D26 consolidates both in PLANNING.md; ROADMAP.md holds milestone outcomes and PROGRESS.md holds completion evidence. Avoid duplicate live checklists and copied setup commands; apps/mobile/README.md owns runnable mobile instructions.
+
+Sequence cleanup, early regional data/routing feasibility, map/place integration, automatic branch/order/schedule calculation, saved-plan/navigation integration, and release evaluation. Automatic planning is required for the first usable release, subject to truthful feasibility/support results. This plan does not authorize installing services, scaffolding the API, or implementing runtime features in the documentation turn.
+
+## D23 — Automatic planning defines the first usable release
+
+**Status:** Explicit owner clarification, 2026-10-27; implementation pending.
+
+Clean production hardcoded samples and placeholders first. Users supply errands and necessary constraints; Wayday recommends suitable stores, selects branches, chooses the stop order, and calculates estimated timing. Users review and correct results rather than constructing the full plan. Manual place/order selection is an override or internal engineering checkpoint, not the first-release definition. Pull routing feasibility forward so a failed engine/data assumption is found early.
+
+## D24 — Editable visit estimates and provisional missing hours
+
+**Status:** Explicit owner choices, 2026-10-27; implementation pending.
+
+Supply clearly labeled, editable category-based duration estimates where the user has not specified a duration. Finalize the versioned default/buffer table before scheduler implementation and preserve explicit user values. Estimates are not observed service-time facts.
+
+Allow a suitable store with no reliable opening-hours record in a provisional plan with a clear check-hours notice. Never claim it is confirmed open. Respect known closures and retain the source of any user correction.
+
+## D25 — High-clearance vehicle variants
+
+**Status:** Owner clarification, 2026-10-27; engine/data support unverified.
+
+The high-clearance category includes pickups/light trucks and heavy delivery vehicles. Keep the five top-level transportation choices and distinguish subtype and needed vehicle parameters within the category. Request required dimensions/weight/access details before heavy-vehicle costing. Ground clearance is independent of vehicle height and does not establish legal access, load restrictions, or road suitability.
+
+## D26 — One planning document
+
+**Status:** Owner feedback and documentation correction, 2026-10-27.
+
+Use the existing PLANNING.md for both live task status and detailed implementation specifications, dependencies, inputs/results, acceptance criteria, and checks. Consolidate the previously separated task specifications and update all references; no extra planning file is needed. D27 relocates this same document to docs/PLANNING.md. Keep the roadmap high-level and full product/technical authorities in docs/wayday/. Generic skill output conventions defer to the owner's existing-document preference.
+
+## D27 — Project documentation under docs
+
+**Status:** Explicit owner request, 2026-10-27; locations and consolidation superseded by D28.
+
+Keep only AGENTS.md and DESIGN.md as root Markdown files. Move the existing README.md, CONTRIBUTING.md, PLANNING.md, and PROGRESS.md into docs/, preserving task specifications and completion history. docs/README.md is the documentation index. Keep the full product/technical authorities under docs/wayday/ and historical references in their existing locations.
+
+Remove the redundant root PRODUCT.md pointer after consolidating its product schema marker and platform/stack context into docs/wayday/PRODUCT.md. Supply this canonical path explicitly to design tools; discovery that depends on a root PRODUCT.md is no longer provided. Repair relative links and task-tracker paths. This supersedes D22's root-file layout and relocates D26's single planning document without introducing another plan. Retain useful references, decision history, and application run guides; remove further documents only after checking their unique content and callers.
+
+## D28 — One Wayday documentation folder with fewer files
+
+**Status:** Owner feedback and documentation consolidation, 2026-10-27.
+
+Keep all current Wayday project documents in docs/wayday/: README, PLANNING, PROGRESS, CONTRIBUTING, ARCHITECTURE, STACK, and DECISIONS. Keep AGENTS.md and DESIGN.md at the root, app-specific run instructions with the app, and historical Asikaso references in their existing locations. This replaces D27's split between docs/ and docs/wayday/.
+
+Consolidate PRODUCT.md into the README product-requirements section, retaining its scope, acceptance scenarios, and design-tool schema/platform/stack metadata. Remove ROADMAP.md because milestone sequencing and checkpoints already belong in Planning; Progress continues to record completed work rather than future sequencing. Consolidate DEVELOPMENT.md into Contributing, preserving verification boundaries, regional-data practices, backend prerequisites, and later platform/cloud checks. Update links and task-tracker paths without creating redirect files.
+
+Keep this decision log because it records rationale and superseded choices, including the owner's changes to earlier requirements. It is not another task board or progress log. This consolidation changes document ownership only; application capabilities remain at the existing implemented/planned status.
 
 ## Revisit before implementation or release
 

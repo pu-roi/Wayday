@@ -9,17 +9,20 @@ Read the repository's `AGENTS.md` and current user request before acting. Founda
 
 ## Establish the contract
 
-Read [Product](../../../docs/wayday/PRODUCT.md) and the pipeline in [Architecture](../../../docs/wayday/ARCHITECTURE.md). Consult [Stack](../../../docs/wayday/STACK.md) for data sources and endpoint policies, and [Decisions](../../../docs/wayday/DECISIONS.md) for scope changes.
+Read [Product requirements](../../../docs/wayday/README.md#product-requirements) and the pipeline in [Architecture](../../../docs/wayday/ARCHITECTURE.md). Consult [Stack](../../../docs/wayday/STACK.md) for data sources and endpoint policies, and [Decisions](../../../docs/wayday/DECISIONS.md) for scope changes. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) owns implementation order and acceptance criteria, including the early M5-01 routing/vehicle gate and M5-02 input/result contract.
+
+The first usable release must recommend stores, select branches, order stops, and estimate schedules from user errands and constraints. Manual place/order choices are optional overrides or intermediate checkpoints, not a substitute for that release requirement.
 
 Separate limited text suggestions, real place discovery, road travel estimation, and itinerary optimization. AI is deferred. Never invent a business, opening interval, coordinate, dependency, or travel estimate to fill missing data. Preserve original text and explicitly confirmed constraints.
 
 ## Preserve scheduling meaning
 
 - Distinguish arrival deadlines from completion deadlines. Include visit duration, configured buffer, and required waiting in feasibility checks.
+- Use labeled, editable category-based visit estimates only when the user has not supplied a duration. Preserve explicit values and finalize the versioned estimate/buffer policy in the input-contract task.
 - Enforce exactly one branch for mandatory errands and at most one for optional errands. Never trade mandatory completion for a shorter route.
-- Respect branch overrides, business intervals, dependency order, and the final destination deadline. Unknown hours remain uncertain.
+- Respect branch overrides, known business intervals, dependency order, and the final destination deadline. Missing reliable hours may produce a provisional plan with a check-hours notice; never claim the store is confirmed open. Preserve the provenance of corrections.
 - Preserve asymmetric matrix values and unreachable legs. Do not substitute straight-line distances for road times without explicitly changing the estimate contract.
-- Carry the selected walking, biking, motorcycle, sedan, or truck profile through matrix requests, cache identity, and replanning. Public commute is excluded. Confirm the truck class and validated parameters before selecting truck costing; distinguish ground clearance from overall height and never invent missing restriction data.
+- Carry the selected walking, biking, motorcycle, sedan, or truck profile through matrix requests, cache identity, and replanning. Public commute is excluded. Distinguish pickup/light and heavy delivery subtypes within the high-clearance category, obtaining the vehicle parameters required by validated engine/data support. Keep ground clearance separate from overall height, weight, and access restrictions; never invent missing restriction data.
 - Reject cycles and invalid references. Define the treatment of optional prerequisite errands consistently before modeling them.
 - Replan unfinished work from the current location/time; retain completed history and newer user edits.
 - Distinguish invalid input, missing data, no route, proven conflict, timeout, and service outage. Do not claim global optimality from a time-limited feasible result.

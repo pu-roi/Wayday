@@ -9,15 +9,16 @@ Read the root `AGENTS.md` for the current phase and authorized scope. A design r
 
 ## Establish the reference
 
-Read [Product](../../../docs/wayday/PRODUCT.md) for current scope. For prototype-informed work, inspect [V2 notes](../../../docs/Asikaso-Prototype/V2-NOTES.md), the relevant [screenshots](../../../docs/Asikaso-Prototype/docs/screenshots/v2), and [Design](../../../docs/Asikaso-Prototype/DESIGN.md). V2 notes supersede the older interaction descriptions for V2; current user direction supersedes historical references. Follow the nested prototype instructions before editing its files.
+Read [Product requirements](../../../docs/wayday/README.md#product-requirements) for scope and the root [Design system](../../../DESIGN.md) for the current theme, shared components, and interaction rules. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) distinguishes future selection-control and map work from implemented UI. For prototype-informed work, inspect [V2 notes](../../../docs/Asikaso-Prototype/V2-NOTES.md), relevant [screenshots](../../../docs/Asikaso-Prototype/docs/screenshots/v2), and the [historical design](../../../docs/Asikaso-Prototype/DESIGN.md). Current requirements and design take precedence over those references. Follow the nested prototype instructions before editing its files.
 
-Treat the design as provisional. Identify which interaction or visual problem the requested change solves before copying an old screen. Preserve the historical baseline unless its modification is requested.
+Treat historical references as provisional. Identify which interaction or visual problem the requested change solves before copying an old screen. Preserve the historical baseline unless its modification is requested.
 
 ## Shape the experience
 
-- Keep the From/Errands/To structure and map-plus-timeline concept unless the request revises them. Prefer compact numbered errands and focused property editing over nested long forms.
+- Keep From/Errands/To as the Today composition, not a mandatory layout for every screen. The map-plus-timeline result remains planned. Prefer compact shared numbered errands and focused property editing over nested long forms.
 - Keep natural-language input editable and expose uncertain place/time suggestions without claiming AI understanding. Preserve confirmed fields when the note title changes.
-- Use the calm white/gray/ink direction as the starting reference. Route blue supports wayfinding, ink indicates selection/commitment, and status colors communicate actual planning outcomes. Do not invent a separate color system for errand categories.
+- Use the implemented light Canvas/Cornflower theme and semantic colors from the root Design system and Flutter theme. Reuse shared controls and patterns; do not add appearance controls or a separate color system for errand categories. Map styles can vary independently of the app theme.
+- Follow the planned selection patterns when that implementation is authorized: visible short choices, predictable selection sheets for longer choices, and numeric monthly-day entry. Preserve drafts, selected values, keyboard behavior, and accessibility; do not treat planned replacements as already implemented.
 - Label arrival deadlines and completion deadlines distinctly. Separate required errands, optional omissions, unknown hours, stale estimates, and unavailable routing without exposing solver jargon.
 - Keep map attribution and essential controls visible when sheets, keyboards, or system insets appear. Include a readable stop list when a map or downloaded coverage is unavailable.
 - Retain the five current transportation choices from the product document. Do not label a sedan/truck route as clearance-verified before the underlying capability is validated.

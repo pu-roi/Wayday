@@ -58,13 +58,15 @@ components:
 
 ## Overview
 
+Product context for design tools is maintained in [the README product requirements](docs/wayday/README.md#product-requirements), including the product schema marker and platform/stack context. Supply docs/wayday/README.md explicitly when a tool needs product context. See [the documentation index](docs/wayday/README.md) for the remaining project documents.
+
 **Creative North Star: "A clear day, in order"**
 
 Wayday keeps everyday errands calm and easy to scan. Warm Canvas, white grouped surfaces, Cornflower actions, and compact Figtree text give the list a clear rhythm. This records the implemented Android Flutter shell, Today, and Recurring interface after the owner's approved system change on 2026-10-16: one light theme with no appearance controls.
 
 The reusable character is quiet grouping, compact numbered rows, and details revealed in focused editors. Short list transitions preserve the consecutive-entry flow; optional notes stay inside the editor, and floating feedback clears after ordinary use. The Today-specific From/Errands/To composition remains in [the surface brief](.impeccable/surfaces/mobile-today.md); it is not a required composition for every future screen.
 
-The token source is [the Flutter theme](apps/mobile/lib/app/theme.dart). Reused patterns live in [the shared errand list](apps/mobile/lib/features/errands/presentation/errand_list.dart), [focused editor](apps/mobile/lib/features/errands/presentation/errand_editor.dart), and [section surface](apps/mobile/lib/core/widgets/section_surface.dart). [Product scope](docs/wayday/PRODUCT.md) and [decisions](docs/wayday/DECISIONS.md) retain product authority. [Historical Asikaso design](docs/Asikaso-Prototype/DESIGN.md) remains preserved reference evidence.
+The token source is [the Flutter theme](apps/mobile/lib/app/theme.dart). Reused patterns live in [the shared errand list](apps/mobile/lib/features/errands/presentation/errand_list.dart), [focused editor](apps/mobile/lib/features/errands/presentation/errand_editor.dart), and [section surface](apps/mobile/lib/core/widgets/section_surface.dart). [Product scope](docs/wayday/README.md#product-requirements) and [decisions](docs/wayday/DECISIONS.md) retain product authority. [Historical Asikaso design](docs/Asikaso-Prototype/DESIGN.md) remains preserved reference evidence.
 
 **Key Characteristics:**
 
@@ -154,7 +156,7 @@ Fields have a quiet fill, no resting stroke, and a readable-blue focus stroke (1
 
 ### Errand notes
 
-The focused editor contains a labeled **Notes (optional)** multiline field with a four-line minimum that grows with its content. It uses the shared field treatment and scrollable form. Notes are plain text, can be cleared, and save with the errand draft. Recurring copies carry notes independently into Today; neither later edit rewrites the other. Notes remain in memory and do not implement interactive shopping checklists.
+The focused editor contains a labeled **Notes (optional)** multiline field with a four-line minimum that grows with its content. It uses the shared field treatment and scrollable form. Notes are plain text, can be cleared, and save with the errand draft. Recurring copies carry notes independently into Today; neither later edit rewrites the other. Notes persist with Today and Recurring on Android; the browser preview remains in memory. Interactive shopping checklists are not implemented.
 
 ### List motion and disclosure
 
@@ -170,11 +172,22 @@ The focused editor contains a labeled **Notes (optional)** multiline field with 
 
 ### Place entry
 
-[The place screen](apps/mobile/lib/core/widgets/place_picker.dart) is a pushed, scrollable page shared by endpoints and errand locations. Its rounded illustration uses quiet blocks, white roads, a pin, and a visible **Map preview** label. The semantic label identifies an illustrative placeholder. Manual place-name entry and **Use this place** work in memory; the illustration does not supply coordinates, search, or pin placement.
+[The place screen](apps/mobile/lib/core/widgets/place_picker.dart) is a pushed, scrollable page shared by endpoints and errand locations. Its rounded illustration uses quiet blocks, white roads, a pin, and a visible **Map preview** label. The semantic label identifies an illustrative placeholder. Manual place-name entry and **Use this place** save labels through the feature repositories; Android persists these labels. The illustration does not supply coordinates, search, or pin placement.
 
 ### Navigation and editing
 
 [The shell](apps/mobile/lib/app/wayday_app.dart) has labeled Today, Recurring, and Settings destinations; the selected icon sits within a pale-blue indicator. Shared pushed editors keep native Back and visible Save actions. Recurring supports named lists, direct item editing, independent group drafts, deletion with Undo, and manual copying to Today. Repeat controls expand within the group editor and describe metadata only. [Settings](apps/mobile/lib/app/settings_view.dart) explains the preview and restores the example day; it has no appearance controls.
+
+### Planned selection and map refinements
+
+These patterns are implementation targets, not descriptions of replaced widgets. See [the implementation plan](docs/wayday/PLANNING.md#task-specifications), M2 and M3, and decisions D19–D20.
+
+- Use visible labeled radio rows for the four timing options and four repeat-frequency options. Keep the current value and field meaning clear.
+- Use a shared single-choice sheet for weekdays, with title, current selection, predictable dismissal, and focus restoration. Use validated numeric entry for monthly day 1–31. Keep occasional commands in an overflow menu.
+- Preserve draft save/cancel and avoid opening the keyboard for non-text choices. Check larger text, screen-reader semantics, long labels, and small screens. Do not force a floating menu off-screen to keep a nominal opening direction.
+- Extend the existing Material 3 theme and shared components as repeated patterns emerge; do not introduce a second broad UI kit without a demonstrated gap.
+- The real map uses a custom Wayday style with readable street/city/landmark labels. Selected errand stops stay prominent; candidate categories, clustering, and zoom-dependent labels reflect the same filtered results as the search list.
+- Map-style selection applies only to the map. Keep app chrome light Cornflower, attribution visible, offline coverage honest, and manual-pin/no-results paths usable.
 
 ### Documentation previews
 
@@ -200,5 +213,5 @@ The sidecar's self-contained HTML/CSS snippets translate native shapes and group
 - **Don't** use Cornflower as small action text on white; use the readable link role.
 - **Don't** turn each compact errand row into a permanent form or separate card.
 - **Don't** present illustrative map geometry as geographic data, search results, or a calculated route.
-- **Don't** imply that changes survive restart or that repeat metadata schedules automatic additions.
+- **Don't** imply unverified persistence for a new feature or claim that repeat metadata schedules automatic additions. Today/Recurring restart persistence is verified on Android.
 - **Don't** treat native screenshots as verification of TalkBack, predictive Back, or performance.
