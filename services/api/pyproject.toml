@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wayday-api"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi==0.143.3", "uvicorn==0.54.0", "psycopg[binary]==3.3.6", "SQLAlchemy==2.1.5", "shapely==2.2.0"]
+
+[project.optional-dependencies]
+import = ["osmium==4.3.1"]
+test = ["pytest==9.1.1", "httpx==0.28.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
