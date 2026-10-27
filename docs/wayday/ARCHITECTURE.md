@@ -80,7 +80,9 @@ Set a solver time limit and bound concurrent work. Keep CPU-bound solves off the
 
 ## Interfaces to define when development starts
 
-Use REST/JSON under `/v1`, with Pydantic models and generated OpenAPI. These are proposed boundaries; there is no frozen wire schema yet.
+Use REST/JSON under `/v1`, with Pydantic models and generated OpenAPI when the API is implemented. The endpoints below remain future runtime boundaries; Stage 2 specifies the planning payloads without creating a server.
+
+Stage 2 now supplies a versioned [planning contract specification](evidence/planning-contract-v1.md), [JSON Schema](evidence/planning-contract-v1.schema.json) and [synthetic acceptance examples](evidence/planning-contract-v1.examples.json) for the future planning/replanning boundaries. `wayday.planning.v1` separates editable day input from calculated snapshots, correlates request/revision, uses explicit Asia/Manila dates and instants, seconds/meters and provider-independent places. It defines the initial editable duration/buffer policy, single-day behavior, optional prerequisites, bounded candidates/calculation and distinct clarification/conflict/timeout/unavailable results. These are executable contract specifications under `tools/routing/`, not a deployed API, solver or changes to the current Flutter models. The personal-data schema and saved-trip implementation remain their later tasks.
 
 | Interface | Input | Output |
 | --- | --- | --- |

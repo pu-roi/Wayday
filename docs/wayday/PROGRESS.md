@@ -11,11 +11,25 @@ This document records the chronological activity history, milestone achievements
 
 | Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 32 | 15 | 2 | 15 | In Progress (46%) |
+| Tasks | 32 | 17 | 1 | 14 | In Progress (53%) |
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] M5-02: Define automatic-planning inputs and outcomes.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Planning · input contract
+- **Summary**: Defined wayday.planning.v1 through a narrative specification, JSON Schema, 14 explicitly synthetic acceptance examples and executable cross-field checks. The contract separates editable input from calculated snapshots, preserves original text and fixed destinations, defines English/Filipino/Taglish clarification cases, versioned editable visit estimates and buffers, explicit Asia/Manila single-day timestamps, arrival/start/completion meanings, optional prerequisites, request revisions and completed history. It distinguishes missing candidates, no route, proven conflict, timeout, outage and unsupported capability outcomes. Truck subtypes require relevant explicit parameters; no clearance or complete legal-access verification is claimed. Initial limits of 12 errands, three candidates each and 38 matrix locations are bounded policy awaiting full-size performance measurement. All 22 routing/contract tests and independent team review passed. No API server, solver, automatic recommendations or Flutter planning models were implemented.
+
+
+### [2026-10-27] M5-01: Validate regional routing and vehicle support early.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Routing · feasibility gate
+- **Summary**: Built and measured pinned local Valhalla3.9.1 on buffered pilot OSM data:18 real public-site routes, six4x4 matrices,30 asymmetric nonwalking pairs and explicit outside-graph400/code171. Source-way review and12t vs20t mapped15t weight contrast passed; actualPBFcheckrefs reports no missing members. Published graph/source/version/resource evidence:177,084,082-byte graph/PBF/timezone directory,673,581,738-byte image,352,440,320-byte containerpeak under2threads/4GiB; graphstages39+13s, warmmedian0.063s/max0.265s (not full-cap performance). Isolated Linux conversion and Docker-volume build resolve Windows DLL/9p issues without global policy/settings changes. Distinguish pickup/heavy subtypes and incomplete dimensions/access/motorcycle/ground-clearance data; finiteHGVpenalty is not a prohibition. Lead independent local route and source checks plus team review passed. No production API, mobile routing or legal/clearance guarantee introduced.
+
 
 ### [2026-10-27] M3-02: Prepare a licensed regional map package.
 - **Status**: [x] DONE

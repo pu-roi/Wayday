@@ -81,7 +81,9 @@ Prepare the regional renderer package with `py tools/maps/build_package.py --pmt
 
 ### Backend after the routing gate
 
-The proposed service remains a local FastAPI modular monolith with bounded routing/planning adapters. [Architecture](ARCHITECTURE.md) defines responsibilities; no /v1 contract is implemented or frozen.
+Stage 2's bounded evaluation is documented in [routing evidence](evidence/routing-pilot-2026-10-27.md), including the pinned Docker image, Linux conversion fallback, native-volume graph preparation, resource measurements and limitations. It binds the task-owned engine to `127.0.0.1:18002`; it is not the production API. Run `./.tools/routing-venv/Scripts/python.exe -m unittest discover -s tools/routing -p 'test_*.py' -v` for offline extract/matrix/contract tests after installing the isolated requirements. The [planning contract](evidence/planning-contract-v1.md) owns the schema/example generation commands and semantic policy. Do not rerun live Overpass or community routing calls as routine tests, and do not alter unrelated Docker containers or global application-control settings.
+
+The proposed service remains a local FastAPI modular monolith with bounded routing/planning adapters. [Architecture](ARCHITECTURE.md) defines responsibilities and links the versioned planning contract specification; no `/v1` server is implemented yet.
 
 Before M5 scaffolding, validate a regional Valhalla graph and profiles on existing hardware. Pin compatible Python/OR-Tools versions, define the contract, and add safe example configuration only for real components. Keep credentials out of the app and sensitive bodies out of logs.
 

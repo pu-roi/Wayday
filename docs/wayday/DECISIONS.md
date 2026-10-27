@@ -234,6 +234,22 @@ Keep the bounded Pasig/Ortigas rectangular pilot `[121.045, 14.548, 121.116, 14.
 
 Continue with OSM as the initial public source and explicitly defer Overture inclusion: no measured same-sample improvement, duplicate-resolution evidence or source-license review justifies importing it yet. Later catalog/search/recommendation tasks must preserve missing/ambiguous outcomes and manual confirmation. The sampled Galleria public-service counters and salons cannot be advertised as automatically covered from this extract. These limitations do not change the automatic-planning first-release requirement; they are inputs to its qualification and acceptance work. See the [coverage evidence](STACK.md#pilot-coverage-evidence-2026-10-27) and [reproducible audit summary](evidence/pilot-place-audit-summary.json).
 
+## D32 — Qualified local road-routing feasibility
+
+**Status:** M5-01 measured and reviewed, 2026-10-27.
+
+Proceed with local Valhalla 3.9.1 for bounded static road estimates after successful graph, route, matrix and mapped weight-restriction checks. Use the buffered pilot graph and preserve asymmetric/unreachable values. The reproducible study uses a task-owned Docker volume because Windows bind-mounted random I/O stalled; the service binds only to localhost on port 18002. This is evaluation tooling, not a production FastAPI implementation or public deployment.
+
+Keep pickup/light and heavy-delivery parameters distinct. The finite HGV access penalty is not an absolute prohibition. Motorcycle remains beta, dimensions/access data are incomplete, and no profile has ground-clearance, legal-access or observed travel-time certification. These limitations accompany later estimates instead of silently substituting a different profile or claiming safety. See [routing evidence](evidence/routing-pilot-2026-10-27.md).
+
+## D33 — Versioned pilot planning contract
+
+**Status:** M5-02 specified and reviewed, 2026-10-27; runtime implementation remains pending.
+
+Adopt `wayday.planning.v1` as the initial contract specification for later planning/replanning. Keep editable day inputs separate from calculated snapshots and carry request IDs, input revisions, source/estimate provenance and completed history. Use explicit Asia/Manila dates and offset-aware local instants, seconds/meters and provider-independent confirmed places. The initial single-day policy rejects implicit overnight rollover. The versioned, editable duration/buffer table, optional-prerequisite meaning, outcome/HTTP distinctions and finite vocabulary clarification cases are defined in the [contract specification](evidence/planning-contract-v1.md).
+
+The initial limits are 12 errands, three candidates per flexible errand, 38 matrix locations and a five-second solver budget within a 20-second calculation deadline. These are resource policies, not measured full-capacity response guarantees; later implementation must evaluate them. Unknown hours require a provisional result with a check-hours notice, and unavailable services retain local edits and the last saved result. JSON Schema, synthetic examples and cross-field tests specify behavior without creating a server, recommendation service or solver.
+
 ## Revisit before implementation or release
 
 - Mac/iPhone access and publishing approach before the later iOS phase, rather than before Android development.

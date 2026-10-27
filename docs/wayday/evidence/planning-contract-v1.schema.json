@@ -1,0 +1,943 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:wayday:planning:v1",
+  "title": "Wayday pilot planning contract v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/day_input"
+    },
+    {
+      "$ref": "#/$defs/planning_result"
+    }
+  ],
+  "$defs": {
+    "confirmed_place": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "enum": [
+                "osm",
+                "overture",
+                "manual"
+              ]
+            },
+            "id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "snapshot_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "provider",
+            "id",
+            "snapshot_date"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "label",
+        "latitude",
+        "longitude",
+        "address",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "vehicle": {
+      "type": "object",
+      "properties": {
+        "subtype": {
+          "enum": [
+            "pickup_light",
+            "heavy_delivery"
+          ]
+        },
+        "height_meters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10
+        },
+        "width_meters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10
+        },
+        "length_meters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 40
+        },
+        "weight_tonnes": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "axle_load_tonnes": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 40
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "axle_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hazmat": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ground_clearance_meters": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 2
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "subtype",
+        "height_meters",
+        "width_meters",
+        "length_meters",
+        "weight_tonnes",
+        "axle_load_tonnes",
+        "axle_count",
+        "hazmat",
+        "ground_clearance_meters"
+      ],
+      "additionalProperties": false
+    },
+    "errand": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "original_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "category": {
+          "anyOf": [
+            {
+              "enum": [
+                "groceries",
+                "wet_market",
+                "pharmacy",
+                "bank",
+                "office",
+                "food",
+                "haircut",
+                "landmark"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "interpretation": {
+          "enum": [
+            "confirmed",
+            "suggested",
+            "needs_clarification"
+          ]
+        },
+        "destination": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "flexible",
+                "fixed"
+              ]
+            },
+            "place": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/confirmed_place"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "place"
+          ],
+          "additionalProperties": false
+        },
+        "timing": {
+          "type": "object",
+          "properties": {
+            "rule": {
+              "enum": [
+                "anytime",
+                "at",
+                "arrive_by",
+                "finish_before"
+              ]
+            },
+            "at": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "rule",
+            "at"
+          ],
+          "additionalProperties": false
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "after_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxItems": 11,
+          "uniqueItems": true
+        },
+        "visit_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 28800
+        },
+        "visit_source": {
+          "enum": [
+            "user",
+            "category_default"
+          ]
+        },
+        "buffer_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "estimate_policy": {
+          "const": "pilot-2026-10-27-v1"
+        }
+      },
+      "required": [
+        "id",
+        "original_text",
+        "notes",
+        "category",
+        "interpretation",
+        "destination",
+        "timing",
+        "optional",
+        "after_ids",
+        "visit_seconds",
+        "visit_source",
+        "buffer_seconds",
+        "estimate_policy"
+      ],
+      "additionalProperties": false
+    },
+    "day_input": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "day_input"
+        },
+        "contract_version": {
+          "const": "wayday.planning.v1"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "input_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "operation": {
+          "enum": [
+            "plan",
+            "replan"
+          ]
+        },
+        "plan_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "timezone": {
+          "const": "Asia/Manila"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/confirmed_place"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "end": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/confirmed_place"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "departure": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "final_deadline": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "profile": {
+          "enum": [
+            "walking",
+            "biking",
+            "motorcycle",
+            "sedan",
+            "truck"
+          ]
+        },
+        "vehicle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/vehicle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/errand"
+          }
+        },
+        "replan": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "previous_plan_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "current_place": {
+                  "$ref": "#/$defs/confirmed_place"
+                },
+                "now": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "completed": {
+                  "type": "array",
+                  "maxItems": 12,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "errand_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "completed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "place": {
+                        "$ref": "#/$defs/confirmed_place"
+                      }
+                    },
+                    "required": [
+                      "errand_id",
+                      "completed_at",
+                      "place"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "previous_plan_id",
+                "current_place",
+                "now",
+                "completed"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "contract_version",
+        "request_id",
+        "input_revision",
+        "operation",
+        "plan_date",
+        "timezone",
+        "start",
+        "end",
+        "departure",
+        "final_deadline",
+        "profile",
+        "vehicle",
+        "errands",
+        "replan"
+      ],
+      "additionalProperties": false
+    },
+    "issue": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "errand_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "errand_id",
+        "field"
+      ],
+      "additionalProperties": false
+    },
+    "hours": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "known",
+            "unknown",
+            "user_corrected"
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snapshot_date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "intervals": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "properties": {
+              "opens": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "closes": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "opens",
+              "closes"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "state",
+        "source",
+        "snapshot_date",
+        "intervals"
+      ],
+      "additionalProperties": false
+    },
+    "stop": {
+      "type": "object",
+      "properties": {
+        "errand_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "place": {
+          "$ref": "#/$defs/confirmed_place"
+        },
+        "qualification_reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "arrival": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "service_start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "service_end": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "departure": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "visit_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400
+        },
+        "buffer_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400
+        },
+        "visit_source": {
+          "enum": [
+            "user",
+            "category_default"
+          ]
+        },
+        "hours": {
+          "$ref": "#/$defs/hours"
+        }
+      },
+      "required": [
+        "errand_id",
+        "place",
+        "qualification_reason",
+        "arrival",
+        "service_start",
+        "service_end",
+        "departure",
+        "visit_seconds",
+        "buffer_seconds",
+        "visit_source",
+        "hours"
+      ],
+      "additionalProperties": false
+    },
+    "plan_snapshot": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "selected_stops": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/stop"
+          }
+        },
+        "omissions": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "properties": {
+              "errand_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "errand_id",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "final_arrival": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "travel_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400
+        },
+        "travel_meters": {
+          "type": "number",
+          "minimum": 0
+        },
+        "geometry": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "LineString"
+            },
+            "coordinates": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 20000,
+              "items": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          },
+          "required": [
+            "type",
+            "coordinates"
+          ],
+          "additionalProperties": false
+        },
+        "completed": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "properties": {
+              "errand_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "completed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "place": {
+                "$ref": "#/$defs/confirmed_place"
+              }
+            },
+            "required": [
+              "errand_id",
+              "completed_at",
+              "place"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/issue"
+          },
+          "maxItems": 100
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "engine_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "graph_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "catalog_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "source_snapshot": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "estimate_policy": {
+              "const": "pilot-2026-10-27-v1"
+            },
+            "traffic": {
+              "const": "none"
+            },
+            "ground_clearance_verified": {
+              "const": false
+            },
+            "restriction_coverage": {
+              "const": "incomplete"
+            }
+          },
+          "required": [
+            "engine_version",
+            "graph_id",
+            "catalog_id",
+            "source_snapshot",
+            "estimate_policy",
+            "traffic",
+            "ground_clearance_verified",
+            "restriction_coverage"
+          ],
+          "additionalProperties": false
+        },
+        "solver": {
+          "type": "object",
+          "properties": {
+            "termination": {
+              "enum": [
+                "completed",
+                "time_limit_feasible"
+              ]
+            },
+            "globally_optimal": {
+              "const": false
+            }
+          },
+          "required": [
+            "termination",
+            "globally_optimal"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "selected_stops",
+        "omissions",
+        "final_arrival",
+        "travel_seconds",
+        "travel_meters",
+        "geometry",
+        "completed",
+        "warnings",
+        "provenance",
+        "solver"
+      ],
+      "additionalProperties": false
+    },
+    "planning_result": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "planning_result"
+        },
+        "contract_version": {
+          "const": "wayday.planning.v1"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "input_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "calculated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "enum": [
+            "feasible",
+            "provisional",
+            "invalid_input",
+            "needs_clarification",
+            "no_candidates",
+            "no_route",
+            "conflict",
+            "timeout",
+            "unavailable",
+            "unsupported_profile"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/issue"
+          }
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/plan_snapshot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "contract_version",
+        "request_id",
+        "input_revision",
+        "calculated_at",
+        "status",
+        "issues",
+        "plan"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

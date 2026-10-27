@@ -4,7 +4,7 @@ Updated: 2026-10-27 (Asia/Manila).
 
 This is the single implementation-planning document: execution order and checkpoints own milestone outcomes, the table owns live status and assignment, and task specifications own dependencies, inputs, expected results, acceptance criteria, and checks. [Progress](PROGRESS.md) records completion evidence; [README product requirements](../../README.md#product-requirements) define product behavior. Do not create a separate roadmap, plan, or duplicate live checklist.
 
-Stage 1, M2-01 through M2-04, is complete and verified using team agents. The owner authorized Stage 2 execution, and M3-01, the Pasig/Ortigas place-coverage audit, is complete with explicit coverage limits. Regional map-package work and road-routing feasibility are now in progress independently according to their prerequisites. Unverified Stage 2 gates and Stages 3–5 remain pending. Preserve existing saved rows and completed M1-01 evidence.
+Stage 1, M2-01 through M2-04, is complete and verified using team agents. Stage 2 coverage, regional package preparation, qualified local routing feasibility and the planning contract are complete. Android renderer verification, M3-03, remains in progress; the other Stage 2 results do not imply it has passed. Stages 3–5 remain pending. Preserve existing saved rows and completed M1-01 evidence.
 
 ## Release goal and confirmed decisions
 
@@ -110,8 +110,8 @@ Keep raw geographic downloads, generated packages/graphs, database files and nat
 | M2-03 | UI · selectors | Replace unpredictable form dropdowns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-04 | Android · checkpoint | Verify the empty-state editing workflow. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M3-01 | Data · feasibility | Audit pilot place coverage. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
-| M5-01 | Routing · feasibility gate | Validate regional routing and vehicle support early. | [-] IN_PROGRESS | Roi Cambe (@pu-roi) |  |
-| M5-02 | Planning · input contract | Define automatic-planning inputs and outcomes. | [ ] TODO |  |  |
+| M5-01 | Routing · feasibility gate | Validate regional routing and vehicle support early. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| M5-02 | Planning · input contract | Define automatic-planning inputs and outcomes. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M3-02 | Maps · data packages | Prepare a licensed regional map package. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M3-03 | Maps · Android feasibility | Render the regional map on Android. | [-] IN_PROGRESS | Roi Cambe (@pu-roi) |  |
 | M3-04 | Local data · places | Persist confirmed place coordinates. | [ ] TODO |  |  |

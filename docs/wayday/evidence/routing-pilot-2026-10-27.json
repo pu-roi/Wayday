@@ -1,0 +1,1565 @@
+{
+  "task": "M5-01",
+  "recorded_on": "2026-10-27",
+  "disposition": "bounded_static_estimate_feasibility_with_explicit_restriction_limits",
+  "reference_integrity": {
+    "tool": "osmium check-refs --check-relations",
+    "missing_nodes_in_ways": 0,
+    "missing_nodes_in_relations": 0,
+    "missing_ways_in_relations": 0,
+    "missing_relations_in_relations": 0
+  },
+  "source": {
+    "pilot_bounds_west_south_east_north": [
+      121.045,
+      14.548,
+      121.116,
+      14.617
+    ],
+    "graph_bounds_west_south_east_north": [
+      121.005,
+      14.508000000000001,
+      121.156,
+      14.657
+    ],
+    "buffer_degrees_each_side": 0.04,
+    "buffer_note": "Approximately 4.3-4.4 km per side; graph coverage is not an expanded product coverage claim.",
+    "source_endpoint": "https://overpass-api.de/api/interpreter",
+    "retrieved_at_utc": "2026-10-27T07:10:44.424178+00:00",
+    "query": "[out:xml][timeout:90][maxsize:134217728];\n(way[\"highway\"](14.508000,121.005000,14.657000,121.156000);way[\"route\"=\"ferry\"](14.508000,121.005000,14.657000,121.156000););\n(._;rel(bw)[\"type\"=\"restriction\"];);\n(._;>;);\nout meta;\n",
+    "query_sha256": "fd2ffd1154647b0d235b250a35c931306542d7cc2645519333b396843702bf1d",
+    "raw_sha256": "d0ab23084f8e8a53b3d7c57b00fc361dbbcd462974a5ac26eef2b9b30e4c2d30",
+    "raw_bytes": 75038987,
+    "download_seconds": 89.391,
+    "license": "ODbL-1.0",
+    "attribution": "OpenStreetMap contributors",
+    "license_url": "https://www.openstreetmap.org/copyright",
+    "osm_base_timestamp": "2026-10-27T07:09:41Z",
+    "element_counts": {
+      "node": 242322,
+      "way": 76120,
+      "relation": 1819
+    },
+    "highway_tag_counts": {
+      "surface": 23881,
+      "maxspeed": 8650,
+      "oneway": 16254,
+      "bicycle": 1965,
+      "foot": 2851,
+      "hgv": 610,
+      "smoothness": 1443,
+      "maxheight": 276,
+      "motorcycle": 482,
+      "maxweight": 179,
+      "access": 23963,
+      "motor_vehicle": 464,
+      "maxwidth": 1,
+      "maxlength": 1
+    },
+    "highway_restriction_values": {
+      "access=customers": 543,
+      "access=delivery": 18,
+      "access=designated": 2,
+      "access=destination": 6238,
+      "access=golf_cart": 1,
+      "access=no": 551,
+      "access=permissive": 1203,
+      "access=permit": 116,
+      "access=private": 15022,
+      "access=service": 2,
+      "access=unknown": 2,
+      "access=yes": 265,
+      "bicycle=customers": 5,
+      "bicycle=designated": 115,
+      "bicycle=destination": 1,
+      "bicycle=dismount": 881,
+      "bicycle=no": 225,
+      "bicycle=permissive": 38,
+      "bicycle=permit": 1,
+      "bicycle=private": 32,
+      "bicycle=unknown": 3,
+      "bicycle=use_sidepath": 16,
+      "bicycle=yes": 648,
+      "foot=designated": 191,
+      "foot=destination": 5,
+      "foot=no": 1222,
+      "foot=permissive": 28,
+      "foot=permit": 1,
+      "foot=private": 42,
+      "foot=use_sidepath": 288,
+      "foot=yes": 1074,
+      "hgv=delivery": 17,
+      "hgv=designated": 5,
+      "hgv=no": 578,
+      "hgv=yes": 10,
+      "maxheight=1.68": 1,
+      "maxheight=1.73": 1,
+      "maxheight=1.75": 1,
+      "maxheight=1.8": 3,
+      "maxheight=1.94": 3,
+      "maxheight=1.95": 1,
+      "maxheight=2.1": 5,
+      "maxheight=2.2": 18,
+      "maxheight=2.20": 1,
+      "maxheight=2.3": 11,
+      "maxheight=2.4": 11,
+      "maxheight=2.4 m": 4,
+      "maxheight=2.5": 22,
+      "maxheight=2.50": 1,
+      "maxheight=2.6": 13,
+      "maxheight=2.60": 1,
+      "maxheight=2.7": 40,
+      "maxheight=2.70": 1,
+      "maxheight=2.8": 1,
+      "maxheight=2.85": 4,
+      "maxheight=2.9": 1,
+      "maxheight=2.94": 4,
+      "maxheight=3": 1,
+      "maxheight=3.4": 1,
+      "maxheight=3.6": 1,
+      "maxheight=3.7": 2,
+      "maxheight=3.92": 1,
+      "maxheight=4": 3,
+      "maxheight=4.12": 1,
+      "maxheight=4.27": 25,
+      "maxheight=4.5": 11,
+      "maxheight=4.6": 7,
+      "maxheight=4.69": 2,
+      "maxheight=4.7": 1,
+      "maxheight=4.80": 2,
+      "maxheight=4.85": 2,
+      "maxheight=4.88": 2,
+      "maxheight=4.99": 4,
+      "maxheight=5": 24,
+      "maxheight=5.1": 8,
+      "maxheight=5.17": 1,
+      "maxheight=5.5": 10,
+      "maxheight=6.2": 2,
+      "maxheight=6.68": 2,
+      "maxheight=6.85": 1,
+      "maxheight=below_default": 3,
+      "maxheight=default": 11,
+      "maxlength=5": 1,
+      "maxspeed=10": 171,
+      "maxspeed=100": 26,
+      "maxspeed=15": 163,
+      "maxspeed=2": 1,
+      "maxspeed=20": 937,
+      "maxspeed=25": 54,
+      "maxspeed=30": 2778,
+      "maxspeed=35": 94,
+      "maxspeed=40": 2422,
+      "maxspeed=45": 16,
+      "maxspeed=5": 64,
+      "maxspeed=50": 88,
+      "maxspeed=60": 1727,
+      "maxspeed=80": 105,
+      "maxspeed=90": 1,
+      "maxspeed=none": 3,
+      "maxweight=10": 40,
+      "maxweight=15": 43,
+      "maxweight=20": 61,
+      "maxweight=20 t": 2,
+      "maxweight=20 tons": 1,
+      "maxweight=20.0": 3,
+      "maxweight=5": 16,
+      "maxweight=9": 13,
+      "maxwidth=8": 1,
+      "motor_vehicle=customers": 5,
+      "motor_vehicle=designated": 1,
+      "motor_vehicle=destination": 87,
+      "motor_vehicle=motorcycles": 1,
+      "motor_vehicle=no": 218,
+      "motor_vehicle=permissive": 5,
+      "motor_vehicle=permit": 7,
+      "motor_vehicle=private": 34,
+      "motor_vehicle=unknown": 1,
+      "motor_vehicle=yes": 105,
+      "motorcycle=designated": 10,
+      "motorcycle=destination": 257,
+      "motorcycle=dismount": 20,
+      "motorcycle=no": 46,
+      "motorcycle=permissive": 1,
+      "motorcycle=private": 19,
+      "motorcycle=yes": 129,
+      "oneway=alternating": 17,
+      "oneway=no": 1001,
+      "oneway=reversible": 4,
+      "oneway=yes": 15232,
+      "smoothness=bad": 42,
+      "smoothness=excellent": 430,
+      "smoothness=good": 448,
+      "smoothness=impassable": 3,
+      "smoothness=intermediate": 512,
+      "smoothness=very_bad": 8,
+      "surface=1": 1,
+      "surface=asphalt": 9960,
+      "surface=brick": 3,
+      "surface=bricks": 9,
+      "surface=clay": 1,
+      "surface=cobblestone": 14,
+      "surface=compacted": 5,
+      "surface=concrete": 11971,
+      "surface=concrete:lanes": 10,
+      "surface=concrete:plates": 4,
+      "surface=dirt": 100,
+      "surface=fine_gravel": 3,
+      "surface=grass": 1,
+      "surface=grass_paver": 5,
+      "surface=gravel": 47,
+      "surface=ground": 39,
+      "surface=metal": 42,
+      "surface=paved": 731,
+      "surface=paving_stones": 348,
+      "surface=pebblestone": 2,
+      "surface=residential": 1,
+      "surface=rock": 1,
+      "surface=sett": 15,
+      "surface=tiles": 29,
+      "surface=unhewn_cobblestone": 9,
+      "surface=unpaved": 526,
+      "surface=wood": 4
+    }
+  },
+  "build": {
+    "measured_at_utc": "2026-10-27T07:29:33.076360+00:00",
+    "image": "ghcr.io/valhalla/valhalla-scripted@sha256:31d96eb75f73e5f5b3dc40702edfda16c4e1793a384a8235bcf00dd3eed1b9bc",
+    "image_bytes": 673581738,
+    "container_id": "96e0a84cbcd6",
+    "engine_status": {
+      "version": "3.9.1",
+      "tileset_last_modified": 1793086058,
+      "available_actions": [
+        "route",
+        "locate",
+        "sources_to_targets",
+        "optimized_route",
+        "isochrone",
+        "trace_route",
+        "trace_attributes",
+        "height",
+        "transit_available",
+        "expansion",
+        "centroid",
+        "status",
+        "tile"
+      ]
+    },
+    "cpu_limit": 2,
+    "memory_limit_bytes": 4294967296,
+    "graph_mount": "wayday-routing-pilot-graph",
+    "cgroup_memory_peak_bytes": 352440320,
+    "environment": {
+      "server_threads": "2",
+      "build_admins": "False",
+      "build_time_zones": "True",
+      "build_elevation": "False",
+      "build_transit": "False",
+      "use_default_speeds_config": "False",
+      "build_tar": "True",
+      "serve_tiles": "True"
+    },
+    "build_and_start_observed_upper_bound_seconds": 168.901,
+    "readiness_note": "Collector observed readiness after startup; use build log timestamps for exact graph-stage durations",
+    "graph_directory_bytes_including_pbf": 177084082,
+    "source_sha256": "d0ab23084f8e8a53b3d7c57b00fc361dbbcd462974a5ac26eef2b9b30e4c2d30",
+    "source_osm_base_timestamp": "2026-10-27T07:09:41Z",
+    "graph_config_sha256": "183b7c79d36811f3e85f9dfc92c8d5059788e50dfa01079609b4814507656842",
+    "pbf_sha256": "ed8c196c830d0b8832897b07d2b96d2d77c91744355b119f8d26eb98bc316d40",
+    "limitations": [
+      "Sampled container memory is not host/WSL peak memory",
+      "Admin database disabled; pilot has no international border crossing",
+      "No elevation or traffic feed",
+      "Unknown/missing OSM restrictions remain unverified"
+    ]
+  },
+  "graph_stage_timing_lines": [
+    "2026-10-27 07:27:23.970300192 [TIMING] src/mjolnir/util.cc::build_tile_set took 39s",
+    "2026-10-27 07:27:37.803791646 [TIMING] src/mjolnir/util.cc::build_tile_set took 13s"
+  ],
+  "public_points": [
+    {
+      "id": "G01",
+      "label": "SM Supermarket Megamall A",
+      "lat": 14.5866334,
+      "lon": 121.0572145,
+      "osm_id": "node/1435156685",
+      "coordinate_kind": "node",
+      "accuracy": "not_independently_surveyed"
+    },
+    {
+      "id": "G02",
+      "label": "Robinsons Supermarket Galleria",
+      "lat": 14.5911857,
+      "lon": 121.05935,
+      "osm_id": "node/1437367255",
+      "coordinate_kind": "node",
+      "accuracy": "not_independently_surveyed"
+    },
+    {
+      "id": "B01",
+      "label": "UnionBank Plaza branch",
+      "lat": 14.5870695,
+      "lon": 121.0634818,
+      "osm_id": "node/1437651413",
+      "coordinate_kind": "node",
+      "accuracy": "not_independently_surveyed"
+    },
+    {
+      "id": "L01",
+      "label": "Pasig City Museum",
+      "lat": 14.5609949,
+      "lon": 121.0762842,
+      "osm_id": "way/118123582",
+      "coordinate_kind": "bounding_box_center",
+      "accuracy": "not_independently_surveyed"
+    }
+  ],
+  "matrix_point_order": [
+    "G01",
+    "G02",
+    "B01",
+    "L01"
+  ],
+  "profiles": {
+    "walking": {
+      "costing": "pedestrian",
+      "costing_options": {
+        "pedestrian": {
+          "ignore_restrictions": false,
+          "ignore_oneways": false,
+          "ignore_access": false
+        }
+      },
+      "routes": [
+        {
+          "from": "G01",
+          "to": "G02",
+          "http_status": 200,
+          "request_seconds": 0.157,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.586859,
+            "min_lon": 121.056564,
+            "max_lat": 14.592804,
+            "max_lon": 121.060096,
+            "time": 765.266,
+            "length": 1.081,
+            "cost": 780.266
+          },
+          "geometry_points": 39,
+          "start_snap_distance_meters": 25.2,
+          "end_snap_distance_meters": 26.4,
+          "street_names": [
+            "1",
+            "60",
+            "AH26",
+            "EDSA",
+            "Epifanio de los Santos Avenue",
+            "Ortigas Avenue"
+          ]
+        },
+        {
+          "from": "B01",
+          "to": "L01",
+          "http_status": 200,
+          "request_seconds": 0.093,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.560804,
+            "min_lon": 121.063611,
+            "max_lat": 14.587083,
+            "max_lon": 121.076549,
+            "time": 2830.446,
+            "length": 3.995,
+            "cost": 2912.776
+          },
+          "geometry_points": 162,
+          "start_snap_distance_meters": 19.1,
+          "end_snap_distance_meters": 15.2,
+          "street_names": [
+            "141",
+            "142",
+            "A. Mabini Street",
+            "Captain Henry Javier Street",
+            "Danny Floro Street",
+            "E. Rodriguez Jr. Avenue",
+            "M. San Buenaventura Street",
+            "Meralco Avenue",
+            "Pasig Boulevard",
+            "Santo Rosario de Lima Extension"
+          ],
+          "source_way_review": {
+            "trace_http_status": 200,
+            "way_count": 40,
+            "note": "Cross-check against the same OSM snapshot, not independent legal-access/road-condition verification",
+            "restriction_examples": [
+              {
+                "way_id": 23395377,
+                "source_tags": {
+                  "highway": "secondary",
+                  "maxweight": "15",
+                  "name": "Pasig Boulevard",
+                  "oneway": "yes",
+                  "surface": "asphalt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "from": "L01",
+          "to": "B01",
+          "http_status": 200,
+          "request_seconds": 0.047,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.560804,
+            "min_lon": 121.063611,
+            "max_lat": 14.587083,
+            "max_lon": 121.076549,
+            "time": 2830.446,
+            "length": 3.995,
+            "cost": 3512.775
+          },
+          "geometry_points": 161,
+          "start_snap_distance_meters": 15.2,
+          "end_snap_distance_meters": 19.1,
+          "street_names": [
+            "141",
+            "142",
+            "A. Mabini Street",
+            "Captain Henry Javier Street",
+            "Danny Floro Street",
+            "E. Rodriguez Jr. Avenue",
+            "M. San Buenaventura Street",
+            "Meralco Avenue",
+            "Pasig Boulevard",
+            "Santo Rosario de Lima Extension"
+          ]
+        }
+      ],
+      "matrix": {
+        "http_status": 200,
+        "request_seconds": 0.265,
+        "rows": 4,
+        "cells": 16,
+        "unreachable_cells": 0,
+        "asymmetric_pairs": 0,
+        "units": "kilometers",
+        "algorithm": "timedistancematrix"
+      },
+      "matrix_seconds_row_major": [
+        [
+          0,
+          765,
+          894,
+          3316
+        ],
+        [
+          765,
+          0,
+          575,
+          3383
+        ],
+        [
+          894,
+          575,
+          0,
+          2830
+        ],
+        [
+          3316,
+          3383,
+          2830,
+          0
+        ]
+      ],
+      "matrix_kilometers_row_major": [
+        [
+          0.0,
+          1.081,
+          1.249,
+          4.667
+        ],
+        [
+          1.081,
+          0.0,
+          0.813,
+          4.777
+        ],
+        [
+          1.249,
+          0.813,
+          0.0,
+          3.995
+        ],
+        [
+          4.667,
+          4.777,
+          3.995,
+          0.0
+        ]
+      ]
+    },
+    "biking": {
+      "costing": "bicycle",
+      "costing_options": {
+        "bicycle": {
+          "ignore_restrictions": false,
+          "ignore_oneways": false,
+          "ignore_access": false
+        }
+      },
+      "routes": [
+        {
+          "from": "G01",
+          "to": "G02",
+          "http_status": 200,
+          "request_seconds": 0.063,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.58696,
+            "min_lon": 121.056564,
+            "max_lat": 14.592073,
+            "max_lon": 121.059558,
+            "time": 181.646,
+            "length": 0.825,
+            "cost": 1120.485
+          },
+          "geometry_points": 26,
+          "start_snap_distance_meters": 36.3,
+          "end_snap_distance_meters": 33.6,
+          "street_names": [
+            "1",
+            "AH26",
+            "EDSA",
+            "Epifanio de los Santos Avenue",
+            "Poveda Street"
+          ]
+        },
+        {
+          "from": "B01",
+          "to": "L01",
+          "http_status": 200,
+          "request_seconds": 0.047,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.561091,
+            "min_lon": 121.063611,
+            "max_lat": 14.587083,
+            "max_lon": 121.07654,
+            "time": 857.66,
+            "length": 4.002,
+            "cost": 1864.369
+          },
+          "geometry_points": 169,
+          "start_snap_distance_meters": 19.1,
+          "end_snap_distance_meters": 16.4,
+          "street_names": [
+            "141",
+            "142",
+            "A. Mabini Street",
+            "Captain Henry Javier Street",
+            "Danny Floro Street",
+            "E. Rodriguez Jr. Avenue",
+            "F. Concepcion Street",
+            "Meralco Avenue",
+            "Pasig Boulevard"
+          ],
+          "source_way_review": {
+            "trace_http_status": 200,
+            "way_count": 40,
+            "note": "Cross-check against the same OSM snapshot, not independent legal-access/road-condition verification",
+            "restriction_examples": [
+              {
+                "way_id": 23395375,
+                "source_tags": {
+                  "highway": "secondary",
+                  "maxweight": "15",
+                  "name": "Pasig Boulevard",
+                  "oneway": "yes",
+                  "surface": "asphalt"
+                }
+              },
+              {
+                "way_id": 897111899,
+                "source_tags": {
+                  "bicycle": "yes",
+                  "foot": "yes",
+                  "highway": "pedestrian",
+                  "motor_vehicle": "no",
+                  "name": "F. Concepcion Street"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "from": "L01",
+          "to": "B01",
+          "http_status": 200,
+          "request_seconds": 0.062,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.561138,
+            "min_lon": 121.063659,
+            "max_lat": 14.588901,
+            "max_lon": 121.07766,
+            "time": 1091.567,
+            "length": 5.178,
+            "cost": 3046.479
+          },
+          "geometry_points": 188,
+          "start_snap_distance_meters": 16.4,
+          "end_snap_distance_meters": 19.1,
+          "street_names": [
+            "142",
+            "Alcalde Jose Street",
+            "C. Raymundo Avenue",
+            "Doctor Sixto Antonio Avenue",
+            "Do\u00f1a Julia Vargas Avenue",
+            "E. Rodriguez Jr. Avenue",
+            "F. Concepcion Street",
+            "Meralco Avenue",
+            "R. Lanuza Avenue",
+            "Rodriguez-Lanuza Avenue"
+          ]
+        }
+      ],
+      "matrix": {
+        "http_status": 200,
+        "request_seconds": 0.219,
+        "rows": 4,
+        "cells": 16,
+        "unreachable_cells": 0,
+        "asymmetric_pairs": 6,
+        "units": "kilometers",
+        "algorithm": "timedistancematrix"
+      },
+      "matrix_seconds_row_major": [
+        [
+          0,
+          181,
+          348,
+          1107
+        ],
+        [
+          339,
+          0,
+          177,
+          1025
+        ],
+        [
+          279,
+          347,
+          0,
+          857
+        ],
+        [
+          1159,
+          1253,
+          1091,
+          0
+        ]
+      ],
+      "matrix_kilometers_row_major": [
+        [
+          0.0,
+          0.825,
+          1.654,
+          5.193
+        ],
+        [
+          1.573,
+          0.0,
+          0.818,
+          4.809
+        ],
+        [
+          1.273,
+          1.495,
+          0.0,
+          4.001
+        ],
+        [
+          5.478,
+          5.992,
+          5.178,
+          0.0
+        ]
+      ]
+    },
+    "motorcycle": {
+      "costing": "motorcycle",
+      "costing_options": {
+        "motorcycle": {
+          "ignore_restrictions": false,
+          "ignore_oneways": false,
+          "ignore_access": false
+        }
+      },
+      "routes": [
+        {
+          "from": "G01",
+          "to": "G02",
+          "http_status": 200,
+          "request_seconds": 0.063,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.58696,
+            "min_lon": 121.056564,
+            "max_lat": 14.592073,
+            "max_lon": 121.059558,
+            "time": 96.445,
+            "length": 0.825,
+            "cost": 872.433
+          },
+          "geometry_points": 26,
+          "start_snap_distance_meters": 36.3,
+          "end_snap_distance_meters": 33.6,
+          "street_names": [
+            "1",
+            "AH26",
+            "EDSA",
+            "Epifanio de los Santos Avenue",
+            "Poveda Street"
+          ]
+        },
+        {
+          "from": "B01",
+          "to": "L01",
+          "http_status": 200,
+          "request_seconds": 0.109,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.560241,
+            "min_lon": 121.063659,
+            "max_lat": 14.589732,
+            "max_lon": 121.079826,
+            "time": 523.608,
+            "length": 6.686,
+            "cost": 986.988
+          },
+          "geometry_points": 199,
+          "start_snap_distance_meters": 19.1,
+          "end_snap_distance_meters": 22.5,
+          "street_names": [
+            "11",
+            "141",
+            "142",
+            "60",
+            "E. Rodriguez Jr. Avenue",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Pasig Boulevard",
+            "Plaza Rizal"
+          ],
+          "source_way_review": {
+            "trace_http_status": 200,
+            "way_count": 52,
+            "note": "Cross-check against the same OSM snapshot, not independent legal-access/road-condition verification",
+            "restriction_examples": [
+              {
+                "way_id": 23395375,
+                "source_tags": {
+                  "highway": "secondary",
+                  "maxweight": "15",
+                  "name": "Pasig Boulevard",
+                  "oneway": "yes",
+                  "surface": "asphalt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "from": "L01",
+          "to": "B01",
+          "http_status": 200,
+          "request_seconds": 0.078,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.558988,
+            "min_lon": 121.063659,
+            "max_lat": 14.591391,
+            "max_lon": 121.080046,
+            "time": 519.543,
+            "length": 6.625,
+            "cost": 1578.806
+          },
+          "geometry_points": 201,
+          "start_snap_distance_meters": 22.5,
+          "end_snap_distance_meters": 19.1,
+          "street_names": [
+            "11",
+            "60",
+            "A. Z. Avis Sr. Street",
+            "Doctor Garcia Street",
+            "Doctor Maximo Flores Street",
+            "E. Rodriguez Jr. Avenue",
+            "Lopez Jaena Street",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Plaza Rizal"
+          ]
+        }
+      ],
+      "matrix": {
+        "http_status": 200,
+        "request_seconds": 0.25,
+        "rows": 4,
+        "cells": 16,
+        "unreachable_cells": 0,
+        "asymmetric_pairs": 6,
+        "units": "kilometers",
+        "algorithm": "costmatrix"
+      },
+      "matrix_seconds_row_major": [
+        [
+          0,
+          96,
+          116,
+          559
+        ],
+        [
+          215,
+          0,
+          98,
+          541
+        ],
+        [
+          145,
+          176,
+          0,
+          523
+        ],
+        [
+          517,
+          506,
+          519,
+          0
+        ]
+      ],
+      "matrix_kilometers_row_major": [
+        [
+          0.0,
+          0.825,
+          1.655,
+          7.504
+        ],
+        [
+          1.575,
+          0.0,
+          0.82,
+          6.669
+        ],
+        [
+          1.247,
+          1.751,
+          0.0,
+          6.686
+        ],
+        [
+          5.411,
+          6.012,
+          6.626,
+          0.0
+        ]
+      ]
+    },
+    "sedan": {
+      "costing": "auto",
+      "costing_options": {
+        "auto": {
+          "ignore_restrictions": false,
+          "ignore_oneways": false,
+          "ignore_access": false
+        }
+      },
+      "routes": [
+        {
+          "from": "G01",
+          "to": "G02",
+          "http_status": 200,
+          "request_seconds": 0.063,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.58696,
+            "min_lon": 121.056564,
+            "max_lat": 14.592073,
+            "max_lon": 121.059558,
+            "time": 111.072,
+            "length": 0.921,
+            "cost": 922.77
+          },
+          "geometry_points": 31,
+          "start_snap_distance_meters": 36.3,
+          "end_snap_distance_meters": 33.6,
+          "street_names": [
+            "1",
+            "AH26",
+            "EDSA",
+            "Epifanio de los Santos Avenue",
+            "Poveda Street"
+          ]
+        },
+        {
+          "from": "B01",
+          "to": "L01",
+          "http_status": 200,
+          "request_seconds": 0.047,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.560241,
+            "min_lon": 121.063659,
+            "max_lat": 14.589732,
+            "max_lon": 121.079826,
+            "time": 523.608,
+            "length": 6.686,
+            "cost": 986.988
+          },
+          "geometry_points": 199,
+          "start_snap_distance_meters": 19.1,
+          "end_snap_distance_meters": 22.5,
+          "street_names": [
+            "11",
+            "141",
+            "142",
+            "60",
+            "E. Rodriguez Jr. Avenue",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Pasig Boulevard",
+            "Plaza Rizal"
+          ],
+          "source_way_review": {
+            "trace_http_status": 200,
+            "way_count": 52,
+            "note": "Cross-check against the same OSM snapshot, not independent legal-access/road-condition verification",
+            "restriction_examples": [
+              {
+                "way_id": 23395375,
+                "source_tags": {
+                  "highway": "secondary",
+                  "maxweight": "15",
+                  "name": "Pasig Boulevard",
+                  "oneway": "yes",
+                  "surface": "asphalt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "from": "L01",
+          "to": "B01",
+          "http_status": 200,
+          "request_seconds": 0.047,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.558988,
+            "min_lon": 121.063659,
+            "max_lat": 14.591391,
+            "max_lon": 121.080046,
+            "time": 519.543,
+            "length": 6.625,
+            "cost": 1578.806
+          },
+          "geometry_points": 201,
+          "start_snap_distance_meters": 22.5,
+          "end_snap_distance_meters": 19.1,
+          "street_names": [
+            "11",
+            "60",
+            "A. Z. Avis Sr. Street",
+            "Doctor Garcia Street",
+            "Doctor Maximo Flores Street",
+            "E. Rodriguez Jr. Avenue",
+            "Lopez Jaena Street",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Plaza Rizal"
+          ]
+        }
+      ],
+      "matrix": {
+        "http_status": 200,
+        "request_seconds": 0.156,
+        "rows": 4,
+        "cells": 16,
+        "unreachable_cells": 0,
+        "asymmetric_pairs": 6,
+        "units": "kilometers",
+        "algorithm": "costmatrix"
+      },
+      "matrix_seconds_row_major": [
+        [
+          0,
+          111,
+          116,
+          559
+        ],
+        [
+          215,
+          0,
+          98,
+          541
+        ],
+        [
+          145,
+          176,
+          0,
+          523
+        ],
+        [
+          517,
+          521,
+          519,
+          0
+        ]
+      ],
+      "matrix_kilometers_row_major": [
+        [
+          0.0,
+          0.921,
+          1.655,
+          7.504
+        ],
+        [
+          1.575,
+          0.0,
+          0.82,
+          6.669
+        ],
+        [
+          1.247,
+          1.751,
+          0.0,
+          6.686
+        ],
+        [
+          5.411,
+          6.108,
+          6.626,
+          0.0
+        ]
+      ]
+    },
+    "pickup_light": {
+      "costing": "auto",
+      "costing_options": {
+        "auto": {
+          "ignore_restrictions": false,
+          "ignore_oneways": false,
+          "ignore_access": false,
+          "height": 1.85,
+          "width": 1.8,
+          "length": 5.1,
+          "weight": 2.1
+        }
+      },
+      "routes": [
+        {
+          "from": "G01",
+          "to": "G02",
+          "http_status": 200,
+          "request_seconds": 0.031,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.58696,
+            "min_lon": 121.056564,
+            "max_lat": 14.592073,
+            "max_lon": 121.059558,
+            "time": 111.072,
+            "length": 0.921,
+            "cost": 922.77
+          },
+          "geometry_points": 31,
+          "start_snap_distance_meters": 36.3,
+          "end_snap_distance_meters": 33.6,
+          "street_names": [
+            "1",
+            "AH26",
+            "EDSA",
+            "Epifanio de los Santos Avenue",
+            "Poveda Street"
+          ]
+        },
+        {
+          "from": "B01",
+          "to": "L01",
+          "http_status": 200,
+          "request_seconds": 0.062,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.560241,
+            "min_lon": 121.063659,
+            "max_lat": 14.589732,
+            "max_lon": 121.079826,
+            "time": 523.608,
+            "length": 6.686,
+            "cost": 986.988
+          },
+          "geometry_points": 199,
+          "start_snap_distance_meters": 19.1,
+          "end_snap_distance_meters": 22.5,
+          "street_names": [
+            "11",
+            "141",
+            "142",
+            "60",
+            "E. Rodriguez Jr. Avenue",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Pasig Boulevard",
+            "Plaza Rizal"
+          ],
+          "source_way_review": {
+            "trace_http_status": 200,
+            "way_count": 52,
+            "note": "Cross-check against the same OSM snapshot, not independent legal-access/road-condition verification",
+            "restriction_examples": [
+              {
+                "way_id": 23395375,
+                "source_tags": {
+                  "highway": "secondary",
+                  "maxweight": "15",
+                  "name": "Pasig Boulevard",
+                  "oneway": "yes",
+                  "surface": "asphalt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "from": "L01",
+          "to": "B01",
+          "http_status": 200,
+          "request_seconds": 0.062,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.558988,
+            "min_lon": 121.063659,
+            "max_lat": 14.591391,
+            "max_lon": 121.080046,
+            "time": 519.543,
+            "length": 6.625,
+            "cost": 1578.806
+          },
+          "geometry_points": 201,
+          "start_snap_distance_meters": 22.5,
+          "end_snap_distance_meters": 19.1,
+          "street_names": [
+            "11",
+            "60",
+            "A. Z. Avis Sr. Street",
+            "Doctor Garcia Street",
+            "Doctor Maximo Flores Street",
+            "E. Rodriguez Jr. Avenue",
+            "Lopez Jaena Street",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Plaza Rizal"
+          ]
+        }
+      ],
+      "matrix": {
+        "http_status": 200,
+        "request_seconds": 0.141,
+        "rows": 4,
+        "cells": 16,
+        "unreachable_cells": 0,
+        "asymmetric_pairs": 6,
+        "units": "kilometers",
+        "algorithm": "costmatrix"
+      },
+      "matrix_seconds_row_major": [
+        [
+          0,
+          111,
+          116,
+          559
+        ],
+        [
+          215,
+          0,
+          98,
+          541
+        ],
+        [
+          145,
+          176,
+          0,
+          523
+        ],
+        [
+          517,
+          521,
+          519,
+          0
+        ]
+      ],
+      "matrix_kilometers_row_major": [
+        [
+          0.0,
+          0.921,
+          1.655,
+          7.504
+        ],
+        [
+          1.575,
+          0.0,
+          0.82,
+          6.669
+        ],
+        [
+          1.247,
+          1.751,
+          0.0,
+          6.686
+        ],
+        [
+          5.411,
+          6.108,
+          6.626,
+          0.0
+        ]
+      ]
+    },
+    "heavy_delivery": {
+      "costing": "truck",
+      "costing_options": {
+        "truck": {
+          "ignore_restrictions": false,
+          "ignore_oneways": false,
+          "ignore_access": false,
+          "height": 3.5,
+          "width": 2.4,
+          "length": 8,
+          "weight": 12,
+          "axle_load": 6,
+          "axle_count": 2,
+          "hazmat": false,
+          "hgv_no_access_penalty": 43200
+        }
+      },
+      "routes": [
+        {
+          "from": "G01",
+          "to": "G02",
+          "http_status": 200,
+          "request_seconds": 0.031,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.579918,
+            "min_lon": 121.055956,
+            "max_lat": 14.59338,
+            "max_lon": 121.063953,
+            "time": 440.699,
+            "length": 3.814,
+            "cost": 2253.497
+          },
+          "geometry_points": 138,
+          "start_snap_distance_meters": 36.3,
+          "end_snap_distance_meters": 33.6,
+          "street_names": [
+            "60",
+            "Do\u00f1a Julia Vargas Avenue",
+            "Exchange Road",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "San Miguel Avenue"
+          ]
+        },
+        {
+          "from": "B01",
+          "to": "L01",
+          "http_status": 200,
+          "request_seconds": 0.047,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.560241,
+            "min_lon": 121.063642,
+            "max_lat": 14.587083,
+            "max_lon": 121.076607,
+            "time": 489.968,
+            "length": 4.793,
+            "cost": 1049.786
+          },
+          "geometry_points": 181,
+          "start_snap_distance_meters": 19.1,
+          "end_snap_distance_meters": 22.5,
+          "street_names": [
+            "11",
+            "141",
+            "142",
+            "E. Rodriguez Jr. Avenue",
+            "Meralco Avenue",
+            "Molave Street",
+            "P. Burgos Street",
+            "Pasig Boulevard",
+            "Plaza Rizal",
+            "R. Lanuza Avenue",
+            "Rodriguez-Lanuza Avenue",
+            "Saint Martin Street",
+            "Saint Paul Road"
+          ],
+          "source_way_review": {
+            "trace_http_status": 200,
+            "way_count": 55,
+            "note": "Cross-check against the same OSM snapshot, not independent legal-access/road-condition verification",
+            "restriction_examples": [
+              {
+                "way_id": 23395375,
+                "source_tags": {
+                  "highway": "secondary",
+                  "maxweight": "15",
+                  "name": "Pasig Boulevard",
+                  "oneway": "yes",
+                  "surface": "asphalt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "from": "L01",
+          "to": "B01",
+          "http_status": 200,
+          "request_seconds": 0.078,
+          "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 14.558988,
+            "min_lon": 121.063659,
+            "max_lat": 14.591391,
+            "max_lon": 121.080046,
+            "time": 582.039,
+            "length": 6.625,
+            "cost": 1076.976
+          },
+          "geometry_points": 201,
+          "start_snap_distance_meters": 22.5,
+          "end_snap_distance_meters": 19.1,
+          "street_names": [
+            "11",
+            "60",
+            "A. Z. Avis Sr. Street",
+            "Doctor Garcia Street",
+            "Doctor Maximo Flores Street",
+            "E. Rodriguez Jr. Avenue",
+            "Lopez Jaena Street",
+            "Meralco Avenue",
+            "Ortigas Avenue",
+            "P. Burgos Street",
+            "Plaza Rizal"
+          ]
+        }
+      ],
+      "matrix": {
+        "http_status": 200,
+        "request_seconds": 0.172,
+        "rows": 4,
+        "cells": 16,
+        "unreachable_cells": 3,
+        "asymmetric_pairs": 6,
+        "units": "kilometers",
+        "algorithm": "costmatrix"
+      },
+      "matrix_seconds_row_major": [
+        [
+          0,
+          null,
+          null,
+          null
+        ],
+        [
+          187,
+          0,
+          102,
+          601
+        ],
+        [
+          145,
+          190,
+          0,
+          489
+        ],
+        [
+          552,
+          664,
+          582,
+          0
+        ]
+      ],
+      "matrix_kilometers_row_major": [
+        [
+          0.0,
+          null,
+          null,
+          null
+        ],
+        [
+          1.411,
+          0.0,
+          0.82,
+          6.669
+        ],
+        [
+          1.247,
+          1.827,
+          0.0,
+          4.793
+        ],
+        [
+          5.411,
+          7.515,
+          6.626,
+          0.0
+        ]
+      ]
+    }
+  },
+  "out_of_graph_probe": {
+    "http_status": 400,
+    "response": {
+      "error_code": 171,
+      "error": "No suitable edges near location",
+      "status_code": 400,
+      "status": "Bad Request"
+    },
+    "request_seconds": 0.015
+  },
+  "weight_restriction_probe": {
+    "fixture_weight_tonnes": 20,
+    "http_status": 200,
+    "request_seconds": 0.11,
+    "compared_source_way_id": 23395375,
+    "source_maxweight_tonnes": 15,
+    "trace_http_status": 200,
+    "uses_compared_way": false,
+    "summary": {
+      "has_time_restrictions": false,
+      "has_toll": false,
+      "has_highway": false,
+      "has_ferry": false,
+      "min_lat": 14.560241,
+      "min_lon": 121.063659,
+      "max_lat": 14.590539,
+      "max_lon": 121.08505,
+      "time": 603.28,
+      "length": 6.672,
+      "cost": 1155.772
+    }
+  },
+  "request_latency_median_seconds": 0.063,
+  "request_latency_max_seconds": 0.265,
+  "request_latency_scope": "18 public-site route requests and six 4x4 matrices; trace/restriction probes excluded; not a 38-location request or field-time benchmark",
+  "runtime_stats": {
+    "BlockIO": "11.8MB / 166MB",
+    "CPUPerc": "0.07%",
+    "Container": "wayday-routing-pilot",
+    "ID": "96e0a84cbcd6",
+    "MemPerc": "3.01%",
+    "MemUsage": "123.3MiB / 4GiB",
+    "Name": "wayday-routing-pilot",
+    "NetIO": "87.7kB / 527kB",
+    "PIDs": "14"
+  },
+  "limitations": [
+    "OSM public-site coordinates and snapping are not entrance surveys",
+    "Synthetic representative pickup/heavy dimensions are evaluation fixtures, not user defaults",
+    "No observed travel-time or legal-access field validation",
+    "No live traffic or ground-clearance model",
+    "Missing restriction tags remain unknown"
+  ],
+  "environment_findings": [
+    "Windows Application Control blocked native pyosmium DLL; left policy unchanged and used pinned Linux osmium-tool 1.16.0-1build1",
+    "Docker Desktop startup exceeded 60-second CLI wait but subsequently initialized normally",
+    "Existing unrelated containers resumed on Desktop startup; left untouched and avoided occupied port8002 using loopback18002",
+    "Windows bind-mount shortcut build stalled in disk-sleep p9_client_rpc; preserved logs and used task-owned Docker volume",
+    "First-attempt cgroup peak390639616 bytes includes timezone preparation; native-volume peak in build includes the subsequent graph build",
+    "Initial extraction tool recorded request start under retrieved_at_utc; source snapshot timestamp is authoritative; future tool runs record both separately"
+  ],
+  "third_party": [
+    {
+      "name": "Valhalla 3.9.1",
+      "license": "MIT",
+      "source": "https://github.com/valhalla/valhalla/tree/3.9.1",
+      "reference": "https://raw.githubusercontent.com/valhalla/valhalla/3.9.1/docker/README.md"
+    },
+    {
+      "name": "osmium-tool 1.16.0-1build1",
+      "license": "GPL-3.0",
+      "role": "build-time conversion only",
+      "source": "https://github.com/osmcode/osmium-tool/tree/v1.16.0"
+    },
+    {
+      "name": "Timezone Boundary Builder 2026d",
+      "license": "ODbL-1.0 data / MIT code",
+      "source": "https://github.com/evansiroky/timezone-boundary-builder/tree/2026d",
+      "artifact": "timezones-with-oceans-1970.shapefile.zip"
+    }
+  ]
+}

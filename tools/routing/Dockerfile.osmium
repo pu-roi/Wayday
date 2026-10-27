@@ -1,0 +1,6 @@
+# Build-time conversion only; not an application or a network service.
+FROM ghcr.io/valhalla/valhalla-scripted@sha256:31d96eb75f73e5f5b3dc40702edfda16c4e1793a384a8235bcf00dd3eed1b9bc
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends osmium-tool=1.16.0-1build1 \
+    && rm -rf /var/lib/apt/lists/*
+ENTRYPOINT ["osmium"]
