@@ -9,7 +9,7 @@ Read the repository's `AGENTS.md` and current user request before acting. Founda
 
 ## Establish the contract
 
-Read [Product requirements](../../../docs/wayday/README.md#product-requirements) and the pipeline in [Architecture](../../../docs/wayday/ARCHITECTURE.md). Consult [Stack](../../../docs/wayday/STACK.md) for data sources and endpoint policies, and [Decisions](../../../docs/wayday/DECISIONS.md) for scope changes. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) owns implementation order and acceptance criteria, including the early M5-01 routing/vehicle gate and M5-02 input/result contract.
+Read [Product requirements](../../../README.md#product-requirements) and the pipeline in [Architecture](../../../docs/wayday/ARCHITECTURE.md). Consult [Stack](../../../docs/wayday/STACK.md) for data sources and endpoint policies, and [Decisions](../../../docs/wayday/DECISIONS.md) for scope changes. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) owns implementation order and acceptance criteria, including the early M5-01 routing/vehicle gate and M5-02 input/result contract.
 
 The first usable release must recommend stores, select branches, order stops, and estimate schedules from user errands and constraints. Manual place/order choices are optional overrides or intermediate checkpoints, not a substitute for that release requirement.
 

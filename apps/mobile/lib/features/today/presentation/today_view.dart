@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -179,27 +180,14 @@ class _TodayViewState extends ConsumerState<TodayView> {
         toolbarHeight: 64,
         title: Text('Today', style: context.type.headlineLarge),
         actions: [
-          PopupMenuButton<String>(
-            tooltip: 'Day options',
-            onSelected: (value) {
-              if (value == 'clear') {
-                _clear();
-              } else {
-                ref.read(todayProvider.notifier).loadExample();
-              }
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                value: 'example',
-                child: Text('Load example day'),
-              ),
-              if (day.errands.isNotEmpty)
-                const PopupMenuItem(
-                  value: 'clear',
-                  child: Text('Clear errands'),
-                ),
-            ],
-          ),
+          if (day.errands.isNotEmpty)
+            PopupMenuButton<String>(
+              tooltip: 'Day options',
+              onSelected: (_) => _clear(),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'clear', child: Text('Clear errands')),
+              ],
+            ),
           const SizedBox(width: 8),
         ],
       ),
@@ -352,7 +340,9 @@ class _TodayViewState extends ConsumerState<TodayView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Example lists · Changes reset when the app restarts.',
+                kIsWeb
+                    ? 'Browser preview · Changes last for this session.'
+                    : 'Saved on this device.',
                 style: context.type.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),
@@ -425,7 +415,14 @@ class EndpointRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(value, style: context.type.titleMedium),
+                Text(
+                  value.trim().isEmpty
+                      ? start
+                            ? 'Choose a starting point'
+                            : 'Choose a final destination'
+                      : value,
+                  style: context.type.titleMedium,
+                ),
               ],
             ),
           ),

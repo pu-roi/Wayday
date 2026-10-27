@@ -10,7 +10,10 @@ abstract interface class DayRepository {
 }
 
 class MemoryDayRepository implements DayRepository {
-  DayPlan _day = exampleDay();
+  MemoryDayRepository({DayPlan? initialData})
+    : _day = initialData ?? DayPlan(errands: const []);
+
+  DayPlan _day;
   @override
   DayPlan read() => _day;
   @override
@@ -26,21 +29,24 @@ class SqliteDayRepository implements DayRepository {
   final SerialWriteQueue _writes = SerialWriteQueue();
   DayPlan _day;
 
-  static Future<SqliteDayRepository> open(
-    WaydayDatabase database, {
-    required DayPlan? initialData,
-  }) async {
+  static Future<SqliteDayRepository> open(WaydayDatabase database) async {
     final settings = await database
         .select(database.daySettings)
         .getSingleOrNull();
+    final defaults = DayPlan(errands: const []);
     if (settings == null) {
-      final seed = initialData;
-      if (seed == null) {
-        throw StateError('Today data is missing from an initialized database.');
-      }
-      final repository = SqliteDayRepository._(database, seed);
-      await repository.save(seed);
-      return repository;
+      await database
+          .into(database.daySettings)
+          .insert(
+            DaySettingsCompanion.insert(
+              id: const Value(1),
+              fromPlace: defaults.from,
+              toPlace: defaults.to,
+              departure: defaults.departure,
+              deadline: defaults.deadline,
+              profile: defaults.profile.name,
+            ),
+          );
     }
 
     final rows = await (database.select(
@@ -49,13 +55,13 @@ class SqliteDayRepository implements DayRepository {
     return SqliteDayRepository._(
       database,
       DayPlan(
-        from: settings.fromPlace,
-        to: settings.toPlace,
-        departure: settings.departure,
-        deadline: settings.deadline,
+        from: settings?.fromPlace ?? defaults.from,
+        to: settings?.toPlace ?? defaults.to,
+        departure: settings?.departure ?? defaults.departure,
+        deadline: settings?.deadline ?? defaults.deadline,
         profile: _parseEnum(
           TravelProfile.values,
-          settings.profile,
+          settings?.profile ?? defaults.profile.name,
           TravelProfile.motor,
         ),
         errands: [
@@ -130,36 +136,3 @@ DayErrandsCompanion _toDayErrand(Errand errand, int position) =>
 
 T _parseEnum<T extends Enum>(List<T> values, String name, T fallback) =>
     values.firstWhere((value) => value.name == name, orElse: () => fallback);
-
-DayPlan exampleDay() => DayPlan(
-  errands: const [
-    Errand(
-      id: 'registrar',
-      title: 'Get documents from the registrar',
-      place: 'PLP · Pasig',
-      timing: TimingRule.finishBefore,
-      minute: 960,
-    ),
-    Errand(
-      id: 'pitch',
-      title: 'Capstone presentation',
-      place: 'PLP · Pasig',
-      timing: TimingRule.at,
-      minute: 660,
-    ),
-    Errand(
-      id: 'pickup',
-      title: 'Pick up in Ortigas',
-      place: 'Ortigas Center',
-      timing: TimingRule.arriveBy,
-      minute: 900,
-    ),
-    Errand(id: 'lunch', title: 'Grab a late lunch', place: 'Choose a place'),
-    Errand(
-      id: 'groceries',
-      title: 'Groceries for home',
-      place: 'Choose a place',
-      optional: true,
-    ),
-  ],
-);

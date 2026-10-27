@@ -9,7 +9,7 @@ Read the root `AGENTS.md` for the current phase and authorized scope. A design r
 
 ## Establish the reference
 
-Read [Product requirements](../../../docs/wayday/README.md#product-requirements) for scope and the root [Design system](../../../DESIGN.md) for the current theme, shared components, and interaction rules. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) distinguishes future selection-control and map work from implemented UI. For prototype-informed work, inspect [V2 notes](../../../docs/Asikaso-Prototype/V2-NOTES.md), relevant [screenshots](../../../docs/Asikaso-Prototype/docs/screenshots/v2), and the [historical design](../../../docs/Asikaso-Prototype/DESIGN.md). Current requirements and design take precedence over those references. Follow the nested prototype instructions before editing its files.
+Read [Product requirements](../../../README.md#product-requirements) for scope and the root [Design system](../../../DESIGN.md) for the current theme, shared components, and interaction rules. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) distinguishes future selection-control and map work from implemented UI. For prototype-informed work, inspect [V2 notes](../../../docs/Asikaso-Prototype/V2-NOTES.md), relevant [screenshots](../../../docs/Asikaso-Prototype/docs/screenshots/v2), and the [historical design](../../../docs/Asikaso-Prototype/DESIGN.md). Current requirements and design take precedence over those references. Follow the nested prototype instructions before editing its files.
 
 Treat historical references as provisional. Identify which interaction or visual problem the requested change solves before copying an old screen. Preserve the historical baseline unless its modification is requested.
 

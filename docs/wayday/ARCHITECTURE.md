@@ -1,6 +1,6 @@
 # Planned architecture
 
-Status, 2026-10-27: the Android shell, Today, Recurring, and local Drift/SQLite persistence are implemented at `apps/mobile/`; M1-01 records emulator restart verification. The browser preview remains in memory. Maps are placeholders and examples are still seeded. The selected map/place/trip architecture below is planned. The backend root `services/api/` still contains only a `.gitkeep` marker. See [the implementation plan](PLANNING.md#task-specifications) for dependency gates.
+Status, 2026-10-27: the Android shell, Today, Recurring, and local Drift/SQLite persistence are implemented at `apps/mobile/`; M1-01 records emulator restart verification. The browser preview remains in memory. Maps are placeholders. Stage 1 removes example seeding and adds shared editing selectors; new state starts empty and existing saved rows are preserved. The selected map/place/trip architecture below is planned. The backend root `services/api/` still contains only a `.gitkeep` marker. See [the implementation plan](PLANNING.md#task-specifications) for dependency gates.
 
 ## Responsibility map
 
@@ -43,7 +43,7 @@ apps/mobile/lib/
 
 Widgets do not call SQL or provider APIs directly. Repository contracts return application models rather than provider-specific objects. Cross-feature operations use shared contracts or explicit application services rather than importing another feature's widgets.
 
-The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Today settings, errands, and Recurring groups/items are stored locally on Android. The current app seeds examples only when no Today settings row exists; M2-01 removes future seeding while preserving saved rows. Web preview state remains in memory; no synchronization outbox or account system is present.
+The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Today settings, errands, and Recurring groups/items are stored locally on Android. New personal state starts empty. Missing Today settings are initialized without replacing existing errand rows; no production example-seeding or reset path remains. Schema version 1 is retained, and test-only fixtures are supplied explicitly. Web preview state remains in memory; no synchronization outbox or account system is present.
 
 Keep limited text parsing on the phone so note entry and correction work offline. Store the original note, explicit edits, and suggestions distinctly. The backend validates the submitted structured constraints; it does not reparse and overwrite confirmed values.
 

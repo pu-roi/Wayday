@@ -11,11 +11,53 @@ This document records the chronological activity history, milestone achievements
 
 | Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 29 | 6 | 0 | 23 | In Progress (20%) |
+| Tasks | 31 | 12 | 0 | 19 | In Progress (38%) |
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] DOC-07: Move the canonical README to the repository root and repair documentation rules, links, and skill references.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Documentation · entry point
+- **Summary**: Moved the full canonical README from docs/wayday to the repository root, preserving every section, product requirements and design-tool schema metadata. Rebased outgoing links and updated incoming links, ownership rules, and six affected project-skill references. Recorded D30 superseding the README-location part of D28; retained historical decision/progress context. Verified 121 local links/anchors across 17 maintained documents, identical product content and link destinations, unchanged seven skill frontmatters, correct three-root-Markdown layout, and unchanged application/historical source files. Documentation-only work; no Flutter checks required.
+
+
+### [2026-10-27] M2-04: Verify the empty-state editing workflow.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Android · checkpoint
+- **Summary**: Stage 1 integrated checkpoint passed: flutter analyze clean; flutter test 48/48; debug APK built with android-arm64,android-x64 using Android Studio OpenJDK25.0.3. API37 x86_64 emulator verified existing-database upgrade preserves all four tables, fresh empty startup/unset endpoints, consecutive creation, editing/notes/numeric time, repeat/day controls, independent recurring copies, clear/remove/delete Undo, populated force-stop/relaunch with exact table comparison, and cleared/deleted lists remaining empty. Used disposable secondary user10 and removed it after restoring owner user0 and original animation settings. Native font-scale1.3 and reduced-motion checks passed. Secondary-user cold startup showed Android system-process ANR and UI automation delays; choosing Wait recovered and no app crash occurred during the subsequent walkthrough. Physical-device, TalkBack and performance verification remain unclaimed. Independent team review approved final fixes; maintained docs updated; local screenshots/database evidence remain ignored.
+
+
+### [2026-10-27] M2-03: Replace unpredictable form dropdowns.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: UI · selectors
+- **Summary**: Replaced timing/repeat dropdowns with radio rows, weekday with confirmation sheet, and monthly day with validated numeric 1-31 input. Preserved notes, optional status, numeric time entry, draft Save/Back and metadata-only recurrence. Independent review found offscreen lazy-disposed monthly validation and zero-duration scroll recovery issues; both fixed with direct controller validation and jumpTo for reduced motion. Forty-item regression covers empty/32 and focus recovery. Focused 17 tests, full 48 tests and analyzer pass. Native API 37 walkthrough confirmed monthly32 rejection,31 acceptance, weekly normalization, weekday Cancel/Done and large-text controls.
+
+
+### [2026-10-27] M2-02: Define shared selection patterns.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: UI · shared design
+- **Summary**: Added typed selection options, reusable labeled radio rows and a single-choice sheet with pending selection, Done/Cancel, dismissal cancellation, keyboard semantics, focus restoration, scrolling and reduced motion. Documented tokens/behavior in DESIGN and generated bundled-font synthetic preview in ignored .impeccable/review/selection-controls.png. Component/editor focused suite passes 17 tests; full suite 48 and analyzer clean. Inspected native weekday sheet on API 37 emulator at font scale 1.3 and with animations removed. No new package or production component gallery.
+
+
+### [2026-10-27] M2-01: Start with user-created data.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Mobile · real data
+- **Summary**: Removed production sample factories, initial seeding and example-reset actions; new Android/browser state starts with empty lists and unset endpoints. Preserved schema version 1 and every existing row, including settings-missing orphan errands. Samples are explicit test-only fixtures. All eight repository tests and the integrated 48-test suite pass. Installed APK upgrade preserved every value in all four tables of the preexisting API 37 emulator database; fresh-user populated and cleared force-stop/relaunch checks passed. Existing user data was backed up locally and left intact. Browser state remains session-only.
+
+
+### [2026-10-27] DOC-06: Consolidate seven execution stages into five with explicit dependency paths, safe overlap, and preserved verification gates.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Documentation · execution plan
+- **Summary**: Consolidated the seven execution stages into five, moved map package/rendering feasibility into the early gates, grouped local trip storage with maps/places, and grouped navigation with integrated verification and pilot acceptance. Recorded D29 and explicit dependency paths and safe overlap, including interface ownership and serialized shared-schema changes. Verified that all 23 runtime tasks appear exactly once across the five stages, no stage precedes its prerequisites, detailed task specifications and runtime board rows match HEAD, and local links/anchors in the three affected documents resolve. Independent team-agent review approved the changes. Documentation only; no application implementation or Flutter checks.
+
 
 ### [2026-10-27] DOC-05: Audit all project skills against the consolidated documentation and update affected references, design guidance, and implementation boundaries before pushing.
 - **Status**: [x] DONE

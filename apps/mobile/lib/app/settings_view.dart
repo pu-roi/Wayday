@@ -1,13 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/widgets/feedback.dart';
-import '../features/today/presentation/today_controller.dart';
 import 'theme.dart';
 
-class SettingsView extends ConsumerWidget {
+class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+  Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Settings')),
     body: Align(
       alignment: Alignment.topCenter,
@@ -32,29 +30,19 @@ class SettingsView extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
-            Text('Try an example', style: context.type.titleMedium),
-            const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.restart_alt_rounded),
-              title: const Text('Reload example day'),
-              onTap: () {
-                ref.read(todayProvider.notifier).loadExample();
-                showFeedback(context, 'Example day restored.');
-              },
-            ),
-            const SizedBox(height: 24),
-            Text('About this preview', style: context.type.titleMedium),
+            Text('About Wayday', style: context.type.titleMedium),
             const SizedBox(height: 12),
             Text(
-              'Errands and recurring lists work in memory. Changes reset when the app restarts. Add recurring lists to Today whenever you choose; they are not added automatically.',
+              kIsWeb
+                  ? 'This browser preview keeps changes for this session. Add recurring lists to Today whenever you choose; they are not added automatically.'
+                  : 'Your errands and recurring lists are saved on this device. Add recurring lists to Today whenever you choose; they are not added automatically.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Maps are visual placeholders. Search, route planning, saved data, and reminders come later.',
+              'Maps are visual previews. Place search, trip planning, saved trips, and reminders are coming later.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),

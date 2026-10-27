@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
@@ -318,7 +319,9 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Example lists · Changes reset when the app restarts.',
+                kIsWeb
+                    ? 'Browser preview · Changes last for this session.'
+                    : 'Saved on this device.',
                 style: context.type.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),

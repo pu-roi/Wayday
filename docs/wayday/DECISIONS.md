@@ -128,7 +128,7 @@ Persist Today settings and errands, plus Recurring groups and their items, in an
 
 ## D18 — User-created startup data
 
-**Status:** Owner direction confirmed 2026-10-27; implementation pending.
+**Status:** Implemented and verified in Stage 1, 2026-10-27; see M2-01 and M2-04 in Progress.
 
 Remove production sample errands/lists, example-reset actions, and fabricated endpoint defaults. Start new Android databases and browser previews empty; examples may remain as explicit test fixtures. Preserve existing stored rows because their origin and user edits cannot be safely inferred from sample IDs or titles. D18 supersedes D17's future first-launch example seeding without changing its persistence implementation or verification history.
 
@@ -144,9 +144,9 @@ Public Overpass is for bounded exploration rather than the consumer app backend.
 
 ## D20 — Consistent selection controls
 
-**Status:** Proposed implementation defaults from the owner's UX research request, 2026-10-27; validate the interaction in Android.
+**Status:** Implemented and verified on the API 37 x86_64 Android emulator, 2026-10-27; physical-device and TalkBack checks remain unverified.
 
-Use visible radio rows for short timing/repeat sets, a shared selection sheet for weekdays, and validated numeric input for monthly day 1–31. Keep occasional commands in an overflow menu. Share labels, selected states, touch targets, focus/cancellation rules, and the existing Material 3 theme. This is a planned refinement, not a claim that the old dropdown widgets have been replaced. The application remains light Cornflower; selectable map styles apply only to the map.
+Use visible radio rows for short timing/repeat sets, a shared selection sheet for weekdays, and validated numeric input for monthly day 1–31. Keep occasional commands in an overflow menu. Share labels, selected states, touch targets, focus/cancellation rules, and the existing Material 3 theme. Stage 1 replaces the legacy timing/repeat/day dropdowns with these shared controls, preserving draft Save/Back behavior and metadata-only recurrence. The application remains light Cornflower; selectable map styles apply only to the map.
 
 ## D21 — Reviewable trips and external navigation
 
@@ -202,13 +202,29 @@ Remove the redundant root PRODUCT.md pointer after consolidating its product sch
 
 ## D28 — One Wayday documentation folder with fewer files
 
-**Status:** Owner feedback and documentation consolidation, 2026-10-27.
+**Status:** Owner feedback and documentation consolidation, 2026-10-27; the README location is superseded by D30.
 
 Keep all current Wayday project documents in docs/wayday/: README, PLANNING, PROGRESS, CONTRIBUTING, ARCHITECTURE, STACK, and DECISIONS. Keep AGENTS.md and DESIGN.md at the root, app-specific run instructions with the app, and historical Asikaso references in their existing locations. This replaces D27's split between docs/ and docs/wayday/.
 
 Consolidate PRODUCT.md into the README product-requirements section, retaining its scope, acceptance scenarios, and design-tool schema/platform/stack metadata. Remove ROADMAP.md because milestone sequencing and checkpoints already belong in Planning; Progress continues to record completed work rather than future sequencing. Consolidate DEVELOPMENT.md into Contributing, preserving verification boundaries, regional-data practices, backend prerequisites, and later platform/cloud checks. Update links and task-tracker paths without creating redirect files.
 
 Keep this decision log because it records rationale and superseded choices, including the owner's changes to earlier requirements. It is not another task board or progress log. This consolidation changes document ownership only; application capabilities remain at the existing implemented/planned status.
+
+## D29 — Five combined execution stages
+
+**Status:** Owner-selected five-stage plan, 2026-10-27; Stage 1 is implemented and verified, and Stages 2–5 remain planned.
+
+Group the existing implementation tasks into five stages: input cleanup, feasibility and contracts, maps/places/saved-trip foundations, automatic planning, and navigation/release evaluation. Pull regional package and Android map-rendering feasibility into the second stage, combine trip persistence with its local-data foundations, and group navigation with integrated verification and pilot acceptance.
+
+Keep all existing task IDs, prerequisites, acceptance criteria, and verification gates in [Planning](PLANNING.md#execution-order-and-checkpoints). Independent tasks may overlap once their prerequisites are complete; a stage label does not add an otherwise unnecessary dependency. Agree on shared interfaces before parallel work and serialize shared schema/migration changes. Fewer stage boundaries alone do not guarantee shorter implementation time. The automatic-planning release goal and Android-first scope still apply.
+
+## D30 — Root README as the project entry point
+
+**Status:** Explicit owner request, 2026-10-27.
+
+Move the complete README from docs/wayday/ to the repository root so GitHub and contributors can find the project overview immediately. Keep its documentation index, product requirements, design-tool schema marker, and platform/stack metadata in that single file. Update outgoing links, incoming references, project skills, and repository rules for the new location. Do not leave a second README or redirect at the old location.
+
+README.md, AGENTS.md, and DESIGN.md are the root Markdown documents. Keep supporting project documents in docs/wayday/. This changes D28's README location while preserving its other document ownership and consolidation decisions. Historical decision and progress entries retain their original context.
 
 ## Revisit before implementation or release
 

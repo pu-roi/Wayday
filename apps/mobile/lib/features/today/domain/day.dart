@@ -15,8 +15,8 @@ enum TravelProfile {
 class DayPlan {
   DayPlan({
     required List<Errand> errands,
-    this.from = 'PLP',
-    this.to = 'Home',
+    this.from = '',
+    this.to = '',
     this.departure = 510,
     this.deadline = 1080,
     this.profile = TravelProfile.motor,
