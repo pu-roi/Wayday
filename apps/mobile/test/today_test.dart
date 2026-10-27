@@ -11,11 +11,16 @@ import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'package:wayday/features/recurring/presentation/recurring_controller.dart';
 import 'package:wayday/core/widgets/feedback.dart';
 
+import 'package:wayday/features/today/data/day_repository.dart';
+import 'package:wayday/features/recurring/data/group_repository.dart';
+import 'fixtures/sample_data.dart';
+
 const captureKey = Key('capture');
 Future<ProviderContainer> launch(
   WidgetTester tester, {
   Size size = const Size(390, 844),
   double scale = 1,
+  bool withFixtures = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -29,7 +34,18 @@ Future<ProviderContainer> launch(
   await (FontLoader(
     'MaterialIcons',
   )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [
+      dayRepositoryProvider.overrideWithValue(
+        MemoryDayRepository(initialData: withFixtures ? fixtureDay() : null),
+      ),
+      groupRepositoryProvider.overrideWithValue(
+        MemoryGroupRepository(
+          initialData: withFixtures ? fixtureGroups() : null,
+        ),
+      ),
+    ],
+  );
   addTearDown(container.dispose);
   await tester.pumpWidget(
     UncontrolledProviderScope(
@@ -74,10 +90,73 @@ Future<void> add(WidgetTester tester, String title) async {
 }
 
 void main() {
-  testWidgets('notes save, cancel, clear and remain independent when copied', (
+  testWidgets('fresh startup is empty and has no example-reset actions', (
     tester,
   ) async {
     final container = await launch(tester);
+    expect(container.read(todayProvider).errands, isEmpty);
+    expect(container.read(todayProvider).from, isEmpty);
+    expect(container.read(todayProvider).to, isEmpty);
+    expect(find.text('Choose a starting point'), findsOneWidget);
+    expect(find.text('Choose a final destination'), findsOneWidget);
+    expect(find.text('What’s on your way today?'), findsOneWidget);
+    expect(find.byTooltip('Day options'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Plan my day'),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.text('Recurring'));
+    await tester.pumpAndSettle();
+    expect(container.read(recurringProvider), isEmpty);
+    expect(find.text('Weekly essentials'), findsNothing);
+    expect(find.byTooltip('New recurring list'), findsOneWidget);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reload example day'), findsNothing);
+    expect(find.text('Try an example'), findsNothing);
+  });
+
+  testWidgets(
+    'unset endpoints cancel unchanged and save actual manual labels',
+    (tester) async {
+      final container = await launch(tester);
+      await tester.tap(find.byKey(const Key('from-map')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('place-name')))
+            .controller!
+            .text,
+        isEmpty,
+      );
+      await tester.enterText(
+        find.byKey(const Key('place-name')),
+        'Unsaved label',
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(container.read(todayProvider).from, isEmpty);
+      await tester.tap(find.byKey(const Key('from-map')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('place-name')),
+        'Library entrance',
+      );
+      await tester.tap(find.text('Use this place'));
+      await tester.pumpAndSettle();
+      expect(container.read(todayProvider).from, 'Library entrance');
+      expect(container.read(todayProvider).to, isEmpty);
+    },
+  );
+
+  testWidgets('notes save, cancel, clear and remain independent when copied', (
+    tester,
+  ) async {
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.text('Recurring'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Stock up on groceries'));
@@ -126,7 +205,7 @@ void main() {
   testWidgets(
     'rapid additions retain input focus and keep the composer visible',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await reveal(tester, find.text('Add errand'));
       await tester.tap(find.text('Add errand'));
       await tester.pumpAndSettle();
@@ -164,7 +243,7 @@ void main() {
   testWidgets(
     'list disclosure animates, reverses mid-flight and retains errands',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       final disclosure = find.byKey(const Key('today-errands-disclosure'));
       final expanded = tester.getSize(disclosure).height;
       await tester.tap(find.text('Errands'));
@@ -192,7 +271,7 @@ void main() {
   testWidgets(
     'clear feedback times out and new messages replace old feedback',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await tester.tap(find.byTooltip('Day options'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Clear errands'));
@@ -223,7 +302,7 @@ void main() {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
-    await launch(tester);
+    await launch(tester, withFixtures: true);
     await tester.tap(find.text('Errands'));
     await tester.pump();
     expect(
@@ -241,7 +320,7 @@ void main() {
     (tester) async {
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
-      await launch(tester);
+      await launch(tester, withFixtures: true);
       expect(
         Theme.of(tester.element(find.text('Plan my day'))).brightness,
         Brightness.light,
@@ -257,7 +336,7 @@ void main() {
   testWidgets(
     'consecutive quick additions stay Anytime and survive tab changes',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await reveal(tester, find.text('Add errand'));
       await tester.tap(find.text('Add errand'));
       await tester.pumpAndSettle();
@@ -280,7 +359,7 @@ void main() {
   testWidgets('draft cancellation and title editing preserve confirmed rules', (
     tester,
   ) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.text('Capstone presentation'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('errand-title')), 'Unsaved');
@@ -305,7 +384,7 @@ void main() {
   testWidgets(
     'numeric time entry validates fields and correctly represents midnight',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await reveal(tester, find.text('Leave'));
       await tester.tap(find.text('Leave'));
       await tester.pumpAndSettle();
@@ -326,7 +405,7 @@ void main() {
     },
   );
   testWidgets('home deadline before departure is rejected', (tester) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await reveal(tester, find.text('Home by'));
     await tester.tap(find.text('Home by'));
     await tester.pumpAndSettle();
@@ -344,7 +423,7 @@ void main() {
   testWidgets(
     'map previews edit endpoints and errand locations without geocoding',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await tester.tap(find.byKey(const Key('from-map')));
       await tester.pumpAndSettle();
       expect(find.text('Map preview'), findsOneWidget);
@@ -374,7 +453,7 @@ void main() {
   testWidgets('all five transportation profiles remain selectable', (
     tester,
   ) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     for (final profile in TravelProfile.values) {
       await reveal(tester, find.text('Travel'));
       await tester.tap(find.text('Travel'));
@@ -387,7 +466,7 @@ void main() {
   testWidgets(
     'copying a recurring group prevents duplicates and preserves independent copies',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await tester.tap(find.text('Recurring'));
       await tester.pumpAndSettle();
       await capture(tester, 'v2-recurring');
@@ -429,7 +508,7 @@ void main() {
   testWidgets('new recurring list supports continuous add and validation', (
     tester,
   ) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.text('Recurring'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('New recurring list'));
@@ -463,7 +542,7 @@ void main() {
   testWidgets('cancelling a group draft does not change its saved items', (
     tester,
   ) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.text('Recurring'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit Weekly essentials'));
@@ -479,9 +558,10 @@ void main() {
   testWidgets(
     'removing from the focused editor offers working undo after pop',
     (tester) async {
-      final container = await launch(tester);
+      final container = await launch(tester, withFixtures: true);
       await tester.tap(find.text('Capstone presentation'));
       await tester.pumpAndSettle();
+      await reveal(tester, find.text('Remove errand'));
       await tester.tap(find.text('Remove errand'));
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).errands.length, 4);
@@ -493,7 +573,7 @@ void main() {
   testWidgets('clear and empty state retain undo and disable planning', (
     tester,
   ) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.byTooltip('Day options'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Clear errands'));
@@ -513,6 +593,7 @@ void main() {
     (tester) async {
       final container = await launch(
         tester,
+        withFixtures: true,
         size: const Size(320, 800),
         scale: 1.3,
       );
@@ -528,7 +609,7 @@ void main() {
     },
   );
   testWidgets('recurring rows open focused editing directly', (tester) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.text('Recurring'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Stock up on groceries'));
@@ -546,7 +627,7 @@ void main() {
     );
   });
   testWidgets('deleting a recurring list has working undo', (tester) async {
-    final container = await launch(tester);
+    final container = await launch(tester, withFixtures: true);
     await tester.tap(find.text('Recurring'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit Weekly essentials'));
@@ -561,7 +642,7 @@ void main() {
   testWidgets('planning still explains unavailable calculations honestly', (
     tester,
   ) async {
-    await launch(tester);
+    await launch(tester, withFixtures: true);
     await tester.tap(find.text('Plan my day'));
     await tester.pumpAndSettle();
     expect(

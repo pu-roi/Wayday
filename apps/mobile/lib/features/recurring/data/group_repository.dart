@@ -11,7 +11,10 @@ abstract interface class GroupRepository {
 }
 
 class MemoryGroupRepository implements GroupRepository {
-  List<ErrandGroup> _groups = List.unmodifiable(exampleGroups());
+  MemoryGroupRepository({List<ErrandGroup>? initialData})
+    : _groups = List.unmodifiable(initialData ?? const <ErrandGroup>[]);
+
+  List<ErrandGroup> _groups;
 
   @override
   List<ErrandGroup> read() => _groups;
@@ -22,35 +25,6 @@ class MemoryGroupRepository implements GroupRepository {
   }
 }
 
-List<ErrandGroup> exampleGroups() => [
-  ErrandGroup(
-    id: 'weekly',
-    name: 'Weekly essentials',
-    repeat: RepeatPattern.weekly,
-    items: const [
-      Errand(
-        id: 'weekly-groceries',
-        title: 'Stock up on groceries',
-        notes: 'Vegetables\nFruits\nMeat',
-      ),
-      Errand(id: 'weekly-laundry', title: 'Pick up the laundry'),
-      Errand(id: 'weekly-cat', title: 'Get cat food'),
-    ],
-  ),
-  ErrandGroup(
-    id: 'midweek',
-    name: 'A little reset',
-    items: const [
-      Errand(id: 'midweek-pharmacy', title: 'Stop by the pharmacy'),
-      Errand(
-        id: 'midweek-coffee',
-        title: 'Coffee and a quiet moment',
-        optional: true,
-      ),
-    ],
-  ),
-];
-
 class SqliteGroupRepository implements GroupRepository {
   SqliteGroupRepository._(this._database, this._groups);
 
@@ -58,19 +32,10 @@ class SqliteGroupRepository implements GroupRepository {
   final SerialWriteQueue _writes = SerialWriteQueue();
   List<ErrandGroup> _groups;
 
-  static Future<SqliteGroupRepository> open(
-    WaydayDatabase database, {
-    required List<ErrandGroup>? initialData,
-  }) async {
+  static Future<SqliteGroupRepository> open(WaydayDatabase database) async {
     final groupRows = await (database.select(
       database.recurringGroups,
     )..orderBy([(row) => OrderingTerm.asc(row.position)])).get();
-    if (groupRows.isEmpty && initialData != null) {
-      final repository = SqliteGroupRepository._(database, initialData);
-      await repository.save(initialData);
-      return repository;
-    }
-
     final itemRows = await (database.select(
       database.groupErrands,
     )..orderBy([(row) => OrderingTerm.asc(row.position)])).get();

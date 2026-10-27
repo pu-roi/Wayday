@@ -83,7 +83,6 @@ class TodayController extends Notifier<DayPlan> {
   );
   void restore(DayPlan day) => _commit(day);
   void clear() => _commit(state.copyWith(errands: []));
-  void loadExample() => _commit(exampleDay());
   void setEndpoint({required bool start, required String value}) {
     if (value.trim().isEmpty) return;
     _commit(

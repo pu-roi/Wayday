@@ -15,28 +15,8 @@ class LocalRepositories {
 
   static Future<LocalRepositories> open({WaydayDatabase? database}) async {
     final localDatabase = database ?? WaydayDatabase();
-    final savedSettings = await localDatabase
-        .select(localDatabase.daySettings)
-        .getSingleOrNull();
-    final isFirstLaunch = savedSettings == null;
-    late final SqliteDayRepository today;
-    late final SqliteGroupRepository recurring;
-    if (isFirstLaunch) {
-      recurring = await SqliteGroupRepository.open(
-        localDatabase,
-        initialData: exampleGroups(),
-      );
-      today = await SqliteDayRepository.open(
-        localDatabase,
-        initialData: exampleDay(),
-      );
-    } else {
-      today = await SqliteDayRepository.open(localDatabase, initialData: null);
-      recurring = await SqliteGroupRepository.open(
-        localDatabase,
-        initialData: null,
-      );
-    }
+    final today = await SqliteDayRepository.open(localDatabase);
+    final recurring = await SqliteGroupRepository.open(localDatabase);
     return LocalRepositories(
       database: localDatabase,
       today: today,
