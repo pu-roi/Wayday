@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Maps remain placeholders and production example removal is pending. The owner requested the next implementation plan on 2026-10-27; this documentation task does not start runtime changes. See [Product](README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
+Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Stage 1 adds empty startup and consistent selection controls while preserving stored data; maps remain placeholders. The owner authorized M2-01 through M2-04 on 2026-10-27. Planning and Progress record acceptance and the actual Android targets. See [Product](README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
 
 Use [Planning](PLANNING.md) as the single file for the implementation plan, task specifications, dependencies, live status, and assignment. Use [the documentation index](README.md) to find each authority. All current project documents and design-tool product metadata live in `docs/wayday/`; only `AGENTS.md` and `DESIGN.md` remain as root Markdown files. Keep milestone sequencing in Planning and completion evidence in Progress. Link to those authorities instead of duplicating their contents.
 
@@ -51,7 +51,7 @@ The [mobile README](../../apps/mobile/README.md) owns exact Flutter commands and
 
 Use the mobile README's analyze, test, run, and debug-build commands from apps/mobile/. Run affected behavioral cases during a slice and full mobile checks at milestone checkpoints.
 
-Preserve quick-add focus, save/cancel, notes and copy independence, timing, numeric validation, undo, reduced motion, feedback dismissal, persistence, and duplicate prevention. Tests that need examples must supply explicit synthetic fixtures when M2-01 removes production examples.
+Preserve quick-add focus, save/cancel, notes and copy independence, timing, numeric validation, undo, reduced motion, feedback dismissal, persistence, and duplicate prevention. Tests that need examples must supply explicit synthetic fixtures; production repositories start empty.
 
 Exercise Android force-stop/relaunch and offline cold starts where relevant. Widget tests and emulator screenshots do not establish TalkBack, physical-device frame rates, GPS quality, or background delivery. Record the actual target. Renderer captures use WAYDAY_CAPTURE=1 and the ignored .impeccable/review/ directory as described in the mobile README. Keep private locations and notes out of artifacts.
 
@@ -73,7 +73,7 @@ Each package needs source URL, acquisition time, source snapshot, region bounds,
 
 Offline rendering needs tiles, style, fonts/glyphs, and sprites; verify a real Android cold start with networking disabled. A remote PMTiles archive is still a network dependency. Select storage/download budgets from measurements; no current size or speed guarantee exists.
 
-No purchase, billing activation, external account, public hosting, or global installation is authorized by this documentation task. Existing hardware has finite disk, memory, and network capacity.
+Stage 1 implementation does not authorize purchases, billing activation, external accounts, public hosting, or global installations. Existing hardware has finite disk, memory, and network capacity.
 
 ### Backend after the routing gate
 

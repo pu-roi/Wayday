@@ -33,7 +33,7 @@ The mobile folder contains the Flutter application; see its [run instructions](.
 
 ## Product requirements
 
-Updated: 2026-10-27 (Asia/Manila). These requirements preserve the agreed product scope; this cleanup does not authorize runtime implementation. Reminder and later-platform acceptance cases apply to their later milestones, not the first usable release.
+Updated: 2026-10-27 (Asia/Manila). These requirements preserve the agreed product scope. The owner authorized Stage 1 cleanup and selection-control implementation; task status and verification belong in Planning and Progress. Reminder and later-platform acceptance cases apply to their later milestones, not the first usable release.
 
 ### Platform
 
@@ -47,7 +47,7 @@ Flutter/Dart. See the authoritative [stack inventory](STACK.md). Visual tokens a
 
 Wayday will help people complete several errands in one trip by choosing suitable places, ordering stops, and checking timing constraints. Initial users are people running errands in Philippine cities, with Pasig/Ortigas as the proposed pilot area.
 
-The current implementation is an Android Flutter app with a single light Cornflower theme, Today, and Recurring. The app stores Today and Recurring data in a local Drift/SQLite database; example errands and groups are seeded on first launch. Persistence across force-stop and relaunch was verified on the API 37 x86_64 emulator on 2026-10-27. Notes copy independently into Today. List insertion and disclosure have short transitions that honor reduced motion; themed in-app feedback expires automatically under ordinary navigation. Map selection is an illustrative placeholder with manual labels; time entry uses hour/minute fields. The full application capabilities below remain planned; there is no backend, automatic recurrence scheduler, or real route calculation yet. The browser preview continues to use in-memory sample data.
+The current implementation is an Android Flutter app with a single light Cornflower theme, Today, and Recurring. The app stores Today and Recurring data in a local Drift/SQLite database; new installations start with empty lists and unset endpoints, and existing saved rows are preserved. Persistence across force-stop and relaunch was verified on the API 37 x86_64 emulator on 2026-10-27. Notes copy independently into Today. List insertion and disclosure have short transitions that honor reduced motion; themed in-app feedback expires automatically under ordinary navigation. Map selection is an illustrative placeholder with manual labels; time entry uses hour/minute fields. Timing and repeat frequency use labeled radio rows, weekdays use a shared confirmation sheet, and monthly day uses validated numeric input. The full application capabilities below remain planned; there is no backend, automatic recurrence scheduler, or real route calculation yet. The browser preview starts empty and keeps changes in memory for the session.
 
 Build and verify Android first. iOS remains a later target; iOS tooling and device access do not block Android development.
 
@@ -55,13 +55,11 @@ Build and verify Android first. iOS remains a later target; iOS tooling and devi
 
 The owner requested the step-by-step plan on 2026-10-27. See [the implementation plan](PLANNING.md#task-specifications) for task dependencies and acceptance criteria; the paragraphs below describe product outcomes rather than implementation status.
 
-New installations will start with empty Today and Recurring lists and unset endpoints. Remove production example-seeding and reset actions, including browser preview defaults; retain explicit synthetic fixtures for tests. Preserve all existing database rows because seeded items may have been edited. Clearing saved content remains a deliberate user action.
-
 Use MapLibre with Protomaps regional map files, a custom Wayday style, and an indexed OSM-based place catalog. Start with measured Pasig/Ortigas coverage. Evaluate Overture only as a validated, attributed supplement. Users can search by name/category, inspect a branch and its available address, or choose a manual pin. Save confirmed coordinates, place identity, and provenance rather than treating a typed label as a located destination.
 
 The owner clarified the first usable release: users supply errands and necessary constraints, and Wayday recommends suitable stores, selects branches, chooses stop order, and calculates an estimated schedule using real road travel data. Users review or correct the result; they are not required to choose every store or build the itinerary themselves. Manual ordering and place selection remain optional overrides and internal development checkpoints. Validate road and POI feasibility early. Save the reviewed trip locally, then explicitly open Google Maps for the next stop. Completion is a manual user action; whole-trip handoff is secondary and respects target limits.
 
-Keep the light Cornflower application theme. Map styles may vary independently. Refine form selection controls using the proposed patterns in [Design](../../DESIGN.md), with their Android accessibility and draft behavior verified during implementation. Repeat settings remain descriptive metadata.
+Keep the light Cornflower application theme and reuse the implemented selection controls in [Design](../../DESIGN.md). Planning and Progress record their draft, accessibility, and Android checks. Map styles may vary independently when map integration is implemented. Repeat settings remain descriptive metadata.
 
 ### Current product direction
 

@@ -4,7 +4,7 @@ Updated: 2026-10-27 (Asia/Manila).
 
 This is the single implementation-planning document: execution order and checkpoints own milestone outcomes, the table owns live status and assignment, and task specifications own dependencies, inputs, expected results, acceptance criteria, and checks. [Progress](PROGRESS.md) records completion evidence; [README product requirements](README.md#product-requirements) define product behavior. Do not create a separate roadmap, plan, or duplicate live checklist.
 
-The current work updates documentation only. All runtime tasks remain planned. Begin with M2-01 when implementation is requested. Existing uncommitted app/database work and completed M1-01 evidence must be preserved.
+Stage 1, M2-01 through M2-04, is complete and verified using team agents. The next task is M3-01, the Pasig/Ortigas place-coverage audit. After that audit, the regional map package/rendering path and routing/contract path may proceed independently according to their prerequisites. Stages 2–5 remain planned. Preserve existing saved rows and completed M1-01 evidence.
 
 ## Release goal and confirmed decisions
 
@@ -20,21 +20,29 @@ The current work updates documentation only. All runtime tasks remain planned. B
 
 ## Current baseline
 
-Today and Recurring editing, notes, timing/repeat metadata, independent manual copies, the shared UI, and Android Drift/SQLite storage are implemented. M1-01 records force-stop/relaunch on the API 37 x86_64 emulator on 2026-10-27, analyzer/tests, and debug builds. Examples are still seeded and maps remain illustrative. Browser preview storage remains in memory. A planned feature below is not evidence of runtime implementation or physical-device verification.
+Today and Recurring editing, notes, timing/repeat metadata, independent manual copies, the shared UI, and Android Drift/SQLite storage are implemented. M1-01 records force-stop/relaunch on the API 37 x86_64 emulator on 2026-10-27, analyzer/tests, and debug builds. Stage 1 is implemented and verified: production examples/reset actions are removed, new state starts with empty lists and unset endpoints, and shared timing/repeat/weekday/monthly-day controls are in use. M2-04 records the 48-test suite, clean analyzer, ARM64/x86_64 debug APK, and API 37 emulator upgrade/restart evidence. Maps remain illustrative. Browser preview storage remains in memory. A planned feature below is not evidence of runtime implementation or physical-device verification.
 
 ## Execution order and checkpoints
 
-IDs remain stable for existing milestone references; dependencies, rather than numeric sorting, determine build order. Routing feasibility is deliberately pulled forward because automatic planning is required for release.
+The owner selected five combined stages on 2026-10-27. IDs remain stable for existing milestone references; dependencies, rather than numeric sorting, determine build order. Map rendering and routing feasibility run early because both are prerequisites for the intended release. These stages group checkpoints; implementation still proceeds through focused, verifiable tasks with their existing acceptance criteria.
 
-| Step | Tasks in order | Exit condition |
+| Stage | Tasks | Exit condition |
 | --- | --- | --- |
 | 1. Clean and stabilize input | M2-01, M2-02, M2-03, M2-04 | User-created data, predictable editing, and restart checks pass |
-| 2. Resolve high-risk foundations | M3-01, M5-01, M5-02 | Pilot POI coverage, real road estimates/vehicle support, and input/result contract are documented |
-| 3. Build real maps and places | M3-02 through M3-09 | Regional map, local catalog, optional place overrides, styles, and offline update/recovery checks pass |
-| 4. Persist trip results | M4-01 | Computed itinerary snapshots and progress can be saved/restored; synthetic inputs remain test fixtures |
-| 5. Automate the core planning | M5-03, M5-04, M5-05, M5-06 | Real alternatives and matrices produce independently validated branch/order/time results in the app |
-| 6. Connect navigation | M4-02, M4-03 | Automatic plan review, external navigation, and return/restart workflows pass end to end |
-| 7. Accept the first usable release | M5-07 | Pilot evidence demonstrates the complete automatic-planning role and communicates actual limitations |
+| 2. Resolve feasibility and contract gates | M3-01, M3-02, M3-03, M5-01, M5-02 | Pilot POI coverage, licensed regional package, Android map rendering, road/vehicle support, and input/result contract are verified or documented as required by their tasks |
+| 3. Build maps, places, and saved-trip foundations | M3-04 through M3-09, M4-01 | Confirmed places, searchable regional catalog, map selection/styles, offline update/recovery, and saved-trip restore checks pass; synthetic plans remain test fixtures |
+| 4. Deliver automatic planning | M5-03, M5-04, M5-05, M5-06 | Real alternatives and matrices produce independently validated branch/order/time results, review, corrections, and remaining-trip replanning in the app |
+| 5. Complete navigation and release evaluation | M4-02, M4-03, M5-07 | Google Maps handoff and integrated Android checks pass before pilot evaluation demonstrates the automatic-planning release criteria and records actual limitations |
+
+Use the following dependency paths within the combined stages:
+
+- **Stage 1:** M2-01 and M2-02 can proceed independently; M2-03 follows M2-02. M2-04 verifies both completed paths before feasibility work begins.
+- **Stage 2:** Complete M3-01 first. Then the map package/rendering path (M3-02 -> M3-03) can overlap the routing/contract path (M5-01 -> M5-02). Finish each feasibility gate before its dependent implementation.
+- **Stage 3:** Complete M3-04 before map selection (M3-05), catalog import (M3-06), or trip storage (M4-01). M4-01 also requires M5-02. Integrate M3-05 and M3-06 in M3-07, then complete M3-08 and M3-09. Serialize shared Drift schema changes and migrations even when the surrounding UI or catalog work overlaps.
+- **Stage 4:** M5-03 can begin after M5-02; M5-04 can begin after M5-02 and M3-06. These independent paths can overlap remaining Stage 3 work without waiting for its full checkpoint. M5-05 requires both; M5-06 additionally requires M4-01 and M3-07.
+- **Stage 5:** Complete M4-02 after M5-06. Run M4-03 only after M4-02 and M3-09; run M5-07 only after M4-03. Grouping navigation and evaluation does not make either checkpoint optional.
+
+When using multiple contributors or agents, agree on shared interfaces first and give each implementation slice a distinct owner and bounded responsibility. Sequence edits to shared contracts, repositories, schemas, and migrations. Run focused checks for each slice and retain every existing Android, offline, integration, and pilot acceptance checkpoint. Combining stages reduces handoffs and permits independent work to overlap; elapsed-time savings depend on available contributors and feasibility results.
 
 If a feasibility gate fails, record the measurements and revise the affected architecture or supported scope before dependent implementation. Do not silently label a map-only or manual-only result as the requested release.
 
@@ -54,10 +62,11 @@ If a feasibility gate fails, record the measurements and revise the affected arc
 | DOC-03 | Documentation | Move root project documentation into docs, consolidate the redundant product pointer, and repair references and task tracking. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | DOC-04 | Documentation | Consolidate current project documentation in docs/wayday and merge redundant product, roadmap, and development files into their remaining authorities. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | DOC-05 | Skills · documentation | Audit all project skills against the consolidated documentation and update affected references, design guidance, and implementation boundaries before pushing. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
-| M2-01 | Mobile · real data | Start with user-created data. | [ ] TODO |  |  |
-| M2-02 | UI · shared design | Define shared selection patterns. | [ ] TODO |  |  |
-| M2-03 | UI · selectors | Replace unpredictable form dropdowns. | [ ] TODO |  |  |
-| M2-04 | Android · checkpoint | Verify the empty-state editing workflow. | [ ] TODO |  |  |
+| DOC-06 | Documentation · execution plan | Consolidate seven execution stages into five with explicit dependency paths, safe overlap, and preserved verification gates. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| M2-01 | Mobile · real data | Start with user-created data. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| M2-02 | UI · shared design | Define shared selection patterns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| M2-03 | UI · selectors | Replace unpredictable form dropdowns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| M2-04 | Android · checkpoint | Verify the empty-state editing workflow. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M3-01 | Data · feasibility | Audit pilot place coverage. | [ ] TODO |  |  |
 | M5-01 | Routing · feasibility gate | Validate regional routing and vehicle support early. | [ ] TODO |  |  |
 | M5-02 | Planning · input contract | Define automatic-planning inputs and outcomes. | [ ] TODO |  |  |
@@ -92,7 +101,7 @@ Record task statuses only in the table above. Preserve completed task history; M
 
 For runtime milestones, use the analyze, test, Android run, and debug-build commands in [the mobile README](../../apps/mobile/README.md). Run focused behavior checks during small slices and full checks at milestone checkpoints. Exercise migrations with synthetic/authorized disposable data, then Android restart and offline scenarios. Avoid routine tests against community endpoints. Record physical-device versus emulator coverage honestly.
 
-For documentation-only changes, verify local links/anchors, task dependencies, current-versus-planned claims, tracker totals, and ignore rules. No runtime implementation or app test run is implied by this document update.
+For documentation-only changes, verify local links/anchors, task dependencies, current-versus-planned claims, tracker totals, and ignore rules. Documentation-only work does not imply runtime implementation or an app test run.
 
 Keep downloaded map data, generated catalogs/graphs/packages, private coordinates, databases, signing credentials, and local configuration out of Git. Recheck package/native notices and provider policies at adoption time. Free software still consumes storage, compute, electricity, and bandwidth; measure before promising service or distribution budgets.
 
