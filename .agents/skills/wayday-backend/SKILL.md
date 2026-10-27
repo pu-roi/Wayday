@@ -11,7 +11,7 @@ Read the root `AGENTS.md` and [Architecture](../../../docs/wayday/ARCHITECTURE.m
 
 Use one FastAPI modular monolith organized around places, routing, and planning. Keep HTTP handlers thin, business orchestration in domain services, persistence in repositories, and Valhalla translation in an adapter. Avoid inventing separately deployed feature services, a queue, or Redis without a measured need.
 
-Read [Product requirements](../../../docs/wayday/README.md#product-requirements) for behavior and [Stack](../../../docs/wayday/STACK.md) before changing an external dependency. Follow the early routing/vehicle feasibility gate and input-contract prerequisites in [Planning](../../../docs/wayday/PLANNING.md#task-specifications). [Contributing](../../../docs/wayday/CONTRIBUTING.md#backend-after-the-routing-gate) owns backend development and verification guidance. Load `wayday-api` when changing observable HTTP behavior, `wayday-database` for persistence changes, and `wayday-planning` for itinerary semantics. Do not load unrelated skills for a purely internal change.
+Read [Product requirements](../../../README.md#product-requirements) for behavior and [Stack](../../../docs/wayday/STACK.md) before changing an external dependency. Follow the early routing/vehicle feasibility gate and input-contract prerequisites in [Planning](../../../docs/wayday/PLANNING.md#task-specifications). [Contributing](../../../docs/wayday/CONTRIBUTING.md#backend-after-the-routing-gate) owns backend development and verification guidance. Load `wayday-api` when changing observable HTTP behavior, `wayday-database` for persistence changes, and `wayday-planning` for itinerary semantics. Do not load unrelated skills for a purely internal change.
 
 ## Preserve Wayday's operating model
 

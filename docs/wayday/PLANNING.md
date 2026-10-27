@@ -2,7 +2,7 @@
 
 Updated: 2026-10-27 (Asia/Manila).
 
-This is the single implementation-planning document: execution order and checkpoints own milestone outcomes, the table owns live status and assignment, and task specifications own dependencies, inputs, expected results, acceptance criteria, and checks. [Progress](PROGRESS.md) records completion evidence; [README product requirements](README.md#product-requirements) define product behavior. Do not create a separate roadmap, plan, or duplicate live checklist.
+This is the single implementation-planning document: execution order and checkpoints own milestone outcomes, the table owns live status and assignment, and task specifications own dependencies, inputs, expected results, acceptance criteria, and checks. [Progress](PROGRESS.md) records completion evidence; [README product requirements](../../README.md#product-requirements) define product behavior. Do not create a separate roadmap, plan, or duplicate live checklist.
 
 Stage 1, M2-01 through M2-04, is complete and verified using team agents. The next task is M3-01, the Pasig/Ortigas place-coverage audit. After that audit, the regional map package/rendering path and routing/contract path may proceed independently according to their prerequisites. Stages 2–5 remain planned. Preserve existing saved rows and completed M1-01 evidence.
 
@@ -63,6 +63,7 @@ If a feasibility gate fails, record the measurements and revise the affected arc
 | DOC-04 | Documentation | Consolidate current project documentation in docs/wayday and merge redundant product, roadmap, and development files into their remaining authorities. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | DOC-05 | Skills · documentation | Audit all project skills against the consolidated documentation and update affected references, design guidance, and implementation boundaries before pushing. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | DOC-06 | Documentation · execution plan | Consolidate seven execution stages into five with explicit dependency paths, safe overlap, and preserved verification gates. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| DOC-07 | Documentation · entry point | Move the canonical README to the repository root and repair documentation rules, links, and skill references. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-01 | Mobile · real data | Start with user-created data. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-02 | UI · shared design | Define shared selection patterns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-03 | UI · selectors | Replace unpredictable form dropdowns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
@@ -598,4 +599,4 @@ The former roadmap's readiness conditions remain applicable: verify native relea
 
 ## Documentation ownership
 
-Use [the documentation index](README.md). All current project documents live in docs/wayday/; only AGENTS.md and DESIGN.md remain as root Markdown files. README.md owns product requirements and design-tool product metadata; DESIGN.md owns UI patterns, ARCHITECTURE.md owns responsibilities, STACK.md owns technology/license/cost evidence, DECISIONS.md records reasons and superseded choices, CONTRIBUTING.md owns development practices, and PROGRESS.md records verified work. This file owns milestone outcomes, the implementation plan, and task board. Do not recreate separate Product, Roadmap, or Development files. Commands and plain repository paths above are relative to the repository root.
+Use [the documentation index](../../README.md). README.md, AGENTS.md, and DESIGN.md live at the root; supporting project documents remain in docs/wayday/. The root README.md owns the project overview, documentation index, product requirements, and design-tool product metadata; DESIGN.md owns UI patterns, ARCHITECTURE.md owns responsibilities, STACK.md owns technology/license/cost evidence, DECISIONS.md records reasons and superseded choices, CONTRIBUTING.md owns development practices, and PROGRESS.md records verified work. This file owns milestone outcomes, the implementation plan, and task board. Do not recreate separate Product, Roadmap, or Development files. Commands and plain repository paths above are relative to the repository root.

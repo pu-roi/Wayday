@@ -66,4 +66,4 @@ Automatic recurrence, task completion, real language parsing, business search, l
 - `assets/fonts/`: bundled Figtree and its OFL license.
 - `test/`: interaction and layout checks.
 
-The [product scope](../../docs/wayday/README.md#product-requirements), [decisions](../../docs/wayday/DECISIONS.md), and [architecture](../../docs/wayday/ARCHITECTURE.md) remain the broader project references. Historical Asikaso sources are preserved.
+The [product scope](../../README.md#product-requirements), [decisions](../../docs/wayday/DECISIONS.md), and [architecture](../../docs/wayday/ARCHITECTURE.md) remain the broader project references. Historical Asikaso sources are preserved.

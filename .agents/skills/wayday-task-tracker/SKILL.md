@@ -9,7 +9,7 @@ Use this skill when planning, updating, or completing tasks across the Wayday pr
 
 The canonical files are `docs/wayday/PLANNING.md` and `docs/wayday/PROGRESS.md`. Run the commands below from the repository root; do not recreate root copies of these documents.
 
-[README](../../../docs/wayday/README.md) owns the document index and product requirements; [Contributing](../../../docs/wayday/CONTRIBUTING.md#development-practices) owns development and verification guidance. Planning includes milestone outcomes and detailed task specifications, so do not create a separate roadmap, plan, or duplicate checklist. Progress records verified work and does not authorize starting future implementation.
+[README](../../../README.md) owns the document index and product requirements; [Contributing](../../../docs/wayday/CONTRIBUTING.md#development-practices) owns development and verification guidance. Planning includes milestone outcomes and detailed task specifications, so do not create a separate roadmap, plan, or duplicate checklist. Progress records verified work and does not authorize starting future implementation.
 
 ## Responsibilities
 

@@ -202,7 +202,7 @@ Remove the redundant root PRODUCT.md pointer after consolidating its product sch
 
 ## D28 — One Wayday documentation folder with fewer files
 
-**Status:** Owner feedback and documentation consolidation, 2026-10-27.
+**Status:** Owner feedback and documentation consolidation, 2026-10-27; the README location is superseded by D30.
 
 Keep all current Wayday project documents in docs/wayday/: README, PLANNING, PROGRESS, CONTRIBUTING, ARCHITECTURE, STACK, and DECISIONS. Keep AGENTS.md and DESIGN.md at the root, app-specific run instructions with the app, and historical Asikaso references in their existing locations. This replaces D27's split between docs/ and docs/wayday/.
 
@@ -217,6 +217,14 @@ Keep this decision log because it records rationale and superseded choices, incl
 Group the existing implementation tasks into five stages: input cleanup, feasibility and contracts, maps/places/saved-trip foundations, automatic planning, and navigation/release evaluation. Pull regional package and Android map-rendering feasibility into the second stage, combine trip persistence with its local-data foundations, and group navigation with integrated verification and pilot acceptance.
 
 Keep all existing task IDs, prerequisites, acceptance criteria, and verification gates in [Planning](PLANNING.md#execution-order-and-checkpoints). Independent tasks may overlap once their prerequisites are complete; a stage label does not add an otherwise unnecessary dependency. Agree on shared interfaces before parallel work and serialize shared schema/migration changes. Fewer stage boundaries alone do not guarantee shorter implementation time. The automatic-planning release goal and Android-first scope still apply.
+
+## D30 — Root README as the project entry point
+
+**Status:** Explicit owner request, 2026-10-27.
+
+Move the complete README from docs/wayday/ to the repository root so GitHub and contributors can find the project overview immediately. Keep its documentation index, product requirements, design-tool schema marker, and platform/stack metadata in that single file. Update outgoing links, incoming references, project skills, and repository rules for the new location. Do not leave a second README or redirect at the old location.
+
+README.md, AGENTS.md, and DESIGN.md are the root Markdown documents. Keep supporting project documents in docs/wayday/. This changes D28's README location while preserving its other document ownership and consolidation decisions. Historical decision and progress entries retain their original context.
 
 ## Revisit before implementation or release
 

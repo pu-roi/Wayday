@@ -2,11 +2,11 @@
 
 ## Current phase
 
-Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Stage 1 adds empty startup and consistent selection controls while preserving stored data; maps remain placeholders. The owner authorized M2-01 through M2-04 on 2026-10-27. Planning and Progress record acceptance and the actual Android targets. See [Product](README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
+Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Stage 1 adds empty startup and consistent selection controls while preserving stored data; maps remain placeholders. The owner authorized M2-01 through M2-04 on 2026-10-27. Planning and Progress record acceptance and the actual Android targets. See [Product](../../README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
 
-Use [Planning](PLANNING.md) as the single file for the implementation plan, task specifications, dependencies, live status, and assignment. Use [the documentation index](README.md) to find each authority. All current project documents and design-tool product metadata live in `docs/wayday/`; only `AGENTS.md` and `DESIGN.md` remain as root Markdown files. Keep milestone sequencing in Planning and completion evidence in Progress. Link to those authorities instead of duplicating their contents.
+Use [Planning](PLANNING.md) as the single file for the implementation plan, task specifications, dependencies, live status, and assignment. Use [the documentation index](../../README.md) to find each authority. The root README owns the project overview, documentation index, product requirements, and design-tool metadata. Supporting project documents live in `docs/wayday/`; `AGENTS.md` and `DESIGN.md` also remain at the root. Keep milestone sequencing in Planning and completion evidence in Progress. Link to those authorities instead of duplicating their contents.
 
-Read the [product scope](README.md#product-requirements), [decisions](DECISIONS.md), and [agent instructions](../../AGENTS.md) before proposing changes.
+Read the [product scope](../../README.md#product-requirements), [decisions](DECISIONS.md), and [agent instructions](../../AGENTS.md) before proposing changes.
 
 ## Making a change
 
@@ -57,10 +57,10 @@ Exercise Android force-stop/relaunch and offline cold starts where relevant. Wid
 
 ### Documentation ownership and checks
 
-- Follow [the documentation index](README.md). Only AGENTS.md and DESIGN.md remain as root Markdown files. Link to full requirements, task statuses, or setup commands instead of copying them.
+- Follow [the documentation index](../../README.md). README.md, AGENTS.md, and DESIGN.md remain at the root; supporting documents live in docs/wayday/. Link to full requirements, task statuses, or setup commands instead of copying them.
 - Resolve local Markdown links against each source file and check referenced anchors where useful.
 - Check product, decisions, architecture, stack, and plan for conflicting selected/implemented/verified claims.
-- Preserve the design-tool product schema marker in [the README](README.md) and historical Asikaso sources/screenshots. Supply docs/wayday/README.md explicitly to tools that need product context; do not recreate a separate product file.
+- Preserve the design-tool product schema marker in [the README](../../README.md) and historical Asikaso sources/screenshots. Supply README.md explicitly to tools that need product context; do not recreate a separate product file.
 - Keep source, notices, synthetic fixtures, and references trackable. Check ignore behavior for secrets, map packages, generated outputs, and local databases.
 - For changed skill instructions, inspect references and use the installed skill-creator's scripts/quick_validate.py when available.
 - Documentation-only edits use link, consistency, and ignore checks; they do not require rebuilding unchanged Flutter or prototype code.

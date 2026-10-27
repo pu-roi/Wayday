@@ -11,11 +11,18 @@ This document records the chronological activity history, milestone achievements
 
 | Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 30 | 11 | 0 | 19 | In Progress (36%) |
+| Tasks | 31 | 12 | 0 | 19 | In Progress (38%) |
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] DOC-07: Move the canonical README to the repository root and repair documentation rules, links, and skill references.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Documentation · entry point
+- **Summary**: Moved the full canonical README from docs/wayday to the repository root, preserving every section, product requirements and design-tool schema metadata. Rebased outgoing links and updated incoming links, ownership rules, and six affected project-skill references. Recorded D30 superseding the README-location part of D28; retained historical decision/progress context. Verified 121 local links/anchors across 17 maintained documents, identical product content and link destinations, unchanged seven skill frontmatters, correct three-root-Markdown layout, and unchanged application/historical source files. Documentation-only work; no Flutter checks required.
+
 
 ### [2026-10-27] M2-04: Verify the empty-state editing workflow.
 - **Status**: [x] DONE

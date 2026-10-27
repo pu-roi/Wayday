@@ -9,7 +9,7 @@ Read the repository's `AGENTS.md` and respect the current phase and latest user 
 
 ## Read the relevant context
 
-- Read [Product requirements](../../../docs/wayday/README.md#product-requirements) for current scope and correction behavior.
+- Read [Product requirements](../../../README.md#product-requirements) for current scope and correction behavior.
 - Read [Architecture](../../../docs/wayday/ARCHITECTURE.md) for feature boundaries, local persistence, and platform adapters.
 - Read [Stack](../../../docs/wayday/STACK.md) before selecting a map/location dependency or service.
 - Consult [Decisions](../../../docs/wayday/DECISIONS.md) when historical Asikaso behavior conflicts with current direction.
