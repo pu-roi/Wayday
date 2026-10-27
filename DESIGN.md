@@ -148,7 +148,7 @@ FilledButton is the Cornflower anchor with dark content, zero authored elevation
 
 ### Cards / Containers
 
-The shared white outlined surface groups related content in Today, Recurring, and group editing. Individual errands remain compact rows. Today contains editable From/To endpoints with labeled **Map** buttons, a collapsible list, and the grouped Leave/Home by/Travel footer. Initially it shows five errands, with **Show all** for longer lists. Recurring group headers toggle their contents while retaining the group name and repeat description; expanded content contains editable rows and **Add to Today**. Rows with nonempty notes show a readable-blue note icon (16 units) with the semantic label **Has notes**; the note body stays out of the compact list.
+The shared white outlined surface groups related content in Today, Recurring, and group editing. Individual errands remain compact rows. Today contains editable From/To endpoints with labeled **Map** buttons, a collapsible list, and the grouped Leave/Home by/Travel footer. Initially it shows up to five user errands, with **Show all** for longer lists. Recurring group headers toggle their contents while retaining the group name and repeat description; expanded content contains editable rows and **Add to Today**. Rows with nonempty notes show a readable-blue note icon (16 units) with the semantic label **Has notes**; the note body stays out of the compact list.
 
 ### Inputs / Fields
 
@@ -176,18 +176,25 @@ The focused editor contains a labeled **Notes (optional)** multiline field with 
 
 ### Navigation and editing
 
-[The shell](apps/mobile/lib/app/wayday_app.dart) has labeled Today, Recurring, and Settings destinations; the selected icon sits within a pale-blue indicator. Shared pushed editors keep native Back and visible Save actions. Recurring supports named lists, direct item editing, independent group drafts, deletion with Undo, and manual copying to Today. Repeat controls expand within the group editor and describe metadata only. [Settings](apps/mobile/lib/app/settings_view.dart) explains the preview and restores the example day; it has no appearance controls.
+[The shell](apps/mobile/lib/app/wayday_app.dart) has labeled Today, Recurring, and Settings destinations; the selected icon sits within a pale-blue indicator. Shared pushed editors keep native Back and visible Save actions. Recurring supports named lists, direct item editing, independent group drafts, deletion with Undo, and manual copying to Today. Repeat controls expand within the group editor and describe metadata only. [Settings](apps/mobile/lib/app/settings_view.dart) explains local Android storage, the in-memory browser preview, and unavailable planning features; it has no appearance or example-reset controls.
 
-### Planned selection and map refinements
+### Selection controls
 
-These patterns are implementation targets, not descriptions of replaced widgets. See [the implementation plan](docs/wayday/PLANNING.md#task-specifications), M2 and M3, and decisions D19–D20.
+[Shared selection controls](apps/mobile/lib/core/widgets/selection_controls.dart) use the existing Cornflower theme. The four timing choices and four repeat frequencies appear as labeled radio rows. Group labels use the section type role with an 8-unit gap; rows use 12-unit horizontal padding, a 14-unit corner radius, a minimum 48-unit height, and wrapping labels. Selection combines a checked radio, pale-blue container, and readable-blue content. State is not conveyed by color alone. Radio groups support Tab, arrow keys, and Space through Material's shared group semantics.
 
-- Use visible labeled radio rows for the four timing options and four repeat-frequency options. Keep the current value and field meaning clear.
-- Use a shared single-choice sheet for weekdays, with title, current selection, predictable dismissal, and focus restoration. Use validated numeric entry for monthly day 1–31. Keep occasional commands in an overflow menu.
-- Preserve draft save/cancel and avoid opening the keyboard for non-text choices. Check larger text, screen-reader semantics, long labels, and small screens. Do not force a floating menu off-screen to keep a nominal opening direction.
-- Extend the existing Material 3 theme and shared components as repeated patterns emerge; do not introduce a second broad UI kit without a demonstrated gap.
+Weekday entry opens the same scrollable single-choice sheet with a visible title, current selection, and seven weekday rows. Sheet headings use the title role, with a 16-unit gap before choices and actions. The sheet retains the 24-unit content inset and safe-area handling. Choices stay pending until **Done**; **Cancel**, Back, a swipe, or tapping outside discard them. Text drafts remain intact, the sheet opens without a text keyboard, and dismissal returns focus to the invoking day control. Remove animations makes its entry and exit transitions immediate.
+
+Monthly repeat uses a labeled numeric **Day of month** field accepting 1–31. Save validates the field even when Repeat is collapsed, opens the section, and focuses invalid input. Changing frequency discards invalid monthly text; switching a monthly day above 7 to a weekday pattern retains the existing Saturday default. Timing changes, repeat changes, and weekday selection update editor drafts; the outer **Save** or **Save list** commits them. Repeat remains metadata and never adds errands automatically.
+
+The synthetic harness in [selection component tests](apps/mobile/test/selection_controls_test.dart) supplies a small preview without adding production sample data or a gallery route. With `WAYDAY_CAPTURE=1`, it loads bundled Figtree/Material icons and writes the rendered preview to the ignored `.impeccable/review/selection-controls.png` path. Widget checks cover selection, dismissal, keyboard focus, large text, and reduced motion; Android walkthrough evidence belongs in Progress.
+
+### Planned map refinements
+
+Real map refinements remain implementation targets. See [the implementation plan](docs/wayday/PLANNING.md#task-specifications), M3, and decisions D19–D20.
+
 - The real map uses a custom Wayday style with readable street/city/landmark labels. Selected errand stops stay prominent; candidate categories, clustering, and zoom-dependent labels reflect the same filtered results as the search list.
 - Map-style selection applies only to the map. Keep app chrome light Cornflower, attribution visible, offline coverage honest, and manual-pin/no-results paths usable.
+- Extend the existing Material 3 theme as repeated patterns emerge; do not introduce a second broad UI kit without a demonstrated gap.
 
 ### Documentation previews
 

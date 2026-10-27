@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/place_picker.dart';
+import '../../../core/widgets/selection_controls.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../domain/errand.dart';
 
@@ -137,27 +138,17 @@ class _ErrandEditorState extends State<ErrandEditor> {
                 },
               ),
               const SizedBox(height: 24),
-              Text('When', style: context.type.titleMedium),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<TimingRule>(
-                initialValue: _timing,
-                isExpanded: true,
-                items: TimingRule.values
-                    .map(
-                      (rule) => DropdownMenuItem(
-                        value: rule,
-                        child: Text(rule.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _timing = value;
-                      _timeError = null;
-                    });
-                  }
-                },
+              SelectionRadioGroup<TimingRule>(
+                label: 'When',
+                selectedValue: _timing,
+                options: [
+                  for (final rule in TimingRule.values)
+                    SelectionOption(value: rule, label: rule.label),
+                ],
+                onChanged: (value) => setState(() {
+                  _timing = value;
+                  _timeError = null;
+                }),
               ),
               if (_timing != TimingRule.anytime) ...[
                 const SizedBox(height: 8),

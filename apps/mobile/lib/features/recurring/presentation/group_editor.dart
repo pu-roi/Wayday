@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/section_surface.dart';
+import '../../../core/widgets/selection_controls.dart';
 import '../../errands/domain/errand.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
@@ -24,16 +26,59 @@ class _GroupEditorState extends ConsumerState<GroupEditor> {
   late List<Errand> _items = [...widget.group.items];
   late RepeatPattern _repeat = widget.group.repeat;
   late int _day = widget.group.day;
+  late final _monthDay = TextEditingController(text: '${widget.group.day}');
+  final _monthDayFocus = FocusNode();
+  final _monthDayAnchor = GlobalKey();
+  final _weekdayFocus = FocusNode();
+  final _scroll = ScrollController();
   bool _scheduleOpen = false;
   String? _itemsError;
   @override
   void dispose() {
     _name.dispose();
+    _monthDay.dispose();
+    _monthDayFocus.dispose();
+    _weekdayFocus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
-  void _save() {
-    if (!(_form.currentState?.validate() ?? false)) return;
+  Future<void> _save() async {
+    final scrollDuration = WaydayMotion.duration(context);
+    // A long list can dispose the field; its monthly draft still needs validation.
+    final invalidMonthDay =
+        _repeat == RepeatPattern.monthly &&
+        _validateMonthDay(_monthDay.text) != null;
+    final validForm = _form.currentState?.validate() ?? false;
+    if (invalidMonthDay) {
+      setState(() => _scheduleOpen = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      if (scrollDuration == Duration.zero) {
+        _scroll.jumpTo(0);
+      } else {
+        await _scroll.animateTo(
+          0,
+          duration: scrollDuration,
+          curve: WaydayMotion.curve,
+        );
+      }
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      _form.currentState?.validate();
+      _monthDayFocus.requestFocus();
+      final fieldContext = _monthDayAnchor.currentContext;
+      if (fieldContext != null && fieldContext.mounted) {
+        await Scrollable.ensureVisible(
+          fieldContext,
+          alignment: .5,
+          duration: scrollDuration,
+        );
+      }
+      return;
+    }
+    if (!validForm) return;
+    if (_repeat == RepeatPattern.monthly) _day = int.parse(_monthDay.text);
     if (_items.isEmpty) {
       setState(() => _itemsError = 'Add at least one errand to this list.');
       return;
@@ -50,6 +95,22 @@ class _GroupEditorState extends ConsumerState<GroupEditor> {
           ),
         );
     Navigator.pop(context);
+  }
+
+  String? _validateMonthDay(String? value) {
+    final day = int.tryParse(value ?? '');
+    return day == null || day < 1 || day > 31
+        ? 'Use a day from 1 to 31.'
+        : null;
+  }
+
+  void _changeRepeat(RepeatPattern value) {
+    if (_monthDayFocus.hasFocus) _monthDayFocus.unfocus();
+    setState(() {
+      _repeat = value;
+      if (value != RepeatPattern.monthly && _day > 7) _day = 6;
+      _monthDay.text = '$_day';
+    });
   }
 
   Future<void> _edit(Errand item) async {
@@ -94,6 +155,7 @@ class _GroupEditorState extends ConsumerState<GroupEditor> {
         child: Form(
           key: _form,
           child: ListView(
+            controller: _scroll,
             padding: const EdgeInsets.all(24),
             children: [
               TextFormField(
@@ -137,57 +199,72 @@ class _GroupEditorState extends ConsumerState<GroupEditor> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<RepeatPattern>(
-                      initialValue: _repeat,
-                      isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'How often'),
-                      items: RepeatPattern.values
-                          .map(
-                            (pattern) => DropdownMenuItem(
-                              value: pattern,
-                              child: Text(pattern.label),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _repeat = value;
-                            if (value != RepeatPattern.monthly && _day > 7) {
-                              _day = 6;
-                            }
-                          });
-                        }
-                      },
+                    SelectionRadioGroup<RepeatPattern>(
+                      label: 'How often',
+                      selectedValue: _repeat,
+                      options: [
+                        for (final pattern in RepeatPattern.values)
+                          SelectionOption(value: pattern, label: pattern.label),
+                      ],
+                      onChanged: _changeRepeat,
                     ),
-                    if (_repeat != RepeatPattern.asNeeded) ...[
+                    if (_repeat == RepeatPattern.monthly) ...[
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<int>(
-                        key: ValueKey(_repeat),
-                        initialValue: _day,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: _repeat == RepeatPattern.monthly
-                              ? 'Day of month'
-                              : 'Day',
+                      SizedBox(
+                        key: _monthDayAnchor,
+                        child: TextFormField(
+                          key: const Key('repeat-month-day'),
+                          controller: _monthDay,
+                          focusNode: _monthDayFocus,
+                          keyboardType: TextInputType.number,
+                          maxLength: 2,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Day of month',
+                            helperText: 'Choose a day from 1 to 31.',
+                            counterText: '',
+                          ),
+                          validator: _validateMonthDay,
+                          onChanged: (value) {
+                            final day = int.tryParse(value);
+                            if (day != null && day >= 1 && day <= 31) {
+                              setState(() => _day = day);
+                            }
+                          },
+                          onTap: () => _monthDay.selection = TextSelection(
+                            baseOffset: 0,
+                            extentOffset: _monthDay.text.length,
+                          ),
                         ),
-                        items: [
-                          for (
-                            var day = 1;
-                            day <= (_repeat == RepeatPattern.monthly ? 31 : 7);
-                            day++
-                          )
-                            DropdownMenuItem(
-                              value: day,
-                              child: Text(
-                                _repeat == RepeatPattern.monthly
-                                    ? 'Day $day'
-                                    : weekdays[day - 1],
-                              ),
-                            ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) setState(() => _day = value);
+                      ),
+                    ] else if (_repeat != RepeatPattern.asNeeded) ...[
+                      const SizedBox(height: 12),
+                      ListTile(
+                        key: const Key('repeat-weekday'),
+                        focusNode: _weekdayFocus,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Day'),
+                        subtitle: Text(weekdays[_day - 1]),
+                        trailing: const Icon(Icons.expand_more_rounded),
+                        onTap: () async {
+                          final day = await chooseSingleChoice<int>(
+                            context,
+                            title: 'Day',
+                            options: [
+                              for (var day = 1; day <= weekdays.length; day++)
+                                SelectionOption(
+                                  value: day,
+                                  label: weekdays[day - 1],
+                                ),
+                            ],
+                            selectedValue: _day,
+                            returnFocusNode: _weekdayFocus,
+                          );
+                          if (day != null && mounted) {
+                            setState(() => _day = day);
+                          }
                         },
                       ),
                     ],
