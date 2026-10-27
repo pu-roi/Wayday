@@ -22,6 +22,20 @@ Stage 1, M2-01 through M2-04, is complete and verified using team agents. The ne
 
 Today and Recurring editing, notes, timing/repeat metadata, independent manual copies, the shared UI, and Android Drift/SQLite storage are implemented. M1-01 records force-stop/relaunch on the API 37 x86_64 emulator on 2026-10-27, analyzer/tests, and debug builds. Stage 1 is implemented and verified: production examples/reset actions are removed, new state starts with empty lists and unset endpoints, and shared timing/repeat/weekday/monthly-day controls are in use. M2-04 records the 48-test suite, clean analyzer, ARM64/x86_64 debug APK, and API 37 emulator upgrade/restart evidence. Maps remain illustrative. Browser preview storage remains in memory. A planned feature below is not evidence of runtime implementation or physical-device verification.
 
+The owner requested a source audit before further changes. The read-only audit on 2026-10-27 confirmed the following integration boundaries; analyzer and all 48 existing tests passed again during that audit.
+
+| Existing implementation to reuse | Missing capability and owning task |
+| --- | --- |
+| One shared `choosePlace` / `PlacePicker` screen, used by Today endpoints and the shared errand editor | Geographic rendering in M3-03; coordinate persistence in M3-04; confirmed pin selection in M3-05; catalog search in M3-06/M3-07 |
+| `Errand`, `DayPlan`, Today/Recurring controllers and repository interfaces | Place identity/provenance in M3-04; planning input/result contract in M5-02; separate saved-trip state in M4-01 |
+| Four-table Drift schema v1, serialized transactional saves, native provider injection and memory preview repositories | Data-preserving schema extensions through the existing database; no parallel personal-data store |
+| Shared errand rows/composer/editor, selection and time sheets, feedback, motion and Cornflower theme | Feature-specific map/search/review controls; preserve existing draft, focus, cancellation and copy behavior |
+| Plan my day action with an unavailable-feature explanation | Planning services in M5-03 through M5-05 and mobile review/replanning in M5-06 |
+
+`DayPlan` currently stores editable input, not a computed itinerary. Existing place values are labels without coordinates. The map is a custom-painted illustration, and the search icon does not query a catalog. No map, location, network-client or external-navigation integration dependency, backend implementation, saved-trip model or completion state exists. Keep new catalog, routing and solver logic out of Today and picker widgets.
+
+The audit also found that optimistic controller saves report failures only to the debug log. Transaction rollback protects stored rows, but the UI has no save-failure or retry state. Address that bounded gap as part of M4-01 before claiming reliable saved-trip persistence; it does not require rewriting the current editing architecture before map feasibility.
+
 ## Execution order and checkpoints
 
 The owner selected five combined stages on 2026-10-27. IDs remain stable for existing milestone references; dependencies, rather than numeric sorting, determine build order. Map rendering and routing feasibility run early because both are prerequisites for the intended release. These stages group checkpoints; implementation still proceeds through focused, verifiable tasks with their existing acceptance criteria.
@@ -46,6 +60,32 @@ When using multiple contributors or agents, agree on shared interfaces first and
 
 If a feasibility gate fails, record the measurements and revise the affected architecture or supported scope before dependent implementation. Do not silently label a map-only or manual-only result as the requested release.
 
+## Stage 2 execution brief
+
+This brief makes the next execution concrete without starting runtime work. Preserve the five stages and task IDs above. The first executable task remains M3-01; the source audit does not satisfy its real-data acceptance criteria.
+
+1. **M3-01: establish the pilot evidence.** Select 35 public destinations independently of OSM availability: five each for groceries/wet markets, pharmacies, banks, offices, food, haircuts and landmarks, with three groceries and two wet markets in the combined grocery category. Record the sample and exact Pasig/Ortigas study bounds before comparing source records. Review exact branches, positions, duplicate/missing records, business-status signals and hours. Keep unavailable evidence unknown. Publish stable sample IDs, independent dated references, expected branch/address, source matches/IDs and the evidence behind each assessment. Record extraction bounds/filter, tool versions, snapshot/retrieval dates and raw-extract checksums with the reproducible recipe. Evaluate Overture against the same sample only where OSM gaps justify supplementation; record an explicit include/defer decision. Finish with supported region/categories and limitations or a required revision; sample match rates are not population completeness estimates.
+2. **M3-02 then M3-03: prepare and display the real map.** Prepare the licensed regional tiles and all style/font/sprite resources, measure their storage requirements, and validate a pinned Flutter/native renderer on Android. Replace the existing picker's illustrative surface through one shared map component, retaining its page layout and all current callers. During renderer feasibility, keep `choosePlace` returning a manual label and label that behavior accurately; render public geographic markers only as verification data, without attaching invented coordinates to user labels. Saving a selected pin belongs to M3-05.
+3. **M5-01 then M5-02: validate roads and define the planner contract.** After M3-01, this path may run alongside the map path. Measure a bounded local road-engine setup against public journeys and transport/vehicle restrictions, then define versioned inputs/results from demonstrated support. Distinguish the supported pilot boundary from any surrounding-road buffer needed for the graph; investigate clipping before calling a sampled journey unreachable. Complete the named duration/buffer, date/timezone, dependency, candidate/solve-limit and error-state decisions before dependent planner code. Evaluation tooling is separate from the production API; service implementation remains M5-03.
+4. **Integrate and review the checkpoint.** Verify the renderer through existing From/To and errand entry points, online and after an offline cold start. Preserve manual-label editing, draft cancellation, list persistence and independent Recurring copies. Record measurements, unsupported capabilities and emulator versus physical-device evidence; complete each task only against its own acceptance criteria.
+5. **Hand off to Stage 3 through the existing boundaries.** M3-04 adds confirmed-place values and one data-preserving migration. M3-05 then changes the shared picker result once and connects pin confirmation to the current endpoint/editor drafts. M3-06/M3-07 add the separate catalog and search. M4-01 adds saved computed trips after M3-04 and M5-02. Keep the current editable day model separate from computed plans, progress and stale-result state.
+
+### Team ownership and integration rules
+
+| Owner | Bounded responsibility | Shared-file rule |
+| --- | --- | --- |
+| Data agent | M3-01 extraction/matching evidence, then M3-02 public map-package preparation | Own assigned data tooling/evidence only; return findings to the lead for maintained documentation |
+| Map/mobile agent | M3-03 shared map component, existing picker integration and focused Android/widget checks | Own assigned map/picker/tests; lead serializes dependency and Android configuration edits |
+| Routing/planning agent | M5-01 road-engine evaluation, then M5-02 contract proposal and synthetic acceptance examples | Own separate evaluation/contract artifacts; no edits to the shared personal database or map UI |
+| Lead agent | Source baseline, prerequisites, shared interfaces/configuration, documentation, tracking and combined checks | Sole editor of shared maintained documents, dependency files and schema changes unless explicitly reassigned |
+| Review agent | Inspect each combined checkpoint for regressions, evidence and data preservation | Read-only review after integration; lead applies fixes or reassigns bounded files |
+
+Use at most two workers alongside the lead, consistent with the available team slots; bring in the reviewer after a worker finishes. After M3-01, the data agent completes M3-02 before handing the map path to the map/mobile agent, while the routing/planning agent owns the other path. Assign exclusive file ownership before each slice; creating parallel agents does not permit concurrent edits to contracts, dependencies, schemas or maintained documents.
+
+Keep raw geographic downloads, generated packages/graphs, database files and native captures in existing ignored data/review locations. Track only lawful bounded audit evidence, small synthetic fixtures, authored tooling, configuration examples and preparation recipes. Recheck official package/provider documentation and licenses when adopting actual versions; no package version or regional size is claimed verified by this planning update.
+
+**Stage 2 exit evidence:** reproducible pilot coverage and source decision; complete regional package and measured size; real Android rendering/pan/zoom/labels/markers/attribution and offline cold start; measured road/vehicle support and limits; reviewed planning input/result contract. Run the mobile README's analyzer, full tests and debug build for renderer integration, including existing editing/persistence regressions. Check Back, keyboard/insets, large text, reduced motion and attribution through the existing picker; renderer feasibility must not require a location permission prompt. Missing/corrupt packages must show an honest unavailable state without modifying personal data. A failed gate keeps dependent tasks pending until the affected choice is revised and verified.
+
 ## Status legend
 
 - `[ ] TODO`: planned, not implemented.
@@ -64,6 +104,7 @@ If a feasibility gate fails, record the measurements and revise the affected arc
 | DOC-05 | Skills · documentation | Audit all project skills against the consolidated documentation and update affected references, design guidance, and implementation boundaries before pushing. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | DOC-06 | Documentation · execution plan | Consolidate seven execution stages into five with explicit dependency paths, safe overlap, and preserved verification gates. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | DOC-07 | Documentation · entry point | Move the canonical README to the repository root and repair documentation rules, links, and skill references. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| DOC-08 | Documentation · implementation readiness | Ground Stage 2 execution and integration boundaries in the source audit, with team ownership and verification gates. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-01 | Mobile · real data | Start with user-created data. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-02 | UI · shared design | Define shared selection patterns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M2-03 | UI · selectors | Replace unpredictable form dropdowns. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
@@ -203,6 +244,7 @@ Measure whether open place data supports real errands in Pasig/Ortigas before pr
 **Acceptance criteria:**
 
 - Compare OSM and optional Overture records against a documented sample of at least 30 public destinations across groceries/wet markets, pharmacies, banks, offices, food, haircuts, and landmarks.
+- Use the 35-destination stratified sample in the Stage 2 execution brief; select it independently of source matches and record the exact study bounds before extraction. Retain unmatched and ambiguous sample entries in reported denominators. Record a repeatable matching method and the evidence supporting branch/pin judgments rather than treating source presence as proof of accuracy.
 - Record source/license/date, branch accuracy, pin accuracy, duplicates, missing names, closed-business signals, and hours availability; use permission-compatible references and no personal addresses.
 - Publish measured findings and supported boundaries; record an explicit decision if coverage requires a different region, source, or narrower feature claim.
 
@@ -283,6 +325,7 @@ Validate the selected MapLibre Flutter binding with the actual project toolchain
 **Acceptance criteria:**
 
 - Render the regional package with working pan/zoom, labels, markers, and unobscured attribution; identify the exact pinned plugin and native requirements.
+- Reuse the existing shared picker and allocated map area. Keep manual-label confirmation and editor cancellation intact at this gate; do not persist marker coordinates until M3-04/M3-05 supply the confirmed-place contract and migration. Keep downloaded-package/native failures isolated from personal data and preserve a readable browser fallback when native rendering is unsupported there.
 - Verify an offline cold start with bundled or installed tiles, fonts, and sprites; a remote PMTiles URL alone is not an offline map.
 - Record startup/rendering behavior, storage use, failure behavior, and supported-platform limitations; revisit the choice if this gate fails.
 
@@ -425,8 +468,9 @@ Build the local trip repository and review model used by automatic planning. Syn
 - Store planned stops, notes, date/timezone, estimates and their provenance, warnings, completed history, and the input revision locally; add a data-preserving migration when needed.
 - Allow manual order/place changes as explicit overrides; mark affected estimates stale until recalculated rather than presenting an altered order as a valid optimized schedule.
 - Restore a saved trip offline after restart, preserving independent Recurring originals and user completion state.
+- Expose pending/saved/failed states and reconcile optimistic edits with durable storage. A failed write must preserve the last saved trip, retain the user's recoverable draft, and show an actionable retry without reporting unsaved changes as saved. Retry must apply the latest intended revision without overwriting newer edits or completion history. Navigation requiring a saved itinerary waits for durable save success.
 
-**Verification:** Repository/migration/widget cases for plan round-trip, interruption, stale inputs, completion recovery, and independent copies; Android offline restart.
+**Verification:** Repository/migration/widget cases for plan round-trip, interruption, stale inputs, completion recovery, and independent copies; Android offline restart. Exercise failed replacement of a nonempty baseline, visible failure with retained draft, successful retry/reopen and newer edits during a failed/in-flight save, preserving Today and Recurring originals.
 
 **Likely areas:** Future trips domain/repository/schema, review state, and focused tests.
 

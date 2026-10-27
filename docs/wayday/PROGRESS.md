@@ -11,11 +11,18 @@ This document records the chronological activity history, milestone achievements
 
 | Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 31 | 12 | 0 | 19 | In Progress (38%) |
+| Tasks | 32 | 13 | 0 | 19 | In Progress (40%) |
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] DOC-08: Ground Stage 2 execution and integration boundaries in the source audit, with team ownership and verification gates.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Documentation · implementation readiness
+- **Summary**: Recorded the read-only source audit and Stage 2 execution brief in the existing Planning authority. Defined a 35-destination independently selected pilot sample, reproducible provenance and matching evidence, map/routing parallel paths, exclusive agent ownership and Android/offline gates. Preserve the existing picker/layout/editors/repositories; separate renderer, confirmed-place migration, pin selection, catalog search and computed-trip responsibilities. Added durable-save failure/retry acceptance to M4-01. Independent team review approved after navigation-dependency wording clarification. Verified 121 local links/anchors across 17 maintained documents, preserved all 31 prior task records and dependency declarations, and restricted changes to Planning/Progress. Prior source-audit analyzer and 48 tests passed; this planning-only update changes no runtime code, installs no packages and completes no map/routing tasks.
+
 
 ### [2026-10-27] DOC-07: Move the canonical README to the repository root and repair documentation rules, links, and skill references.
 - **Status**: [x] DONE
