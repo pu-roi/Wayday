@@ -14,6 +14,7 @@ import 'package:wayday/core/widgets/feedback.dart';
 import 'package:wayday/features/today/data/day_repository.dart';
 import 'package:wayday/features/recurring/data/group_repository.dart';
 import 'fixtures/sample_data.dart';
+import 'package:wayday/features/maps/presentation/regional_map.dart';
 
 const captureKey = Key('capture');
 Future<ProviderContainer> launch(
@@ -36,6 +37,7 @@ Future<ProviderContainer> launch(
   )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
   final container = ProviderContainer(
     overrides: [
+      mapPlatformSupportedProvider.overrideWithValue(false),
       dayRepositoryProvider.overrideWithValue(
         MemoryDayRepository(initialData: withFixtures ? fixtureDay() : null),
       ),
@@ -139,6 +141,8 @@ void main() {
       );
       await tester.pageBack();
       await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       expect(container.read(todayProvider).from, isEmpty);
       await tester.tap(find.byKey(const Key('from-map')));
       await tester.pumpAndSettle();
@@ -146,7 +150,9 @@ void main() {
         find.byKey(const Key('place-name')),
         'Library entrance',
       );
-      await tester.tap(find.text('Use this place'));
+      await tester.tap(find.text('Use name only'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm location'));
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).from, 'Library entrance');
       expect(container.read(todayProvider).to, isEmpty);
@@ -272,9 +278,7 @@ void main() {
     'clear feedback times out and new messages replace old feedback',
     (tester) async {
       final container = await launch(tester, withFixtures: true);
-      await tester.tap(find.byTooltip('Day options'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Clear errands'));
+      await tester.tap(find.byKey(const Key('clear-errands')));
       await tester.pumpAndSettle();
       expect(find.text('Errands cleared.'), findsOneWidget);
       expect(find.text('Undo'), findsOneWidget);
@@ -421,18 +425,23 @@ void main() {
     );
   });
   testWidgets(
-    'map previews edit endpoints and errand locations without geocoding',
+    'manual map labels edit endpoints and errand locations without geocoding',
     (tester) async {
       final container = await launch(tester, withFixtures: true);
       await tester.tap(find.byKey(const Key('from-map')));
       await tester.pumpAndSettle();
-      expect(find.text('Map preview'), findsOneWidget);
+      expect(
+        find.text('Search places, landmarks, or addresses'),
+        findsOneWidget,
+      );
       await capture(tester, 'v2-map');
       await tester.enterText(
         find.byKey(const Key('place-name')),
         'Campus entrance',
       );
-      await tester.tap(find.text('Use this place'));
+      await tester.tap(find.text('Use name only'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm location'));
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).from, 'Campus entrance');
       await tester.tap(find.text('Capstone presentation'));
@@ -443,7 +452,9 @@ void main() {
         find.byKey(const Key('place-name')),
         'University hall',
       );
-      await tester.tap(find.text('Use this place'));
+      await tester.tap(find.text('Use name only'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm location'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
@@ -574,9 +585,7 @@ void main() {
     tester,
   ) async {
     final container = await launch(tester, withFixtures: true);
-    await tester.tap(find.byTooltip('Day options'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Clear errands'));
+    await tester.tap(find.byKey(const Key('clear-errands')));
     await tester.pumpAndSettle();
     expect(find.text('What’s on your way today?'), findsOneWidget);
     await capture(tester, 'v2-empty');
@@ -646,11 +655,21 @@ void main() {
     await tester.tap(find.text('Plan my day'));
     await tester.pumpAndSettle();
     expect(
-      find.textContaining('Route calculations, branch suggestions'),
+      find.textContaining('Travel times and opening hours are not checked'),
       findsOneWidget,
     );
-    await tester.tap(find.text('Keep editing'));
+    await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Get documents from the registrar'), findsOneWidget);
   });
+  testWidgets(
+    'profile navigation shows local profile without sample identity',
+    (tester) async {
+      await launch(tester);
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      expect(find.text('Your profile'), findsOneWidget);
+      expect(find.text('Jace Bellen'), findsNothing);
+    },
+  );
 }

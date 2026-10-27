@@ -14,9 +14,18 @@ dependencies:
   go_router: ^18.1.0
   drift: ^2.35.3
   drift_flutter: ^0.3.1
+  maplibre_gl:
+    path: third_party/maplibre_gl
+  geolocator: 14.1.1
+  crypto: 3.0.7
+  http: ^1.6.0
+  path_provider: ^2.1.6
+  sqlite3: ^3.8.0
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   drift_dev: ^2.35.2
@@ -24,6 +33,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/maps/pilot/
+    - assets/maps/pilot/fonts/NotoSansRegular/
+    - assets/maps/pilot/sprites/
+    - assets/maps/pilot/notices/
   fonts:
     - family: Figtree
       fonts:

@@ -33,7 +33,8 @@ ICONS_COMMIT = "92510779634f4a006c61ea70e50cb8c52c765a81"
 SOURCE = "https://build.protomaps.com/20261026.pmtiles"
 ARCHIVE = CACHE / "pilot-20261026-z15.pmtiles"
 BOUNDS = [121.045, 14.548, 121.116, 14.617]
-FONT = "Noto Sans Regular"
+SOURCE_FONT = "Noto Sans Regular"
+FONT = "NotoSansRegular"
 USER_AGENT = "WaydayMapPackage/0.1 (+https://github.com/pu-roi/Wayday)"
 
 
@@ -94,11 +95,11 @@ def asset_tree() -> dict:
 def fetch_assets() -> list[dict]:
     tree = asset_tree()
     selected = [entry for entry in tree["tree"] if (
-        entry["path"].startswith(f"fonts/{FONT}/")
+        entry["path"].startswith(f"fonts/{SOURCE_FONT}/")
         or entry["path"] in {"fonts/OFL.txt", "scripts/LICENSE.md", "README.md"}
         or entry["path"] in {f"sprites/v4/light{suffix}" for suffix in (".json", ".png", "@2x.json", "@2x.png")}
     )]
-    if sum(entry["path"].startswith(f"fonts/{FONT}/") for entry in selected) != 256:
+    if sum(entry["path"].startswith(f"fonts/{SOURCE_FONT}/") for entry in selected) != 256:
         raise ValueError("Pinned fontstack is not the expected 256 glyph ranges")
 
     def get(entry: dict) -> None:
@@ -233,8 +234,8 @@ def build(cli: Path, copy_to_app: bool) -> None:
         for entry in entries:
             source = CACHE / "assets" / entry["path"]
             path = entry["path"]
-            if path.startswith("fonts/" + FONT + "/"):
-                target = staging / path
+            if path.startswith("fonts/" + SOURCE_FONT + "/"):
+                target = staging / "fonts" / FONT / source.name
             elif path.startswith("sprites/v4/"):
                 target = staging / "sprites" / source.name
             else:
@@ -253,7 +254,7 @@ def build(cli: Path, copy_to_app: bool) -> None:
         (staging / "style.json").write_text(json.dumps(style, indent=2) + "\n", encoding="utf-8")
         (staging / "source-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         manifest = {
-            "formatVersion": 1, "id": "pasig-ortigas-20261026-z15-v1", "region": "Pasig / Ortigas pilot",
+            "formatVersion": 1, "id": "pasig-ortigas-20261026-z15-v2", "region": "Pasig / Ortigas pilot",
             "boundsWestSouthEastNorth": BOUNDS, "minZoom": 0, "maxZoom": 15,
             "sourceDate": "2026-10-26", "sourceSnapshot": metadata.get("planetiler:osm:osmosisreplicationtime"),
             "styleFile": "style.json", "archiveFile": "pilot.pmtiles", "tileSchema": "Protomaps 4.15.2",

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/day_repository.dart';
 import '../domain/day.dart';
+import '../../places/domain/place_intent.dart';
 
 final dayRepositoryProvider = Provider<DayRepository>(
   (ref) => MemoryDayRepository(),
@@ -31,6 +32,11 @@ class TodayController extends Notifier<DayPlan> {
       persistSafely(
         ref.read(dayRepositoryProvider).save(day),
         label: 'Today errands',
+        onFailure: () => ref
+            .read(saveFailuresProvider.notifier)
+            .failed('Today errands', () => _commit(state)),
+        onSuccess: () =>
+            ref.read(saveFailuresProvider.notifier).saved('Today errands'),
       ),
     );
   }
@@ -58,6 +64,15 @@ class TodayController extends Notifier<DayPlan> {
   );
   int addGroup({required String groupId, required List<Errand> errands}) {
     final copies = <Errand>[];
+    final idMap = <String, String>{};
+    for (final existing in state.errands) {
+      if (existing.sourceGroupId == groupId && existing.sourceItemId != null) {
+        idMap[existing.sourceItemId!] = existing.id;
+      }
+    }
+    for (final item in errands) {
+      idMap.putIfAbsent(item.id, () => 'copy-${_nextId++}');
+    }
     for (final item in errands) {
       if (state.errands.any(
         (existing) =>
@@ -67,7 +82,11 @@ class TodayController extends Notifier<DayPlan> {
         continue;
       }
       copies.add(
-        item.copyForToday(newId: 'copy-${_nextId++}', groupId: groupId),
+        item.copyForToday(
+          newId: idMap[item.id]!,
+          groupId: groupId,
+          idMap: idMap,
+        ),
       );
     }
     if (copies.isNotEmpty) {
@@ -83,17 +102,19 @@ class TodayController extends Notifier<DayPlan> {
   );
   void restore(DayPlan day) => _commit(day);
   void clear() => _commit(state.copyWith(errands: []));
-  void setEndpoint({required bool start, required String value}) {
-    if (value.trim().isEmpty) return;
+  void setEndpoint({required bool start, required PlaceIntent value}) {
+    if (value.label.trim().isEmpty) return;
     _commit(
       start
-          ? state.copyWith(from: value.trim())
-          : state.copyWith(to: value.trim()),
+          ? state.copyWith(from: value.label.trim(), fromPlace: value)
+          : state.copyWith(to: value.label.trim(), toPlace: value),
     );
   }
 
   void setProfile(TravelProfile value) =>
       _commit(state.copyWith(profile: value));
+  void setDate(DateTime value) =>
+      _commit(state.copyWith(date: calendarDate(value)));
   void setTimes({int? departure, int? deadline}) =>
       _commit(state.copyWith(departure: departure, deadline: deadline));
 }

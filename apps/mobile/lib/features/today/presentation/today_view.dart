@@ -10,6 +10,9 @@ import '../../../core/widgets/section_surface.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
+import '../../review/presentation/day_review_view.dart';
+import '../../maps/presentation/place_map.dart';
+import '../../maps/presentation/regional_map.dart';
 import '../domain/day.dart';
 import 'today_controller.dart';
 
@@ -67,6 +70,7 @@ class _TodayViewState extends ConsumerState<TodayView> {
       context,
       title: start ? 'Starting point' : 'Final destination',
       initial: start ? day.from : day.to,
+      initialPlace: start ? day.fromPlace : day.toPlace,
     );
     if (value != null && mounted) {
       ref.read(todayProvider.notifier).setEndpoint(start: start, value: value);
@@ -139,39 +143,14 @@ class _TodayViewState extends ConsumerState<TodayView> {
       ),
     ),
   );
-  void _planning() => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    builder: (sheetContext) => SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.route_rounded, size: 32, color: context.wayday.link),
-              const SizedBox(height: 20),
-              Text('Your day starts here.', style: context.type.titleLarge),
-              const SizedBox(height: 12),
-              Text(
-                'This build is for shaping your day. Route calculations, branch suggestions, and travel times are coming later.',
-                style: context.type.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(sheetContext),
-                  child: const Text('Keep editing'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+  Future<void> _planning() async {
+    final saved = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const DayReviewView()));
+    if (saved == true && mounted) showFeedback(context, 'Manual order saved.');
+  }
+
   @override
   Widget build(BuildContext context) {
     final day = ref.watch(todayProvider);
@@ -181,12 +160,11 @@ class _TodayViewState extends ConsumerState<TodayView> {
         title: Text('Today', style: context.type.headlineLarge),
         actions: [
           if (day.errands.isNotEmpty)
-            PopupMenuButton<String>(
-              tooltip: 'Day options',
-              onSelected: (_) => _clear(),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'clear', child: Text('Clear errands')),
-              ],
+            TextButton.icon(
+              key: const Key('clear-errands'),
+              onPressed: _clear,
+              icon: const Icon(Icons.clear_all_rounded),
+              label: const Text('Clear'),
             ),
           const SizedBox(width: 8),
         ],
@@ -200,12 +178,27 @@ class _TodayViewState extends ConsumerState<TodayView> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                child: Text(
-                  MaterialLocalizations.of(
-                    context,
-                  ).formatFullDate(DateTime.now()),
-                  style: context.type.bodyMedium?.copyWith(
-                    color: context.colors.onSurfaceVariant,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('trip-date'),
+                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                    label: Text(
+                      MaterialLocalizations.of(
+                        context,
+                      ).formatFullDate(DateTime.parse(day.date)),
+                    ),
+                    onPressed: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.parse(day.date),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (date != null && mounted) {
+                        ref.read(todayProvider.notifier).setDate(date);
+                      }
+                    },
                   ),
                 ),
               ),
@@ -325,6 +318,36 @@ class _TodayViewState extends ConsumerState<TodayView> {
                       onLeave: () => _time(true),
                       onDeadline: () => _time(false),
                       onTravel: _travel,
+                    ),
+                    SizedBox(
+                      height: 220,
+                      child: ref.watch(mapPlatformSupportedProvider)
+                          ? ref.watch(placeMapBuilderProvider)(
+                              PlaceMapRequest(
+                                philippinesOverview: true,
+                                iconOnlyAttribution: true,
+                                pins: [
+                                  if (day.fromPlace.hasCoordinates)
+                                    MapPin('A', day.fromPlace),
+                                  for (var i = 0; i < day.errands.length; i++)
+                                    if (day
+                                        .errands[i]
+                                        .placeIntent
+                                        .hasCoordinates)
+                                      MapPin(
+                                        '${i + 1}',
+                                        day.errands[i].placeIntent,
+                                      ),
+                                  if (day.toPlace.hasCoordinates)
+                                    MapPin('Z', day.toPlace),
+                                ],
+                              ),
+                            )
+                          : const Center(
+                              child: Text(
+                                'Map preview is available on Android.',
+                              ),
+                            ),
                     ),
                   ],
                 ),

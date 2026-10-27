@@ -25,6 +25,7 @@ key.properties
 coverage/
 **/android/local.properties
 **/android/.gradle/
+**/android/.kotlin/
 **/ios/Pods/
 **/ios/.symlinks/
 **/ios/Flutter/ephemeral/

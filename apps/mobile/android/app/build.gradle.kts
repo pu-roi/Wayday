@@ -17,6 +17,12 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "dev.wayday.wayday"
+        // Flutter integration tests uninstall their target by default. Isolate
+        // the memory-only map harness from the owner's installed personal data.
+        // Dart normalizes Windows environment keys to uppercase.
+        if (providers.gradleProperty("WAYDAY_MAP_TEST").orNull == "true") {
+            applicationIdSuffix = ".maptest"
+        }
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -46,4 +52,12 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // 13.7.1 fixes PMTiles asset byte ranges and queries during map detachment.
+    // Keep this paired with maplibre_gl 0.27.1 until a verified plugin upgrade.
+    implementation("org.maplibre.gl:android-sdk-opengl") {
+        version { strictly("13.7.1") }
+    }
 }

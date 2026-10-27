@@ -14,6 +14,9 @@ Natural Earth: public domain; https://www.naturalearthdata.com/about/terms-of-us
 Glyphs: Noto Sans Regular, Copyright 2022 The Noto Project Authors.
 SIL Open Font License 1.1; full text in Noto-OFL.txt. The packaged fontstack is
 the upstream generated Noto Sans Regular asset, not every script/font variant.
+The runtime path/fontstack alias NotoSansRegular avoids spaces in Android Flutter
+asset URLs. Glyph PBF bytes are unchanged from the upstream Noto Sans Regular files;
+this alias does not rename or claim authorship of the original font software.
 
 Sprites: Protomaps basemaps-assets sprites/v4/light, derived from tangrams/icons.
 MIT-licensed icons; copyright and full license in Tangram-Icons-MIT.txt.

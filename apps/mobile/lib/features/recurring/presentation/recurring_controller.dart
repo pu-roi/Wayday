@@ -36,6 +36,11 @@ class RecurringController extends Notifier<List<ErrandGroup>> {
       persistSafely(
         ref.read(groupRepositoryProvider).save(state),
         label: 'Recurring lists',
+        onFailure: () => ref
+            .read(saveFailuresProvider.notifier)
+            .failed('Recurring lists', () => _commit(state)),
+        onSuccess: () =>
+            ref.read(saveFailuresProvider.notifier).saved('Recurring lists'),
       ),
     );
   }

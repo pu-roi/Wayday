@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../../core/data/serial_write_queue.dart';
@@ -50,15 +51,19 @@ class SqliteGroupRepository implements GroupRepository {
             for (final item in itemRows.where(
               (item) => item.groupId == group.id,
             ))
-              Errand(
-                id: item.id,
-                title: item.title,
-                place: item.place,
-                notes: item.notes,
-                timing: _parseTiming(item.timing),
-                minute: item.minute,
-                optional: item.optional,
-              ),
+              item.details != null
+                  ? Errand.fromJson(
+                      jsonDecode(item.details!) as Map<String, dynamic>,
+                    )
+                  : Errand(
+                      id: item.id,
+                      title: item.title,
+                      place: item.place,
+                      notes: item.notes,
+                      timing: _parseTiming(item.timing),
+                      minute: item.minute,
+                      optional: item.optional,
+                    ),
           ],
         ),
     ]);
@@ -119,6 +124,7 @@ GroupErrandsCompanion _toGroupErrand(
   timing: errand.timing.name,
   minute: Value(errand.minute),
   optional: errand.optional,
+  details: Value(jsonEncode(errand.toJson())),
 );
 
 RepeatPattern _parseRepeat(String name) => RepeatPattern.values.firstWhere(
