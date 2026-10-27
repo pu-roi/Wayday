@@ -66,6 +66,11 @@ node_modules/
 *.db-shm
 *.log
 
+# Regional map assets are prepared locally; preserve empty buildable directories.
+/apps/mobile/assets/maps/pilot/**
+!/apps/mobile/assets/maps/pilot/**/
+!/apps/mobile/assets/maps/pilot/**/.gitkeep
+
 # Machine-specific editor / OS files
 .idea/
 .vscode/*

@@ -1,0 +1,28 @@
+Wayday Pasig/Ortigas pilot map package
+
+This is a bounded development/feasibility package, not nationwide offline coverage,
+a complete place-search catalog, a routing graph, or a computed itinerary.
+
+Basemap tiles: Protomaps daily build 20261026, schema 4.15.2.
+Derived from OpenStreetMap and Natural Earth. The Protomaps basemap download is
+distributed as an ODbL Produced Work. Retain visible OpenStreetMap attribution.
+Attribution: Copyright OpenStreetMap contributors; https://www.openstreetmap.org/copyright
+License: Open Database License 1.0; https://opendatacommons.org/licenses/odbl/1-0/
+Download/distribution terms: https://docs.protomaps.com/basemaps/downloads
+Natural Earth: public domain; https://www.naturalearthdata.com/about/terms-of-use/
+
+Glyphs: Noto Sans Regular, Copyright 2022 The Noto Project Authors.
+SIL Open Font License 1.1; full text in Noto-OFL.txt. The packaged fontstack is
+the upstream generated Noto Sans Regular asset, not every script/font variant.
+
+Sprites: Protomaps basemaps-assets sprites/v4/light, derived from tangrams/icons.
+MIT-licensed icons; copyright and full license in Tangram-Icons-MIT.txt.
+Upstream asset README and preparation-script BSD notice are included for provenance.
+Assets pinned to basemaps-assets commit 028c18f713baecad011301ff7a69acc39bcc2ae7.
+
+Wayday style: authored for the existing Cornflower/Canvas design. It does not
+change the repository's unresolved license for original project work. No Protomaps
+style code is copied. Names, roads and POIs shown are source geography, not fixtures.
+
+All runtime tiles, font glyphs and sprites are local. External links in attribution
+and notices are source/license references, not online map-resource fallbacks.

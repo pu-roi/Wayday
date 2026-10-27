@@ -112,8 +112,8 @@ Keep raw geographic downloads, generated packages/graphs, database files and nat
 | M3-01 | Data · feasibility | Audit pilot place coverage. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
 | M5-01 | Routing · feasibility gate | Validate regional routing and vehicle support early. | [-] IN_PROGRESS | Roi Cambe (@pu-roi) |  |
 | M5-02 | Planning · input contract | Define automatic-planning inputs and outcomes. | [ ] TODO |  |  |
-| M3-02 | Maps · data packages | Prepare a licensed regional map package. | [-] IN_PROGRESS | Roi Cambe (@pu-roi) |  |
-| M3-03 | Maps · Android feasibility | Render the regional map on Android. | [ ] TODO |  |  |
+| M3-02 | Maps · data packages | Prepare a licensed regional map package. | [x] DONE | Roi Cambe (@pu-roi) | 2026-10-27 |
+| M3-03 | Maps · Android feasibility | Render the regional map on Android. | [-] IN_PROGRESS | Roi Cambe (@pu-roi) |  |
 | M3-04 | Local data · places | Persist confirmed place coordinates. | [ ] TODO |  |  |
 | M3-05 | Places · manual selection | Save a place chosen on the map. | [ ] TODO |  |  |
 | M3-06 | Places · local catalog | Import a searchable regional POI catalog. | [ ] TODO |  |  |

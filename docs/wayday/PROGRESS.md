@@ -11,11 +11,18 @@ This document records the chronological activity history, milestone achievements
 
 | Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 32 | 14 | 2 | 16 | In Progress (43%) |
+| Tasks | 32 | 15 | 2 | 15 | In Progress (46%) |
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] M3-02: Prepare a licensed regional map package.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Maps · data packages
+- **Summary**: Prepared the bounded Protomaps 4.15.2 map package from 20261026.pmtiles using pmtiles1.31.2. Verified archive 8,046,175 bytes, zoom0-15, exact pilot bounds, MVT/gzip and CLI verify. Complete package 268 payload files 14,370,151 bytes plus 47,944-byte manifest, including all256 Noto Sans Regular glyph ranges, four light sprites, authored Wayday style, OFL/MIT/OSM notices and SHA256 per-file manifest. Source assets pinned to commit028c18f713baecad011301ff7a69acc39bcc2ae7 and checked against Git blob hashes. Extraction17.30s/40requests/8.4MB transfer; cached repeat7.58s with identical manifest/payload hashes, Pythonpeak28.4MB (excludes earlier CLI/native rendering). Five offline failure tests and lead verification passed. Raw/generated/app-package resources remain ignored; tracked tooling preserves prior packages and nested repository markers. Native/offline Android rendering remains M3-03.
+
 
 ### [2026-10-27] M3-01: Audit pilot place coverage.
 - **Status**: [x] DONE
