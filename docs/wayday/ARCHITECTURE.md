@@ -1,6 +1,6 @@
 # Planned architecture
 
-Status, 2026-10-27: the Android shell, Today, Recurring, and local Drift/SQLite persistence are implemented at `apps/mobile/`; M1-01 records emulator restart verification. The browser preview remains in memory. Maps are placeholders. Stage 1 removes example seeding and adds shared editing selectors; new state starts empty and existing saved rows are preserved. The selected map/place/trip architecture below is planned. The backend root `services/api/` still contains only a `.gitkeep` marker. See [the implementation plan](PLANNING.md#task-specifications) for dependency gates.
+Status, 2026-10-27: Android Today, Recurring, and local Drift/SQLite persistence exist at `apps/mobile/`; the browser preview remains in memory. Reconciliation adds an online search adapter, confirmed-place values, map pin selection, manual review, schema migration and legacy-workspace recovery. These additions require integrated Android verification before readiness is claimed. The measured local routing study and versioned planning contract remain feasibility evidence, not production planning. Rudy's bounded place service has been copied into `services/api/` for review; the app does not depend on it. See [README product requirements](../../README.md#product-requirements) and [Decisions](DECISIONS.md) for current product boundaries and rationale.
 
 ## Responsibility map
 
@@ -9,7 +9,7 @@ flowchart TD
     UI[Flutter views] --> VM[Feature view models]
     VM --> REPO[Repositories]
     REPO --> LOCAL[Drift / SQLite: tasks and saved trips]
-    REPO --> CATALOG[Installed regional POI catalog and search index]
+    REPO --> SEARCH[Online Philippines place search]
     REPO --> API[Later FastAPI: travel estimates and planning]
     API --> POI[PostgreSQL / PostGIS when server catalog queries need it]
     API --> ROAD[Valhalla: road matrix and geometry]
@@ -20,7 +20,7 @@ flowchart TD
     VM --> REMINDERS[Native geofences and local notifications]
 ```
 
-The phone owns personal state and, in the next slice, installed regional map/catalog data and search. A later backend provides real road estimates and automatic planning after feasibility. Map rendering, place search, road routing, stop scheduling, and external navigation are separate responsibilities. Reminder delivery remains later platform work.
+The phone owns personal state and offline regional map data. Per D35, the initial place search is online and Philippines-wide through a Photon-compatible adapter; coverage and reliability still require qualification. A later backend provides real road estimates and automatic planning after feasibility. Map rendering, place search, road routing, stop scheduling, and external navigation are separate responsibilities. Reminder delivery remains later platform work.
 
 ## Frontend: features with MVVM
 
@@ -43,15 +43,17 @@ apps/mobile/lib/
 
 Widgets do not call SQL or provider APIs directly. Repository contracts return application models rather than provider-specific objects. Cross-feature operations use shared contracts or explicit application services rather than importing another feature's widgets.
 
-The current shared errand model includes plain-text notes. Its copy operation carries notes into Today without retaining a mutable link to the template. List/disclosure motion and transient Material feedback live in `core/widgets/`; they have no service or plugin dependency. Today settings, errands, and Recurring groups/items are stored locally on Android. New personal state starts empty. Missing Today settings are initialized without replacing existing errand rows; no production example-seeding or reset path remains. Schema version 1 is retained, and test-only fixtures are supplied explicitly. Web preview state remains in memory; no synchronization outbox or account system is present.
+The map feature retains the regional offline-package validator and renderer, and adds an online MapLibre pin-selection surface. The shared picker combines search, saved places and map positioning in one route and returns a provider-independent place value. A dedicated search controller debounces input, serializes requests and ignores stale responses; only the latest pending query is retained. Search/map failures retain explicit name-only entry. Camera recentering preserves selected place provenance; user movement creates a manual pin and clears outdated identity/address details. The regional package validator checks its manifest, paths, hashes, PMTiles bounds and local resources. Neither renderer calculates routes or establishes business accuracy.
+
+The shared errand model retains plain-text notes and independent copies. Today settings, errands, Recurring groups and saved places are stored locally on Android. Schema version 2 adds place and errand details without replacing version-1 rows. The recovery flow reads Rudy's workspace and imports into a separate database; when both databases exist, users choose the source and both originals remain. Save failures expose retry. Web preview state remains in memory; no synchronization outbox or account system is present.
 
 Keep limited text parsing on the phone so note entry and correction work offline. Store the original note, explicit edits, and suggestions distinctly. The backend validates the submitted structured constraints; it does not reparse and overwrite confirmed values.
 
 ## Next local place and trip boundaries — planned
 
-Use a provider-independent confirmed-place value for start/end and errands: label, coordinates, optional address, source identity, and source snapshot date. Preserve unresolved legacy labels without inventing coordinates. Add a migration from the existing schema version rather than rebuilding the personal database. Recurring copies retain independent place values.
+Use the provider-independent place value for start/end and errands: label, coordinates, optional address, source identity, and source snapshot date. The schema upgrade preserves unresolved legacy labels without inventing coordinates. Recurring copies retain independent place values. Verify upgrade and recovery behavior on Android as well as with synthetic databases.
 
-Keep the searchable POI catalog separate from the basemap: vector tiles omit or simplify source attributes and are not the search database. Use bounded indexed queries over an installed regional catalog. Personal pins, notes, and corrections remain separate from replaceable public data. Source updates retain provenance, resolve duplicates deliberately, and never overwrite personal edits.
+Keep place search separate from the basemap: vector tiles omit or simplify source attributes and are not the search database. D35 selects online search across the Philippines; choose and validate a provider, filter by country rather than a rectangular approximation, and retain manual selection when unavailable. An installed regional catalog remains a possible later offline capability. Personal pins, notes, and corrections remain separate from replaceable public data. Preserve available provenance and do not overwrite personal edits.
 
 A map package includes PMTiles, the matching style schema, fonts/glyphs, sprites, region bounds, versions, checksums, and license/attribution metadata. Install compatible map/catalog packages atomically and retain the last valid version after interruption or corruption. Record readiness and age. Complete offline rendering must be verified on Android; a remote PMTiles URL is still online.
 
@@ -61,7 +63,7 @@ Save the reviewed automatically planned trip snapshot before external navigation
 
 Use a single FastAPI application with places, routing, and planning modules. HTTP handlers validate and delegate; services perform domain operations; repositories access PostGIS; adapters translate Valhalla responses. OR-Tools belongs behind the planning module's solver boundary.
 
-The backend root is reserved at `services/api/`. The internal source/test directories and infrastructure folder below remain planned:
+The backend root `services/api/` currently contains the imported pilot place-search application under `src/wayday_api/`, plus tests, SQL migrations and import tools. It is not connected to the Flutter app and does not implement routing or planning. The broader domain structure and infrastructure folder below remain planned:
 
 ```text
 services/api/
@@ -74,7 +76,7 @@ services/api/
 infra/                 future local deployment configuration
 ```
 
-The later API may retain reusable route-cache data. Add a server regional catalog only when measured place-query needs require it; initial regional search uses the installed phone catalog. Personal tasks and trip history remain on the phone; plan requests are calculations, not an implicit cloud backup. Avoid logging full notes, home coordinates, or request bodies by default.
+The later API may retain reusable route-cache data. Initial place search is intended to use an online provider under D35; a server catalog is optional and must not restrict nationwide search to the pilot. Personal tasks and trip history remain on the phone; plan requests are calculations, not an implicit cloud backup. Avoid logging full notes, home coordinates, or request bodies by default.
 
 Set a solver time limit and bound concurrent work. Keep CPU-bound solves off the async event loop. Start without Redis, a message broker, or separately deployed application microservices; add a worker only if measured load requires one. Hosting Valhalla separately is an engine boundary, not a reason to split every domain module into a service.
 

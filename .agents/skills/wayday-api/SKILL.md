@@ -5,7 +5,7 @@ description: Design, change, or review Wayday REST/JSON requests, responses, val
 
 # Wayday API contracts
 
-Read the root `AGENTS.md`, [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the relevant [Product requirements](../../../README.md#product-requirements). [Planning](../../../docs/wayday/PLANNING.md#task-specifications), especially M5-02, owns the input/result contract prerequisites and acceptance cases. The documented `/v1` endpoints are proposals until implemented; do not claim an existing wire contract or compatibility obligation that has not been established.
+Read the root `AGENTS.md`, [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the relevant [Product requirements](../../../README.md#product-requirements). The [planning contract v1](../../../docs/wayday/evidence/planning-contract-v1.md) records the proposed input/result semantics; it is a specification, not an implemented API or permission to start backend work. The documented `/v1` endpoints are proposals until implemented; do not claim an existing wire contract or compatibility obligation that has not been established.
 
 ## Define the observable behavior
 

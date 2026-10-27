@@ -4,7 +4,7 @@
 
 Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Stage 1 adds empty startup and consistent selection controls while preserving stored data; maps remain placeholders. The owner authorized M2-01 through M2-04 on 2026-10-27. Planning and Progress record acceptance and the actual Android targets. See [Product](../../README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
 
-Use [Planning](PLANNING.md) as the single file for the implementation plan, task specifications, dependencies, live status, and assignment. Use [the documentation index](../../README.md) to find each authority. The root README owns the project overview, documentation index, product requirements, and design-tool metadata. Supporting project documents live in `docs/wayday/`; `AGENTS.md` and `DESIGN.md` also remain at the root. Keep milestone sequencing in Planning and completion evidence in Progress. Link to those authorities instead of duplicating their contents.
+Follow the owner's latest explicit task instructions for current scope and sequence. Use [the documentation index](../../README.md) to find each project authority. The root README owns the project overview, documentation index, product requirements, and design-tool metadata. Supporting project documents live in `docs/wayday/`; `AGENTS.md` and `DESIGN.md` also remain at the root. [Progress](PROGRESS.md) records completed work and verification evidence. Link to the relevant product and technical authorities instead of duplicating their contents.
 
 Read the [product scope](../../README.md#product-requirements), [decisions](DECISIONS.md), and [agent instructions](../../AGENTS.md) before proposing changes.
 
@@ -44,7 +44,7 @@ Do not assign an open-source license to the team's original work without an expl
 
 ## Development practices
 
-The [mobile README](../../apps/mobile/README.md) owns exact Flutter commands and local-tool instructions. The [implementation plan](PLANNING.md#task-specifications) owns task-specific checks. The following practices were consolidated from the former Development document. The preserved prototype check above runs when prototype inputs or behavior change; read its nested instructions before editing.
+The [mobile README](../../apps/mobile/README.md) owns exact Flutter commands and local-tool instructions. Use the acceptance criteria in the user's current task and the relevant product/technical sources for task-specific checks. The following practices were consolidated from the former Development document. The preserved prototype check above runs when prototype inputs or behavior change; read its nested instructions before editing.
 
 
 ### Mobile verification

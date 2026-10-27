@@ -1,6 +1,6 @@
 # Technology stack and dependency inventory
 
-Initial research: 2026-10-15; mapping research and selected next direction updated 2026-10-27. Flutter and Today/Recurring Drift/SQLite storage are implemented. MapLibre/Protomaps, place search, navigation handoff, and later routing/solver choices below are planned and uninstalled unless explicitly listed as current dependencies. No external account or paid service has been provisioned.
+Initial research: 2026-10-15; mapping and routing work updated 2026-10-27. Flutter and Today/Recurring Drift/SQLite storage are implemented. The reconciliation adds a configurable online place-search client and online map pin selection, with limited emulator verification. Regional Protomaps resources and a local Valhalla evaluation graph remain separate pilot evidence. Navigation handoff, production routing/planning services and the solver remain later tasks. No external account or paid service has been provisioned.
 
 Platform sequencing clarified on 2026-10-16: build and verify Android first; iOS comes later. The iOS considerations below apply to that later phase and do not block Android development.
 
@@ -58,15 +58,17 @@ The shell bundles Figtree and its SIL Open Font License in `apps/mobile/assets/f
 
 ## Data and service boundaries
 
-### Maps: MapLibre, Protomaps, and a Wayday style — selected, not installed
+### Maps: MapLibre, Protomaps, and a Wayday style
 
-Research and owner direction recorded 2026-10-27. MapLibre is the renderer; Protomaps supplies an OSM-derived regional basemap; PMTiles is its archive format. The selected Flutter binding, native requirements, resource use, and regional package size still need the M3 feasibility checks. Do not treat a README feature matrix as verification in this app.
+MapLibre is the renderer; Protomaps supplies the OSM-derived regional basemap; PMTiles is its archive format. The app uses a [project-local MapLibre 0.27.1 patch](../../apps/mobile/third_party/maplibre_gl/WAYDAY.md) that adds a per-map Android native attribution-button option. Native verification of this patch is outstanding. `crypto` remains pinned to 3.0.7. The plugin's Android module compiles with Java/Kotlin 21 and API 36; the existing Android Studio JBR 25 satisfies its build requirement. Android uses the OpenGL native artifact, strictly pinned by the app to 13.7.1. The plugin's original 13.5.0 dependency failed to read bundled PMTiles byte ranges in the actual API 37 emulator. [Native 13.7.1](https://github.com/maplibre/maplibre-native/releases/tag/android-v13.7.1) includes the asset-range fix and query/detachment fix. Historical offline-renderer evidence is recorded separately from verification of the current UI and plugin. Browser rendering uses a readable fallback rather than claiming native package support.
 
 #### Regional package preparation evidence
 
 M3-02 prepared the rectangular pilot package from Protomaps build `20261026.pmtiles`, schema 4.15.2, source snapshot `2026-10-26T04:00:00Z`, with zooms 0–15. The extracted archive is 8,046,175 bytes; the complete package is 14,418,095 bytes including its 47,944-byte manifest. Its 268 payload files include all 256 Noto Sans Regular glyph ranges, four light sprite resources, an authored Wayday style and license/provenance notices. Every payload has a SHA-256 inventory entry. The manifest SHA-256 is `f7f6365e029031a8d8a6bc4b2b3884a6decad867071a89a68c98235b9f60a798`.
 
 `pmtiles` 1.31.2 extracted 114 tiles using four download threads, 40 requests and 8.4 MB transferred in 17.30 seconds; archive/header/metadata verification passed. A cached repeat preparation completed in 7.58 seconds with identical manifest and payload hashes. The cached Python process peak working set was 28,422,144 bytes; this excludes archive extraction, the native renderer and host memory. Two decoded source tiles contained nonempty roads/buildings/POIs, which establishes vector content rather than road routability or searchable-business completeness.
+
+During native integration the package was revised to `pasig-ortigas-20261026-z15-v2`: a space-free `NotoSansRegular` path/fontstack alias avoids Flutter's percent-encoded APK asset directories. Glyph bytes, source attribution and font license remain unchanged. The revised payload is 14,370,390 bytes plus a 47,432-byte manifest, totaling 14,417,822 bytes; manifest SHA-256 is `9b3bc00abca38fd557c49931ed64554f6c0e320cd26272f0b19170ff32fcb9d2`. Its cached preparation took 22.122 seconds on the contended development host. Earlier measurements above describe the original package and remain historical preparation evidence.
 
 Fonts/sprites are pinned to `protomaps/basemaps-assets` commit `028c18f713baecad011301ff7a69acc39bcc2ae7`, with downloaded bytes checked against its Git blob inventory. Noto glyphs retain SIL OFL 1.1; sprite icons retain the upstream MIT notice; OSM/Protomaps attribution and source notices travel with the package. No remote resource URL is used as a rendering fallback. Five offline failure tests cover corruption, missing glyphs, unsafe paths, network-resource rejection and preserving repository markers/prior packages. Preparation tooling and the style are tracked under `tools/maps/`; raw/generated/app-package resources remain ignored. Android native/offline rendering remains M3-03, rather than a result of package preparation.
 
@@ -88,7 +90,7 @@ Local software avoids a metered map API but still needs development resources, s
 
 ### Places: an indexed regional catalog — planned
 
-Use a separate installed OSM-based POI catalog for initial regional search, with bounded text/category/area queries. Preserve source IDs, snapshot dates, original tags/hours, and separately sourced corrections. The personal Drift database owns errands and confirmed places; public catalog replacement must not erase them. A later PostGIS catalog is conditional on actual server queries, not a prerequisite for local search.
+The owner selected online place search across the Philippines in D35, superseding the initial installed-catalog preference. Select and validate a service with country filtering, appropriate terms and an explicit outage fallback. Preserve available source IDs, dates, original hours and corrections. The personal Drift database owns errands and confirmed places; public-data updates must not erase them. An installed catalog remains an optional later offline capability, and PostGIS is not required on the phone.
 
 Start by auditing at least 30 public Pasig/Ortigas destinations across relevant categories. Record branch/pin accuracy, duplicates, missing places, hours, and closed-business signals; no measured nationwide completeness is established. Use Philippine categories and aliases supported by the audit. [Philippine conventions](https://wiki.openstreetmap.org/wiki/Philippines/Mapping_conventions).
 

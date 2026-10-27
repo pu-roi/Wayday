@@ -50,7 +50,7 @@ components:
   trip-settings: { textColor: "{colors.link-blue}", padding: "14px" }
   navigation: { backgroundColor: "{colors.canvas}", height: "76px" }
   time-field: { backgroundColor: "{colors.field-light}", textColor: "{colors.text-light}", typography: "{typography.headline}", rounded: "{rounded.field}", padding: "16px" }
-  map-preview: { backgroundColor: "{colors.field-light}", rounded: "{rounded.card}" }
+  regional-map: { backgroundColor: "{colors.field-light}", rounded: "{rounded.card}" }
   feedback: { backgroundColor: "{colors.selected-blue}", textColor: "{colors.link-blue}", typography: "{typography.body}", rounded: "{rounded.button}" }
 ---
 
@@ -73,7 +73,7 @@ The token source is [the Flutter theme](apps/mobile/lib/app/theme.dart). Reused 
 - One light Canvas/Cornflower theme with readable dark text.
 - Compact shared errand rows and simple Anytime-default quick add.
 - Quiet outlined groups, focused editors, and familiar Material states.
-- Numeric time entry and explicitly illustrative map previews.
+- Numeric time entry and a shared regional map with explicit manual-label semantics.
 - Visible labels, content-driven sizing, and scrollable forms.
 - State-preserving disclosure, reduced-motion support, and transient in-app feedback.
 
@@ -90,11 +90,11 @@ Warm Canvas and white surfaces carry a restrained blue palette. Frontmatter list
 ### Neutral
 
 - **Canvas:** scaffold, app bars, and bottom navigation.
-- **White:** enclosing groups, modal sheets, and the illustrative map's roads.
+- **White:** enclosing groups, modal sheets, and regional map roads.
 - **Text and supporting text:** `text-light` and `text-muted-light` establish hierarchy across the single light theme.
 - **Quiet outline:** `outline-light` frames groups and divides related sections.
-- **Field fill:** `field-light` separates text entry and forms the map illustration's ground.
-- **Mist:** map blocks use `mist` at 55% opacity.
+- **Field fill:** `field-light` separates text entry and map loading/unavailable surfaces.
+- **Mist:** regional building/road surfaces use quiet related tones from the authored map style.
 
 **The Readable Blue Rule.** Use `link-blue` for action text, icons, focus strokes, and focused floating labels; use Cornflower with `action-ink` for filled primary actions.
 
@@ -172,7 +172,11 @@ The focused editor contains a labeled **Notes (optional)** multiline field with 
 
 ### Place entry
 
-[The place screen](apps/mobile/lib/core/widgets/place_picker.dart) is a pushed, scrollable page shared by endpoints and errand locations. Its rounded illustration uses quiet blocks, white roads, a pin, and a visible **Map preview** label. The semantic label identifies an illustrative placeholder. Manual place-name entry and **Use this place** save labels through the feature repositories; Android persists these labels. The illustration does not supply coordinates, search, or pin placement.
+Profile provides an outlined Saved places entry leading to a local list. Selecting a place opens a focused editor for its name and map location; saving commits the draft, Back discards it, and deletion requires confirmation. Existing errands and endpoints retain their selected place details. Loading failures offer retry and unavailable storage is distinguished from an empty list.
+
+[The place screen](apps/mobile/lib/core/widgets/place_picker.dart) opens one map-based picker for endpoints, errands and saved-place location editing. A persistent search field stays above the map with the keyboard initially closed. Focusing search displays a scrollable panel of saved places and online results. Search waits for a 600 ms typing pause and at least two characters, runs one request at a time and retains only the latest queued query. Choosing a result closes search and centers its location beneath the pin. Moving the map changes a draft point, and one Confirm location action commits it. Initial map positioning never selects a point automatically. Back closes search before cancelling the picker. Name-only entry is explicit and retains no invented coordinates. Attribution is accessible from the map and search results, and failures retain saved-place and manual entry.
+
+Today shows an online map directly below trip settings, extending to the edges of the same surface. A and Z mark confirmed From and To locations; numbered markers correspond to errands. Places without coordinates remain in the list, and no route is drawn. The map starts at a Philippines overview when no locations are confirmed, fits confirmed places, and shows loading and retry states. Its Cornflower information button opens Wayday's credits page, without an always-visible credit label; this differs from the OpenStreetMap Foundation's attribution safe-harbour guidance. The separate offline Pasig/Ortigas preview remains in Settings, with its source details and bundled notices on the credits page.
 
 ### Navigation and editing
 
@@ -190,7 +194,7 @@ The synthetic harness in [selection component tests](apps/mobile/test/selection_
 
 ### Planned map refinements
 
-Real map refinements remain implementation targets. See [the implementation plan](docs/wayday/PLANNING.md#task-specifications), M3, and decisions D19–D20.
+Real map refinements remain future product work. See the product requirements in [README](README.md#product-requirements) and decisions D19–D20. Current implementation priorities come from the owner's latest instructions.
 
 - The real map uses a custom Wayday style with readable street/city/landmark labels. Selected errand stops stay prominent; candidate categories, clustering, and zoom-dependent labels reflect the same filtered results as the search list.
 - Map-style selection applies only to the map. Keep app chrome light Cornflower, attribution visible, offline coverage honest, and manual-pin/no-results paths usable.
@@ -211,7 +215,7 @@ The sidecar's self-contained HTML/CSS snippets translate native shapes and group
 - **Do** preserve composer state and focus during consecutive entry, and honor Remove animations for shared spatial transitions.
 - **Do** keep optional notes in the focused editor and indicate their presence compactly in rows.
 - **Do** replace stale feedback, expire ordinary messages, and preserve accessible Undo actions.
-- **Do** keep map illustrations explicitly labeled as previews and retain honest unavailable-feature copy.
+- **Do** distinguish regional map exploration, manual labels, confirmed pins and calculated routes, and retain honest unavailable-feature copy.
 - **Do** preserve historical Asikaso references and attribution.
 
 ### Don't:

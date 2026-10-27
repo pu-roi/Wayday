@@ -216,7 +216,7 @@ Keep this decision log because it records rationale and superseded choices, incl
 
 Group the existing implementation tasks into five stages: input cleanup, feasibility and contracts, maps/places/saved-trip foundations, automatic planning, and navigation/release evaluation. Pull regional package and Android map-rendering feasibility into the second stage, combine trip persistence with its local-data foundations, and group navigation with integrated verification and pilot acceptance.
 
-Keep all existing task IDs, prerequisites, acceptance criteria, and verification gates in [Planning](PLANNING.md#execution-order-and-checkpoints). Independent tasks may overlap once their prerequisites are complete; a stage label does not add an otherwise unnecessary dependency. Agree on shared interfaces before parallel work and serialize shared schema/migration changes. Fewer stage boundaries alone do not guarantee shorter implementation time. The automatic-planning release goal and Android-first scope still apply.
+At the time of this decision, keep task IDs, prerequisites, acceptance criteria, and verification gates together in the implementation plan. Independent tasks may overlap once their prerequisites are complete; a stage label does not add an otherwise unnecessary dependency. Agree on shared interfaces before parallel work and serialize shared schema/migration changes. Fewer stage boundaries alone do not guarantee shorter implementation time. The automatic-planning release goal and Android-first scope still apply. D34 later records the owner's removal of that plan.
 
 ## D30 — Root README as the project entry point
 
@@ -249,6 +249,32 @@ Keep pickup/light and heavy-delivery parameters distinct. The finite HGV access 
 Adopt `wayday.planning.v1` as the initial contract specification for later planning/replanning. Keep editable day inputs separate from calculated snapshots and carry request IDs, input revisions, source/estimate provenance and completed history. Use explicit Asia/Manila dates and offset-aware local instants, seconds/meters and provider-independent confirmed places. The initial single-day policy rejects implicit overnight rollover. The versioned, editable duration/buffer table, optional-prerequisite meaning, outcome/HTTP distinctions and finite vocabulary clarification cases are defined in the [contract specification](evidence/planning-contract-v1.md).
 
 The initial limits are 12 errands, three candidates per flexible errand, 38 matrix locations and a five-second solver budget within a 20-second calculation deadline. These are resource policies, not measured full-capacity response guarantees; later implementation must evaluate them. Unknown hours require a provisional result with a check-hours notice, and unavailable services retain local edits and the last saved result. JSON Schema, synthetic examples and cross-field tests specify behavior without creating a server, recommendation service or solver.
+
+## D34 — Remove the active task board
+
+**Status:** Completed by explicit owner direction, 2026-10-27.
+
+Remove `docs/wayday/PLANNING.md` and do not recreate a roadmap or task board. The owner will supply work priorities and sequence directly. Preserve product requirements, decisions, progress history, and feasibility evidence so they remain available as context; they are not permission to restart the former roadmap.
+
+## D35 — Online place search for the Philippines
+
+**Status:** Owner direction; Photon-compatible adapter and picker integration implemented, provider qualification and integrated Android verification pending.
+
+Place search should use an online service and cover the Philippines rather than only the Pasig/Ortigas pilot. Search results must be restricted to the Philippines, without assuming that a rectangular bounding box follows national borders. Keep a manual-selection fallback when search is unavailable and preserve personal data locally. This revises the earlier preference for an installed catalog as the initial search implementation; offline map resources and place search remain separate concerns.
+
+Photon is an evaluation candidate: its API documents a country-code search filter, and a limited live Cebu query returned results marked `PH` on 2026-10-27. Its public instance is a demo with no availability guarantee and can throttle requests. Before adoption, verify the deployed instance's filtering, Philippine data coverage, attribution, limits and replacement path. A public demo is not a production availability commitment. No provider account, purchase, billing activation, or hosted deployment has been authorized by this decision.
+
+## D36 — Saved-place management in Profile
+
+**Status:** Owner-directed, 2026-10-28.
+
+Expose locally saved places through Profile, with name and location editing and confirmed deletion. Changes affect future selections; existing errands and endpoints retain the place details selected earlier. Keep the existing local storage schema and do not introduce an account or synchronization.
+
+## D37 — One-screen place selection
+
+**Status:** Owner-directed, 2026-10-28; native Android verification remains required.
+
+Open the map directly with search, saved places and a single Confirm location action. Search runs after a 600 ms typing pause with two or more characters, with one in-flight request and only the latest queued query. Choosing a result recenters the map without changing its provenance; manual movement creates a draft pin with outdated source/address details removed. Keep explicit name-only fallback, draft cancellation and optional user-requested location permission. Reuse the existing Photon-compatible adapter without a new backend or schema migration.
 
 ## Revisit before implementation or release
 

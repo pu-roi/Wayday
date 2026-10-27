@@ -2,16 +2,30 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-10-28] Unified location picker implementation
+
+- Combined place search, saved places and online pin positioning into one picker route with a single Confirm location action. Search waits 600 ms, serializes requests, retains only the latest queued query and discards stale responses. Programmatic camera positioning preserves place identity; manual movement produces a draft pin with outdated address/source details removed. Explicit name-only fallback and draft cancellation remain available.
+- Added and updated search-controller, selection, location-race and navigation tests, plus the isolated Android map harness. Dart analysis passes. Flutter execution remains blocked by Windows application control during native-asset preparation; these tests and the native interaction have not been verified in this change.
+
+### [2026-10-28] Profile, Today map and credits updates
+
+- Added local saved-place viewing, name/location editing and confirmed deletion through Profile, retaining independent place details in existing errands/endpoints. Today displays confirmed places on an online map inside its route surface; it does not calculate a route. Detailed map notices are available from Settings and the map information control.
+- A project-local MapLibre 0.27.1 patch adds a per-map Android attribution-button option, so Today and the combined picker can use one themed information control. This requires a full Android rebuild and device verification. Icon-only attribution remains explicitly recorded as differing from OpenStreetMap Foundation's published safe-harbour guidance.
+- The copied FastAPI service remains a bounded pilot catalog implementation for review, separate from mobile online search. Automatic recommendations, road estimates, itinerary optimization and reminders remain unimplemented. Earlier native evidence is historical and does not verify the current picker or patched plugin.
+
+### [2026-10-28] Repository status and branch preparation
+
+- Updated README, architecture, decisions, stack and agent guidance to distinguish current mobile capabilities, the imported pilot API, earlier evidence and outstanding verification. Removed the stale task-count percentage without recreating the retired task board.
+- Checks passed: mobile Dart analysis; 22 routing/contract tests; 14 backend unit tests; the preserved prototype check; and 126 local document links. Seven PostGIS integration tests were skipped without a configured test database. Flutter tests and the isolated Android harness remain blocked by Windows application control. No runtime or device result is implied by the documentation update.
+
 > [!NOTE]
-> This log is updated automatically when tasks are marked complete via the `wayday-task-tracker` skill or helper script. See [PLANNING.md](PLANNING.md) for the active task board.
+> This log records completed work and verification evidence. The owner supplies current task priorities and sequence directly; no active task board is maintained.
 
 ---
 
 ## Progress Summary
 
-| Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 32 | 17 | 1 | 14 | In Progress (53%) |
+The activity log records completed implementation, research and checks. Historical task identifiers below are evidence references, not an active task board or a current completion percentage. The owner supplies current work directly; the latest native verification limits are recorded above.
 
 ---
 

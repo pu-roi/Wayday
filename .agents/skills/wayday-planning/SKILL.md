@@ -9,7 +9,9 @@ Read the repository's `AGENTS.md` and current user request before acting. Founda
 
 ## Establish the contract
 
-Read [Product requirements](../../../README.md#product-requirements) and the pipeline in [Architecture](../../../docs/wayday/ARCHITECTURE.md). Consult [Stack](../../../docs/wayday/STACK.md) for data sources and endpoint policies, and [Decisions](../../../docs/wayday/DECISIONS.md) for scope changes. [Planning](../../../docs/wayday/PLANNING.md#task-specifications) owns implementation order and acceptance criteria, including the early M5-01 routing/vehicle gate and M5-02 input/result contract.
+Read [Product requirements](../../../README.md#product-requirements) and the pipeline in [Architecture](../../../docs/wayday/ARCHITECTURE.md). Consult [Stack](../../../docs/wayday/STACK.md) for data sources and endpoint policies, and [Decisions](../../../docs/wayday/DECISIONS.md) for scope changes. Current task order comes from the owner's latest explicit instructions; do not recreate the removed roadmap or task board.
+
+For planning implementation, follow the versioned [planning contract](../../../docs/wayday/evidence/planning-contract-v1.md) and its [routing feasibility evidence](../../../docs/wayday/evidence/routing-pilot-2026-10-27.md). M5-01 and M5-02 are completed feasibility/specification, not production routing or planning. The routing study used 4x4 matrices and does not validate the contract's 38-location request cap, route accuracy, comprehensive legal access, or ground clearance. Treat candidate/solve limits as provisional until full-size performance is measured; schema and synthetic-fixture checks do not establish live service behavior.
 
 The first usable release must recommend stores, select branches, order stops, and estimate schedules from user errands and constraints. Manual place/order choices are optional overrides or intermediate checkpoints, not a substitute for that release requirement.
 
