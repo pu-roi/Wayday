@@ -75,6 +75,8 @@ Offline rendering needs tiles, style, fonts/glyphs, and sprites; verify a real A
 
 Stage 1 implementation does not authorize purchases, billing activation, external accounts, public hosting, or global installations. Existing hardware has finite disk, memory, and network capacity.
 
+The Stage 2 place audit is reproduced from the repository root with `py tools/geodata/pilot_audit.py fetch`, `py tools/geodata/pilot_audit.py candidates`, then `py tools/geodata/pilot_audit.py report`. Run `py -m unittest discover -s tools/geodata -p 'test_*.py'` for offline matching/provenance regressions. The frozen sample and reviewed findings live under `docs/wayday/evidence/pilot-place-audit-*`; raw downloads, successful-query manifests and failed attempts stay in ignored `data/downloads/pilot-audit/`. A new live fetch may reflect newer OSM data, so keep historical snapshot/hash evidence distinct from a refreshed result. Source failures are unresolved measurements, never empty coverage.
+
 ### Backend after the routing gate
 
 The proposed service remains a local FastAPI modular monolith with bounded routing/planning adapters. [Architecture](ARCHITECTURE.md) defines responsibilities; no /v1 contract is implemented or frozen.

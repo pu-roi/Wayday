@@ -11,11 +11,18 @@ This document records the chronological activity history, milestone achievements
 
 | Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 32 | 13 | 0 | 19 | In Progress (40%) |
+| Tasks | 32 | 14 | 2 | 16 | In Progress (43%) |
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] M3-01: Audit pilot place coverage.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Data · feasibility
+- **Summary**: Audited 35 independently frozen public Pasig/Ortigas samples against a bounded OSM extraction: 16 plausible site/branch matches, 3 ambiguous and 16 not found; only one matched site has OSM hours, no surveyed entrance accuracy. Final extract 11,679 elements, 5,278,128 bytes, snapshot 2026-10-27T06:59:26Z with reproducible query and raw/sample/tool/results hashes. Published CSV, frozen references, manual review and summary; preserved floor corrections separately, retained missing/ambiguous denominators, documented clustered-sample/adjacent-city limits, and explicitly deferred unvalidated Overture inclusion. Three offline matching/provenance regressions and independent review passed; raw data stays ignored. Bounded map/road feasibility may proceed; automatic catalog completeness is not established.
+
 
 ### [2026-10-27] DOC-08: Ground Stage 2 execution and integration boundaries in the source audit, with team ownership and verification gates.
 - **Status**: [x] DONE

@@ -84,6 +84,25 @@ Use a separate installed OSM-based POI catalog for initial regional search, with
 
 Start by auditing at least 30 public Pasig/Ortigas destinations across relevant categories. Record branch/pin accuracy, duplicates, missing places, hours, and closed-business signals; no measured nationwide completeness is established. Use Philippine categories and aliases supported by the audit. [Philippine conventions](https://wiki.openstreetmap.org/wiki/Philippines/Mapping_conventions).
 
+#### Pilot coverage evidence, 2026-10-27
+
+M3-01 used a frozen, independently selected sample of 35 public destinations within west/south/east/north `[121.045, 14.548, 121.116, 14.617]`. This rectangle includes adjacent-city Ortigas malls; it is not the Pasig administrative boundary. The sample intentionally clusters mall errands, one bank brand and Poblacion landmarks, so its match rates do not estimate population completeness.
+
+| Sample category | Plausible site/branch match | Ambiguous | Not found in bounded review |
+| --- | --- | --- | --- |
+| Groceries and wet markets | 4 | 0 | 1 |
+| Pharmacies | 2 | 1 | 2 |
+| Banks | 3 | 2 | 0 |
+| Offices | 0 | 0 | 5 |
+| Food | 2 | 0 | 3 |
+| Haircuts | 0 | 0 | 5 |
+| Landmarks | 5 | 0 | 0 |
+| Total | 16 | 3 | 16 |
+
+The final Overpass extract contains 11,679 elements and 5,278,128 bytes, with OSM snapshot `2026-10-27T06:59:26Z`; its SHA-256 is recorded in the [audit summary](evidence/pilot-place-audit-summary.json). Only one of the 16 matched sites has an OSM opening-hours value. No entrance or pin received independent field/survey verification. A plausible site match does not verify current operation, a dispensing pharmacy service, inventory, a floor, or an accessible entrance. Original incorrect directory-floor assumptions are retained in the frozen sample and corrected in the reviewed results.
+
+The [35-row results](evidence/pilot-place-audit-results.csv), [frozen references and sample](evidence/pilot-place-audit-sample.json), and [manual review](evidence/pilot-place-audit-review.json) preserve source IDs, dates, coordinate kinds and explicit uncertainty. Raw extracts and failed-request evidence stay under ignored `data/downloads/pilot-audit/`. This supports proceeding to bounded map and road feasibility, not claiming complete automatic destination coverage. Later catalog/recommendation tasks must retain no-candidate/manual-pin paths and qualify branch/service identity. Overture inclusion is deferred until a same-sample comparison demonstrates an attributable improvement and resolves duplicates and source licenses. See D31 in [Decisions](DECISIONS.md).
+
 | Source/tool | License and capability | Limitation or replacement path |
 | --- | --- | --- |
 | OSM / Geofabrik | ODbL geographic data; Philippines extracts and updates | Attribution/derived-database obligations; uneven POI/hours coverage. Keep manual pins and freshness visible; [licensing](https://www.openstreetmap.org/copyright), [extracts](https://download.geofabrik.de/asia/philippines.html) |

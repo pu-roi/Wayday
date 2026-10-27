@@ -1,0 +1,91 @@
+{
+  "audit_id": "pasig-ortigas-2026-10-27",
+  "sample_size": 35,
+  "status_counts": {
+    "matched_site": 16,
+    "not_found": 16,
+    "ambiguous": 3
+  },
+  "category_counts": {
+    "groceries_wet_markets": {
+      "matched_site": 4,
+      "not_found": 1
+    },
+    "pharmacies": {
+      "ambiguous": 1,
+      "not_found": 2,
+      "matched_site": 2
+    },
+    "banks": {
+      "matched_site": 3,
+      "ambiguous": 2
+    },
+    "offices": {
+      "not_found": 5
+    },
+    "food": {
+      "matched_site": 2,
+      "not_found": 3
+    },
+    "haircuts": {
+      "not_found": 5
+    },
+    "landmarks": {
+      "matched_site": 5
+    }
+  },
+  "matched_sites_with_osm_hours": 1,
+  "independently_surveyed_pins": 0,
+  "extracted_elements_without_name_or_brand": 3137,
+  "extraction": {
+    "started_at_utc": "2026-10-27T07:00:22.540304+00:00",
+    "retrieved_at_utc": "2026-10-27T07:01:12.507414+00:00",
+    "endpoint": "https://overpass-api.de/api/interpreter",
+    "query": "[out:json][timeout:60];\n(\nnwr[\"amenity\"](14.548,121.045,14.617,121.116);\nnwr[\"shop\"](14.548,121.045,14.617,121.116);\nnwr[\"tourism\"](14.548,121.045,14.617,121.116);\nnwr[\"office\"](14.548,121.045,14.617,121.116);\nnwr[\"leisure\"](14.548,121.045,14.617,121.116);\nnwr[\"historic\"](14.548,121.045,14.617,121.116);\nnwr[\"name\"~\"Galleria|Megamall|30th|Center Pasig|Crescent|Centerpoint|Wynsum|Chipeco|UnionBank Plaza|Bonifacio|Bruno's\\\\ Barbers|Brunos\\\\ Barbers|David's\\\\ Salon|Davids\\\\ Salon|Immaculate\\\\ Concepcion\\\\ Cathedral|Immaculate\\\\ Conception\\\\ Cathedral|Jesi\\\\ Mendez|Jesi\\\\ Mendez\\\\ Salon|Jollibee|KFC|LTO|Land\\\\ Transportation\\\\ Office|Marketplace|Max's|Max's\\\\ Restaurant|Maxs|Mc\\\\ Donald's|McDonald's|McDonalds|Mercury\\\\ Drug|Museo\\\\ ng\\\\ Pasig|Mutya\\\\ ng\\\\ Pasig|Mutya\\\\ ng\\\\ Pasig\\\\ Tower|NBI|National\\\\ Bureau\\\\ of\\\\ Investigation|Pag\\\\ Ibig|Pag\\\\-IBIG|Pagibig|Pasig\\\\ Cathedral|Pasig\\\\ City\\\\ Museum|Pasig\\\\ City\\\\ Public\\\\ Market|Pasig\\\\ Mega\\\\ Market|Pasig\\\\ Revolving\\\\ Tower|Phil\\\\ Health|PhilHealth|Plaza\\\\ Bonifacio|Plaza\\\\ Rizal|Revolving\\\\ Tower|Robinsons\\\\ Supermarket|Rustan's\\\\ Supermarket|SM\\\\ Supermarket|SM\\\\ Supermarket\\\\ Megamall|SSS|Shakey's|Shakeys|Social\\\\ Security\\\\ System|Star\\\\ Market|T\\\\ and\\\\ J\\\\ Salon|T\\\\&J|T\\\\&J\\\\ Salon|The\\\\ Marketplace|Union\\\\ Bank|UnionBank|Watsons\",i](14.548,121.045,14.617,121.116);\n);\nout meta center;\n",
+    "bounds_west_south_east_north": [
+      121.045,
+      14.548,
+      121.116,
+      14.617
+    ],
+    "frozen_sample_sha256": "35e507f34f7da12cf32b7d0f6c029f1139e9ef495f62eed5857946e87a49722e",
+    "raw_sha256": "6aaad29d5b4ae6249c633078229578b846d83cb765f796d00857fa738d2c2651",
+    "raw_bytes": 5278128,
+    "elements": 11679,
+    "osm_base_timestamp": "2026-10-27T06:59:26Z",
+    "generator": "Overpass API 0.7.62.11 87bfad18",
+    "user_agent": "WaydayPilotAudit/0.1 (+https://github.com/pu-roi/Wayday)",
+    "license": "ODbL-1.0",
+    "attribution": "OpenStreetMap contributors",
+    "license_url": "https://www.openstreetmap.org/copyright",
+    "query_sha256": "82fdbadc97139044af6915e26f8de34bfa6f4c5a74d7adae0aba0631e3e8e7e5"
+  },
+  "audit_tool_python": "3.12.10",
+  "audit_tool_sha256": "91a1b95344fcbc9ec80cef8a7b87cf9051da1e6dc8add022b035c22cb74bb895",
+  "results_sha256": "a3638d0e928d1334dc8575c55204d5500ec665bde23cea290c2015c74512c916",
+  "review_sha256": "69e44607f0d17ee0252f40da3a1feb7d8559d5749b8a9a70434706373e267dbc",
+  "disposition": "Proceed with the bounded Pasig/Ortigas rectangular map/road feasibility pilot. OSM remains the candidate regional basemap source and a partial catalog source, not a complete automatic errand-destination catalog. Later M3-06/M3-07/M5-04 must retain missing/ambiguous/no-candidate outcomes, inspect branch identity/category conflicts, and permit explicit manual pins. Do not claim automatic support for the sampled Galleria public-service counters or salons from this extract. Do not claim all stores are open or exact entrances are verified.",
+  "limitations": [
+    "The rectangle includes adjacent-city portions of Ortigas (Quezon City and Mandaluyong) and neighboring areas; it is not the Pasig administrative polygon or a citywide support claim.",
+    "The sample was selected independently of OSM, but deliberately clusters mall errands, one bank brand and Pasig Poblacion landmarks. Sample match rates do not estimate population completeness or all categories/branches.",
+    "References are online operator/government listings, not phone calls or field visits. Presence in a directory or OSM does not verify current opening or inventory. No sample has independently surveyed entrance coordinates; node positions and way/relation bounding-box centers are distinguished.",
+    "Named candidate extraction covers the sample aliases as well as amenity/shop/tourism/office/leisure/historic objects. Unmatched means not found in this bounded extraction and manual review, not proven absent globally. Unnamed nearby features were not guessed into named businesses.",
+    "Frozen sample notes incorrectly assigned several Galleria tenant floors. These are corrected in the reference_review fields without changing sample membership, names, bounds or frozen hash. Government service-location descriptions themselves contain grouping/wing inconsistencies; exact floor remains uncertain.",
+    "A successful initial category extract omitted square/building-only landmarks. A successful alias-expanded extraction supplies the final results. An intermediate request returned HTTP 502 and another endpoint timed out; neither failure is treated as empty coverage. Raw attempts and downloads remain ignored.",
+    "The global extracted-element unnamed count includes many parking/amenity features and is not a count or percentage of missing business names. Hours availability is measured only on the reviewed sample matches; missing hours stay unknown.",
+    "Confirmed sample duplicate identities were not found in manual review. This is not a regional deduplication proof: same-brand alternatives are distinct branches, and named buildings, counters, ATMs and surrounding squares must retain their separate identities."
+  ],
+  "overture_decision": {
+    "decision": "defer_inclusion",
+    "reason": "The OSM audit demonstrates specific indoor/service/salon gaps, but no measured same-sample Overture improvement or duplicate/license-chain review exists. Do not add an unvalidated second catalog merely because OSM has gaps. Preserve the same35 sample for a future bounded supplement comparison; current pilot uses OSM with explicit incomplete-coverage behavior.",
+    "official_reference": "https://docs.overturemaps.org/guides/places/",
+    "checked_on": "2026-10-27",
+    "license_boundary": "Official October2026 guide lists source-specific CC0-1.0, CDLA-Permissive-2.0 and Apache-2.0 records; existence confidence does not prove business hours. No Overture records are imported or redistributed in this audit."
+  },
+  "reproduction": [
+    "py tools/geodata/pilot_audit.py fetch",
+    "py tools/geodata/pilot_audit.py candidates",
+    "py tools/geodata/pilot_audit.py report",
+    "py -m unittest discover -s tools/geodata -p test_*.py"
+  ]
+}

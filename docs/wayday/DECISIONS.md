@@ -226,6 +226,14 @@ Move the complete README from docs/wayday/ to the repository root so GitHub and 
 
 README.md, AGENTS.md, and DESIGN.md are the root Markdown documents. Keep supporting project documents in docs/wayday/. This changes D28's README location while preserving its other document ownership and consolidation decisions. Historical decision and progress entries retain their original context.
 
+## D31 — Measured pilot coverage and source limits
+
+**Status:** M3-01 audit findings recorded, 2026-10-27; map and routing feasibility remain separate gates.
+
+Keep the bounded Pasig/Ortigas rectangular pilot `[121.045, 14.548, 121.116, 14.617]` for map/road evaluation. The independently selected 35-destination sample produced 16 plausible site/branch matches, three ambiguous matches and 16 not found in the bounded OSM extraction/manual review. The sample is deliberately clustered and includes adjacent-city Ortigas malls; it does not establish citywide or category-wide completeness. Only one matched site carries OSM hours, and no entrance coordinates were independently surveyed. Retain branch, service-capability, floor, hours and entrance uncertainty rather than turning these matches into verified recommendations.
+
+Continue with OSM as the initial public source and explicitly defer Overture inclusion: no measured same-sample improvement, duplicate-resolution evidence or source-license review justifies importing it yet. Later catalog/search/recommendation tasks must preserve missing/ambiguous outcomes and manual confirmation. The sampled Galleria public-service counters and salons cannot be advertised as automatically covered from this extract. These limitations do not change the automatic-planning first-release requirement; they are inputs to its qualification and acceptance work. See the [coverage evidence](STACK.md#pilot-coverage-evidence-2026-10-27) and [reproducible audit summary](evidence/pilot-place-audit-summary.json).
+
 ## Revisit before implementation or release
 
 - Mac/iPhone access and publishing approach before the later iOS phase, rather than before Android development.
