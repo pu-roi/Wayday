@@ -1,0 +1,7 @@
+# The vendored upstream package uses Dart's default language settings.
+# Wayday's stricter app-specific analysis still applies to the app.
+analyzer:
+  language:
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false

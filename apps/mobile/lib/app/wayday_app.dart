@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/recurring/presentation/recurring_view.dart';
 import '../features/today/presentation/today_view.dart';
+import '../features/profile/presentation/profile_view.dart';
+import '../core/data/persist_safely.dart';
 import 'settings_view.dart';
 import 'theme.dart';
 
@@ -16,6 +18,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/today', builder: (_, _) => const TodayView()),
           GoRoute(path: '/recurring', builder: (_, _) => const RecurringView()),
+          GoRoute(path: '/profile', builder: (_, _) => const ProfileView()),
           GoRoute(path: '/settings', builder: (_, _) => const SettingsView()),
         ],
       ),
@@ -37,19 +40,40 @@ class WaydayApp extends ConsumerWidget {
   );
 }
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({required this.location, required this.child, super.key});
   final String location;
   final Widget child;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final failures = ref.watch(saveFailuresProvider);
+    final content = failures.isEmpty
+        ? child
+        : Column(
+            children: [
+              for (final failure in failures.entries)
+                MaterialBanner(
+                  content: Text(
+                    '${failure.key} could not be saved on this device.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: failure.value,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              Expanded(child: child),
+            ],
+          );
     final index = switch (location) {
       '/recurring' => 1,
-      '/settings' => 2,
+      '/profile' => 2,
+      '/settings' => 3,
       _ => 0,
     };
     void select(int value) =>
-        context.go(['/today', '/recurring', '/settings'][value]);
+        context.go(['/today', '/recurring', '/profile', '/settings'][value]);
     const destinations = [
       NavigationDestination(
         icon: Icon(Icons.format_list_bulleted_rounded),
@@ -58,6 +82,10 @@ class AppShell extends StatelessWidget {
       NavigationDestination(
         icon: Icon(Icons.repeat_rounded),
         label: 'Recurring',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.person_outline_rounded),
+        label: 'Profile',
       ),
       NavigationDestination(icon: Icon(Icons.tune_rounded), label: 'Settings'),
     ];
@@ -88,13 +116,13 @@ class AppShell extends StatelessWidget {
                       .toList(),
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(child: child),
+                Expanded(child: content),
               ],
             ),
           );
         }
         return Scaffold(
-          body: child,
+          body: content,
           bottomNavigationBar: DecoratedBox(
             decoration: BoxDecoration(
               border: Border(

@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../../core/data/serial_write_queue.dart';
 import '../domain/day.dart';
 import '../../../core/data/wayday_database.dart';
+import '../../places/domain/place_intent.dart';
 
 abstract interface class DayRepository {
   DayPlan read();
@@ -52,6 +54,9 @@ class SqliteDayRepository implements DayRepository {
     final rows = await (database.select(
       database.dayErrands,
     )..orderBy([(row) => OrderingTerm.asc(row.position)])).get();
+    final details = settings?.placeDetails == null
+        ? null
+        : jsonDecode(settings!.placeDetails!) as Map<String, dynamic>;
     return SqliteDayRepository._(
       database,
       DayPlan(
@@ -59,6 +64,17 @@ class SqliteDayRepository implements DayRepository {
         to: settings?.toPlace ?? defaults.to,
         departure: settings?.departure ?? defaults.departure,
         deadline: settings?.deadline ?? defaults.deadline,
+        fromPlace: details?['fromPlace'] == null
+            ? null
+            : PlaceIntent.fromJson(
+                details!['fromPlace'] as Map<String, dynamic>,
+              ),
+        toPlace: details?['toPlace'] == null
+            ? null
+            : PlaceIntent.fromJson(details!['toPlace'] as Map<String, dynamic>),
+        date: details?['date'] as String?,
+        timeZone: details?['timeZone'] as String? ?? 'Asia/Manila',
+        revision: details?['revision'] as int? ?? 0,
         profile: _parseEnum(
           TravelProfile.values,
           settings?.profile ?? defaults.profile.name,
@@ -66,21 +82,25 @@ class SqliteDayRepository implements DayRepository {
         ),
         errands: [
           for (final row in rows)
-            Errand(
-              id: row.id,
-              title: row.title,
-              place: row.place,
-              notes: row.notes,
-              timing: _parseEnum(
-                TimingRule.values,
-                row.timing,
-                TimingRule.anytime,
-              ),
-              minute: row.minute,
-              optional: row.optional,
-              sourceGroupId: row.sourceGroupId,
-              sourceItemId: row.sourceItemId,
-            ),
+            row.details != null
+                ? Errand.fromJson(
+                    jsonDecode(row.details!) as Map<String, dynamic>,
+                  )
+                : Errand(
+                    id: row.id,
+                    title: row.title,
+                    place: row.place,
+                    notes: row.notes,
+                    timing: _parseEnum(
+                      TimingRule.values,
+                      row.timing,
+                      TimingRule.anytime,
+                    ),
+                    minute: row.minute,
+                    optional: row.optional,
+                    sourceGroupId: row.sourceGroupId,
+                    sourceItemId: row.sourceItemId,
+                  ),
         ],
       ),
     );
@@ -104,6 +124,15 @@ class SqliteDayRepository implements DayRepository {
               departure: day.departure,
               deadline: day.deadline,
               profile: day.profile.name,
+              placeDetails: Value(
+                jsonEncode({
+                  'fromPlace': day.fromPlace.toJson(),
+                  'toPlace': day.toPlace.toJson(),
+                  'date': day.date,
+                  'timeZone': day.timeZone,
+                  'revision': day.revision,
+                }),
+              ),
             ),
           );
       await _database.delete(_database.dayErrands).go();
@@ -132,6 +161,7 @@ DayErrandsCompanion _toDayErrand(Errand errand, int position) =>
       optional: errand.optional,
       sourceGroupId: Value(errand.sourceGroupId),
       sourceItemId: Value(errand.sourceItemId),
+      details: Value(jsonEncode(errand.toJson())),
     );
 
 T _parseEnum<T extends Enum>(List<T> values, String name, T fallback) =>

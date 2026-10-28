@@ -4,7 +4,7 @@
 
 Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Stage 1 adds empty startup and consistent selection controls while preserving stored data; maps remain placeholders. The owner authorized M2-01 through M2-04 on 2026-10-27. Planning and Progress record acceptance and the actual Android targets. See [Product](../../README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
 
-Use [Planning](PLANNING.md) as the single file for the implementation plan, task specifications, dependencies, live status, and assignment. Use [the documentation index](../../README.md) to find each authority. The root README owns the project overview, documentation index, product requirements, and design-tool metadata. Supporting project documents live in `docs/wayday/`; `AGENTS.md` and `DESIGN.md` also remain at the root. Keep milestone sequencing in Planning and completion evidence in Progress. Link to those authorities instead of duplicating their contents.
+Follow the owner's latest explicit task instructions for current scope and sequence. Use [the documentation index](../../README.md) to find each project authority. The root README owns the project overview, documentation index, product requirements, and design-tool metadata. Supporting project documents live in `docs/wayday/`; `AGENTS.md` and `DESIGN.md` also remain at the root. [Progress](PROGRESS.md) records completed work and verification evidence. Link to the relevant product and technical authorities instead of duplicating their contents.
 
 Read the [product scope](../../README.md#product-requirements), [decisions](DECISIONS.md), and [agent instructions](../../AGENTS.md) before proposing changes.
 
@@ -44,7 +44,7 @@ Do not assign an open-source license to the team's original work without an expl
 
 ## Development practices
 
-The [mobile README](../../apps/mobile/README.md) owns exact Flutter commands and local-tool instructions. The [implementation plan](PLANNING.md#task-specifications) owns task-specific checks. The following practices were consolidated from the former Development document. The preserved prototype check above runs when prototype inputs or behavior change; read its nested instructions before editing.
+The [mobile README](../../apps/mobile/README.md) owns exact Flutter commands and local-tool instructions. Use the acceptance criteria in the user's current task and the relevant product/technical sources for task-specific checks. The following practices were consolidated from the former Development document. The preserved prototype check above runs when prototype inputs or behavior change; read its nested instructions before editing.
 
 
 ### Mobile verification
@@ -75,9 +75,15 @@ Offline rendering needs tiles, style, fonts/glyphs, and sprites; verify a real A
 
 Stage 1 implementation does not authorize purchases, billing activation, external accounts, public hosting, or global installations. Existing hardware has finite disk, memory, and network capacity.
 
+The Stage 2 place audit is reproduced from the repository root with `py tools/geodata/pilot_audit.py fetch`, `py tools/geodata/pilot_audit.py candidates`, then `py tools/geodata/pilot_audit.py report`. Run `py -m unittest discover -s tools/geodata -p 'test_*.py'` for offline matching/provenance regressions. The frozen sample and reviewed findings live under `docs/wayday/evidence/pilot-place-audit-*`; raw downloads, successful-query manifests and failed attempts stay in ignored `data/downloads/pilot-audit/`. A new live fetch may reflect newer OSM data, so keep historical snapshot/hash evidence distinct from a refreshed result. Source failures are unresolved measurements, never empty coverage.
+
+Prepare the regional renderer package with `py tools/maps/build_package.py --pmtiles .tools/pmtiles/pmtiles.exe --copy-to-app` from the repository root. Obtain the pinned official `pmtiles` 1.31.2 tool locally; do not commit the executable. The recipe uses the bounded 20261026 source archive, pinned glyph/sprite resources and authored style. It stages and checks the complete package before publishing to ignored `data/generated/maps/pilot/` and optionally `apps/mobile/assets/maps/pilot/`. Repeat runs use verified cached downloads. Run `py -m unittest discover -s tools/maps -p 'test_*.py'` for offline failure cases. Empty tracked asset directories allow a source checkout to build an honest missing-package state before preparation; generated geographic resources do not belong in Git. The dated upstream archive may expire, so retain the verified local source cache for exact reproduction; choosing a newer source requires a deliberate recorded package revision.
+
 ### Backend after the routing gate
 
-The proposed service remains a local FastAPI modular monolith with bounded routing/planning adapters. [Architecture](ARCHITECTURE.md) defines responsibilities; no /v1 contract is implemented or frozen.
+Stage 2's bounded evaluation is documented in [routing evidence](evidence/routing-pilot-2026-10-27.md), including the pinned Docker image, Linux conversion fallback, native-volume graph preparation, resource measurements and limitations. It binds the task-owned engine to `127.0.0.1:18002`; it is not the production API. Run `./.tools/routing-venv/Scripts/python.exe -m unittest discover -s tools/routing -p 'test_*.py' -v` for offline extract/matrix/contract tests after installing the isolated requirements. The [planning contract](evidence/planning-contract-v1.md) owns the schema/example generation commands and semantic policy. Do not rerun live Overpass or community routing calls as routine tests, and do not alter unrelated Docker containers or global application-control settings.
+
+The proposed service remains a local FastAPI modular monolith with bounded routing/planning adapters. [Architecture](ARCHITECTURE.md) defines responsibilities and links the versioned planning contract specification; no `/v1` server is implemented yet.
 
 Before M5 scaffolding, validate a regional Valhalla graph and profiles on existing hardware. Pin compatible Python/OR-Tools versions, define the contract, and add safe example configuration only for real components. Keep credentials out of the app and sensitive bodies out of logs.
 

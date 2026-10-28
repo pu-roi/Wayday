@@ -11,7 +11,6 @@ The root `README.md` owns the project overview, documentation index, product req
 | Document | Purpose |
 | --- | --- |
 | [Product requirements](#product-requirements) | User needs, scope, behavior, and acceptance scenarios |
-| [Planning](docs/wayday/PLANNING.md) | Future work, execution order, dependencies, task specifications, and live status |
 | [Progress](docs/wayday/PROGRESS.md) | Completed work, contributor attribution, and verification evidence |
 | [Architecture](docs/wayday/ARCHITECTURE.md) | Responsibilities, interfaces, and offline boundaries |
 | [Stack](docs/wayday/STACK.md) | Technology research, dependency inventory, licensing, costs, and limits |
@@ -20,7 +19,7 @@ The root `README.md` owns the project overview, documentation index, product req
 | [Design](DESIGN.md) | Mobile theme, shared components, and interaction rules |
 | [Agent instructions](AGENTS.md) | Repository guidance for coding assistants |
 
-Planning describes what comes next; Progress records what has been completed. Roadmap outcomes are consolidated in Planning. Development guidance is consolidated in Contributing. Do not recreate separate Product, Roadmap, or Development documents. Give design tools `README.md` explicitly for product context; the product schema marker and platform/stack context live here.
+Current work follows the owner's latest explicit instructions; Progress records completed work. Development guidance is consolidated in Contributing. Do not create a roadmap or task board unless the owner explicitly asks. Give design tools `README.md` explicitly for product context; the product schema marker and platform/stack context live here.
 
 ## Application folders
 
@@ -29,11 +28,11 @@ Planning describes what comes next; Progress records what has been completed. Ro
 | [apps/mobile](apps/mobile) | Flutter frontend organized by feature, with views, view models, and repositories |
 | [services/api](services/api) | FastAPI backend organized as a modular monolith with domain services |
 
-The mobile folder contains the Flutter application; see its [run instructions](apps/mobile/README.md). The API folder still contains only a `.gitkeep` marker. The architecture document distinguishes the current shell from the broader planned application.
+The mobile folder contains the Flutter application; see its [run instructions](apps/mobile/README.md). The API folder contains an imported, bounded FastAPI place service for review; it is not connected to the mobile app. The architecture document distinguishes implemented capabilities from the broader planned application.
 
 ## Product requirements
 
-Updated: 2026-10-27 (Asia/Manila). These requirements preserve the agreed product scope. The owner authorized Stage 1 cleanup and selection-control implementation; task status and verification belong in Planning and Progress. Reminder and later-platform acceptance cases apply to their later milestones, not the first usable release.
+Updated: 2026-10-28 (Asia/Manila). These requirements preserve the long-term product scope. The owner supplies current tasks directly; this does not replace the product requirements below. Earlier persistence, regional data, routing feasibility and contract work have recorded evidence. The current combined picker, saved-place management and native map-control changes still require integrated Android verification. Progress and evidence files distinguish implemented work from verified behavior.
 
 ### Platform
 
@@ -47,15 +46,15 @@ Flutter/Dart. See the authoritative [stack inventory](docs/wayday/STACK.md). Vis
 
 Wayday will help people complete several errands in one trip by choosing suitable places, ordering stops, and checking timing constraints. Initial users are people running errands in Philippine cities, with Pasig/Ortigas as the proposed pilot area.
 
-The current implementation is an Android Flutter app with a single light Cornflower theme, Today, and Recurring. The app stores Today and Recurring data in a local Drift/SQLite database; new installations start with empty lists and unset endpoints, and existing saved rows are preserved. Persistence across force-stop and relaunch was verified on the API 37 x86_64 emulator on 2026-10-27. Notes copy independently into Today. List insertion and disclosure have short transitions that honor reduced motion; themed in-app feedback expires automatically under ordinary navigation. Map selection is an illustrative placeholder with manual labels; time entry uses hour/minute fields. Timing and repeat frequency use labeled radio rows, weekdays use a shared confirmation sheet, and monthly day uses validated numeric input. The full application capabilities below remain planned; there is no backend, automatic recurrence scheduler, or real route calculation yet. The browser preview starts empty and keeps changes in memory for the session.
+The current implementation is an Android Flutter app with a single light Cornflower theme, Today, Recurring, Profile and Settings. Personal tasks and saved places use local Drift/SQLite storage; new installations start empty and existing rows are preserved. Earlier Today/Recurring persistence across force-stop and relaunch was verified on an API 37 x86_64 emulator on 2026-10-27. Notes copy independently into Today, list transitions honor reduced motion and ordinary in-app feedback expires automatically. The shared location picker now combines a map, search while typing, saved places and one confirmation action. Profile supports saved-place editing and deletion; Today previews confirmed places without a calculated route. A separate offline Pasig/Ortigas preview and credits page remain in Settings. Current picker, legacy-data recovery and native map-control changes require integrated Android verification. Time and repeat editing retain focused controls; repeat metadata does not schedule automatic additions. A measured local Valhalla study and versioned planning contract remain feasibility/specification evidence. The imported FastAPI pilot place service is not connected to the app, which uses a configurable Photon-compatible online search service. Automatic recommendations, routing, schedule optimization and reminders are not implemented. The browser preview keeps changes in memory for the session.
 
 Build and verify Android first. iOS remains a later target; iOS tooling and device access do not block Android development.
 
-### Next implementation target — planned
+### Post-hackathon first-release target — planned
 
-The owner requested the step-by-step plan on 2026-10-27. See [the implementation plan](docs/wayday/PLANNING.md#task-specifications) for task dependencies and acceptance criteria; the paragraphs below describe product outcomes rather than implementation status.
+The paragraphs below describe enduring product outcomes, not the current hackathon task sequence. Current priorities come from the owner's latest instructions.
 
-Use MapLibre with Protomaps regional map files, a custom Wayday style, and an indexed OSM-based place catalog. Start with measured Pasig/Ortigas coverage. Evaluate Overture only as a validated, attributed supplement. Users can search by name/category, inspect a branch and its available address, or choose a manual pin. Save confirmed coordinates, place identity, and provenance rather than treating a typed label as a located destination.
+Use MapLibre with Protomaps regional map files and a custom Wayday style. The owner now requests online place search across the Philippines, restricted to Philippine results; the provider and nationwide map coverage remain to be evaluated. The prepared offline map package and measured place audit cover only Pasig/Ortigas. Evaluate Overture only as a validated, attributed supplement. Users can search by name/category, inspect a branch and its available address, or choose a manual pin. Save confirmed coordinates, place identity, and provenance rather than treating a typed label as a located destination. See D35 in [Decisions](docs/wayday/DECISIONS.md).
 
 The owner clarified the first usable release: users supply errands and necessary constraints, and Wayday recommends suitable stores, selects branches, chooses stop order, and calculates an estimated schedule using real road travel data. Users review or correct the result; they are not required to choose every store or build the itinerary themselves. Manual ordering and place selection remain optional overrides and internal development checkpoints. Validate road and POI feasibility early. Save the reviewed trip locally, then explicitly open Google Maps for the next stop. Completion is a manual user action; whole-trip handoff is secondary and respects target limits.
 
@@ -66,7 +65,7 @@ Keep the light Cornflower application theme and reuse the implemented selection 
 | Capability | Planned first-version boundary |
 | --- | --- |
 | Errand input | Ordinary text or bullet lines with limited, editable rule-based suggestions in English, Filipino, and Taglish |
-| Place selection | Automatic recommendations and branch choice from a regional catalog; specific/saved places and manual pins are optional overrides |
+| Place selection | Automatic recommendations and branch choice using place data; specific/saved places and manual pins are optional overrides |
 | Day planning | Start/end points, departure, final deadline, stop duration, priority, timing rules, and dependencies |
 | Travel | Walking, biking, motorcycle (motor), sedan (low clearance), or truck (high clearance); one profile per trip; no public commute |
 | Plan result | Map and stop timeline, selected branches, estimated times, slack, and errands that do not fit |

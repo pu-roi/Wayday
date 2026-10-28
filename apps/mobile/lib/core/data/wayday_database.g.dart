@@ -73,6 +73,17 @@ class $DaySettingsTable extends DaySettings
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _placeDetailsMeta = const VerificationMeta(
+    'placeDetails',
+  );
+  @override
+  late final GeneratedColumn<String> placeDetails = GeneratedColumn<String>(
+    'place_details',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -81,6 +92,7 @@ class $DaySettingsTable extends DaySettings
     departure,
     deadline,
     profile,
+    placeDetails,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -137,6 +149,15 @@ class $DaySettingsTable extends DaySettings
     } else if (isInserting) {
       context.missing(_profileMeta);
     }
+    if (data.containsKey('place_details')) {
+      context.handle(
+        _placeDetailsMeta,
+        placeDetails.isAcceptableOrUnknown(
+          data['place_details']!,
+          _placeDetailsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -170,6 +191,10 @@ class $DaySettingsTable extends DaySettings
         DriftSqlType.string,
         data['${effectivePrefix}profile'],
       )!,
+      placeDetails: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}place_details'],
+      ),
     );
   }
 
@@ -186,6 +211,7 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
   final int departure;
   final int deadline;
   final String profile;
+  final String? placeDetails;
   const DaySettingsRow({
     required this.id,
     required this.fromPlace,
@@ -193,6 +219,7 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
     required this.departure,
     required this.deadline,
     required this.profile,
+    this.placeDetails,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -203,6 +230,9 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
     map['departure'] = Variable<int>(departure);
     map['deadline'] = Variable<int>(deadline);
     map['profile'] = Variable<String>(profile);
+    if (!nullToAbsent || placeDetails != null) {
+      map['place_details'] = Variable<String>(placeDetails);
+    }
     return map;
   }
 
@@ -214,6 +244,9 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
       departure: Value(departure),
       deadline: Value(deadline),
       profile: Value(profile),
+      placeDetails: placeDetails == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeDetails),
     );
   }
 
@@ -229,6 +262,7 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
       departure: serializer.fromJson<int>(json['departure']),
       deadline: serializer.fromJson<int>(json['deadline']),
       profile: serializer.fromJson<String>(json['profile']),
+      placeDetails: serializer.fromJson<String?>(json['placeDetails']),
     );
   }
   @override
@@ -241,6 +275,7 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
       'departure': serializer.toJson<int>(departure),
       'deadline': serializer.toJson<int>(deadline),
       'profile': serializer.toJson<String>(profile),
+      'placeDetails': serializer.toJson<String?>(placeDetails),
     };
   }
 
@@ -251,6 +286,7 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
     int? departure,
     int? deadline,
     String? profile,
+    Value<String?> placeDetails = const Value.absent(),
   }) => DaySettingsRow(
     id: id ?? this.id,
     fromPlace: fromPlace ?? this.fromPlace,
@@ -258,6 +294,7 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
     departure: departure ?? this.departure,
     deadline: deadline ?? this.deadline,
     profile: profile ?? this.profile,
+    placeDetails: placeDetails.present ? placeDetails.value : this.placeDetails,
   );
   DaySettingsRow copyWithCompanion(DaySettingsCompanion data) {
     return DaySettingsRow(
@@ -267,6 +304,9 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
       departure: data.departure.present ? data.departure.value : this.departure,
       deadline: data.deadline.present ? data.deadline.value : this.deadline,
       profile: data.profile.present ? data.profile.value : this.profile,
+      placeDetails: data.placeDetails.present
+          ? data.placeDetails.value
+          : this.placeDetails,
     );
   }
 
@@ -278,14 +318,22 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
           ..write('toPlace: $toPlace, ')
           ..write('departure: $departure, ')
           ..write('deadline: $deadline, ')
-          ..write('profile: $profile')
+          ..write('profile: $profile, ')
+          ..write('placeDetails: $placeDetails')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, fromPlace, toPlace, departure, deadline, profile);
+  int get hashCode => Object.hash(
+    id,
+    fromPlace,
+    toPlace,
+    departure,
+    deadline,
+    profile,
+    placeDetails,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -295,7 +343,8 @@ class DaySettingsRow extends DataClass implements Insertable<DaySettingsRow> {
           other.toPlace == this.toPlace &&
           other.departure == this.departure &&
           other.deadline == this.deadline &&
-          other.profile == this.profile);
+          other.profile == this.profile &&
+          other.placeDetails == this.placeDetails);
 }
 
 class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
@@ -305,6 +354,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
   final Value<int> departure;
   final Value<int> deadline;
   final Value<String> profile;
+  final Value<String?> placeDetails;
   const DaySettingsCompanion({
     this.id = const Value.absent(),
     this.fromPlace = const Value.absent(),
@@ -312,6 +362,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
     this.departure = const Value.absent(),
     this.deadline = const Value.absent(),
     this.profile = const Value.absent(),
+    this.placeDetails = const Value.absent(),
   });
   DaySettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -320,6 +371,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
     required int departure,
     required int deadline,
     required String profile,
+    this.placeDetails = const Value.absent(),
   }) : fromPlace = Value(fromPlace),
        toPlace = Value(toPlace),
        departure = Value(departure),
@@ -332,6 +384,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
     Expression<int>? departure,
     Expression<int>? deadline,
     Expression<String>? profile,
+    Expression<String>? placeDetails,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -340,6 +393,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
       if (departure != null) 'departure': departure,
       if (deadline != null) 'deadline': deadline,
       if (profile != null) 'profile': profile,
+      if (placeDetails != null) 'place_details': placeDetails,
     });
   }
 
@@ -350,6 +404,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
     Value<int>? departure,
     Value<int>? deadline,
     Value<String>? profile,
+    Value<String?>? placeDetails,
   }) {
     return DaySettingsCompanion(
       id: id ?? this.id,
@@ -358,6 +413,7 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
       departure: departure ?? this.departure,
       deadline: deadline ?? this.deadline,
       profile: profile ?? this.profile,
+      placeDetails: placeDetails ?? this.placeDetails,
     );
   }
 
@@ -382,6 +438,9 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
     if (profile.present) {
       map['profile'] = Variable<String>(profile.value);
     }
+    if (placeDetails.present) {
+      map['place_details'] = Variable<String>(placeDetails.value);
+    }
     return map;
   }
 
@@ -393,7 +452,8 @@ class DaySettingsCompanion extends UpdateCompanion<DaySettingsRow> {
           ..write('toPlace: $toPlace, ')
           ..write('departure: $departure, ')
           ..write('deadline: $deadline, ')
-          ..write('profile: $profile')
+          ..write('profile: $profile, ')
+          ..write('placeDetails: $placeDetails')
           ..write(')'))
         .toString();
   }
@@ -506,6 +566,17 @@ class $DayErrandsTable extends DayErrands
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _detailsMeta = const VerificationMeta(
+    'details',
+  );
+  @override
+  late final GeneratedColumn<String> details = GeneratedColumn<String>(
+    'details',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -518,6 +589,7 @@ class $DayErrandsTable extends DayErrands
     optional,
     sourceGroupId,
     sourceItemId,
+    details,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -608,6 +680,12 @@ class $DayErrandsTable extends DayErrands
         ),
       );
     }
+    if (data.containsKey('details')) {
+      context.handle(
+        _detailsMeta,
+        details.isAcceptableOrUnknown(data['details']!, _detailsMeta),
+      );
+    }
     return context;
   }
 
@@ -657,6 +735,10 @@ class $DayErrandsTable extends DayErrands
         DriftSqlType.string,
         data['${effectivePrefix}source_item_id'],
       ),
+      details: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}details'],
+      ),
     );
   }
 
@@ -677,6 +759,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
   final bool optional;
   final String? sourceGroupId;
   final String? sourceItemId;
+  final String? details;
   const DayErrandRow({
     required this.id,
     required this.position,
@@ -688,6 +771,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
     required this.optional,
     this.sourceGroupId,
     this.sourceItemId,
+    this.details,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -707,6 +791,9 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
     }
     if (!nullToAbsent || sourceItemId != null) {
       map['source_item_id'] = Variable<String>(sourceItemId);
+    }
+    if (!nullToAbsent || details != null) {
+      map['details'] = Variable<String>(details);
     }
     return map;
   }
@@ -729,6 +816,9 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
       sourceItemId: sourceItemId == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceItemId),
+      details: details == null && nullToAbsent
+          ? const Value.absent()
+          : Value(details),
     );
   }
 
@@ -748,6 +838,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
       optional: serializer.fromJson<bool>(json['optional']),
       sourceGroupId: serializer.fromJson<String?>(json['sourceGroupId']),
       sourceItemId: serializer.fromJson<String?>(json['sourceItemId']),
+      details: serializer.fromJson<String?>(json['details']),
     );
   }
   @override
@@ -764,6 +855,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
       'optional': serializer.toJson<bool>(optional),
       'sourceGroupId': serializer.toJson<String?>(sourceGroupId),
       'sourceItemId': serializer.toJson<String?>(sourceItemId),
+      'details': serializer.toJson<String?>(details),
     };
   }
 
@@ -778,6 +870,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
     bool? optional,
     Value<String?> sourceGroupId = const Value.absent(),
     Value<String?> sourceItemId = const Value.absent(),
+    Value<String?> details = const Value.absent(),
   }) => DayErrandRow(
     id: id ?? this.id,
     position: position ?? this.position,
@@ -791,6 +884,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
         ? sourceGroupId.value
         : this.sourceGroupId,
     sourceItemId: sourceItemId.present ? sourceItemId.value : this.sourceItemId,
+    details: details.present ? details.value : this.details,
   );
   DayErrandRow copyWithCompanion(DayErrandsCompanion data) {
     return DayErrandRow(
@@ -808,6 +902,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
       sourceItemId: data.sourceItemId.present
           ? data.sourceItemId.value
           : this.sourceItemId,
+      details: data.details.present ? data.details.value : this.details,
     );
   }
 
@@ -823,7 +918,8 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
           ..write('minute: $minute, ')
           ..write('optional: $optional, ')
           ..write('sourceGroupId: $sourceGroupId, ')
-          ..write('sourceItemId: $sourceItemId')
+          ..write('sourceItemId: $sourceItemId, ')
+          ..write('details: $details')
           ..write(')'))
         .toString();
   }
@@ -840,6 +936,7 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
     optional,
     sourceGroupId,
     sourceItemId,
+    details,
   );
   @override
   bool operator ==(Object other) =>
@@ -854,7 +951,8 @@ class DayErrandRow extends DataClass implements Insertable<DayErrandRow> {
           other.minute == this.minute &&
           other.optional == this.optional &&
           other.sourceGroupId == this.sourceGroupId &&
-          other.sourceItemId == this.sourceItemId);
+          other.sourceItemId == this.sourceItemId &&
+          other.details == this.details);
 }
 
 class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
@@ -868,6 +966,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
   final Value<bool> optional;
   final Value<String?> sourceGroupId;
   final Value<String?> sourceItemId;
+  final Value<String?> details;
   final Value<int> rowid;
   const DayErrandsCompanion({
     this.id = const Value.absent(),
@@ -880,6 +979,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
     this.optional = const Value.absent(),
     this.sourceGroupId = const Value.absent(),
     this.sourceItemId = const Value.absent(),
+    this.details = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DayErrandsCompanion.insert({
@@ -893,6 +993,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
     required bool optional,
     this.sourceGroupId = const Value.absent(),
     this.sourceItemId = const Value.absent(),
+    this.details = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        position = Value(position),
@@ -912,6 +1013,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
     Expression<bool>? optional,
     Expression<String>? sourceGroupId,
     Expression<String>? sourceItemId,
+    Expression<String>? details,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -925,6 +1027,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
       if (optional != null) 'optional': optional,
       if (sourceGroupId != null) 'source_group_id': sourceGroupId,
       if (sourceItemId != null) 'source_item_id': sourceItemId,
+      if (details != null) 'details': details,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -940,6 +1043,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
     Value<bool>? optional,
     Value<String?>? sourceGroupId,
     Value<String?>? sourceItemId,
+    Value<String?>? details,
     Value<int>? rowid,
   }) {
     return DayErrandsCompanion(
@@ -953,6 +1057,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
       optional: optional ?? this.optional,
       sourceGroupId: sourceGroupId ?? this.sourceGroupId,
       sourceItemId: sourceItemId ?? this.sourceItemId,
+      details: details ?? this.details,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -990,6 +1095,9 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
     if (sourceItemId.present) {
       map['source_item_id'] = Variable<String>(sourceItemId.value);
     }
+    if (details.present) {
+      map['details'] = Variable<String>(details.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1009,6 +1117,7 @@ class DayErrandsCompanion extends UpdateCompanion<DayErrandRow> {
           ..write('optional: $optional, ')
           ..write('sourceGroupId: $sourceGroupId, ')
           ..write('sourceItemId: $sourceItemId, ')
+          ..write('details: $details, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1462,6 +1571,17 @@ class $GroupErrandsTable extends GroupErrands
       'CHECK ("optional" IN (0, 1))',
     ),
   );
+  static const VerificationMeta _detailsMeta = const VerificationMeta(
+    'details',
+  );
+  @override
+  late final GeneratedColumn<String> details = GeneratedColumn<String>(
+    'details',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1473,6 +1593,7 @@ class $GroupErrandsTable extends GroupErrands
     timing,
     minute,
     optional,
+    details,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1553,6 +1674,12 @@ class $GroupErrandsTable extends GroupErrands
     } else if (isInserting) {
       context.missing(_optionalMeta);
     }
+    if (data.containsKey('details')) {
+      context.handle(
+        _detailsMeta,
+        details.isAcceptableOrUnknown(data['details']!, _detailsMeta),
+      );
+    }
     return context;
   }
 
@@ -1598,6 +1725,10 @@ class $GroupErrandsTable extends GroupErrands
         DriftSqlType.bool,
         data['${effectivePrefix}optional'],
       )!,
+      details: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}details'],
+      ),
     );
   }
 
@@ -1617,6 +1748,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
   final String timing;
   final int? minute;
   final bool optional;
+  final String? details;
   const GroupErrandRow({
     required this.id,
     required this.groupId,
@@ -1627,6 +1759,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
     required this.timing,
     this.minute,
     required this.optional,
+    this.details,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1642,6 +1775,9 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
       map['minute'] = Variable<int>(minute);
     }
     map['optional'] = Variable<bool>(optional);
+    if (!nullToAbsent || details != null) {
+      map['details'] = Variable<String>(details);
+    }
     return map;
   }
 
@@ -1658,6 +1794,9 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
           ? const Value.absent()
           : Value(minute),
       optional: Value(optional),
+      details: details == null && nullToAbsent
+          ? const Value.absent()
+          : Value(details),
     );
   }
 
@@ -1676,6 +1815,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
       timing: serializer.fromJson<String>(json['timing']),
       minute: serializer.fromJson<int?>(json['minute']),
       optional: serializer.fromJson<bool>(json['optional']),
+      details: serializer.fromJson<String?>(json['details']),
     );
   }
   @override
@@ -1691,6 +1831,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
       'timing': serializer.toJson<String>(timing),
       'minute': serializer.toJson<int?>(minute),
       'optional': serializer.toJson<bool>(optional),
+      'details': serializer.toJson<String?>(details),
     };
   }
 
@@ -1704,6 +1845,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
     String? timing,
     Value<int?> minute = const Value.absent(),
     bool? optional,
+    Value<String?> details = const Value.absent(),
   }) => GroupErrandRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
@@ -1714,6 +1856,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
     timing: timing ?? this.timing,
     minute: minute.present ? minute.value : this.minute,
     optional: optional ?? this.optional,
+    details: details.present ? details.value : this.details,
   );
   GroupErrandRow copyWithCompanion(GroupErrandsCompanion data) {
     return GroupErrandRow(
@@ -1726,6 +1869,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
       timing: data.timing.present ? data.timing.value : this.timing,
       minute: data.minute.present ? data.minute.value : this.minute,
       optional: data.optional.present ? data.optional.value : this.optional,
+      details: data.details.present ? data.details.value : this.details,
     );
   }
 
@@ -1740,7 +1884,8 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
           ..write('notes: $notes, ')
           ..write('timing: $timing, ')
           ..write('minute: $minute, ')
-          ..write('optional: $optional')
+          ..write('optional: $optional, ')
+          ..write('details: $details')
           ..write(')'))
         .toString();
   }
@@ -1756,6 +1901,7 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
     timing,
     minute,
     optional,
+    details,
   );
   @override
   bool operator ==(Object other) =>
@@ -1769,7 +1915,8 @@ class GroupErrandRow extends DataClass implements Insertable<GroupErrandRow> {
           other.notes == this.notes &&
           other.timing == this.timing &&
           other.minute == this.minute &&
-          other.optional == this.optional);
+          other.optional == this.optional &&
+          other.details == this.details);
 }
 
 class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
@@ -1782,6 +1929,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
   final Value<String> timing;
   final Value<int?> minute;
   final Value<bool> optional;
+  final Value<String?> details;
   final Value<int> rowid;
   const GroupErrandsCompanion({
     this.id = const Value.absent(),
@@ -1793,6 +1941,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
     this.timing = const Value.absent(),
     this.minute = const Value.absent(),
     this.optional = const Value.absent(),
+    this.details = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupErrandsCompanion.insert({
@@ -1805,6 +1954,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
     required String timing,
     this.minute = const Value.absent(),
     required bool optional,
+    this.details = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
@@ -1824,6 +1974,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
     Expression<String>? timing,
     Expression<int>? minute,
     Expression<bool>? optional,
+    Expression<String>? details,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1836,6 +1987,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
       if (timing != null) 'timing': timing,
       if (minute != null) 'minute': minute,
       if (optional != null) 'optional': optional,
+      if (details != null) 'details': details,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1850,6 +2002,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
     Value<String>? timing,
     Value<int?>? minute,
     Value<bool>? optional,
+    Value<String?>? details,
     Value<int>? rowid,
   }) {
     return GroupErrandsCompanion(
@@ -1862,6 +2015,7 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
       timing: timing ?? this.timing,
       minute: minute ?? this.minute,
       optional: optional ?? this.optional,
+      details: details ?? this.details,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1896,6 +2050,9 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
     if (optional.present) {
       map['optional'] = Variable<bool>(optional.value);
     }
+    if (details.present) {
+      map['details'] = Variable<String>(details.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1914,6 +2071,214 @@ class GroupErrandsCompanion extends UpdateCompanion<GroupErrandRow> {
           ..write('timing: $timing, ')
           ..write('minute: $minute, ')
           ..write('optional: $optional, ')
+          ..write('details: $details, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SavedPlacesTable extends SavedPlaces
+    with TableInfo<$SavedPlacesTable, SavedPlace> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SavedPlacesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'saved_places';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SavedPlace> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SavedPlace map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SavedPlace(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $SavedPlacesTable createAlias(String alias) {
+    return $SavedPlacesTable(attachedDatabase, alias);
+  }
+}
+
+class SavedPlace extends DataClass implements Insertable<SavedPlace> {
+  final String id;
+  final String payload;
+  const SavedPlace({required this.id, required this.payload});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  SavedPlacesCompanion toCompanion(bool nullToAbsent) {
+    return SavedPlacesCompanion(id: Value(id), payload: Value(payload));
+  }
+
+  factory SavedPlace.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SavedPlace(
+      id: serializer.fromJson<String>(json['id']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  SavedPlace copyWith({String? id, String? payload}) =>
+      SavedPlace(id: id ?? this.id, payload: payload ?? this.payload);
+  SavedPlace copyWithCompanion(SavedPlacesCompanion data) {
+    return SavedPlace(
+      id: data.id.present ? data.id.value : this.id,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedPlace(')
+          ..write('id: $id, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SavedPlace &&
+          other.id == this.id &&
+          other.payload == this.payload);
+}
+
+class SavedPlacesCompanion extends UpdateCompanion<SavedPlace> {
+  final Value<String> id;
+  final Value<String> payload;
+  final Value<int> rowid;
+  const SavedPlacesCompanion({
+    this.id = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SavedPlacesCompanion.insert({
+    required String id,
+    required String payload,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       payload = Value(payload);
+  static Insertable<SavedPlace> custom({
+    Expression<String>? id,
+    Expression<String>? payload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (payload != null) 'payload': payload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SavedPlacesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? payload,
+    Value<int>? rowid,
+  }) {
+    return SavedPlacesCompanion(
+      id: id ?? this.id,
+      payload: payload ?? this.payload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedPlacesCompanion(')
+          ..write('id: $id, ')
+          ..write('payload: $payload, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1929,6 +2294,7 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
     this,
   );
   late final $GroupErrandsTable groupErrands = $GroupErrandsTable(this);
+  late final $SavedPlacesTable savedPlaces = $SavedPlacesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1938,6 +2304,7 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
     dayErrands,
     recurringGroups,
     groupErrands,
+    savedPlaces,
   ];
 }
 
@@ -1949,6 +2316,7 @@ typedef $$DaySettingsTableCreateCompanionBuilder =
       required int departure,
       required int deadline,
       required String profile,
+      Value<String?> placeDetails,
     });
 typedef $$DaySettingsTableUpdateCompanionBuilder =
     DaySettingsCompanion Function({
@@ -1958,6 +2326,7 @@ typedef $$DaySettingsTableUpdateCompanionBuilder =
       Value<int> departure,
       Value<int> deadline,
       Value<String> profile,
+      Value<String?> placeDetails,
     });
 
 class $$DaySettingsTableFilterComposer
@@ -1996,6 +2365,11 @@ class $$DaySettingsTableFilterComposer
 
   ColumnFilters<String> get profile => $composableBuilder(
     column: $table.profile,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get placeDetails => $composableBuilder(
+    column: $table.placeDetails,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2038,6 +2412,11 @@ class $$DaySettingsTableOrderingComposer
     column: $table.profile,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get placeDetails => $composableBuilder(
+    column: $table.placeDetails,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DaySettingsTableAnnotationComposer
@@ -2066,6 +2445,11 @@ class $$DaySettingsTableAnnotationComposer
 
   GeneratedColumn<String> get profile =>
       $composableBuilder(column: $table.profile, builder: (column) => column);
+
+  GeneratedColumn<String> get placeDetails => $composableBuilder(
+    column: $table.placeDetails,
+    builder: (column) => column,
+  );
 }
 
 class $$DaySettingsTableTableManager
@@ -2105,6 +2489,7 @@ class $$DaySettingsTableTableManager
                 Value<int> departure = const Value.absent(),
                 Value<int> deadline = const Value.absent(),
                 Value<String> profile = const Value.absent(),
+                Value<String?> placeDetails = const Value.absent(),
               }) => DaySettingsCompanion(
                 id: id,
                 fromPlace: fromPlace,
@@ -2112,6 +2497,7 @@ class $$DaySettingsTableTableManager
                 departure: departure,
                 deadline: deadline,
                 profile: profile,
+                placeDetails: placeDetails,
               ),
           createCompanionCallback:
               ({
@@ -2121,6 +2507,7 @@ class $$DaySettingsTableTableManager
                 required int departure,
                 required int deadline,
                 required String profile,
+                Value<String?> placeDetails = const Value.absent(),
               }) => DaySettingsCompanion.insert(
                 id: id,
                 fromPlace: fromPlace,
@@ -2128,6 +2515,7 @@ class $$DaySettingsTableTableManager
                 departure: departure,
                 deadline: deadline,
                 profile: profile,
+                placeDetails: placeDetails,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -2175,6 +2563,7 @@ typedef $$DayErrandsTableCreateCompanionBuilder =
       required bool optional,
       Value<String?> sourceGroupId,
       Value<String?> sourceItemId,
+      Value<String?> details,
       Value<int> rowid,
     });
 typedef $$DayErrandsTableUpdateCompanionBuilder =
@@ -2189,6 +2578,7 @@ typedef $$DayErrandsTableUpdateCompanionBuilder =
       Value<bool> optional,
       Value<String?> sourceGroupId,
       Value<String?> sourceItemId,
+      Value<String?> details,
       Value<int> rowid,
     });
 
@@ -2248,6 +2638,11 @@ class $$DayErrandsTableFilterComposer
 
   ColumnFilters<String> get sourceItemId => $composableBuilder(
     column: $table.sourceItemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get details => $composableBuilder(
+    column: $table.details,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2310,6 +2705,11 @@ class $$DayErrandsTableOrderingComposer
     column: $table.sourceItemId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get details => $composableBuilder(
+    column: $table.details,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DayErrandsTableAnnotationComposer
@@ -2354,6 +2754,9 @@ class $$DayErrandsTableAnnotationComposer
     column: $table.sourceItemId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get details =>
+      $composableBuilder(column: $table.details, builder: (column) => column);
 }
 
 class $$DayErrandsTableTableManager
@@ -2397,6 +2800,7 @@ class $$DayErrandsTableTableManager
                 Value<bool> optional = const Value.absent(),
                 Value<String?> sourceGroupId = const Value.absent(),
                 Value<String?> sourceItemId = const Value.absent(),
+                Value<String?> details = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayErrandsCompanion(
                 id: id,
@@ -2409,6 +2813,7 @@ class $$DayErrandsTableTableManager
                 optional: optional,
                 sourceGroupId: sourceGroupId,
                 sourceItemId: sourceItemId,
+                details: details,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2423,6 +2828,7 @@ class $$DayErrandsTableTableManager
                 required bool optional,
                 Value<String?> sourceGroupId = const Value.absent(),
                 Value<String?> sourceItemId = const Value.absent(),
+                Value<String?> details = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayErrandsCompanion.insert(
                 id: id,
@@ -2435,6 +2841,7 @@ class $$DayErrandsTableTableManager
                 optional: optional,
                 sourceGroupId: sourceGroupId,
                 sourceItemId: sourceItemId,
+                details: details,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2701,6 +3108,7 @@ typedef $$GroupErrandsTableCreateCompanionBuilder =
       required String timing,
       Value<int?> minute,
       required bool optional,
+      Value<String?> details,
       Value<int> rowid,
     });
 typedef $$GroupErrandsTableUpdateCompanionBuilder =
@@ -2714,6 +3122,7 @@ typedef $$GroupErrandsTableUpdateCompanionBuilder =
       Value<String> timing,
       Value<int?> minute,
       Value<bool> optional,
+      Value<String?> details,
       Value<int> rowid,
     });
 
@@ -2768,6 +3177,11 @@ class $$GroupErrandsTableFilterComposer
 
   ColumnFilters<bool> get optional => $composableBuilder(
     column: $table.optional,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get details => $composableBuilder(
+    column: $table.details,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2825,6 +3239,11 @@ class $$GroupErrandsTableOrderingComposer
     column: $table.optional,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get details => $composableBuilder(
+    column: $table.details,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$GroupErrandsTableAnnotationComposer
@@ -2862,6 +3281,9 @@ class $$GroupErrandsTableAnnotationComposer
 
   GeneratedColumn<bool> get optional =>
       $composableBuilder(column: $table.optional, builder: (column) => column);
+
+  GeneratedColumn<String> get details =>
+      $composableBuilder(column: $table.details, builder: (column) => column);
 }
 
 class $$GroupErrandsTableTableManager
@@ -2908,6 +3330,7 @@ class $$GroupErrandsTableTableManager
                 Value<String> timing = const Value.absent(),
                 Value<int?> minute = const Value.absent(),
                 Value<bool> optional = const Value.absent(),
+                Value<String?> details = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupErrandsCompanion(
                 id: id,
@@ -2919,6 +3342,7 @@ class $$GroupErrandsTableTableManager
                 timing: timing,
                 minute: minute,
                 optional: optional,
+                details: details,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2932,6 +3356,7 @@ class $$GroupErrandsTableTableManager
                 required String timing,
                 Value<int?> minute = const Value.absent(),
                 required bool optional,
+                Value<String?> details = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupErrandsCompanion.insert(
                 id: id,
@@ -2943,6 +3368,7 @@ class $$GroupErrandsTableTableManager
                 timing: timing,
                 minute: minute,
                 optional: optional,
+                details: details,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2979,6 +3405,155 @@ typedef $$GroupErrandsTableProcessedTableManager =
       GroupErrandRow,
       PrefetchHooks Function()
     >;
+typedef $$SavedPlacesTableCreateCompanionBuilder =
+    SavedPlacesCompanion Function({
+      required String id,
+      required String payload,
+      Value<int> rowid,
+    });
+typedef $$SavedPlacesTableUpdateCompanionBuilder =
+    SavedPlacesCompanion Function({
+      Value<String> id,
+      Value<String> payload,
+      Value<int> rowid,
+    });
+
+class $$SavedPlacesTableFilterComposer
+    extends Composer<_$WaydayDatabase, $SavedPlacesTable> {
+  $$SavedPlacesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SavedPlacesTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $SavedPlacesTable> {
+  $$SavedPlacesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SavedPlacesTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $SavedPlacesTable> {
+  $$SavedPlacesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$SavedPlacesTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $SavedPlacesTable,
+          SavedPlace,
+          $$SavedPlacesTableFilterComposer,
+          $$SavedPlacesTableOrderingComposer,
+          $$SavedPlacesTableAnnotationComposer,
+          $$SavedPlacesTableCreateCompanionBuilder,
+          $$SavedPlacesTableUpdateCompanionBuilder,
+          (
+            SavedPlace,
+            BaseReferences<_$WaydayDatabase, $SavedPlacesTable, SavedPlace>,
+          ),
+          SavedPlace,
+          PrefetchHooks Function()
+        > {
+  $$SavedPlacesTableTableManager(_$WaydayDatabase db, $SavedPlacesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SavedPlacesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SavedPlacesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SavedPlacesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) =>
+                  SavedPlacesCompanion(id: id, payload: payload, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String payload,
+                Value<int> rowid = const Value.absent(),
+              }) => SavedPlacesCompanion.insert(
+                id: id,
+                payload: payload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SavedPlacesTable, SavedPlace>(table),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $SavedPlacesTable,
+                    SavedPlace
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SavedPlacesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $SavedPlacesTable,
+      SavedPlace,
+      $$SavedPlacesTableFilterComposer,
+      $$SavedPlacesTableOrderingComposer,
+      $$SavedPlacesTableAnnotationComposer,
+      $$SavedPlacesTableCreateCompanionBuilder,
+      $$SavedPlacesTableUpdateCompanionBuilder,
+      (
+        SavedPlace,
+        BaseReferences<_$WaydayDatabase, $SavedPlacesTable, SavedPlace>,
+      ),
+      SavedPlace,
+      PrefetchHooks Function()
+    >;
 
 class $WaydayDatabaseManager {
   final _$WaydayDatabase _db;
@@ -2991,4 +3566,6 @@ class $WaydayDatabaseManager {
       $$RecurringGroupsTableTableManager(_db, _db.recurringGroups);
   $$GroupErrandsTableTableManager get groupErrands =>
       $$GroupErrandsTableTableManager(_db, _db.groupErrands);
+  $$SavedPlacesTableTableManager get savedPlaces =>
+      $$SavedPlacesTableTableManager(_db, _db.savedPlaces);
 }

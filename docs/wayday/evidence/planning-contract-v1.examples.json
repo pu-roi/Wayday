@@ -1,0 +1,1657 @@
+{
+  "notice": "Synthetic contract fixtures only: no real business, road geometry, route time or optimizer result is asserted",
+  "cases": [
+    {
+      "name": "automatic_pharmacy_with_unknown_hours",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "provisional",
+        "issues": [],
+        "plan": {
+          "id": "synthetic-plan-1",
+          "selected_stops": [
+            {
+              "errand_id": "medicine",
+              "place": {
+                "label": "Synthetic pharmacy branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              },
+              "qualification_reason": "Synthetic pharmacy category fixture; no inventory claim",
+              "arrival": "2026-10-27T08:05:00+08:00",
+              "service_start": "2026-10-27T08:05:00+08:00",
+              "service_end": "2026-10-27T08:15:00+08:00",
+              "departure": "2026-10-27T08:20:00+08:00",
+              "visit_seconds": 600,
+              "buffer_seconds": 300,
+              "visit_source": "category_default",
+              "hours": {
+                "state": "unknown",
+                "source": null,
+                "snapshot_date": null,
+                "intervals": []
+              }
+            }
+          ],
+          "omissions": [],
+          "final_arrival": "2026-10-27T08:25:00+08:00",
+          "travel_seconds": 600,
+          "travel_meters": 1000,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                121.06,
+                14.58
+              ],
+              [
+                121.065,
+                14.585
+              ],
+              [
+                121.07,
+                14.59
+              ]
+            ]
+          },
+          "completed": [],
+          "warnings": [
+            {
+              "code": "check_hours",
+              "message": "Opening hours are unknown; check before visiting",
+              "errand_id": "medicine",
+              "field": null
+            },
+            {
+              "code": "synthetic_fixture",
+              "message": "All positions, travel times and business identities are test-only",
+              "errand_id": null,
+              "field": null
+            }
+          ],
+          "provenance": {
+            "engine_version": "synthetic",
+            "graph_id": "synthetic-matrix-v1",
+            "catalog_id": "synthetic-places-v1",
+            "source_snapshot": "2026-10-27T00:00:00Z",
+            "estimate_policy": "pilot-2026-10-27-v1",
+            "traffic": "none",
+            "ground_clearance_verified": false,
+            "restriction_coverage": "incomplete"
+          },
+          "solver": {
+            "termination": "completed",
+            "globally_optimal": false
+          }
+        }
+      }
+    },
+    {
+      "name": "explicit_branch_override",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "fixed",
+              "place": {
+                "label": "Synthetic user-selected branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              }
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "provisional",
+        "issues": [],
+        "plan": {
+          "id": "synthetic-plan-1",
+          "selected_stops": [
+            {
+              "errand_id": "medicine",
+              "place": {
+                "label": "Synthetic user-selected branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              },
+              "qualification_reason": "Synthetic pharmacy category fixture; no inventory claim",
+              "arrival": "2026-10-27T08:05:00+08:00",
+              "service_start": "2026-10-27T08:05:00+08:00",
+              "service_end": "2026-10-27T08:15:00+08:00",
+              "departure": "2026-10-27T08:20:00+08:00",
+              "visit_seconds": 600,
+              "buffer_seconds": 300,
+              "visit_source": "category_default",
+              "hours": {
+                "state": "unknown",
+                "source": null,
+                "snapshot_date": null,
+                "intervals": []
+              }
+            }
+          ],
+          "omissions": [],
+          "final_arrival": "2026-10-27T08:25:00+08:00",
+          "travel_seconds": 600,
+          "travel_meters": 1000,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                121.06,
+                14.58
+              ],
+              [
+                121.065,
+                14.585
+              ],
+              [
+                121.07,
+                14.59
+              ]
+            ]
+          },
+          "completed": [],
+          "warnings": [
+            {
+              "code": "check_hours",
+              "message": "Opening hours are unknown; check before visiting",
+              "errand_id": "medicine",
+              "field": null
+            },
+            {
+              "code": "synthetic_fixture",
+              "message": "All positions, travel times and business identities are test-only",
+              "errand_id": null,
+              "field": null
+            }
+          ],
+          "provenance": {
+            "engine_version": "synthetic",
+            "graph_id": "synthetic-matrix-v1",
+            "catalog_id": "synthetic-places-v1",
+            "source_snapshot": "2026-10-27T00:00:00Z",
+            "estimate_policy": "pilot-2026-10-27-v1",
+            "traffic": "none",
+            "ground_clearance_verified": false,
+            "restriction_coverage": "incomplete"
+          },
+          "solver": {
+            "termination": "completed",
+            "globally_optimal": false
+          }
+        }
+      }
+    },
+    {
+      "name": "editable_visit_duration",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 1200,
+            "visit_source": "user",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "provisional",
+        "issues": [],
+        "plan": {
+          "id": "synthetic-plan-1",
+          "selected_stops": [
+            {
+              "errand_id": "medicine",
+              "place": {
+                "label": "Synthetic pharmacy branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              },
+              "qualification_reason": "Synthetic pharmacy category fixture; no inventory claim",
+              "arrival": "2026-10-27T08:05:00+08:00",
+              "service_start": "2026-10-27T08:05:00+08:00",
+              "service_end": "2026-10-27T08:25:00+08:00",
+              "departure": "2026-10-27T08:30:00+08:00",
+              "visit_seconds": 1200,
+              "buffer_seconds": 300,
+              "visit_source": "user",
+              "hours": {
+                "state": "unknown",
+                "source": null,
+                "snapshot_date": null,
+                "intervals": []
+              }
+            }
+          ],
+          "omissions": [],
+          "final_arrival": "2026-10-27T08:35:00+08:00",
+          "travel_seconds": 600,
+          "travel_meters": 1000,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                121.06,
+                14.58
+              ],
+              [
+                121.065,
+                14.585
+              ],
+              [
+                121.07,
+                14.59
+              ]
+            ]
+          },
+          "completed": [],
+          "warnings": [
+            {
+              "code": "check_hours",
+              "message": "Opening hours are unknown; check before visiting",
+              "errand_id": "medicine",
+              "field": null
+            },
+            {
+              "code": "synthetic_fixture",
+              "message": "All positions, travel times and business identities are test-only",
+              "errand_id": null,
+              "field": null
+            }
+          ],
+          "provenance": {
+            "engine_version": "synthetic",
+            "graph_id": "synthetic-matrix-v1",
+            "catalog_id": "synthetic-places-v1",
+            "source_snapshot": "2026-10-27T00:00:00Z",
+            "estimate_policy": "pilot-2026-10-27-v1",
+            "traffic": "none",
+            "ground_clearance_verified": false,
+            "restriction_coverage": "incomplete"
+          },
+          "solver": {
+            "termination": "completed",
+            "globally_optimal": false
+          }
+        }
+      }
+    },
+    {
+      "name": "unclear_errand_preserves_original_text",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "lunch with her after",
+            "notes": "",
+            "category": null,
+            "interpretation": "needs_clarification",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 1800,
+            "visit_source": "user",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "needs_clarification",
+        "issues": [
+          {
+            "code": "ambiguous_errand",
+            "message": "Confirm destination/category and what 'after' refers to",
+            "errand_id": "medicine",
+            "field": "errands.medicine"
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "optional_omission_with_dependency",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          },
+          {
+            "id": "coffee",
+            "original_text": "Coffee if there is time",
+            "notes": "",
+            "category": "food",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": true,
+            "after_ids": [
+              "medicine"
+            ],
+            "visit_seconds": 1800,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "provisional",
+        "issues": [],
+        "plan": {
+          "id": "synthetic-plan-1",
+          "selected_stops": [
+            {
+              "errand_id": "medicine",
+              "place": {
+                "label": "Synthetic pharmacy branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              },
+              "qualification_reason": "Synthetic pharmacy category fixture; no inventory claim",
+              "arrival": "2026-10-27T08:05:00+08:00",
+              "service_start": "2026-10-27T08:05:00+08:00",
+              "service_end": "2026-10-27T08:15:00+08:00",
+              "departure": "2026-10-27T08:20:00+08:00",
+              "visit_seconds": 600,
+              "buffer_seconds": 300,
+              "visit_source": "category_default",
+              "hours": {
+                "state": "unknown",
+                "source": null,
+                "snapshot_date": null,
+                "intervals": []
+              }
+            }
+          ],
+          "omissions": [
+            {
+              "errand_id": "coffee",
+              "reason": "Synthetic example: insufficient time for the optional stop"
+            }
+          ],
+          "final_arrival": "2026-10-27T08:25:00+08:00",
+          "travel_seconds": 600,
+          "travel_meters": 1000,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                121.06,
+                14.58
+              ],
+              [
+                121.065,
+                14.585
+              ],
+              [
+                121.07,
+                14.59
+              ]
+            ]
+          },
+          "completed": [],
+          "warnings": [
+            {
+              "code": "check_hours",
+              "message": "Opening hours are unknown; check before visiting",
+              "errand_id": "medicine",
+              "field": null
+            },
+            {
+              "code": "synthetic_fixture",
+              "message": "All positions, travel times and business identities are test-only",
+              "errand_id": null,
+              "field": null
+            }
+          ],
+          "provenance": {
+            "engine_version": "synthetic",
+            "graph_id": "synthetic-matrix-v1",
+            "catalog_id": "synthetic-places-v1",
+            "source_snapshot": "2026-10-27T00:00:00Z",
+            "estimate_policy": "pilot-2026-10-27-v1",
+            "traffic": "none",
+            "ground_clearance_verified": false,
+            "restriction_coverage": "incomplete"
+          },
+          "solver": {
+            "termination": "completed",
+            "globally_optimal": false
+          }
+        }
+      }
+    },
+    {
+      "name": "appointment_waiting",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "at",
+              "at": "2026-10-27T08:10:00+08:00"
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "provisional",
+        "issues": [],
+        "plan": {
+          "id": "synthetic-plan-1",
+          "selected_stops": [
+            {
+              "errand_id": "medicine",
+              "place": {
+                "label": "Synthetic pharmacy branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              },
+              "qualification_reason": "Synthetic pharmacy category fixture; no inventory claim",
+              "arrival": "2026-10-27T08:05:00+08:00",
+              "service_start": "2026-10-27T08:10:00+08:00",
+              "service_end": "2026-10-27T08:20:00+08:00",
+              "departure": "2026-10-27T08:25:00+08:00",
+              "visit_seconds": 600,
+              "buffer_seconds": 300,
+              "visit_source": "category_default",
+              "hours": {
+                "state": "unknown",
+                "source": null,
+                "snapshot_date": null,
+                "intervals": []
+              }
+            }
+          ],
+          "omissions": [],
+          "final_arrival": "2026-10-27T08:30:00+08:00",
+          "travel_seconds": 600,
+          "travel_meters": 1000,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                121.06,
+                14.58
+              ],
+              [
+                121.065,
+                14.585
+              ],
+              [
+                121.07,
+                14.59
+              ]
+            ]
+          },
+          "completed": [],
+          "warnings": [
+            {
+              "code": "check_hours",
+              "message": "Opening hours are unknown; check before visiting",
+              "errand_id": "medicine",
+              "field": null
+            },
+            {
+              "code": "synthetic_fixture",
+              "message": "All positions, travel times and business identities are test-only",
+              "errand_id": null,
+              "field": null
+            }
+          ],
+          "provenance": {
+            "engine_version": "synthetic",
+            "graph_id": "synthetic-matrix-v1",
+            "catalog_id": "synthetic-places-v1",
+            "source_snapshot": "2026-10-27T00:00:00Z",
+            "estimate_policy": "pilot-2026-10-27-v1",
+            "traffic": "none",
+            "ground_clearance_verified": false,
+            "restriction_coverage": "incomplete"
+          },
+          "solver": {
+            "termination": "completed",
+            "globally_optimal": false
+          }
+        }
+      }
+    },
+    {
+      "name": "no_candidates",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "no_candidates",
+        "issues": [
+          {
+            "code": "no_matching_category",
+            "message": "Synthetic no_candidates example; retain the last saved plan",
+            "errand_id": null,
+            "field": null
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "no_route",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "no_route",
+        "issues": [
+          {
+            "code": "unreachable_leg",
+            "message": "Synthetic no_route example; retain the last saved plan",
+            "errand_id": null,
+            "field": null
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "conflict",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "conflict",
+        "issues": [
+          {
+            "code": "proven_deadline_conflict",
+            "message": "Synthetic conflict example; retain the last saved plan",
+            "errand_id": null,
+            "field": null
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "timeout",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "timeout",
+        "issues": [
+          {
+            "code": "solve_time_limit",
+            "message": "Synthetic timeout example; retain the last saved plan",
+            "errand_id": null,
+            "field": null
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "unavailable",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "unavailable",
+        "issues": [
+          {
+            "code": "routing_service_unavailable",
+            "message": "Synthetic unavailable example; retain the last saved plan",
+            "errand_id": null,
+            "field": null
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "unsupported_profile",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "unsupported_profile",
+        "issues": [
+          {
+            "code": "unsupported_vehicle_capability",
+            "message": "Synthetic unsupported_profile example; retain the last saved plan",
+            "errand_id": null,
+            "field": null
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "missing_endpoint",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "plan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": null,
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": null
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "needs_clarification",
+        "issues": [
+          {
+            "code": "missing_start",
+            "message": "Choose a confirmed starting point",
+            "errand_id": null,
+            "field": "start"
+          }
+        ],
+        "plan": null
+      }
+    },
+    {
+      "name": "replan_preserves_completed_history",
+      "request": {
+        "kind": "day_input",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "operation": "replan",
+        "plan_date": "2026-10-27",
+        "timezone": "Asia/Manila",
+        "start": {
+          "label": "Synthetic start",
+          "latitude": 14.58,
+          "longitude": 121.06,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "end": {
+          "label": "Synthetic finish",
+          "latitude": 14.59,
+          "longitude": 121.07,
+          "address": null,
+          "source": {
+            "provider": "manual",
+            "id": null,
+            "snapshot_date": null
+          }
+        },
+        "departure": "2026-10-27T08:00:00+08:00",
+        "final_deadline": "2026-10-27T18:00:00+08:00",
+        "profile": "walking",
+        "vehicle": null,
+        "errands": [
+          {
+            "id": "medicine",
+            "original_text": "Bumili ng gamot",
+            "notes": "",
+            "category": "pharmacy",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 600,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          },
+          {
+            "id": "earlier",
+            "original_text": "Synthetic completed errand",
+            "notes": "",
+            "category": "bank",
+            "interpretation": "confirmed",
+            "destination": {
+              "kind": "flexible",
+              "place": null
+            },
+            "timing": {
+              "rule": "anytime",
+              "at": null
+            },
+            "optional": false,
+            "after_ids": [],
+            "visit_seconds": 1800,
+            "visit_source": "category_default",
+            "buffer_seconds": 300,
+            "estimate_policy": "pilot-2026-10-27-v1"
+          }
+        ],
+        "replan": {
+          "previous_plan_id": "synthetic-previous-plan",
+          "current_place": {
+            "label": "Synthetic start",
+            "latitude": 14.58,
+            "longitude": 121.06,
+            "address": null,
+            "source": {
+              "provider": "manual",
+              "id": null,
+              "snapshot_date": null
+            }
+          },
+          "now": "2026-10-27T08:00:00+08:00",
+          "completed": [
+            {
+              "errand_id": "earlier",
+              "completed_at": "2026-10-27T07:55:00+08:00",
+              "place": {
+                "label": "Synthetic completed bank",
+                "latitude": 14.58,
+                "longitude": 121.06,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              }
+            }
+          ]
+        }
+      },
+      "response": {
+        "kind": "planning_result",
+        "contract_version": "wayday.planning.v1",
+        "request_id": "synthetic-request-1",
+        "input_revision": 7,
+        "calculated_at": "2026-10-27T07:00:00Z",
+        "status": "provisional",
+        "issues": [],
+        "plan": {
+          "id": "synthetic-plan-1",
+          "selected_stops": [
+            {
+              "errand_id": "medicine",
+              "place": {
+                "label": "Synthetic pharmacy branch",
+                "latitude": 14.585,
+                "longitude": 121.065,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              },
+              "qualification_reason": "Synthetic pharmacy category fixture; no inventory claim",
+              "arrival": "2026-10-27T08:05:00+08:00",
+              "service_start": "2026-10-27T08:05:00+08:00",
+              "service_end": "2026-10-27T08:15:00+08:00",
+              "departure": "2026-10-27T08:20:00+08:00",
+              "visit_seconds": 600,
+              "buffer_seconds": 300,
+              "visit_source": "category_default",
+              "hours": {
+                "state": "unknown",
+                "source": null,
+                "snapshot_date": null,
+                "intervals": []
+              }
+            }
+          ],
+          "omissions": [],
+          "final_arrival": "2026-10-27T08:25:00+08:00",
+          "travel_seconds": 600,
+          "travel_meters": 1000,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                121.06,
+                14.58
+              ],
+              [
+                121.065,
+                14.585
+              ],
+              [
+                121.07,
+                14.59
+              ]
+            ]
+          },
+          "completed": [
+            {
+              "errand_id": "earlier",
+              "completed_at": "2026-10-27T07:55:00+08:00",
+              "place": {
+                "label": "Synthetic completed bank",
+                "latitude": 14.58,
+                "longitude": 121.06,
+                "address": null,
+                "source": {
+                  "provider": "manual",
+                  "id": null,
+                  "snapshot_date": null
+                }
+              }
+            }
+          ],
+          "warnings": [
+            {
+              "code": "check_hours",
+              "message": "Opening hours are unknown; check before visiting",
+              "errand_id": "medicine",
+              "field": null
+            },
+            {
+              "code": "synthetic_fixture",
+              "message": "All positions, travel times and business identities are test-only",
+              "errand_id": null,
+              "field": null
+            }
+          ],
+          "provenance": {
+            "engine_version": "synthetic",
+            "graph_id": "synthetic-matrix-v1",
+            "catalog_id": "synthetic-places-v1",
+            "source_snapshot": "2026-10-27T00:00:00Z",
+            "estimate_policy": "pilot-2026-10-27-v1",
+            "traffic": "none",
+            "ground_clearance_verified": false,
+            "restriction_coverage": "incomplete"
+          },
+          "solver": {
+            "termination": "completed",
+            "globally_optimal": false
+          }
+        }
+      }
+    }
+  ]
+}

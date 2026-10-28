@@ -25,6 +25,7 @@ key.properties
 coverage/
 **/android/local.properties
 **/android/.gradle/
+**/android/.kotlin/
 **/ios/Pods/
 **/ios/.symlinks/
 **/ios/Flutter/ephemeral/
@@ -65,6 +66,11 @@ node_modules/
 *.db-wal
 *.db-shm
 *.log
+
+# Regional map assets are prepared locally; preserve empty buildable directories.
+/apps/mobile/assets/maps/pilot/**
+!/apps/mobile/assets/maps/pilot/**/
+!/apps/mobile/assets/maps/pilot/**/.gitkeep
 
 # Machine-specific editor / OS files
 .idea/

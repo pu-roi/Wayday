@@ -5,14 +5,14 @@ description: Plan, implement, or review Wayday Drift/SQLite persistence, Postgre
 
 # Wayday database
 
-Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The Android app already has Drift/SQLite schema version 1 for Today and Recurring. Inspect existing data and migration history before changes. The selected regional catalog and confirmed-place/trip schemas are future tasks; documentation planning does not authorize runtime implementation.
+Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The Android app uses a versioned Drift/SQLite schema and has a recovery path for the previous workspace database. Inspect existing data and migration history before changes. Saved-trip schemas are future work; documentation planning does not authorize runtime implementation.
 
-[Planning](../../../docs/wayday/PLANNING.md#task-specifications) owns storage-task prerequisites and acceptance criteria; [Contributing](../../../docs/wayday/CONTRIBUTING.md#regional-maps-and-data) owns package/import practices. Sample-data cleanup removes future seeding/reset behavior while preserving existing rows, including user-edited examples. Repeat settings remain metadata; storage work does not authorize an automatic scheduler.
+Follow the owner's current task for storage scope and acceptance criteria; [Contributing](../../../docs/wayday/CONTRIBUTING.md#regional-maps-and-data) owns package/import practices. Sample-data cleanup removes future seeding/reset behavior while preserving existing rows, including user-edited examples. Repeat settings remain metadata; storage work does not authorize an automatic scheduler.
 
 ## Choose the correct data owner
 
 - Drift/SQLite owns personal errands, template copies, saved places, saved itineraries, reminder identities, and trip progress on the phone.
-- A replaceable installed regional catalog owns public POIs for the next local-search milestone; keep its refreshes separate from personal data. PostgreSQL/PostGIS is a later option when server catalog/cache queries require it. Backend calculations are not permission to persist personal tasks or history.
+- Online place search is the current owner direction. An installed regional catalog remains a possible later offline capability; keep any public data refreshes separate from personal data. PostgreSQL/PostGIS is optional for server catalog queries. Backend calculations are not permission to persist personal tasks or history.
 - Supabase is a future PostgreSQL hosting option. Do not introduce its auth, synchronization, or client database access merely to add storage.
 
 Load `wayday-mobile` for changes to local behavior, `wayday-backend` for server repository/transaction work, and `wayday-planning` when stored fields change itinerary meaning. Keep API serialization decisions in `wayday-api`.

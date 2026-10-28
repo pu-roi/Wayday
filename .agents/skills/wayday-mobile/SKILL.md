@@ -13,7 +13,7 @@ Read the repository's `AGENTS.md` and respect the current phase and latest user 
 - Read [Architecture](../../../docs/wayday/ARCHITECTURE.md) for feature boundaries, local persistence, and platform adapters.
 - Read [Stack](../../../docs/wayday/STACK.md) before selecting a map/location dependency or service.
 - Consult [Decisions](../../../docs/wayday/DECISIONS.md) when historical Asikaso behavior conflicts with current direction.
-- Follow dependencies in [Planning](../../../docs/wayday/PLANNING.md#task-specifications) and verification practices in [Contributing](../../../docs/wayday/CONTRIBUTING.md#development-practices). The [mobile README](../../../apps/mobile/README.md) owns runnable commands. Do not recreate removed Product, Roadmap, or Development files.
+- Follow the owner's latest task instructions and verification practices in [Contributing](../../../docs/wayday/CONTRIBUTING.md#development-practices). The [mobile README](../../../apps/mobile/README.md) owns runnable commands. Do not recreate a roadmap or task board unless the owner explicitly asks.
 
 ## Apply Wayday's mobile boundaries
 
@@ -27,7 +27,7 @@ Preserve original errand text and user-confirmed rules. Treat parsing as a limit
 
 Keep tasks, template copies, trip progress, and saved itineraries local. A copied template is independently editable; remap its internal dependency IDs. A stale network result must not overwrite newer input or completed-stop history.
 
-Android Today and Recurring persistence already exists; the browser preview remains in memory. Removing future sample seeding must preserve saved rows, including examples the user may have edited. Real maps, place search, saved trips, and automatic planning remain future work. Manual place selection is an override or development checkpoint; the first usable release must recommend stores, choose branches/order, and estimate schedules.
+Android Today and Recurring persistence already exists; the browser preview remains in memory. Removing future sample seeding must preserve saved rows, including examples the user may have edited. The reconciliation adds online place search and map pin selection; verify their actual Android behavior and provider coverage before claiming readiness. Saved trips and automatic planning remain future work. Manual place selection is an override or development checkpoint; the first usable release must recommend stores, choose branches/order, and estimate schedules.
 
 Keep offline map availability separate from offline routing. Check downloaded map completeness, styles/fonts/sprites, provider limits, and iOS cache eviction. Preserve required attribution outside overlapping map sheets.
 

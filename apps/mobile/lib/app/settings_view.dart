@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../features/maps/presentation/regional_map.dart';
+import '../features/maps/presentation/map_credits_page.dart';
+import '../core/widgets/section_surface.dart';
 import 'theme.dart';
 
 class SettingsView extends StatelessWidget {
@@ -20,6 +23,10 @@ class SettingsView extends StatelessWidget {
               'Wayday',
               style: context.type.titleLarge,
               textAlign: TextAlign.center,
+            ),
+            const ExpansionTile(
+              title: Text('Offline Pasig/Ortigas preview'),
+              children: [RegionalMap()],
             ),
             const SizedBox(height: 8),
             Text(
@@ -42,9 +49,19 @@ class SettingsView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Maps are visual previews. Place search, trip planning, saved trips, and reminders are coming later.',
+              kIsWeb
+                  ? 'Search uses an online place service. The regional offline map is available on Android; browser map support may differ. Trip planning, saved trips, and reminders are coming later.'
+                  : 'Search and map pin selection use online services. The offline regional map covers Pasig/Ortigas. Trip planning, saved trips, and reminders are coming later.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SectionSurface(
+              child: ListTile(
+                title: const Text('Map credits and licenses'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => openMapCredits(context),
               ),
             ),
           ],

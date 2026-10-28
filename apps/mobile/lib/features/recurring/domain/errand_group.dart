@@ -39,4 +39,29 @@ class ErrandGroup {
     RepeatPattern.fortnightly => 'Every 2 weeks · ${weekdays[day - 1]}',
     RepeatPattern.monthly => 'Monthly · Day $day',
   };
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'repeat': repeat.name,
+    'day': day,
+    'items': items.map((e) => e.toJson()).toList(),
+  };
+
+  factory ErrandGroup.fromJson(Map<String, dynamic> json) {
+    final repeat = RepeatPattern.values.byName(json['repeat'] as String);
+    final day = json['day'] as int;
+    if (day < 1 || day > (repeat == RepeatPattern.monthly ? 31 : 7)) {
+      throw const FormatException('Invalid repeat day');
+    }
+    return ErrandGroup(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      repeat: repeat,
+      day: day,
+      items: (json['items'] as List)
+          .map((e) => Errand.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }

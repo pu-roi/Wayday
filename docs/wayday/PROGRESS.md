@@ -2,20 +2,69 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-10-28] Unified location picker implementation
+
+- Combined place search, saved places and online pin positioning into one picker route with a single Confirm location action. Search waits 600 ms, serializes requests, retains only the latest queued query and discards stale responses. Programmatic camera positioning preserves place identity; manual movement produces a draft pin with outdated address/source details removed. Explicit name-only fallback and draft cancellation remain available.
+- Added and updated search-controller, selection, location-race and navigation tests, plus the isolated Android map harness. Dart analysis passes. Flutter execution remains blocked by Windows application control during native-asset preparation; these tests and the native interaction have not been verified in this change.
+
+### [2026-10-28] Profile, Today map and credits updates
+
+- Added local saved-place viewing, name/location editing and confirmed deletion through Profile, retaining independent place details in existing errands/endpoints. Today displays confirmed places on an online map inside its route surface; it does not calculate a route. Detailed map notices are available from Settings and the map information control.
+- A project-local MapLibre 0.27.1 patch adds a per-map Android attribution-button option, so Today and the combined picker can use one themed information control. This requires a full Android rebuild and device verification. Icon-only attribution remains explicitly recorded as differing from OpenStreetMap Foundation's published safe-harbour guidance.
+- The copied FastAPI service remains a bounded pilot catalog implementation for review, separate from mobile online search. Automatic recommendations, road estimates, itinerary optimization and reminders remain unimplemented. Earlier native evidence is historical and does not verify the current picker or patched plugin.
+
+### [2026-10-28] Repository status and branch preparation
+
+- Updated README, architecture, decisions, stack and agent guidance to distinguish current mobile capabilities, the imported pilot API, earlier evidence and outstanding verification. Removed the stale task-count percentage without recreating the retired task board.
+- Checks passed: mobile Dart analysis; 22 routing/contract tests; 14 backend unit tests; the preserved prototype check; and 126 local document links. Seven PostGIS integration tests were skipped without a configured test database. Flutter tests and the isolated Android harness remain blocked by Windows application control. No runtime or device result is implied by the documentation update.
+
 > [!NOTE]
-> This log is updated automatically when tasks are marked complete via the `wayday-task-tracker` skill or helper script. See [PLANNING.md](PLANNING.md) for the active task board.
+> This log records completed work and verification evidence. The owner supplies current task priorities and sequence directly; no active task board is maintained.
 
 ---
 
 ## Progress Summary
 
-| Category / Milestone | Total Tasks | Completed | In Progress | Pending | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Tasks | 31 | 12 | 0 | 19 | In Progress (38%) |
+The activity log records completed implementation, research and checks. Historical task identifiers below are evidence references, not an active task board or a current completion percentage. The owner supplies current work directly; the latest native verification limits are recorded above.
 
 ---
 
 ## Activity Log
+
+### [2026-10-27] M5-02: Define automatic-planning inputs and outcomes.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Planning · input contract
+- **Summary**: Defined wayday.planning.v1 through a narrative specification, JSON Schema, 14 explicitly synthetic acceptance examples and executable cross-field checks. The contract separates editable input from calculated snapshots, preserves original text and fixed destinations, defines English/Filipino/Taglish clarification cases, versioned editable visit estimates and buffers, explicit Asia/Manila single-day timestamps, arrival/start/completion meanings, optional prerequisites, request revisions and completed history. It distinguishes missing candidates, no route, proven conflict, timeout, outage and unsupported capability outcomes. Truck subtypes require relevant explicit parameters; no clearance or complete legal-access verification is claimed. Initial limits of 12 errands, three candidates each and 38 matrix locations are bounded policy awaiting full-size performance measurement. All 22 routing/contract tests and independent team review passed. No API server, solver, automatic recommendations or Flutter planning models were implemented.
+
+
+### [2026-10-27] M5-01: Validate regional routing and vehicle support early.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Routing · feasibility gate
+- **Summary**: Built and measured pinned local Valhalla3.9.1 on buffered pilot OSM data:18 real public-site routes, six4x4 matrices,30 asymmetric nonwalking pairs and explicit outside-graph400/code171. Source-way review and12t vs20t mapped15t weight contrast passed; actualPBFcheckrefs reports no missing members. Published graph/source/version/resource evidence:177,084,082-byte graph/PBF/timezone directory,673,581,738-byte image,352,440,320-byte containerpeak under2threads/4GiB; graphstages39+13s, warmmedian0.063s/max0.265s (not full-cap performance). Isolated Linux conversion and Docker-volume build resolve Windows DLL/9p issues without global policy/settings changes. Distinguish pickup/heavy subtypes and incomplete dimensions/access/motorcycle/ground-clearance data; finiteHGVpenalty is not a prohibition. Lead independent local route and source checks plus team review passed. No production API, mobile routing or legal/clearance guarantee introduced.
+
+
+### [2026-10-27] M3-02: Prepare a licensed regional map package.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Maps · data packages
+- **Summary**: Prepared the bounded Protomaps 4.15.2 map package from 20261026.pmtiles using pmtiles1.31.2. Verified archive 8,046,175 bytes, zoom0-15, exact pilot bounds, MVT/gzip and CLI verify. Complete package 268 payload files 14,370,151 bytes plus 47,944-byte manifest, including all256 Noto Sans Regular glyph ranges, four light sprites, authored Wayday style, OFL/MIT/OSM notices and SHA256 per-file manifest. Source assets pinned to commit028c18f713baecad011301ff7a69acc39bcc2ae7 and checked against Git blob hashes. Extraction17.30s/40requests/8.4MB transfer; cached repeat7.58s with identical manifest/payload hashes, Pythonpeak28.4MB (excludes earlier CLI/native rendering). Five offline failure tests and lead verification passed. Raw/generated/app-package resources remain ignored; tracked tooling preserves prior packages and nested repository markers. Native/offline Android rendering remains M3-03.
+
+
+### [2026-10-27] M3-01: Audit pilot place coverage.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Data · feasibility
+- **Summary**: Audited 35 independently frozen public Pasig/Ortigas samples against a bounded OSM extraction: 16 plausible site/branch matches, 3 ambiguous and 16 not found; only one matched site has OSM hours, no surveyed entrance accuracy. Final extract 11,679 elements, 5,278,128 bytes, snapshot 2026-10-27T06:59:26Z with reproducible query and raw/sample/tool/results hashes. Published CSV, frozen references, manual review and summary; preserved floor corrections separately, retained missing/ambiguous denominators, documented clustered-sample/adjacent-city limits, and explicitly deferred unvalidated Overture inclusion. Three offline matching/provenance regressions and independent review passed; raw data stays ignored. Bounded map/road feasibility may proceed; automatic catalog completeness is not established.
+
+
+### [2026-10-27] DOC-08: Ground Stage 2 execution and integration boundaries in the source audit, with team ownership and verification gates.
+- **Status**: [x] DONE
+- **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
+- **Component**: Documentation · implementation readiness
+- **Summary**: Recorded the read-only source audit and Stage 2 execution brief in the existing Planning authority. Defined a 35-destination independently selected pilot sample, reproducible provenance and matching evidence, map/routing parallel paths, exclusive agent ownership and Android/offline gates. Preserve the existing picker/layout/editors/repositories; separate renderer, confirmed-place migration, pin selection, catalog search and computed-trip responsibilities. Added durable-save failure/retry acceptance to M4-01. Independent team review approved after navigation-dependency wording clarification. Verified 121 local links/anchors across 17 maintained documents, preserved all 31 prior task records and dependency declarations, and restricted changes to Planning/Progress. Prior source-audit analyzer and 48 tests passed; this planning-only update changes no runtime code, installs no packages and completes no map/routing tasks.
+
 
 ### [2026-10-27] DOC-07: Move the canonical README to the repository root and repair documentation rules, links, and skill references.
 - **Status**: [x] DONE

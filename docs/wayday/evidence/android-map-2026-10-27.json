@@ -1,0 +1,49 @@
+{
+  "task": "M3-03",
+  "recorded_on": "2026-10-27",
+  "target": "API 37 x86_64 Android emulator with SwiftShader; no physical-device claim",
+  "flutter_binding": "maplibre_gl 0.27.1",
+  "android_native_renderer": "org.maplibre.gl:android-sdk-opengl:13.7.1 (strict app dependency)",
+  "package_id": "pasig-ortigas-20261026-z15-v2",
+  "package_manifest_sha256": "9b3bc00abca38fd557c49931ed64554f6c0e320cd26272f0b19170ff32fcb9d2",
+  "package_bytes_including_manifest": 14417822,
+  "native_harness": "apps/mobile/integration_test/regional_map_test.dart",
+  "safe_harness_command": "./tool/test-map.ps1 -DeviceId emulator-5554",
+  "harness_application_id": "dev.wayday.wayday.maptest",
+  "harness_result": "PASS: one complete native workflow; all test edits use memory repositories",
+  "offline_state": {
+    "airplane_mode": "enabled via cmd connectivity airplane-mode",
+    "wifi": "disabled",
+    "mobile_data": "disabled",
+    "active_default_network": "none"
+  },
+  "observed_checks": {
+    "rendered_roads_at_initial_view": 127,
+    "rendered_labels_at_initial_view": 14,
+    "observed_initial_ready_milliseconds": 6202,
+    "readiness_is_performance_benchmark": false,
+    "pan_changes_camera": true,
+    "zoom_to_level_14": true,
+    "temporary_marker_render_and_removal": true,
+    "local_attribution_and_license_dialog": true,
+    "endpoint_manual_label_cancel_and_save": true,
+    "nested_errand_draft_cancel_and_save": true,
+    "missing_package_retains_manual_label_save": true
+  },
+  "integration_findings_and_fixes": [
+    "The plugin's native 13.5.0 failed bundled PMTiles metadata range reads. Native 13.7.1 includes upstream fixes #4602 and #4686; a strict dependency is recorded in the app Gradle file.",
+    "Flutter encodes spaces in APK asset directory names. The space-free NotoSansRegular local path/fontstack alias preserves the original upstream glyph bytes and licenses.",
+    "Android rendered-feature query bounds use physical screen pixels, so logical Flutter bounds are multiplied by device pixel ratio.",
+    "Production readiness requires loaded style and actual rendered roads and labels, with a pending recheck for overlapping idle events and a 30-second unavailable fallback.",
+    "Unused automatic annotation managers raced with rapid picker disposal. This rendering-only slice disables annotation creation; the harness uses an explicit temporary GeoJSON/circle layer.",
+    "An invalid empty tap-event configuration was caught and removed during device testing; the final harness retains the plugin's valid tap-event defaults.",
+    "Optional transitive location permissions are removed from the merged manifest because this stage does not use device location. The inspected APK declares neither coarse nor fine location permission.",
+    "Direct Flutter integration-test runs automatically uninstalled the normal emulator app during cleanup. The pre-test SQLite backup retained every original row. The maintained wrapper now sets an explicit test-only application ID and --no-uninstall because Flutter can retain the pre-build application ID for cleanup. Exact restoration and the subsequent isolated-run preservation check are recorded before task completion."
+  ],
+  "limitations": [
+    "Observed debug/emulator startup is not a performance or physical-device guarantee.",
+    "A cold emulator boot produced a System UI not-responding dialog; choosing Wait recovered. Subsequent harness checks passed without an app crash.",
+    "TalkBack, predictive Back and physical-device frame rates remain unverified.",
+    "Place labels remain unresolved strings; no search, saved pin, calculated itinerary or mobile routing service is introduced."
+  ]
+}

@@ -4,6 +4,7 @@ import '../../../core/widgets/place_picker.dart';
 import '../../../core/widgets/selection_controls.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../domain/errand.dart';
+import '../../places/domain/place_intent.dart';
 
 sealed class ErrandEditResult {
   const ErrandEditResult();
@@ -34,7 +35,13 @@ class _ErrandEditorState extends State<ErrandEditor> {
   final _form = GlobalKey<FormState>();
   late final _title = TextEditingController(text: widget.errand.title);
   late final _notes = TextEditingController(text: widget.errand.notes);
+  late final _duration = TextEditingController(
+    text: '${widget.errand.durationMinutes}',
+  );
+  late bool _durationConfirmed = widget.errand.durationConfirmed;
+  late final _confirmed = {...widget.errand.confirmedFields};
   late String _place = widget.errand.place;
+  late PlaceIntent _placeIntent = widget.errand.placeIntent;
   late TimingRule _timing = widget.errand.timing;
   late int? _minute = widget.errand.minute;
   late bool _optional = widget.errand.optional;
@@ -43,6 +50,7 @@ class _ErrandEditorState extends State<ErrandEditor> {
   void dispose() {
     _title.dispose();
     _notes.dispose();
+    _duration.dispose();
     super.dispose();
   }
 
@@ -60,6 +68,10 @@ class _ErrandEditorState extends State<ErrandEditor> {
           title: _title.text.trim(),
           notes: _notes.text.trim(),
           place: _place,
+          placeIntent: _placeIntent,
+          durationMinutes: int.parse(_duration.text),
+          durationConfirmed: _durationConfirmed,
+          confirmedFields: _confirmed,
           timing: _timing,
           minute: _minute,
           clearTime: _timing == TimingRule.anytime,
@@ -133,8 +145,38 @@ class _ErrandEditorState extends State<ErrandEditor> {
                     context,
                     title: 'Errand location',
                     initial: _place,
+                    initialPlace: _placeIntent,
                   );
-                  if (place != null && mounted) setState(() => _place = place);
+                  if (place != null && mounted) {
+                    setState(() {
+                      _place = place.label;
+                      _placeIntent = place;
+                      _confirmed.add('place');
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                key: const Key('errand-duration'),
+                controller: _duration,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Visit duration',
+                  suffixText: 'minutes',
+                  helperText: _durationConfirmed
+                      ? 'Your estimate for this visit.'
+                      : '15 minutes assumed · adjust for this visit.',
+                ),
+                onChanged: (_) => setState(() {
+                  _durationConfirmed = true;
+                  _confirmed.add('duration');
+                }),
+                validator: (value) {
+                  final minutes = int.tryParse(value ?? '');
+                  return minutes == null || minutes < 1 || minutes > 1440
+                      ? 'Enter between 1 and 1,440 minutes.'
+                      : null;
                 },
               ),
               const SizedBox(height: 24),

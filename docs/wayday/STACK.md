@@ -1,6 +1,6 @@
 # Technology stack and dependency inventory
 
-Initial research: 2026-10-15; mapping research and selected next direction updated 2026-10-27. Flutter and Today/Recurring Drift/SQLite storage are implemented. MapLibre/Protomaps, place search, navigation handoff, and later routing/solver choices below are planned and uninstalled unless explicitly listed as current dependencies. No external account or paid service has been provisioned.
+Initial research: 2026-10-15; mapping and routing work updated 2026-10-27. Flutter and Today/Recurring Drift/SQLite storage are implemented. The reconciliation adds a configurable online place-search client and online map pin selection, with limited emulator verification. Regional Protomaps resources and a local Valhalla evaluation graph remain separate pilot evidence. Navigation handoff, production routing/planning services and the solver remain later tasks. No external account or paid service has been provisioned.
 
 Platform sequencing clarified on 2026-10-16: build and verify Android first; iOS comes later. The iOS considerations below apply to that later phase and do not block Android development.
 
@@ -58,9 +58,19 @@ The shell bundles Figtree and its SIL Open Font License in `apps/mobile/assets/f
 
 ## Data and service boundaries
 
-### Maps: MapLibre, Protomaps, and a Wayday style — selected, not installed
+### Maps: MapLibre, Protomaps, and a Wayday style
 
-Research and owner direction recorded 2026-10-27. MapLibre is the renderer; Protomaps supplies an OSM-derived regional basemap; PMTiles is its archive format. The selected Flutter binding, native requirements, resource use, and regional package size still need the M3 feasibility checks. Do not treat a README feature matrix as verification in this app.
+MapLibre is the renderer; Protomaps supplies the OSM-derived regional basemap; PMTiles is its archive format. The app uses a [project-local MapLibre 0.27.1 patch](../../apps/mobile/third_party/maplibre_gl/WAYDAY.md) that adds a per-map Android native attribution-button option. Native verification of this patch is outstanding. `crypto` remains pinned to 3.0.7. The plugin's Android module compiles with Java/Kotlin 21 and API 36; the existing Android Studio JBR 25 satisfies its build requirement. Android uses the OpenGL native artifact, strictly pinned by the app to 13.7.1. The plugin's original 13.5.0 dependency failed to read bundled PMTiles byte ranges in the actual API 37 emulator. [Native 13.7.1](https://github.com/maplibre/maplibre-native/releases/tag/android-v13.7.1) includes the asset-range fix and query/detachment fix. Historical offline-renderer evidence is recorded separately from verification of the current UI and plugin. Browser rendering uses a readable fallback rather than claiming native package support.
+
+#### Regional package preparation evidence
+
+M3-02 prepared the rectangular pilot package from Protomaps build `20261026.pmtiles`, schema 4.15.2, source snapshot `2026-10-26T04:00:00Z`, with zooms 0–15. The extracted archive is 8,046,175 bytes; the complete package is 14,418,095 bytes including its 47,944-byte manifest. Its 268 payload files include all 256 Noto Sans Regular glyph ranges, four light sprite resources, an authored Wayday style and license/provenance notices. Every payload has a SHA-256 inventory entry. The manifest SHA-256 is `f7f6365e029031a8d8a6bc4b2b3884a6decad867071a89a68c98235b9f60a798`.
+
+`pmtiles` 1.31.2 extracted 114 tiles using four download threads, 40 requests and 8.4 MB transferred in 17.30 seconds; archive/header/metadata verification passed. A cached repeat preparation completed in 7.58 seconds with identical manifest and payload hashes. The cached Python process peak working set was 28,422,144 bytes; this excludes archive extraction, the native renderer and host memory. Two decoded source tiles contained nonempty roads/buildings/POIs, which establishes vector content rather than road routability or searchable-business completeness.
+
+During native integration the package was revised to `pasig-ortigas-20261026-z15-v2`: a space-free `NotoSansRegular` path/fontstack alias avoids Flutter's percent-encoded APK asset directories. Glyph bytes, source attribution and font license remain unchanged. The revised payload is 14,370,390 bytes plus a 47,432-byte manifest, totaling 14,417,822 bytes; manifest SHA-256 is `9b3bc00abca38fd557c49931ed64554f6c0e320cd26272f0b19170ff32fcb9d2`. Its cached preparation took 22.122 seconds on the contended development host. Earlier measurements above describe the original package and remain historical preparation evidence.
+
+Fonts/sprites are pinned to `protomaps/basemaps-assets` commit `028c18f713baecad011301ff7a69acc39bcc2ae7`, with downloaded bytes checked against its Git blob inventory. Noto glyphs retain SIL OFL 1.1; sprite icons retain the upstream MIT notice; OSM/Protomaps attribution and source notices travel with the package. No remote resource URL is used as a rendering fallback. Five offline failure tests cover corruption, missing glyphs, unsafe paths, network-resource rejection and preserving repository markers/prior packages. Preparation tooling and the style are tracked under `tools/maps/`; raw/generated/app-package resources remain ignored. Android native/offline rendering remains M3-03, rather than a result of package preparation.
 
 Protomaps basemap code is BSD-3, map design is CC0, and OSM-derived tiles require visible OSM attribution and applicable data obligations. PMTiles reference implementations are BSD-3 and the format is an open specification. Supply the style, fonts/glyphs, sprites, notices, and manifest as well as tiles for offline rendering. MapLibre Native/Flutter supports PMTiles, but a remote archive still needs networking; evaluate a local regional archive on Android. Keep the last valid version during package replacement.
 
@@ -80,9 +90,28 @@ Local software avoids a metered map API but still needs development resources, s
 
 ### Places: an indexed regional catalog — planned
 
-Use a separate installed OSM-based POI catalog for initial regional search, with bounded text/category/area queries. Preserve source IDs, snapshot dates, original tags/hours, and separately sourced corrections. The personal Drift database owns errands and confirmed places; public catalog replacement must not erase them. A later PostGIS catalog is conditional on actual server queries, not a prerequisite for local search.
+The owner selected online place search across the Philippines in D35, superseding the initial installed-catalog preference. Select and validate a service with country filtering, appropriate terms and an explicit outage fallback. Preserve available source IDs, dates, original hours and corrections. The personal Drift database owns errands and confirmed places; public-data updates must not erase them. An installed catalog remains an optional later offline capability, and PostGIS is not required on the phone.
 
 Start by auditing at least 30 public Pasig/Ortigas destinations across relevant categories. Record branch/pin accuracy, duplicates, missing places, hours, and closed-business signals; no measured nationwide completeness is established. Use Philippine categories and aliases supported by the audit. [Philippine conventions](https://wiki.openstreetmap.org/wiki/Philippines/Mapping_conventions).
+
+#### Pilot coverage evidence, 2026-10-27
+
+M3-01 used a frozen, independently selected sample of 35 public destinations within west/south/east/north `[121.045, 14.548, 121.116, 14.617]`. This rectangle includes adjacent-city Ortigas malls; it is not the Pasig administrative boundary. The sample intentionally clusters mall errands, one bank brand and Poblacion landmarks, so its match rates do not estimate population completeness.
+
+| Sample category | Plausible site/branch match | Ambiguous | Not found in bounded review |
+| --- | --- | --- | --- |
+| Groceries and wet markets | 4 | 0 | 1 |
+| Pharmacies | 2 | 1 | 2 |
+| Banks | 3 | 2 | 0 |
+| Offices | 0 | 0 | 5 |
+| Food | 2 | 0 | 3 |
+| Haircuts | 0 | 0 | 5 |
+| Landmarks | 5 | 0 | 0 |
+| Total | 16 | 3 | 16 |
+
+The final Overpass extract contains 11,679 elements and 5,278,128 bytes, with OSM snapshot `2026-10-27T06:59:26Z`; its SHA-256 is recorded in the [audit summary](evidence/pilot-place-audit-summary.json). Only one of the 16 matched sites has an OSM opening-hours value. No entrance or pin received independent field/survey verification. A plausible site match does not verify current operation, a dispensing pharmacy service, inventory, a floor, or an accessible entrance. Original incorrect directory-floor assumptions are retained in the frozen sample and corrected in the reviewed results.
+
+The [35-row results](evidence/pilot-place-audit-results.csv), [frozen references and sample](evidence/pilot-place-audit-sample.json), and [manual review](evidence/pilot-place-audit-review.json) preserve source IDs, dates, coordinate kinds and explicit uncertainty. Raw extracts and failed-request evidence stay under ignored `data/downloads/pilot-audit/`. This supports proceeding to bounded map and road feasibility, not claiming complete automatic destination coverage. Later catalog/recommendation tasks must retain no-candidate/manual-pin paths and qualify branch/service identity. Overture inclusion is deferred until a same-sample comparison demonstrates an attributable improvement and resolves duplicates and source licenses. See D31 in [Decisions](DECISIONS.md).
 
 | Source/tool | License and capability | Limitation or replacement path |
 | --- | --- | --- |
@@ -116,6 +145,14 @@ Use explicit Maps URLs with confirmed coordinates; no Google API key is needed f
 These were source/documentation references, not apps built or verified in Wayday. Community reports explain risks but are not current service contracts. See the [Overpass operator discussion](https://community.openstreetmap.org/t/overpass-api-performance-issues/140598/182), [MapLibre filtering/cluster example](https://stackoverflow.com/questions/79030353/maplibregl-how-to-filter-by-features), and [Philippine developer cost discussion](https://www.reddit.com/r/PinoyProgrammer/comments/107jk8m/); official policies above govern adoption.
 
 ### Routes and optimization: Valhalla and OR-Tools
+
+#### Measured regional routing gate, 2026-10-27
+
+The [M5-01 evidence](evidence/routing-pilot-2026-10-27.md) and [machine-readable measurements](evidence/routing-pilot-2026-10-27.json) record a local Valhalla 3.9.1 graph from the pilot region plus a 0.04-degree road buffer. All 18 sampled routes and six 4x4 matrices returned successfully; all 30 unordered pairs across the five non-walking matrices were asymmetric. An outside-graph probe returned an explicit error. This does not establish an unreachable pair within the supported pilot or observed travel-time accuracy.
+
+The pinned official AMD64 image uses digest `sha256:31d96eb75f73e5f5b3dc40702edfda16c4e1793a384a8235bcf00dd3eed1b9bc`. The graph/PBF/timezone directory occupied 177,084,082 bytes; the image occupied 673,581,738 bytes. With two threads and a 4 GiB cap, the successful native-volume build recorded a 352,440,320-byte cgroup peak. Warm sampled request latency was 0.063 seconds median and 0.265 seconds maximum. These exclude total host/VM/storage overhead and do not demonstrate the larger contract request cap. Windows bind-mounted random I/O stalled, so the reproducible evaluation uses a task-owned Docker volume and leaves unrelated containers/settings intact.
+
+Walking/biking source-way comparisons and a 12-ton versus 20-ton heavy-delivery weight-restriction contrast were exercised. Motorcycle remains beta; pickup auto costing and heavy truck requests do not certify all dimensions, legal restrictions or data completeness. Width/length/axle restriction data is especially sparse. No profile has ground-clearance certification, live traffic or field-validated legal access. These limits qualify the static-estimate feasibility result; they are required input to the [v1 planning contract](evidence/planning-contract-v1.md), not an implemented phone routing service. Valhalla remains local evaluation tooling; OR-Tools and the production API are not installed or scaffolded by this task.
 
 Run Valhalla locally with a bounded regional graph. Evaluate the five product profiles against its costing models: walking uses pedestrian costing, biking uses bicycle costing, motorcycle uses motorcycle costing, and sedan starts with auto costing. Truck costing is a candidate when the confirmed truck class matches its access and dimensional assumptions. Motorcycle costing is marked beta. All mappings require local validation. [Routing profiles](https://valhalla.github.io/valhalla/api/route/api-reference/)
 
