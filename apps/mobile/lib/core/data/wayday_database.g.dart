@@ -2285,6 +2285,201 @@ class SavedPlacesCompanion extends UpdateCompanion<SavedPlace> {
   }
 }
 
+class $AcceptedItinerariesTable extends AcceptedItineraries
+    with TableInfo<$AcceptedItinerariesTable, AcceptedItineraryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AcceptedItinerariesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'accepted_itineraries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AcceptedItineraryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AcceptedItineraryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AcceptedItineraryRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $AcceptedItinerariesTable createAlias(String alias) {
+    return $AcceptedItinerariesTable(attachedDatabase, alias);
+  }
+}
+
+class AcceptedItineraryRow extends DataClass
+    implements Insertable<AcceptedItineraryRow> {
+  final int id;
+  final String payload;
+  const AcceptedItineraryRow({required this.id, required this.payload});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  AcceptedItinerariesCompanion toCompanion(bool nullToAbsent) {
+    return AcceptedItinerariesCompanion(id: Value(id), payload: Value(payload));
+  }
+
+  factory AcceptedItineraryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AcceptedItineraryRow(
+      id: serializer.fromJson<int>(json['id']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  AcceptedItineraryRow copyWith({int? id, String? payload}) =>
+      AcceptedItineraryRow(id: id ?? this.id, payload: payload ?? this.payload);
+  AcceptedItineraryRow copyWithCompanion(AcceptedItinerariesCompanion data) {
+    return AcceptedItineraryRow(
+      id: data.id.present ? data.id.value : this.id,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AcceptedItineraryRow(')
+          ..write('id: $id, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AcceptedItineraryRow &&
+          other.id == this.id &&
+          other.payload == this.payload);
+}
+
+class AcceptedItinerariesCompanion
+    extends UpdateCompanion<AcceptedItineraryRow> {
+  final Value<int> id;
+  final Value<String> payload;
+  const AcceptedItinerariesCompanion({
+    this.id = const Value.absent(),
+    this.payload = const Value.absent(),
+  });
+  AcceptedItinerariesCompanion.insert({
+    this.id = const Value.absent(),
+    required String payload,
+  }) : payload = Value(payload);
+  static Insertable<AcceptedItineraryRow> custom({
+    Expression<int>? id,
+    Expression<String>? payload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (payload != null) 'payload': payload,
+    });
+  }
+
+  AcceptedItinerariesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? payload,
+  }) {
+    return AcceptedItinerariesCompanion(
+      id: id ?? this.id,
+      payload: payload ?? this.payload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AcceptedItinerariesCompanion(')
+          ..write('id: $id, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$WaydayDatabase extends GeneratedDatabase {
   _$WaydayDatabase(QueryExecutor e) : super(e);
   $WaydayDatabaseManager get managers => $WaydayDatabaseManager(this);
@@ -2295,6 +2490,8 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
   );
   late final $GroupErrandsTable groupErrands = $GroupErrandsTable(this);
   late final $SavedPlacesTable savedPlaces = $SavedPlacesTable(this);
+  late final $AcceptedItinerariesTable acceptedItineraries =
+      $AcceptedItinerariesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2305,6 +2502,7 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
     recurringGroups,
     groupErrands,
     savedPlaces,
+    acceptedItineraries,
   ];
 }
 
@@ -3554,6 +3752,165 @@ typedef $$SavedPlacesTableProcessedTableManager =
       SavedPlace,
       PrefetchHooks Function()
     >;
+typedef $$AcceptedItinerariesTableCreateCompanionBuilder =
+    AcceptedItinerariesCompanion Function({
+      Value<int> id,
+      required String payload,
+    });
+typedef $$AcceptedItinerariesTableUpdateCompanionBuilder =
+    AcceptedItinerariesCompanion Function({
+      Value<int> id,
+      Value<String> payload,
+    });
+
+class $$AcceptedItinerariesTableFilterComposer
+    extends Composer<_$WaydayDatabase, $AcceptedItinerariesTable> {
+  $$AcceptedItinerariesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AcceptedItinerariesTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $AcceptedItinerariesTable> {
+  $$AcceptedItinerariesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AcceptedItinerariesTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $AcceptedItinerariesTable> {
+  $$AcceptedItinerariesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$AcceptedItinerariesTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $AcceptedItinerariesTable,
+          AcceptedItineraryRow,
+          $$AcceptedItinerariesTableFilterComposer,
+          $$AcceptedItinerariesTableOrderingComposer,
+          $$AcceptedItinerariesTableAnnotationComposer,
+          $$AcceptedItinerariesTableCreateCompanionBuilder,
+          $$AcceptedItinerariesTableUpdateCompanionBuilder,
+          (
+            AcceptedItineraryRow,
+            BaseReferences<
+              _$WaydayDatabase,
+              $AcceptedItinerariesTable,
+              AcceptedItineraryRow
+            >,
+          ),
+          AcceptedItineraryRow,
+          PrefetchHooks Function()
+        > {
+  $$AcceptedItinerariesTableTableManager(
+    _$WaydayDatabase db,
+    $AcceptedItinerariesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AcceptedItinerariesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AcceptedItinerariesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AcceptedItinerariesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+              }) => AcceptedItinerariesCompanion(id: id, payload: payload),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String payload,
+              }) =>
+                  AcceptedItinerariesCompanion.insert(id: id, payload: payload),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AcceptedItinerariesTable, AcceptedItineraryRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $AcceptedItinerariesTable,
+                    AcceptedItineraryRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AcceptedItinerariesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $AcceptedItinerariesTable,
+      AcceptedItineraryRow,
+      $$AcceptedItinerariesTableFilterComposer,
+      $$AcceptedItinerariesTableOrderingComposer,
+      $$AcceptedItinerariesTableAnnotationComposer,
+      $$AcceptedItinerariesTableCreateCompanionBuilder,
+      $$AcceptedItinerariesTableUpdateCompanionBuilder,
+      (
+        AcceptedItineraryRow,
+        BaseReferences<
+          _$WaydayDatabase,
+          $AcceptedItinerariesTable,
+          AcceptedItineraryRow
+        >,
+      ),
+      AcceptedItineraryRow,
+      PrefetchHooks Function()
+    >;
 
 class $WaydayDatabaseManager {
   final _$WaydayDatabase _db;
@@ -3568,4 +3925,6 @@ class $WaydayDatabaseManager {
       $$GroupErrandsTableTableManager(_db, _db.groupErrands);
   $$SavedPlacesTableTableManager get savedPlaces =>
       $$SavedPlacesTableTableManager(_db, _db.savedPlaces);
+  $$AcceptedItinerariesTableTableManager get acceptedItineraries =>
+      $$AcceptedItinerariesTableTableManager(_db, _db.acceptedItineraries);
 }

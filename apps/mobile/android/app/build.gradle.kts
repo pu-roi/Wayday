@@ -28,6 +28,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -44,7 +45,7 @@ android {
         }
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = maxOf(24, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
@@ -90,7 +91,16 @@ flutter {
     source = "../.."
 }
 
+// Navigation embeds the Google Maps classes. Places UI Kit must use that copy
+// rather than adding a second play-services-maps implementation.
+configurations.configureEach {
+    exclude(group = "com.google.android.gms", module = "play-services-maps")
+}
+
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
+    // Match google_navigation_flutter 0.11.2: native Places bridge also imports LatLng.
+    implementation("com.google.android.libraries.navigation:navigation:7.9.0")
     implementation("com.google.android.libraries.places:places:6.0.2")
     implementation("com.google.android.material:material:1.13.0")
     // 13.7.1 fixes PMTiles asset byte ranges and queries during map detachment.
