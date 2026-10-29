@@ -7,6 +7,18 @@ import '../domain/place_intent.dart';
 import '../data/google_search.dart';
 import '../data/google_pin_cache.dart';
 
+/// Presentation state lives only for the currently open picker session.
+class _SourceSession {
+  List<PlaceSearchResult> results = [];
+  final Map<String, SourceState> sources = {};
+  final Map<String, List<PlaceSearchResult>> batches = {};
+  bool started = false, frozen = false;
+  String? requestKey;
+  PlaceSearchRequest? request;
+  List<PlaceSearchResult>? staged;
+  SearchOrigin? visibleOrigin;
+}
+
 class PlaceSearchController extends ChangeNotifier {
   PlaceSearchController(
     this.service, {
@@ -14,6 +26,7 @@ class PlaceSearchController extends ChangeNotifier {
     this.sourceChoice,
     this.pins,
   }) {
+    _previousSource = source;
     sourceChoice?.addListener(_sourceChanged);
   }
   final GoogleSearchService? google;
@@ -47,13 +60,57 @@ class PlaceSearchController extends ChangeNotifier {
 
   String get interpretedText => interpretation.providerText;
   void chooseSource(SearchSource value) => sourceChoice?.choose(value);
+  SearchSource _previousSource = SearchSource.google;
+  bool _open = false;
+  bool _submitted = false;
+  final _sessions = {
+    for (final source in SearchSource.values) source: _SourceSession(),
+  };
+  _SourceSession get _state => _sessions[source]!;
+  _SourceSession get _googleState => _sessions[SearchSource.google]!;
+  void open() => _open = true;
   void _sourceChanged() {
-    _newOriginSearch();
+    if (_previousSource == SearchSource.google) {
+      google?.cancel(_owner);
+      // A selection-resolution callback must never commit while its source is
+      // hidden. Keep the original search cards available for another selection.
+      if (_resolvingId != null) {
+        _resolvingId = null;
+        _detailsStarted = false;
+        _googleState.sources['google_ui_kit'] = SourceState(
+          _googleVisible == null
+              ? SourcePhase.unavailable
+              : SourcePhase.complete,
+        );
+      }
+    } else {
+      service.pausePending(_owner);
+    }
+    _previousSource = source;
+    if (!_open || _disposed) return;
+    // Completed and failed sessions stay intact. Only paused work resumes.
+    final pending = sources.entries
+        .where((entry) => entry.value.phase == SourcePhase.waiting)
+        .map((entry) => entry.key)
+        .toSet();
+    _suspended = false;
+    if (!_started &&
+        (category != null ||
+            query.length >= 3 ||
+            (_submitted && query.length >= 2)) &&
+        !needsLocalArea) {
+      _launch(immediate: true);
+    } else if (pending.isNotEmpty) {
+      _launch(immediate: true, only: pending);
+    }
+    notifyListeners();
   }
 
   void attachGoogle(GoogleSearchBridge bridge) {
     _bridge = bridge;
-    if (usesGoogle && _started && !_suspended) _launch();
+    if (usesGoogle && _started && !_suspended && _googlePending == null) {
+      _launch();
+    }
   }
 
   void detachGoogle(GoogleSearchBridge bridge) {
@@ -147,6 +204,13 @@ class PlaceSearchController extends ChangeNotifier {
 
   void refreshGoogleReference(PlaceIntent place) {
     if (!place.isGoogle || place.providerPlaceId == null) return;
+    _open = true;
+    service.cancel(_owner);
+    _clearGoogle();
+    _revision++;
+    _invalidateSessions();
+    // Source activation must not first schedule an unrelated named search.
+    query = '';
     chooseSource(SearchSource.google);
     query = place.label;
     _resolvingId = place.providerPlaceId;
@@ -171,6 +235,7 @@ class PlaceSearchController extends ChangeNotifier {
     bool immediate = false,
     String? placeId,
   }) {
+    final session = _googleState;
     final bridge = _bridge;
     if (bridge == null) {
       sources['google_ui_kit'] = SourceState(
@@ -185,17 +250,25 @@ class PlaceSearchController extends ChangeNotifier {
       bridge,
       request,
       (state) {
-        if (_disposed || revision != _revision || !usesGoogle || _suspended) {
+        if (_disposed ||
+            revision != _revision ||
+            !_open ||
+            _suspended ||
+            (placeId != null && _resolvingId != placeId)) {
           return;
         }
-        sources['google_ui_kit'] = state;
+        session.sources['google_ui_kit'] = state;
         notifyListeners();
       },
       (native, count) {
-        if (_disposed || revision != _revision || !usesGoogle || _suspended) {
+        if (_disposed ||
+            revision != _revision ||
+            !_open ||
+            _suspended ||
+            (placeId != null && _resolvingId != placeId)) {
           return;
         }
-        if (_frozen && _googleVisible != null && placeId == null) {
+        if (session.frozen && _googleVisible != null && placeId == null) {
           _googleStaged = native;
           _googleStagedCount = count;
         } else {
@@ -213,24 +286,33 @@ class PlaceSearchController extends ChangeNotifier {
   final CombinedPlaceSearch service;
   final Object _owner = Object();
   String query = '';
-  List<PlaceSearchResult> results = [];
-  final Map<String, SourceState> sources = {};
+  List<PlaceSearchResult> get results => _state.results;
+  set results(List<PlaceSearchResult> value) => _state.results = value;
+  Map<String, SourceState> get sources => _state.sources;
   SearchArea? _area;
   SearchCategory? category;
-  bool _disposed = false, _started = false, _suspended = false;
+  bool _disposed = false, _suspended = false;
+  bool get _started => _state.started;
+  set _started(bool value) => _state.started = value;
   int _revision = 0;
-  String? _requestKey;
-  PlaceSearchRequest? _activeRequest;
-  final Map<String, List<PlaceSearchResult>> _batches = {};
+  int _contextRevision = 0;
+  int get contextRevision => _contextRevision;
+  String? get _requestKey => _state.requestKey;
+  set _requestKey(String? value) => _state.requestKey = value;
+  PlaceSearchRequest? get _activeRequest => _state.request;
+  set _activeRequest(PlaceSearchRequest? value) => _state.request = value;
+  Map<String, List<PlaceSearchResult>> get _batches => _state.batches;
   SearchOrigin? _device;
   SearchOrigin? _selectedArea;
-  bool _areaSelected = false, _frozen = false, _replacementUsed = false;
-  List<PlaceSearchResult>? _staged;
-  SearchOrigin? _visibleOrigin;
+  bool _areaSelected = false, _replacementUsed = false;
+  set _frozen(bool value) => _state.frozen = value;
+  List<PlaceSearchResult>? get _staged => _state.staged;
+  set _staged(List<PlaceSearchResult>? value) => _state.staged = value;
+  SearchOrigin? get _visibleOrigin => _state.visibleOrigin;
   SearchOrigin? get origin => _areaSelected ? _selectedArea : _device;
   SearchOrigin? get visibleOrigin => _visibleOrigin;
   String get originLabel => origin?.label ?? 'Philippines';
-  bool get hasUpdates => _staged != null || _googleStaged != null;
+  bool get hasUpdates => usesGoogle ? _googleStaged != null : _staged != null;
   bool get nearMe => !_areaSelected && _device != null;
   void freezeResults() {
     _frozen = true;
@@ -238,7 +320,7 @@ class PlaceSearchController extends ChangeNotifier {
 
   void applyUpdates() {
     _frozen = false;
-    final native = _googleStaged;
+    final native = usesGoogle ? _googleStaged : null;
     if (native != null) {
       _googleVisible = native;
       _googleCount = _googleStagedCount;
@@ -257,6 +339,7 @@ class PlaceSearchController extends ChangeNotifier {
   }
 
   void useNearMe() {
+    if (!_areaSelected) return;
     _areaSelected = false;
     _selectedArea = null;
     _newOriginSearch();
@@ -266,6 +349,7 @@ class PlaceSearchController extends ChangeNotifier {
     service.cancel(_owner);
     _clearGoogle();
     _revision++;
+    _invalidateSessions();
     _resetRanking();
     results = [];
     sources.clear();
@@ -311,6 +395,11 @@ class PlaceSearchController extends ChangeNotifier {
       if (dispatched) _replacementUsed = true;
       // Preserve visible records until replacement candidates are ready.
       _revision++;
+      service.cancel(_owner);
+      google?.cancel(_owner);
+      _sessions[usesGoogle ? SearchSource.others : SearchSource.google] =
+          _SourceSession();
+      if (!usesGoogle) _clearGoogle();
       _launch(immediate: dispatched, preserveResults: true);
     } else if (previous?.rankingKey != value?.rankingKey) {
       _publish();
@@ -330,6 +419,7 @@ class PlaceSearchController extends ChangeNotifier {
       (_started &&
           sources.values.every((s) => s.phase == SourcePhase.disabled));
   bool get searched => _started && !loading;
+  bool get hasSearch => _started;
   bool get emptySuccess =>
       searched && !failed && (usesGoogle ? _googleCount == 0 : results.isEmpty);
   void updateArea(SearchArea area) {
@@ -339,13 +429,16 @@ class PlaceSearchController extends ChangeNotifier {
   }
 
   void change(String value) {
+    _open = true;
     final next = normalizeSearch(value);
     if (next == query && category == null) return;
+    _submitted = false;
     service.cancel(_owner);
     _clearGoogle();
     _original = false;
     _suggested = null;
     _revision++;
+    _invalidateSessions();
     _resetRanking();
     query = next;
     category = null;
@@ -357,9 +450,11 @@ class PlaceSearchController extends ChangeNotifier {
   }
 
   void chooseCategory(SearchCategory value) {
+    _open = true;
     service.cancel(_owner);
     _clearGoogle();
     _revision++;
+    _invalidateSessions();
     _resetRanking();
     category = value;
     if (_device == null && _area?.local == true) {
@@ -378,12 +473,17 @@ class PlaceSearchController extends ChangeNotifier {
 
   void searchThisArea() {
     if (_area?.local != true) return;
+    if (_areaSelected && _selectedArea?.key == SearchOrigin.map(_area!).key) {
+      return;
+    }
     _areaSelected = true;
     _selectedArea = SearchOrigin.map(_area!);
     _newOriginSearch();
   }
 
   void submit() {
+    _open = true;
+    _submitted = true;
     if (query.length < 2 || query.length > 100 || needsLocalArea) return;
     if (usesGoogle && sources['google_ui_kit']?.phase == SourcePhase.loading) {
       return;
@@ -410,6 +510,7 @@ class PlaceSearchController extends ChangeNotifier {
 
   void retry() {
     if (loading) return;
+    _suspended = false;
     if (usesGoogle && _resolvingId != null && _detailsStarted) {
       googleMessage =
           'This selection could not be resolved. Choose another result or use Other sources.';
@@ -427,12 +528,12 @@ class PlaceSearchController extends ChangeNotifier {
     bool immediate = false,
     Set<String>? only,
     bool preserveResults = false,
+    bool refresh = false,
   }) {
     final request = only != null && _activeRequest != null
         ? _activeRequest!
         : _request();
     if (only == null && request.key != _requestKey) {
-      _revision++;
       if (!preserveResults) results = [];
       _batches.clear();
       sources.clear();
@@ -441,6 +542,7 @@ class PlaceSearchController extends ChangeNotifier {
     _suspended = false;
     _activeRequest = request;
     final revision = _revision;
+    final session = _state;
     _started = true;
     if (usesGoogle) {
       if (_resolvingId != null) {
@@ -454,23 +556,25 @@ class PlaceSearchController extends ChangeNotifier {
       _owner,
       request,
       (id, state, batch) {
-        if (_disposed || revision != _revision) return;
-        sources[id] = state;
+        if (_disposed || revision != _revision || !_open || _suspended) return;
+        session.sources[id] = state;
         if (state.phase == SourcePhase.complete) {
-          _batches[id] = batch;
-          _publish();
+          session.batches[id] = batch;
+          _publish(session);
         }
         notifyListeners();
       },
       immediate: immediate,
       only: only,
+      refresh: refresh,
     );
   }
 
-  void _publish() {
+  void _publish([_SourceSession? target]) {
+    final session = target ?? _state;
     final merged = <PlaceSearchResult>[];
     final sorted = rankPlaces(
-      _batches.values.expand((v) => v),
+      session.batches.values.expand((v) => v),
       interpretedText,
       origin,
     );
@@ -485,7 +589,8 @@ class PlaceSearchController extends ChangeNotifier {
       }
     }
     final next = merged.take(30).toList();
-    if (_frozen) {
+    final results = session.results;
+    if (session.frozen) {
       // Records as well as order stay fixed while someone is choosing a row.
       if (next.length != results.length ||
           List.generate(
@@ -503,22 +608,25 @@ class PlaceSearchController extends ChangeNotifier {
                 next[i].latitude != results[i].latitude ||
                 next[i].longitude != results[i].longitude,
           ).any((changed) => changed) ||
-          _visibleOrigin?.rankingKey != origin?.rankingKey) {
-        _staged = next;
+          session.visibleOrigin?.rankingKey != origin?.rankingKey) {
+        session.staged = next;
       } else {
-        _staged = null;
+        session.staged = null;
       }
     } else {
-      results = next;
-      _visibleOrigin = origin;
-      _staged = null;
+      session.results = next;
+      session.visibleOrigin = origin;
+      session.staged = null;
     }
   }
 
   void dismiss() {
+    _open = false;
+    _submitted = false;
     service.cancel(_owner);
     _clearGoogle();
     _revision++;
+    _invalidateSessions();
     _resetRanking();
     query = '';
     category = null;
@@ -531,15 +639,36 @@ class PlaceSearchController extends ChangeNotifier {
   void suspend() {
     _suspended = true;
     service.cancel(_owner);
-    _clearGoogle();
+    google?.cancel(_owner);
     _revision++;
-    for (final id in sources.keys.toList()) {
-      if (sources[id]!.phase == SourcePhase.waiting ||
-          sources[id]!.phase == SourcePhase.loading) {
-        sources[id] = const SourceState(SourcePhase.unavailable);
+    for (final session in _sessions.values) {
+      for (final id in session.sources.keys.toList()) {
+        if (session.sources[id]!.phase == SourcePhase.waiting ||
+            session.sources[id]!.phase == SourcePhase.loading) {
+          session.sources[id] = const SourceState(SourcePhase.unavailable);
+        }
       }
     }
     notifyListeners();
+  }
+
+  void _invalidateSessions() {
+    _contextRevision++;
+    for (final key in SearchSource.values) {
+      _sessions[key] = _SourceSession();
+    }
+  }
+
+  bool get canRefresh =>
+      _started &&
+      !loading &&
+      sources.isNotEmpty &&
+      sources.values.any((value) => value.phase == SourcePhase.complete);
+
+  void refreshResults() {
+    if (!canRefresh) return;
+    _suspended = false;
+    _launch(immediate: true, preserveResults: true, refresh: true);
   }
 
   @override

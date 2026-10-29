@@ -12,6 +12,28 @@ import 'package:wayday/features/places/domain/place_search.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 import 'package:wayday/features/places/presentation/place_search_panel.dart';
 import 'package:wayday/features/places/presentation/google_search_view.dart';
+import 'package:wayday/features/places/data/combined_place_search.dart';
+import 'package:wayday/features/places/data/search_adapters.dart';
+import 'package:wayday/features/places/data/search_quota.dart';
+import 'package:wayday/features/places/data/google_search.dart';
+
+class FixtureOtherSearch extends SearchAdapter {
+  @override
+  String get id => 'geoapify';
+  @override
+  String get endpoint => 'https://fixture.invalid';
+  @override
+  bool get enabled => true;
+  @override
+  Future<List<PlaceSearchResult>> search(PlaceSearchRequest request) async => [
+    const PlaceSearchResult(
+      name: 'Fixture result',
+      latitude: 14.58,
+      longitude: 121.05,
+      sourceId: 'fixture-only',
+    ),
+  ];
+}
 
 class PublicFixtureLocation extends LocationPlatform {
   @override
@@ -40,6 +62,13 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          combinedPlaceSearchProvider.overrideWith((ref) {
+            final service = CombinedPlaceSearch([
+              FixtureOtherSearch(),
+            ], ref.read(searchQuotaLedgerProvider));
+            ref.onDispose(service.dispose);
+            return service;
+          }),
           locationPlatformProvider.overrideWithValue(PublicFixtureLocation()),
           if (!const bool.fromEnvironment('WAYDAY_GOOGLE_REAL_MAP'))
             placeMapBuilderProvider.overrideWithValue((request) {
@@ -146,6 +175,31 @@ void main() {
         final nativeBeforeKeyboard = tester.state<GoogleSearchViewState>(
           find.byType(GoogleSearchView),
         );
+        final originalChannel = currentChannel();
+        for (var i = 0; i < 10; i++) {
+          controller.chooseSource(SearchSource.others);
+          await tester.pump(const Duration(milliseconds: 150));
+          final hidden = await originalChannel.invokeMapMethod<String, Object?>(
+            'qualify',
+            <String, Object?>{},
+          );
+          expect(hidden?['visible'], isFalse);
+          expect(hidden?['hiddenFromAccessibility'], isTrue);
+          controller.chooseSource(SearchSource.google);
+          await tester.pump(const Duration(milliseconds: 150));
+          expect(
+            tester.state(find.byType(GoogleSearchView)),
+            same(nativeBeforeKeyboard),
+          );
+        }
+        final retained = await currentChannel()
+            .invokeMapMethod<String, Object?>('qualify', <String, Object?>{});
+        expect(retained?['bindings'], metadata?['bindings']);
+        expect(retained?['count'], metadata?['count']);
+        expect(retained?['visible'], isTrue);
+        debugPrint(
+          'WAYDAY_SOURCE_RETENTION_PASSED switches=10 bindings=${retained?['bindings']}',
+        );
         await tester.tap(finder);
         await SystemChannels.textInput.invokeMethod<void>('TextInput.show');
         final keyboardDeadline = DateTime.now().add(const Duration(seconds: 8));
@@ -169,7 +223,7 @@ void main() {
           same(nativeBeforeKeyboard),
         );
         expect(find.byTooltip('Search options'), findsNothing);
-        expect(find.text('Places'), findsOneWidget);
+        expect(find.text('Places'), findsNothing);
         expect(find.text('Search this area'), findsOneWidget);
         expect(find.text('Saves this name without a map pin.'), findsOneWidget);
         debugPrint('WAYDAY_GOOGLE_RESTORED_LAYOUT_READY');

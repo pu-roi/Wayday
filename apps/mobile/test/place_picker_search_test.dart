@@ -57,7 +57,9 @@ Future<void> launch(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-          searchSourceChoiceProvider.overrideWithValue(SearchSourceChoice()..choose(SearchSource.others)),
+        searchSourceChoiceProvider.overrideWithValue(
+          SearchSourceChoice()..choose(SearchSource.others),
+        ),
         combinedPlaceSearchProvider.overrideWith((ref) {
           final service = CombinedPlaceSearch(
             [
@@ -291,8 +293,8 @@ void main() {
       await tester.enterText(find.byKey(const Key('place-name')), 'Paaralan');
       await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.widgetWithText(ListTile, name));
-      await tester.tap(find.widgetWithText(ListTile, name));
+      await tester.ensureVisible(find.text(name));
+      await tester.tap(find.text(name));
       await tester.pumpAndSettle();
       expect(tester.testTextInput.isVisible, isFalse);
       expect(find.text('Confirm location'), findsOneWidget);
@@ -345,7 +347,12 @@ void main() {
     await tester.enterText(find.byKey(const Key('place-name')), 'Business');
     await tester.pump(const Duration(milliseconds: 1500));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ListTile, 'Business'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('place-search-results')),
+        matching: find.text('Business'),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Move map'));
     await tester.pump();

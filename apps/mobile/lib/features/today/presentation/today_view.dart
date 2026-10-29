@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,9 @@ import '../../review/presentation/day_review_view.dart';
 import '../../maps/presentation/place_map.dart';
 import '../../maps/presentation/regional_map.dart';
 import '../../places/data/google_pin_cache.dart';
+import '../../places/data/combined_place_search.dart';
+import '../../places/domain/place_search.dart';
+import '../../places/domain/place_intent.dart';
 import '../domain/day.dart';
 import 'today_controller.dart';
 
@@ -31,11 +35,19 @@ class TodayView extends ConsumerStatefulWidget {
   ConsumerState<TodayView> createState() => _TodayViewState();
 }
 
-class _TodayViewState extends ConsumerState<TodayView> {
+class _TodayViewState extends ConsumerState<TodayView>
+    with WidgetsBindingObserver {
   late final GooglePinCache _googlePins;
+  late final CombinedPlaceSearch _placeSearch;
+  final _fromLookup = Object(), _toLookup = Object();
+  final _finding = <bool>{};
+  final _lookupTimers = <bool, Timer>{};
+  int _fromRevision = 0, _toRevision = 0;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _placeSearch = ref.read(combinedPlaceSearchProvider);
     _googlePins = ref.read(googlePinCacheProvider)..addListener(_pinsChanged);
   }
 
@@ -45,8 +57,126 @@ class _TodayViewState extends ConsumerState<TodayView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cancelLookup(true);
+    _cancelLookup(false);
     _googlePins.removeListener(_pinsChanged);
     super.dispose();
+  }
+
+  void _cancelLookup(bool start) {
+    _lookupTimers.remove(start)?.cancel();
+    if (start) {
+      _fromRevision++;
+    } else {
+      _toRevision++;
+    }
+    _placeSearch.cancel(start ? _fromLookup : _toLookup, only: {'geoapify'});
+    _finding.remove(start);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      setState(() {
+        _cancelLookup(true);
+        _cancelLookup(false);
+      });
+    }
+  }
+
+  void _resolvePin(bool start, PlaceIntent place) {
+    if (place.source != 'manual' ||
+        place.label != 'Dropped pin' ||
+        !place.hasCoordinates ||
+        place.isGoogle) {
+      return;
+    }
+    final revision = start ? _fromRevision : _toRevision;
+    setState(() => _finding.add(start));
+    _lookupTimers[start] = Timer(const Duration(seconds: 8), () {
+      if (mounted && revision == (start ? _fromRevision : _toRevision)) {
+        setState(() => _cancelLookup(start));
+      }
+    });
+    _placeSearch.reverse(
+      start ? _fromLookup : _toLookup,
+      place.latitude!,
+      place.longitude!,
+      (_, status, results) {
+        if (!mounted || revision != (start ? _fromRevision : _toRevision)) {
+          return;
+        }
+        final day = ref.read(todayProvider);
+        final current = start ? day.fromPlace : day.toPlace;
+        if (!identical(current, place)) {
+          setState(() => _finding.remove(start));
+          return;
+        }
+        if (status.phase == SourcePhase.waiting ||
+            status.phase == SourcePhase.loading) {
+          return;
+        }
+        _lookupTimers.remove(start)?.cancel();
+        setState(() => _finding.remove(start));
+        if (status.phase != SourcePhase.complete || results.isEmpty) return;
+        final result = results.first;
+        ref
+            .read(todayProvider.notifier)
+            .setEndpoint(
+              start: start,
+              value: PlaceIntent(
+                kind: PlaceKind.specific,
+                label: result.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+                source: 'manual',
+                provider: result.provider,
+                retrievedAt: result.retrievedAt?.toIso8601String(),
+                attributions: result.attributions,
+              ),
+            );
+      },
+    );
+  }
+
+  Future<void> _namePin(bool start) async {
+    setState(() => _cancelLookup(start));
+    final day = ref.read(todayProvider);
+    final original = start ? day.fromPlace : day.toPlace;
+    final input = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Name this pin'),
+        content: TextField(
+          controller: input,
+          autofocus: true,
+          maxLength: 100,
+          decoration: const InputDecoration(labelText: 'Place name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, input.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    input.dispose();
+    if (!mounted || name == null || name.isEmpty) return;
+    final latest = ref.read(todayProvider);
+    if (!identical(start ? latest.fromPlace : latest.toPlace, original)) return;
+    ref
+        .read(todayProvider.notifier)
+        .setEndpoint(start: start, value: original.withLabel(name));
+    setState(() {});
   }
 
   bool _expanded = true;
@@ -54,10 +184,14 @@ class _TodayViewState extends ConsumerState<TodayView> {
   void _clear() {
     final previous = ref.read(todayProvider);
     final controller = ref.read(todayProvider.notifier);
+    setState(() {
+      _cancelLookup(true);
+      _cancelLookup(false);
+    });
     controller.clear();
     showFeedback(
       context,
-      'Errands cleared.',
+      'Today cleared.',
       onUndo: () => controller.restore(previous),
     );
   }
@@ -83,6 +217,7 @@ class _TodayViewState extends ConsumerState<TodayView> {
   }
 
   Future<void> _place(bool start) async {
+    setState(() => _cancelLookup(start));
     final day = ref.read(todayProvider);
     final value = await choosePlace(
       context,
@@ -92,6 +227,7 @@ class _TodayViewState extends ConsumerState<TodayView> {
     );
     if (value != null && mounted) {
       ref.read(todayProvider.notifier).setEndpoint(start: start, value: value);
+      _resolvePin(start, value);
     }
   }
 
@@ -177,7 +313,12 @@ class _TodayViewState extends ConsumerState<TodayView> {
         toolbarHeight: 64,
         title: Text('Today', style: context.type.headlineLarge),
         actions: [
-          if (day.errands.isNotEmpty)
+          if (day.errands.isNotEmpty ||
+              day.from.isNotEmpty ||
+              day.to.isNotEmpty ||
+              day.departure != 510 ||
+              day.deadline != 1080 ||
+              day.profile != TravelProfile.motor)
             TextButton.icon(
               key: const Key('clear-errands'),
               onPressed: _clear,
@@ -227,6 +368,9 @@ class _TodayViewState extends ConsumerState<TodayView> {
                     EndpointRow(
                       start: true,
                       value: day.from,
+                      finding: _finding.contains(true),
+                      place: day.fromPlace,
+                      onName: () => _namePin(true),
                       onTap: () => _place(true),
                     ),
                     const Divider(indent: 20, endIndent: 20),
@@ -328,6 +472,9 @@ class _TodayViewState extends ConsumerState<TodayView> {
                     EndpointRow(
                       start: false,
                       value: day.to,
+                      finding: _finding.contains(false),
+                      place: day.toPlace,
+                      onName: () => _namePin(false),
                       onTap: () => _place(false),
                     ),
                     const Divider(),
@@ -427,11 +574,17 @@ class EndpointRow extends StatelessWidget {
     required this.start,
     required this.value,
     required this.onTap,
+    this.finding = false,
+    this.place,
+    this.onName,
     super.key,
   });
   final bool start;
   final String value;
   final VoidCallback onTap;
+  final bool finding;
+  final PlaceIntent? place;
+  final VoidCallback? onName;
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
@@ -464,6 +617,14 @@ class EndpointRow extends StatelessWidget {
                       : value,
                   style: context.type.titleMedium,
                 ),
+                if (finding) const Text('Finding address…'),
+                if (!finding &&
+                    value == 'Dropped pin' &&
+                    place?.hasCoordinates == true)
+                  TextButton(
+                    onPressed: onName,
+                    child: const Text('Name this pin'),
+                  ),
               ],
             ),
           ),

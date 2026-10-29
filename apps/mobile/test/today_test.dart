@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/wayday_app.dart';
 import 'package:wayday/features/today/domain/day.dart';
+import 'package:wayday/features/places/domain/place_intent.dart';
 import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'package:wayday/features/recurring/presentation/recurring_controller.dart';
 import 'package:wayday/core/widgets/feedback.dart';
@@ -280,12 +281,12 @@ void main() {
       final container = await launch(tester, withFixtures: true);
       await tester.tap(find.byKey(const Key('clear-errands')));
       await tester.pumpAndSettle();
-      expect(find.text('Errands cleared.'), findsOneWidget);
+      expect(find.text('Today cleared.'), findsOneWidget);
       expect(find.text('Undo'), findsOneWidget);
       await capture(tester, 'v3-feedback');
       await tester.pump(const Duration(seconds: 7));
       await tester.pumpAndSettle();
-      expect(find.text('Errands cleared.'), findsNothing);
+      expect(find.text('Today cleared.'), findsNothing);
       expect(container.read(todayProvider).errands, isEmpty);
       final context = tester.element(find.text('Today').first);
       showFeedback(context, 'First message');
@@ -597,6 +598,76 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(todayProvider).errands.length, 5);
   });
+  testWidgets(
+    'clear resets both endpoints and trip settings even without errands; undo restores them',
+    (tester) async {
+      final container = await launch(tester);
+      final controller = container.read(todayProvider.notifier);
+      const from = PlaceIntent(
+        kind: PlaceKind.specific,
+        label: 'Start',
+        latitude: 14.5,
+        longitude: 121.0,
+      );
+      const to = PlaceIntent(
+        kind: PlaceKind.specific,
+        label: 'Destination',
+        latitude: 14.6,
+        longitude: 121.1,
+      );
+      controller.setEndpoint(start: true, value: from);
+      controller.setEndpoint(start: false, value: to);
+      controller.setTimes(departure: 600, deadline: 1200);
+      controller.setProfile(TravelProfile.bike);
+      await tester.pump();
+      expect(find.byKey(const Key('clear-errands')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('clear-errands')));
+      await tester.pumpAndSettle();
+      final cleared = container.read(todayProvider);
+      expect(cleared.errands, isEmpty);
+      expect(cleared.from, isEmpty);
+      expect(cleared.to, isEmpty);
+      expect(cleared.fromPlace.hasCoordinates, isFalse);
+      expect(cleared.toPlace.hasCoordinates, isFalse);
+      expect(cleared.departure, 510);
+      expect(cleared.deadline, 1080);
+      expect(cleared.profile, TravelProfile.motor);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      final restored = container.read(todayProvider);
+      expect(restored.fromPlace.latitude, 14.5);
+      expect(restored.toPlace.longitude, 121.1);
+      expect(restored.departure, 600);
+      expect(restored.deadline, 1200);
+      expect(restored.profile, TravelProfile.bike);
+    },
+  );
+
+  testWidgets(
+    'derived endpoint credits stay in the data but are not displayed on Today',
+    (tester) async {
+      final container = await launch(tester);
+      const place = PlaceIntent(
+        kind: PlaceKind.specific,
+        label: 'Street',
+        latitude: 14.5,
+        longitude: 121,
+        provider: 'geoapify',
+        source: 'manual',
+        attributions: ['© OpenStreetMap contributors', 'Powered by Geoapify'],
+      );
+      final controller = container.read(todayProvider.notifier);
+      controller.setEndpoint(start: true, value: place);
+      controller.setEndpoint(start: false, value: place);
+      await tester.pump();
+      expect(find.text('Powered by Geoapify'), findsNothing);
+      expect(find.text('© OpenStreetMap contributors'), findsNothing);
+      expect(
+        container.read(todayProvider).fromPlace.attributions,
+        contains('Powered by Geoapify'),
+      );
+    },
+  );
   testWidgets(
     'small phone and larger text retain usable list and trip controls',
     (tester) async {

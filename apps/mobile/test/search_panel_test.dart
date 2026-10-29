@@ -16,6 +16,133 @@ import 'search_ranking_test.dart' show place;
 
 void main() {
   testWidgets(
+    'source switching preserves scroll while a changed query resets it',
+    (tester) async {
+      final now = tester.binding.clock.now;
+      final ledger = TestLedger(now).ledger;
+      final service = CombinedPlaceSearch(
+        [
+          TestAdapter(
+            'geoapify',
+            (_) async => [
+              for (var i = 0; i < 30; i++)
+                place('row-$i', 'Cebu branch $i', 10.3),
+            ],
+          ),
+        ],
+        ledger,
+        now: now,
+      );
+      final google = GoogleSearchService(ledger, enabled: false);
+      final choice = SearchSourceChoice()..choose(SearchSource.others);
+      final c = PlaceSearchController(
+        service,
+        google: google,
+        sourceChoice: choice,
+      )..change('Cebu');
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildTheme(),
+          home: Scaffold(
+            body: ListenableBuilder(
+              listenable: c,
+              builder: (_, _) => PlaceSearchPanel(
+                search: c,
+                saved: const [],
+                onSelect: (_) {},
+                onNameOnly: () {},
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 2));
+      final list = find.byKey(const Key('place-search-results'));
+      await tester.drag(list, const Offset(0, -700));
+      await tester.pumpAndSettle();
+      final scroll = tester.state<ScrollableState>(
+        find.descendant(of: list, matching: find.byType(Scrollable)),
+      );
+      final offset = scroll.position.pixels;
+      expect(offset, greaterThan(100));
+      choice.choose(SearchSource.google);
+      await tester.pump();
+      choice.choose(SearchSource.others);
+      await tester.pump();
+      final restored = tester.state<ScrollableState>(
+        find.descendant(of: list, matching: find.byType(Scrollable)),
+      );
+      expect(restored, same(scroll));
+      expect(restored.position.pixels, offset);
+      c.change('Another query');
+      await tester.pump();
+      final reset = tester.state<ScrollableState>(
+        find.descendant(of: list, matching: find.byType(Scrollable)),
+      );
+      expect(reset.position.pixels, 0);
+      await tester.pumpWidget(const SizedBox());
+      c.dispose();
+      service.dispose();
+      google.dispose();
+      choice.dispose();
+    },
+  );
+  testWidgets(
+    'short result list keeps fallback actions scrollable with a keyboard and large text',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 250);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewInsets);
+      final ledger = QuotaLedger(read: () async => null, write: (_) async {});
+      final service = CombinedPlaceSearch([], ledger);
+      final source = SearchSourceChoice()..choose(SearchSource.others);
+      final c = PlaceSearchController(service, sourceChoice: source)
+        ..updateDeviceLocation(const SearchOrigin.device(14.58, 121.05))
+        ..query = 'Cebu'
+        ..results = [place('fixture', 'Fixture Cebu', 10.3)];
+      addTearDown(() {
+        c.dispose();
+        service.dispose();
+        source.dispose();
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(1.3)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: PlaceSearchPanel(
+              search: c,
+              saved: const [],
+              onUseLocation: () {},
+              onSelect: (_) {},
+              onNameOnly: () {},
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.scrollUntilVisible(
+        find.text('Back to map'),
+        100,
+        scrollable: find.descendant(
+          of: find.byKey(const Key('place-search-results')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(find.text('Back to map').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
     'shared search chrome keeps native identity and request count through keyboard and text scaling',
     (tester) async {
       final font = FontLoader('Figtree')
@@ -110,8 +237,9 @@ void main() {
       final selected = tester.widget<Text>(find.text('Google'));
       expect(selected.style!.decoration, TextDecoration.underline);
       expect(find.text('Search this area').hitTestable(), findsOneWidget);
-      expect(find.text('Places').hitTestable(), findsOneWidget);
-      expect(find.text('Search original text').hitTestable(), findsOneWidget);
+      expect(find.text('Places'), findsNothing);
+      expect(find.text('Search original text'), findsNothing);
+      expect(find.textContaining('Searching for'), findsNothing);
       expect(
         find.text('Saves this name without a map pin.').hitTestable(),
         findsOneWidget,
@@ -136,6 +264,17 @@ void main() {
       expect(loads, 1);
       expect(disposals, 0);
       expect(c.query, 'Megamall');
+      for (var i = 0; i < 10; i++) {
+        source.choose(SearchSource.others);
+        await tester.pump();
+        expect(find.byType(GoogleSearchView), findsNothing);
+        source.choose(SearchSource.google);
+        await tester.pump();
+        expect(tester.state(find.byType(GoogleSearchView)), same(native));
+      }
+      expect(creates, 1);
+      expect(loads, 1);
+      expect(disposals, 0);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();

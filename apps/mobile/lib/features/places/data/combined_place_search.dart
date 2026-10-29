@@ -48,11 +48,13 @@ class _Cache {
 }
 
 class _Job {
-  _Job(this.request, this.key, this.due);
+  _Job(this.request, this.key, this.due, {this.execute});
   final PlaceSearchRequest request;
   final String key;
   final DateTime due;
   final Map<Object, SearchUpdate> listeners = {};
+  bool dispatched = false;
+  final Future<List<PlaceSearchResult>> Function()? execute;
 }
 
 class _Runner {
@@ -77,8 +79,22 @@ class CombinedPlaceSearch {
   final DateTime Function() now;
   bool _disposed = false;
   Iterable<String> get providers => _runners.map((r) => r.adapter.id);
-  void cancel(Object owner) {
+
+  /// Pause only this owner's queued work, retaining dispatched subscriptions.
+  void pausePending(Object owner) {
     for (final r in _runners) {
+      if (r.flight?.dispatched == false) r.flight?.listeners.remove(owner);
+      r.pending?.listeners.remove(owner);
+      if (r.pending?.listeners.isEmpty == true) {
+        r.pending = null;
+        r.timer?.cancel();
+      }
+    }
+  }
+
+  void cancel(Object owner, {Set<String>? only}) {
+    for (final r in _runners) {
+      if (only != null && !only.contains(r.adapter.id)) continue;
       r.flight?.listeners.remove(owner);
       r.pending?.listeners.remove(owner);
       if (r.pending?.listeners.isEmpty == true) {
@@ -94,8 +110,9 @@ class CombinedPlaceSearch {
     SearchUpdate update, {
     bool immediate = false,
     Set<String>? only,
+    bool refresh = false,
   }) {
-    cancel(owner);
+    cancel(owner, only: only);
     if (_disposed) return;
     if (request.text.length > 100 ||
         (request.category == null && request.text.length < 2) ||
@@ -119,7 +136,7 @@ class CombinedPlaceSearch {
       }
       final key = '${r.adapter.endpoint}|${request.key}';
       final cached = r.cache.remove(key);
-      if (cached != null && cached.expires.isAfter(now())) {
+      if (!refresh && cached != null && cached.expires.isAfter(now())) {
         r.cache[key] = cached;
         update(id, const SourceState(SourcePhase.complete), cached.results);
         continue;
@@ -155,6 +172,56 @@ class CombinedPlaceSearch {
       update(id, const SourceState(SourcePhase.waiting), []);
       _schedule(r);
     }
+  }
+
+  /// Reverse lookups use the same Geoapify runner and accounting as search.
+  void reverse(
+    Object owner,
+    double latitude,
+    double longitude,
+    SearchUpdate update,
+  ) {
+    cancel(owner, only: {'geoapify'});
+    final matches = _runners.where((r) => r.adapter.id == 'geoapify');
+    if (_disposed || matches.isEmpty || !matches.first.adapter.enabled) {
+      update('geoapify', const SourceState(SourcePhase.disabled), []);
+      return;
+    }
+    final r = matches.first;
+    final key = 'reverse|$latitude|$longitude';
+    final cached = r.cache.remove(key);
+    if (cached != null && cached.expires.isAfter(now())) {
+      r.cache[key] = cached;
+      update(
+        'geoapify',
+        const SourceState(SourcePhase.complete),
+        cached.results,
+      );
+      return;
+    }
+    if (r.accessBlocked) {
+      update('geoapify', const SourceState(SourcePhase.unavailable), []);
+      return;
+    }
+    if (r.flight?.key == key) {
+      r.flight!.listeners[owner] = update;
+      update('geoapify', const SourceState(SourcePhase.loading), []);
+      return;
+    }
+    if (r.pending != null) {
+      _notify(r, r.pending!, const SourceState(SourcePhase.unavailable), []);
+    }
+    r.timer?.cancel();
+    final job = _Job(
+      PlaceSearchRequest(''),
+      key,
+      now(),
+      execute: () => r.adapter.reverse(latitude, longitude),
+    );
+    job.listeners[owner] = update;
+    r.pending = job;
+    update('geoapify', const SourceState(SourcePhase.waiting), []);
+    _schedule(r);
   }
 
   void _schedule(_Runner r, [DateTime? after]) {
@@ -201,9 +268,11 @@ class CombinedPlaceSearch {
       if (_disposed || job.listeners.isEmpty) return;
       _notify(r, job, const SourceState(SourcePhase.loading), []);
       dispatched = true;
-      final results = await r.adapter
-          .search(job.request)
-          .timeout(const Duration(seconds: 5));
+      job.dispatched = true;
+      final results =
+          await (job.execute?.call() ?? r.adapter.search(job.request)).timeout(
+            const Duration(seconds: 5),
+          );
       final expires = now().add(
         results.isEmpty
             ? const Duration(seconds: 60)

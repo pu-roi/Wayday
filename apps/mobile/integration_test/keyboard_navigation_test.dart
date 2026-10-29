@@ -105,6 +105,14 @@ void main() {
     await tester.tap(find.byKey(const Key('place-name')));
     await waitKeyboard(true);
     await tester.pump(const Duration(seconds: 2));
+    await tester.scrollUntilVisible(
+      find.text('Fixture Cebu'),
+      100,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('place-search-results')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.text('Fixture Cebu'), findsOneWidget);
     debugPrint('WAYDAY_KEYBOARD_HARDWARE_BACK_READY');
     // The host sends one real ADB Back event only while the isolated test is foreground.

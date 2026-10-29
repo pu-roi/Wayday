@@ -133,7 +133,7 @@ class PlaceIntent {
     );
   }
 
-  PlaceIntent withLabel(String value) => PlaceIntent(
+  PlaceIntent withLabel(String value, {String? labelSource}) => PlaceIntent(
     kind: kind,
     label: value,
     latitude: latitude,
@@ -141,7 +141,7 @@ class PlaceIntent {
     savedPlaceId: savedPlaceId,
     category: category,
     brand: brand,
-    source: source,
+    source: labelSource ?? source,
     address: address,
     sourceDate: sourceDate,
     coordinateKind: coordinateKind,

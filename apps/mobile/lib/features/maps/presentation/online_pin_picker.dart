@@ -21,11 +21,13 @@ class OnlinePinPicker extends ConsumerStatefulWidget {
     required this.initial,
     this.title = 'Choose a location',
     this.allowSave = true,
+    this.otherSourcesOnly = false,
     super.key,
   });
   final PlaceIntent? initial;
   final String title;
   final bool allowSave;
+  final bool otherSourcesOnly;
   @override
   ConsumerState<OnlinePinPicker> createState() => _OnlinePinPickerState();
 }
@@ -37,6 +39,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
   late final PlaceSearchController _search;
   late final SearchLocationController _location;
   late final GooglePinCache _googlePins;
+  SearchSourceChoice? _localSourceChoice;
   PlaceIntent? _point, _focus;
   List<SavedPlace> _saved = [];
   int _focusRevision = 0, _locationAttempt = 0;
@@ -60,11 +63,15 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
       _point = widget.initial;
     }
     _googlePins = ref.read(googlePinCacheProvider)..addListener(_refresh);
+    if (widget.otherSourcesOnly) {
+      _localSourceChoice = SearchSourceChoice()..choose(SearchSource.others);
+    }
     _search =
         PlaceSearchController(
             ref.read(combinedPlaceSearchProvider),
             google: ref.read(googleSearchProvider),
-            sourceChoice: ref.read(searchSourceChoiceProvider),
+            sourceChoice:
+                _localSourceChoice ?? ref.read(searchSourceChoiceProvider),
             pins: _googlePins,
           )
           ..onGoogleSelection = _choose
@@ -87,6 +94,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
 
   void _openSearch() {
     if (_searchOpen) return;
+    _search.open();
     setState(() => _searchOpen = true);
     _location.refresh();
     _locationChanged();
@@ -169,6 +177,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
   void _closeSearch() {
     _searchFocus.unfocus();
     _search.dismiss();
+    _localSourceChoice?.choose(SearchSource.others);
     setState(() => _searchOpen = false);
   }
 
@@ -211,7 +220,10 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
         _locationInfo = null;
         // Retain an explicitly entered personal name, never a moved business identity.
         final named = selected ?? widget.initial;
-        final alias = named?.source == 'user' || named?.source == 'manual'
+        final alias =
+            (named?.source == 'user' ||
+                    (named?.source == 'manual' && named?.provider == null)) &&
+                named?.label != 'Dropped pin'
             ? named?.label
             : null;
         _point = PlaceIntent(
@@ -330,6 +342,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
     WidgetsBinding.instance.removeObserver(this);
     _locationAttempt++;
     _search.dispose();
+    _localSourceChoice?.dispose();
     _googlePins.removeListener(_refresh);
     _location.removeListener(_locationChanged);
     _query.dispose();
@@ -504,6 +517,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                       Positioned.fill(
                         child: PlaceSearchPanel(
                           search: _search,
+                          showSourceChoices: !widget.otherSourcesOnly,
                           saved: _saved,
                           savedError: _savedError,
                           locating: _location.phase == LocationPhase.loading,
@@ -546,7 +560,10 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                                 counterText: '',
                               ),
                               onChanged: (text) => setState(
-                                () => _point = point.withLabel(text.trim()),
+                                () => _point = point.withLabel(
+                                  text.trim(),
+                                  labelSource: 'google_ui_kit/user_label',
+                                ),
                               ),
                             )
                           else

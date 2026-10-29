@@ -54,10 +54,19 @@ private class GooglePlacesView(private val activity: FlutterFragmentActivity, me
     private val hosted = mutableMapOf<Int, Hosted>()
     private var visibleRevision: Int? = null
     private var disposed = false
+    private var bindingCount = 0
     init {
         root.setBackgroundColor(Color.rgb(251, 251, 248))
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "visibility" -> {
+                    val visible = call.arguments == true
+                    root.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+                    root.descendantFocusability = if (visible) ViewGroup.FOCUS_AFTER_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                    root.importantForAccessibility = if (visible) View.IMPORTANT_FOR_ACCESSIBILITY_AUTO else View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                    if (!visible) root.clearFocus()
+                    result.success(null)
+                }
                 "search", "details" -> {
                     val arguments = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
                     attached {
@@ -83,6 +92,9 @@ private class GooglePlacesView(private val activity: FlutterFragmentActivity, me
                     val entry = hosted[visibleRevision]
                     val places = entry?.places.orEmpty()
                     result.success(mapOf("count" to places.size,
+                        "bindings" to bindingCount,
+                        "visible" to (root.visibility == View.VISIBLE),
+                        "hiddenFromAccessibility" to (root.importantForAccessibility == View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS),
                         "idPresent" to places.any { !it.id.isNullOrEmpty() },
                         "locationPresent" to places.any { it.location != null },
                         "addressPresent" to places.any { !it.formattedAddress.isNullOrEmpty() },
@@ -114,6 +126,7 @@ private class GooglePlacesView(private val activity: FlutterFragmentActivity, me
             result.error("services", "Google services unavailable", null); return
         }
         if (!initialize()) { result.error("access", "Google key unavailable", null); return }
+        bindingCount++
         val revision = (args["revision"] as Number).toInt()
         hosted.keys.filter { it != visibleRevision }.toList().forEach(::remove)
         val frame = FrameLayout(activity).apply {

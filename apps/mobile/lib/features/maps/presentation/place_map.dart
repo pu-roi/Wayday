@@ -93,7 +93,9 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
   late final GooglePinCache _googlePins;
   void _pinsExpired() {
     if (mounted) {
-      if (_ready) _sync();
+      // The picker has no marker layers to synchronize. Reframing it here
+      // races with a selected Google result or a user's manual camera move.
+      if (_ready && !widget.request.centerPicker) _sync();
       setState(() {});
     }
   }

@@ -101,7 +101,16 @@ class TodayController extends Notifier<DayPlan> {
     ),
   );
   void restore(DayPlan day) => _commit(day);
-  void clear() => _commit(state.copyWith(errands: []));
+  void clear() => _commit(
+    state.copyWith(
+      errands: [],
+      from: '',
+      to: '',
+      departure: 510,
+      deadline: 1080,
+      profile: TravelProfile.motor,
+    ),
+  );
   void setEndpoint({required bool start, required PlaceIntent value}) {
     if (value.label.trim().isEmpty) return;
     _commit(

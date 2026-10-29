@@ -7,7 +7,7 @@ import 'search_attribution.dart';
 import '../data/google_search.dart';
 import 'google_search_view.dart';
 
-class PlaceSearchPanel extends StatelessWidget {
+class PlaceSearchPanel extends StatefulWidget {
   const PlaceSearchPanel({
     required this.search,
     required this.saved,
@@ -15,6 +15,7 @@ class PlaceSearchPanel extends StatelessWidget {
     required this.onNameOnly,
     required this.onClose,
     this.savedError = false,
+    this.showSourceChoices = true,
     this.onRetrySaved,
     this.onUseLocation,
     this.onOpenSettings,
@@ -27,13 +28,40 @@ class PlaceSearchPanel extends StatelessWidget {
   final ValueChanged<PlaceIntent> onSelect;
   final VoidCallback onNameOnly, onClose;
   final bool savedError;
+  final bool showSourceChoices;
   final VoidCallback? onRetrySaved;
   final VoidCallback? onUseLocation, onOpenSettings;
   final bool locating;
   final String? locationMessage;
+  @override
+  State<PlaceSearchPanel> createState() => _PlaceSearchPanelState();
+}
+
+class _PlaceSearchPanelState extends State<PlaceSearchPanel> {
+  bool _googleMounted = false;
+  Widget? _otherContent;
+  List<Widget> _googleControls = [];
+  PlaceSearchController get search => widget.search;
+  List<SavedPlace> get saved => widget.saved;
+  ValueChanged<PlaceIntent> get onSelect => widget.onSelect;
+  VoidCallback get onNameOnly => widget.onNameOnly;
+  VoidCallback get onClose => widget.onClose;
+  bool get savedError => widget.savedError;
+  VoidCallback? get onRetrySaved => widget.onRetrySaved;
+  VoidCallback? get onUseLocation => widget.onUseLocation;
+  VoidCallback? get onOpenSettings => widget.onOpenSettings;
+  bool get locating => widget.locating;
+  String? get locationMessage => widget.locationMessage;
   // Both source groups keep these controls and rows when the keyboard opens.
   List<Widget> _controls(BuildContext context, List<SavedPlace> matches) => [
-    if (search.sourceChoice != null) _SearchSourceButtons(search: search),
+    if (widget.showSourceChoices && search.sourceChoice != null)
+      _SearchSourceButtons(search: search)
+    else if (!widget.showSourceChoices && search.hasSearch)
+      IconButton(
+        tooltip: 'Refresh results',
+        onPressed: search.canRefresh ? search.refreshResults : null,
+        icon: const Icon(Icons.refresh_rounded),
+      ),
     if (onUseLocation != null) ...[
       Text(
         search.originLabel,
@@ -76,39 +104,6 @@ class PlaceSearchPanel extends StatelessWidget {
             child: const Text('Open settings'),
           ),
         ),
-    ],
-    // Reserve the action's space so it cannot move a row under a held finger.
-    SizedBox(
-      height: 48,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Places',
-              style: context.type.titleSmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (search.hasUpdates)
-            TextButton.icon(
-              key: const Key('updated-search-results'),
-              onPressed: search.applyUpdates,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Updated results'),
-            ),
-        ],
-      ),
-    ),
-    if (search.interpretation.corrected) ...[
-      Text('Searching for ${search.interpretedText}'),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton(
-          onPressed: search.searchOriginal,
-          child: const Text('Search original text'),
-        ),
-      ),
     ],
     for (final suggestion in search.interpretation.suggestions)
       TextButton(
@@ -164,7 +159,8 @@ class PlaceSearchPanel extends StatelessWidget {
       ),
     ] else if (search.emptySuccess)
       const Text('No matching places found. Try another name or move the map.'),
-    if (search.googleMessage != null) Text(search.googleMessage!),
+    if (search.usesGoogle && search.googleMessage != null)
+      Text(search.googleMessage!),
   ];
 
   List<Widget> _fallbackActions() => [
@@ -200,13 +196,16 @@ class PlaceSearchPanel extends StatelessWidget {
         children: [
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: controlsBudget * .65),
-            child: SingleChildScrollView(
-              key: const PageStorageKey('google-search-controls'),
-              primary: false,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: controls,
+            child: SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                key: const PageStorageKey('google-search-controls'),
+                primary: false,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: controls,
+                ),
               ),
             ),
           ),
@@ -219,6 +218,7 @@ class PlaceSearchPanel extends StatelessWidget {
                   ? GoogleSearchView(
                       key: const ValueKey('google-search-host'),
                       search: search,
+                      visible: search.usesGoogle,
                     )
                   : const SingleChildScrollView(
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -230,19 +230,56 @@ class PlaceSearchPanel extends StatelessWidget {
           ),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: controlsBudget * .35),
-            child: SingleChildScrollView(
-              key: const PageStorageKey('google-search-fallback'),
-              primary: false,
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Column(children: _fallbackActions()),
+            child: SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                key: const PageStorageKey('google-search-fallback'),
+                primary: false,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Column(children: _fallbackActions()),
+              ),
             ),
           ),
         ],
       );
     },
   );
+  Widget _otherPanel(List<Widget> rows) => Listener(
+    onPointerDown: (_) => search.freezeResults(),
+    child: NotificationListener<ScrollStartNotification>(
+      onNotification: (_) {
+        search.freezeResults();
+        return false;
+      },
+      child: CustomScrollView(
+        key: const Key('place-search-results'),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => rows[index],
+                childCount: rows.length,
+                findChildIndexCallback: (key) {
+                  final index = rows.indexWhere((w) => w.key == key);
+                  return index < 0 ? null : index;
+                },
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            sliver: SliverList.list(children: _fallbackActions()),
+          ),
+        ],
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
+    if (search.usesGoogle) _googleMounted = true;
     final matches = saved
         .where(
           (p) =>
@@ -256,16 +293,7 @@ class PlaceSearchPanel extends StatelessWidget {
         Semantics(
           key: ValueKey('result-${result.sourceId}'),
           onDidGainAccessibilityFocus: search.freezeResults,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.place_outlined),
-            title: Text(result.name),
-            subtitle: Text(
-              [
-                result.address ?? 'Address not recorded',
-                ?searchDistanceLabel(result, search.visibleOrigin),
-              ].join('\n'),
-            ),
+          child: InkWell(
             onTap: () => onSelect(
               PlaceIntent(
                 kind: PlaceKind.specific,
@@ -280,6 +308,48 @@ class PlaceSearchPanel extends StatelessWidget {
                 attributions: result.attributions,
               ),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(result.name, style: context.type.bodyLarge),
+                            Text(
+                              [
+                                result.address ?? 'Address not recorded',
+                                ?searchDistanceLabel(
+                                  result,
+                                  search.visibleOrigin,
+                                ),
+                              ].join('\n'),
+                              style: context.type.bodyMedium?.copyWith(
+                                color: context.colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: context.colors.outlineVariant),
+              ],
+            ),
           ),
         ),
       SearchAttribution(
@@ -287,33 +357,55 @@ class PlaceSearchPanel extends StatelessWidget {
           for (final result in search.results) ...result.attributions,
         }.toList(),
       ),
-      ..._fallbackActions(),
     ];
+    if (search.usesGoogle) {
+      _googleControls = controls;
+    } else {
+      _otherContent = KeyedSubtree(
+        key: ValueKey(search.contextRevision),
+        child: _otherPanel(rows),
+      );
+    }
     return Material(
       color: context.colors.surface,
-      child: search.usesGoogle
-          ? _googlePanel(context, controls)
-          : Listener(
-              onPointerDown: (_) => search.freezeResults(),
-              child: NotificationListener<ScrollStartNotification>(
-                onNotification: (_) {
-                  search.freezeResults();
-                  return false;
-                },
-                child: ListView.builder(
-                  key: const Key('place-search-results'),
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.manual,
-                  itemCount: rows.length,
-                  itemBuilder: (context, index) => rows[index],
-                  findChildIndexCallback: (key) {
-                    final index = rows.indexWhere((w) => w.key == key);
-                    return index < 0 ? null : index;
-                  },
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ExcludeFocus(
+              excluding: !search.usesGoogle,
+              child: Offstage(
+                offstage: !search.usesGoogle,
+                child: _googleMounted
+                    ? _googlePanel(context, _googleControls)
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: ExcludeFocus(
+              excluding: search.usesGoogle,
+              child: Offstage(
+                offstage: search.usesGoogle,
+                child: _otherContent ?? const SizedBox.shrink(),
+              ),
+            ),
+          ),
+          if (search.hasUpdates)
+            Positioned(
+              top: 0,
+              right: 20,
+              child: Material(
+                color: context.colors.surface,
+                child: TextButton.icon(
+                  key: const Key('updated-search-results'),
+                  onPressed: search.applyUpdates,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Updated results'),
                 ),
               ),
             ),
+        ],
+      ),
     );
   }
 }
@@ -325,6 +417,12 @@ class _SearchSourceButtons extends StatelessWidget {
   Widget build(BuildContext context) => Wrap(
     spacing: 12,
     children: [
+      if (search.hasSearch)
+        IconButton(
+          tooltip: 'Refresh results',
+          onPressed: search.canRefresh ? search.refreshResults : null,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
       for (final source in SearchSource.values)
         Semantics(
           selected: source == search.source,

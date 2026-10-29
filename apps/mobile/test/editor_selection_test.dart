@@ -44,14 +44,16 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
 Future<List<ErrandEditResult?>> _openErrand(WidgetTester tester) async {
   final results = <ErrandEditResult?>[];
   await tester.pumpWidget(
-    MaterialApp(
-      theme: buildTheme(),
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: TextButton(
-            onPressed: () async =>
-                results.add(await editErrand(context, _errand)),
-            child: const Text('Open errand'),
+    ProviderScope(
+      child: MaterialApp(
+        theme: buildTheme(),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async =>
+                  results.add(await editErrand(context, _errand)),
+              child: const Text('Open errand'),
+            ),
           ),
         ),
       ),

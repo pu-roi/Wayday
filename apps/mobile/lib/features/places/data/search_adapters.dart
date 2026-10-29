@@ -10,6 +10,10 @@ abstract class SearchAdapter {
   bool get enabled;
   bool get categories => true;
   Future<List<PlaceSearchResult>> search(PlaceSearchRequest request);
+  Future<List<PlaceSearchResult>> reverse(
+    double latitude,
+    double longitude,
+  ) async => [];
 }
 
 class HttpSearchAdapter extends SearchAdapter {
@@ -29,6 +33,105 @@ class HttpSearchAdapter extends SearchAdapter {
   bool get enabled => id == 'photon' || apiKey.isNotEmpty;
   @override
   bool get categories => id != 'photon';
+  @override
+  Future<List<PlaceSearchResult>> reverse(
+    double latitude,
+    double longitude,
+  ) async {
+    if (id != 'geoapify' || !enabled) return [];
+    final uri = Uri.parse('$endpoint/v1/geocode/reverse').replace(
+      queryParameters: {
+        'lat': '$latitude',
+        'lon': '$longitude',
+        'limit': '1',
+        'countrycodes': 'ph',
+        'apiKey': apiKey,
+      },
+    );
+    final abort = Completer<void>();
+    final timer = Timer(const Duration(seconds: 5), () {
+      if (!abort.isCompleted) abort.complete();
+    });
+    try {
+      final response = await http.Response.fromStream(
+        await client.send(
+          http.AbortableRequest('GET', uri, abortTrigger: abort.future),
+        ),
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw const SearchFailure(SearchFailureKind.access);
+      }
+      if (response.statusCode == 429) {
+        final header = response.headers['retry-after'];
+        final seconds = int.tryParse(header ?? '');
+        throw SearchFailure(
+          SearchFailureKind.rate,
+          retryAt: seconds != null && seconds >= 0
+              ? DateTime.now().toUtc().add(Duration(seconds: seconds))
+              : header == null
+              ? null
+              : DateTime.tryParse(header) ?? parseHttpDate(header),
+        );
+      }
+      if (response.statusCode != 200 || response.bodyBytes.length > 1000000) {
+        throw const SearchFailure(SearchFailureKind.temporary);
+      }
+      final payload = jsonDecode(utf8.decode(response.bodyBytes));
+      if (payload is! Map || payload['features'] is! List) {
+        throw const SearchFailure(SearchFailureKind.invalid);
+      }
+      for (final feature in payload['features'] as List) {
+        if (feature is! Map || feature['properties'] is! Map) continue;
+        final p = feature['properties'] as Map;
+        if ('${p['country_code']}'.toLowerCase() != 'ph') continue;
+        String? field(String key) {
+          final v = p[key];
+          return v is String && v.trim().isNotEmpty ? v.trim() : null;
+        }
+
+        final distance = p['distance'];
+        final street =
+            distance is num &&
+                distance.isFinite &&
+                distance >= 0 &&
+                distance <= 100
+            ? field('street')
+            : null;
+        final locality =
+            field('suburb') ??
+            field('district') ??
+            field('city') ??
+            field('county');
+        final label = street != null
+            ? [street, ?locality].join(', ')
+            : locality;
+        if (label == null) continue;
+        return [
+          PlaceSearchResult(
+            name: label,
+            latitude: latitude,
+            longitude: longitude,
+            sourceId: 'manual',
+            provider: 'geoapify',
+            retrievedAt: DateTime.now().toUtc(),
+            attributions: const [
+              '© OpenStreetMap contributors',
+              'Powered by Geoapify',
+            ],
+          ),
+        ];
+      }
+      return [];
+    } on SearchFailure {
+      rethrow;
+    } catch (_) {
+      throw const SearchFailure(SearchFailureKind.temporary);
+    } finally {
+      timer.cancel();
+      if (!abort.isCompleted) abort.complete();
+    }
+  }
+
   @override
   Future<List<PlaceSearchResult>> search(PlaceSearchRequest request) async {
     final area = request.area;

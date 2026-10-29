@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/place_picker.dart';
 import '../../../core/widgets/selection_controls.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../domain/errand.dart';
 import '../../places/domain/place_intent.dart';
+import '../../places/domain/place_search.dart';
+import '../../places/data/combined_place_search.dart';
 
 sealed class ErrandEditResult {
   const ErrandEditResult();
@@ -24,14 +28,15 @@ Future<ErrandEditResult?> editErrand(BuildContext context, Errand errand) =>
       MaterialPageRoute(builder: (_) => ErrandEditor(errand: errand)),
     );
 
-class ErrandEditor extends StatefulWidget {
+class ErrandEditor extends ConsumerStatefulWidget {
   const ErrandEditor({required this.errand, super.key});
   final Errand errand;
   @override
-  State<ErrandEditor> createState() => _ErrandEditorState();
+  ConsumerState<ErrandEditor> createState() => _ErrandEditorState();
 }
 
-class _ErrandEditorState extends State<ErrandEditor> {
+class _ErrandEditorState extends ConsumerState<ErrandEditor>
+    with WidgetsBindingObserver {
   final _form = GlobalKey<FormState>();
   late final _title = TextEditingController(text: widget.errand.title);
   late final _notes = TextEditingController(text: widget.errand.notes);
@@ -46,8 +51,109 @@ class _ErrandEditorState extends State<ErrandEditor> {
   late int? _minute = widget.errand.minute;
   late bool _optional = widget.errand.optional;
   String? _timeError;
+  final _lookupOwner = Object();
+  late final CombinedPlaceSearch _placeSearch;
+  Timer? _lookupTimer;
+  int _lookupRevision = 0;
+  bool _finding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _placeSearch = ref.read(combinedPlaceSearchProvider);
+  }
+
+  void _cancelLookup() {
+    _lookupRevision++;
+    _lookupTimer?.cancel();
+    _lookupTimer = null;
+    _placeSearch.cancel(_lookupOwner, only: {'geoapify'});
+    _finding = false;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      setState(_cancelLookup);
+    }
+  }
+
+  void _resolvePin(PlaceIntent place) {
+    if (place.source != 'manual' ||
+        place.label != 'Dropped pin' ||
+        !place.hasCoordinates ||
+        place.isGoogle) {
+      return;
+    }
+    final revision = _lookupRevision;
+    setState(() => _finding = true);
+    _lookupTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted && revision == _lookupRevision) setState(_cancelLookup);
+    });
+    _placeSearch.reverse(_lookupOwner, place.latitude!, place.longitude!, (
+      _,
+      status,
+      results,
+    ) {
+      if (!mounted ||
+          revision != _lookupRevision ||
+          !identical(_placeIntent, place)) {
+        return;
+      }
+      if (status.phase == SourcePhase.waiting ||
+          status.phase == SourcePhase.loading) {
+        return;
+      }
+      _lookupTimer?.cancel();
+      setState(() {
+        _finding = false;
+        if (status.phase == SourcePhase.complete && results.isNotEmpty) {
+          final result = results.first;
+          _placeIntent = PlaceIntent(
+            kind: PlaceKind.specific,
+            label: result.name,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            source: 'manual',
+            provider: result.provider,
+            retrievedAt: result.retrievedAt?.toIso8601String(),
+            attributions: result.attributions,
+          );
+          _place = result.name;
+        }
+      });
+    });
+  }
+
+  Future<void> _namePlace() async {
+    setState(_cancelLookup);
+    final original = _placeIntent;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => const _NamePlaceDialog(),
+    );
+    if (!mounted ||
+        name == null ||
+        name.isEmpty ||
+        !identical(original, _placeIntent)) {
+      return;
+    }
+    setState(() {
+      _place = name;
+      _placeIntent = original.withLabel(
+        name,
+        labelSource: original.isGoogle ? 'google_ui_kit/user_label' : null,
+      );
+    });
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cancelLookup();
     _title.dispose();
     _notes.dispose();
     _duration.dispose();
@@ -86,7 +192,10 @@ class _ErrandEditorState extends State<ErrandEditor> {
     appBar: AppBar(
       title: const Text('Edit errand'),
       actions: [
-        TextButton(onPressed: _save, child: const Text('Save')),
+        TextButton(
+          onPressed: _finding ? null : _save,
+          child: const Text('Save'),
+        ),
         const SizedBox(width: 12),
       ],
     ),
@@ -138,24 +247,40 @@ class _ErrandEditorState extends State<ErrandEditor> {
                   color: context.wayday.link,
                 ),
                 title: Text(_place.isEmpty ? 'Choose a place' : _place),
-                subtitle: const Text('Open map'),
+                subtitle: Text(_finding ? 'Finding address…' : 'Open map'),
                 trailing: Icon(Icons.map_outlined, color: context.wayday.link),
                 onTap: () async {
+                  setState(() {
+                    _cancelLookup();
+                  });
                   final place = await choosePlace(
                     context,
                     title: 'Errand location',
                     initial: _place,
                     initialPlace: _placeIntent,
+                    otherSourcesOnly: true,
                   );
-                  if (place != null && mounted) {
+                  if (!mounted) return;
+                  if (place != null) {
                     setState(() {
                       _place = place.label;
                       _placeIntent = place;
                       _confirmed.add('place');
                     });
+                    _resolvePin(place);
                   }
                 },
               ),
+              if (_placeIntent.isGoogle ||
+                  (_placeIntent.source == 'manual' &&
+                      _placeIntent.hasCoordinates))
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: _namePlace,
+                    child: const Text('Name this location'),
+                  ),
+                ),
               const SizedBox(height: 20),
               TextFormField(
                 key: const Key('errand-duration'),
@@ -243,5 +368,41 @@ class _ErrandEditorState extends State<ErrandEditor> {
         ),
       ),
     ),
+  );
+}
+
+class _NamePlaceDialog extends StatefulWidget {
+  const _NamePlaceDialog();
+  @override
+  State<_NamePlaceDialog> createState() => _NamePlaceDialogState();
+}
+
+class _NamePlaceDialogState extends State<_NamePlaceDialog> {
+  final input = TextEditingController();
+  @override
+  void dispose() {
+    input.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Name this location'),
+    content: TextField(
+      controller: input,
+      autofocus: true,
+      maxLength: 100,
+      decoration: const InputDecoration(labelText: 'Your label'),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      TextButton(
+        onPressed: () => Navigator.pop(context, input.text.trim()),
+        child: const Text('Save'),
+      ),
+    ],
   );
 }

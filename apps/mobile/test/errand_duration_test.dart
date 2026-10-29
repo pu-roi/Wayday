@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/errands/domain/errand.dart';
@@ -10,16 +11,18 @@ void main() {
   ) async {
     ErrandEditResult? result;
     await tester.pumpWidget(
-      MaterialApp(
-        theme: buildTheme(),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () async => result = await editErrand(
-                context,
-                const Errand(id: 'a', title: 'Buy'),
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildTheme(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async => result = await editErrand(
+                  context,
+                  const Errand(id: 'a', title: 'Buy'),
+                ),
+                child: const Text('Open'),
               ),
-              child: const Text('Open'),
             ),
           ),
         ),

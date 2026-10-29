@@ -7,8 +7,13 @@ import '../data/google_search.dart';
 import 'place_search_controller.dart';
 
 class GoogleSearchView extends StatefulWidget {
-  const GoogleSearchView({required this.search, super.key});
+  const GoogleSearchView({
+    required this.search,
+    this.visible = true,
+    super.key,
+  });
   final PlaceSearchController search;
+  final bool visible;
   @override
   State<GoogleSearchView> createState() => GoogleSearchViewState();
 }
@@ -59,7 +64,9 @@ class GoogleSearchViewState extends State<GoogleSearchView> {
     _bridge = bridge;
     channel.setMethodCallHandler((call) async {
       if (!mounted) return;
-      if (call.method == 'interaction') widget.search.freezeResults();
+      if (call.method == 'interaction' && widget.visible) {
+        widget.search.freezeResults();
+      }
       if (call.method == 'selection') {
         try {
           final value = GooglePlaceSnapshot.fromJson(
@@ -73,6 +80,20 @@ class GoogleSearchViewState extends State<GoogleSearchView> {
       }
     });
     widget.search.attachGoogle(bridge);
+    _visibility();
+  }
+
+  Future<void> _visibility() async {
+    try {
+      await _bridge?.channel.invokeMethod<void>('visibility', widget.visible);
+    } on PlatformException catch (_) {
+    } on MissingPluginException catch (_) {}
+  }
+
+  @override
+  void didUpdateWidget(covariant GoogleSearchView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.visible != widget.visible) _visibility();
   }
 
   @override

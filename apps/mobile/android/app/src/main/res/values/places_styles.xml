@@ -1,5 +1,8 @@
 <resources>
     <style name="WaydayPlacesTheme" parent="PlacesMaterialTheme">
+        <!-- Place Search uses a full-height Android CardView behind its
+             wrap-content result list. Keep that card light in system dark mode. -->
+        <item name="cardViewStyle">@style/WaydayPlacesCard</item>
         <item name="placesColorPrimary">#285C86</item>
         <item name="placesColorSurface">#FFFFFF</item>
         <item name="placesColorOutlineDecorative">#DEE7ED</item>
@@ -29,6 +32,9 @@
         <item name="placesTextAppearanceBodyMedium">@style/WaydayPlacesBody</item>
         <item name="placesTextAppearanceLabelLarge">@style/WaydayPlacesLabel</item>
         <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <style name="WaydayPlacesCard" parent="CardView.Light">
+        <item name="cardBackgroundColor">#FFFFFF</item>
     </style>
     <style name="WaydayPlacesTitle">
         <item name="fontFamily">@font/figtree</item>

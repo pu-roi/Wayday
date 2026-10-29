@@ -108,18 +108,9 @@ void main() {
         70,
         scrollable: header,
       );
-      await tester.scrollUntilVisible(
-        find.text('Places'),
-        70,
-        scrollable: header,
-      );
-      await tester.scrollUntilVisible(
-        find.text('Search original text'),
-        70,
-        scrollable: header,
-      );
-      await tester.tap(find.text('Search original text'));
-      await tester.pumpAndSettle();
+      expect(find.text('Places'), findsNothing);
+      expect(find.text('Search original text'), findsNothing);
+      expect(find.textContaining('Searching for'), findsNothing);
       final footer = find.descendant(
         of: find.byKey(const PageStorageKey('google-search-fallback')),
         matching: find.byType(Scrollable),
