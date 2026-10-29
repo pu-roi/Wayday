@@ -15,8 +15,63 @@ import 'package:wayday/app/wayday_app.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
 import 'package:wayday/features/maps/presentation/regional_map.dart';
 import 'package:wayday/features/today/presentation/today_controller.dart';
+import 'package:wayday/features/maps/data/location_reader.dart';
+import 'support/fake_location.dart';
 
 void main() {
+  testWidgets(
+    'confirmed current location gets a nearby address without changing the fix',
+    (tester) async {
+      final adapter = _Adapter()..reversePending = Completer();
+      final search = CombinedPlaceSearch([
+        adapter,
+      ], QuotaLedger(read: () async => null, write: (_) async {}));
+      final container = ProviderContainer(
+        overrides: [
+          combinedPlaceSearchProvider.overrideWithValue(search),
+          locationPlatformProvider.overrideWithValue(FakeLocationPlatform()),
+          placeMapBuilderProvider.overrideWithValue(
+            (_) => const SizedBox.expand(),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const WaydayApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('from-map')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Use my location'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm location'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(container.read(todayProvider).from, 'Current location');
+      expect(adapter.reverseCalls, 1);
+      adapter.reversePending!.complete([
+        const PlaceSearchResult(
+          name: 'C. Santos Street, Murphy',
+          latitude: 14.0,
+          longitude: 120.0,
+          sourceId: 'manual',
+          provider: 'geoapify',
+        ),
+      ]);
+      await tester.pump();
+      await tester.pump();
+      final place = container.read(todayProvider).fromPlace;
+      expect(place.label, 'C. Santos Street, Murphy');
+      expect(place.latitude, 14.58);
+      expect(place.longitude, 121.05);
+      expect(place.source, 'device');
+      await tester.pumpWidget(const SizedBox());
+      container.dispose();
+      search.dispose();
+    },
+  );
   testWidgets(
     'confirming a pin commits its coordinates before the lookup and ignores stale results',
     (tester) async {

@@ -30,6 +30,14 @@ void main() {
     );
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('More details'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('More details'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('errand-duration')));
     await tester.enterText(find.byKey(const Key('errand-duration')), '30');
     await tester.tap(find.text('Save'));

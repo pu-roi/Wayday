@@ -327,6 +327,9 @@ void main() {
     expect(routes.pushes, 2);
     expect(map!.focus!.label, 'Cebu City');
     expect(map!.focus!.source, 'osm/node/123');
+    final locationLabel = find.widgetWithText(TextFormField, 'Your label');
+    expect(locationLabel, findsOneWidget);
+    expect(tester.widget<TextFormField>(locationLabel).initialValue, 'Cebu City');
     expect(find.text('Main Street'), findsOneWidget);
     expect(find.text('Confirm location'), findsOneWidget);
     await tester.tap(find.text('Confirm location'));

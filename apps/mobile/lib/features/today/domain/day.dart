@@ -82,7 +82,10 @@ class DayPlan {
     'toPlace': toPlace.toJson(),
   };
 
-  factory DayPlan.fromJson(Map<String, dynamic> json) {
+  factory DayPlan.fromJson(
+    Map<String, dynamic> json, {
+    GooglePinResolver? resolveGooglePin,
+  }) {
     final date = json['date'] as String;
     final parsedDate = DateTime.parse(date);
     final departure = json['departure'] as int;
@@ -96,7 +99,12 @@ class DayPlan {
     }
     return DayPlan(
       errands: (json['errands'] as List)
-          .map((e) => Errand.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => Errand.fromJson(
+              e as Map<String, dynamic>,
+              resolveGooglePin: resolveGooglePin,
+            ),
+          )
           .toList(),
       from: json['from'] as String,
       to: json['to'] as String,
@@ -108,8 +116,12 @@ class DayPlan {
       revision: json['revision'] as int,
       fromPlace: PlaceIntent.fromJson(
         json['fromPlace'] as Map<String, dynamic>,
+        resolveGooglePin: resolveGooglePin,
       ),
-      toPlace: PlaceIntent.fromJson(json['toPlace'] as Map<String, dynamic>),
+      toPlace: PlaceIntent.fromJson(
+        json['toPlace'] as Map<String, dynamic>,
+        resolveGooglePin: resolveGooglePin,
+      ),
     );
   }
 }

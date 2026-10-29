@@ -16,6 +16,50 @@ import 'search_ranking_test.dart' show place;
 
 void main() {
   testWidgets(
+    'failed search offers one retry without a disabled refresh icon',
+    (tester) async {
+      final now = tester.binding.clock.now;
+      final service = CombinedPlaceSearch(
+        [
+          TestAdapter(
+            'geoapify',
+            (_) async => throw const SearchFailure(SearchFailureKind.temporary),
+          ),
+        ],
+        TestLedger(now).ledger,
+        now: now,
+      );
+      final source = SearchSourceChoice()..choose(SearchSource.others);
+      final c = PlaceSearchController(service, sourceChoice: source)
+        ..change('Arellano');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ListenableBuilder(
+              listenable: c,
+              builder: (_, _) => PlaceSearchPanel(
+                search: c,
+                saved: const [],
+                onSelect: (_) {},
+                onNameOnly: () {},
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.text('Retry search'), findsOneWidget);
+      expect(find.byTooltip('Refresh results'), findsNothing);
+      expect(find.text('Google').hitTestable(), findsOneWidget);
+      expect(find.text('Other sources').hitTestable(), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      c.dispose();
+      service.dispose();
+      source.dispose();
+    },
+  );
+  testWidgets(
     'source switching preserves scroll while a changed query resets it',
     (tester) async {
       final now = tester.binding.clock.now;
@@ -295,7 +339,13 @@ void main() {
         TestLedger(clock).ledger,
         now: clock,
       );
-      final c = PlaceSearchController(service)..change('Megamall');
+      tester.view.physicalSize = const Size(360, 740);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final choice = SearchSourceChoice()..choose(SearchSource.others);
+      final c = PlaceSearchController(service, sourceChoice: choice)
+        ..change('Megamall');
       PlaceIntent? selected;
       await tester.pumpWidget(
         MaterialApp(
@@ -321,17 +371,21 @@ void main() {
       later.complete([place('mall', 'SM Megamall', 14.6)]);
       await tester.pump();
       expect(tester.getTopLeft(row), position);
-      expect(find.text('Updated results'), findsOneWidget);
+      expect(find.text('Updates'), findsOneWidget);
+      expect(find.text('Google').hitTestable(), findsOneWidget);
+      expect(find.text('Other sources').hitTestable(), findsOneWidget);
+      expect(find.byTooltip('Refresh results'), findsNothing);
       await finger.up();
       await tester.pump();
       expect(selected!.source, 'tenant');
       expect(selected!.latitude, 14.58);
-      await tester.tap(find.text('Updated results'));
+      await tester.tap(find.text('Updates'));
       await tester.pump();
       expect(c.results.first.sourceId, 'mall');
       await tester.pumpWidget(const SizedBox());
       c.dispose();
       service.dispose();
+      choice.dispose();
     },
   );
   testWidgets(

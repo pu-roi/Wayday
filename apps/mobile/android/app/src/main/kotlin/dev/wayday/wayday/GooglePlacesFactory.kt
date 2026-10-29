@@ -168,6 +168,13 @@ private class GooglePlacesView(private val activity: FlutterFragmentActivity, me
                         hosted[revision]?.result = null
                         remove(revision)
                     } else complete(revision, mapOf("count" to places.size,
+                        "candidates" to places.take(10).map { place ->
+                            mapOf("revision" to revision, "placeId" to place.id,
+                                "latitude" to place.location?.latitude,
+                                "longitude" to place.location?.longitude,
+                                "retrievedAtMillis" to hosted[revision]?.retrievedAtMillis,
+                                "countryStatus" to country(place), "resolved" to false)
+                        },
                         "hasSelectableMetadata" to places.any { it.id != null && it.location != null && country(it) == true }))
                 }
                 override fun onRequestError(error: Exception) { failed(revision, error) }

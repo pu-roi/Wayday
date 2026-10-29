@@ -14,6 +14,115 @@ import 'package:wayday/features/maps/data/location_reader.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 
 void main() {
+  testWidgets(
+    'provider pin label can be edited and confirmed without moving the pin',
+    (tester) async {
+      PlaceIntent? chosen;
+      const original = PlaceIntent(
+        kind: PlaceKind.specific,
+        label: 'Arellano University',
+        latitude: 14.6,
+        longitude: 121.0,
+        source: 'geoapify',
+        provider: 'geoapify',
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            placeMapBuilderProvider.overrideWithValue(
+              (_) => const SizedBox.expand(),
+            ),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async =>
+                    chosen = await Navigator.push<PlaceIntent>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const OnlinePinPicker(initial: original),
+                      ),
+                    ),
+                child: const Text('Open picker'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open picker'));
+      await tester.pumpAndSettle();
+      final label = find.widgetWithText(TextFormField, 'Your label');
+      expect(label, findsOneWidget);
+      expect(
+        tester.widget<TextFormField>(label).controller?.text ??
+            tester.widget<TextFormField>(label).initialValue,
+        'Arellano University',
+      );
+      await tester.enterText(label, 'My university');
+      await tester.pump();
+      await tester.tap(find.text('Confirm location'));
+      await tester.pumpAndSettle();
+      expect(chosen!.label, 'My university');
+      expect(chosen!.latitude, 14.6);
+      expect(chosen!.longitude, 121.0);
+      expect(chosen!.provider, 'geoapify');
+      expect(chosen!.source, 'user');
+    },
+  );
+
+  testWidgets('Google custom label preserves the place reference and lease', (
+    tester,
+  ) async {
+    PlaceIntent? chosen;
+    final lease = GooglePinLease()
+      ..latitude = 14.6
+      ..longitude = 121.0
+      ..acquiredAt = DateTime.now();
+    final original = PlaceIntent(
+      kind: PlaceKind.providerReference,
+      label: 'search text',
+      provider: 'google_ui_kit',
+      providerPlaceId: 'place-id',
+      source: 'google_ui_kit',
+      googlePin: lease,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeMapBuilderProvider.overrideWithValue(
+            (_) => const SizedBox.expand(),
+          ),
+        ],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async => chosen = await Navigator.push<PlaceIntent>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnlinePinPicker(initial: original),
+                ),
+              ),
+              child: const Text('Open picker'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open picker'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Your label'),
+      'My meeting place',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Confirm location'));
+    await tester.pumpAndSettle();
+    expect(chosen!.label, 'My meeting place');
+    expect(chosen!.providerPlaceId, 'place-id');
+    expect(chosen!.googlePin, same(lease));
+    expect(chosen!.toJson(), isNot(contains('latitude')));
+  });
   testWidgets('zoom label follows the map camera above location control', (
     tester,
   ) async {
@@ -33,6 +142,8 @@ void main() {
       ),
     );
     expect(find.byKey(const Key('map-zoom-label')), findsNothing);
+    expect(request!.interactive, isTrue);
+    expect(request!.compactMarkers, isFalse);
     request!.onZoomChanged!(4.7);
     await tester.pump();
     expect(find.text('Z: 4.7'), findsOneWidget);

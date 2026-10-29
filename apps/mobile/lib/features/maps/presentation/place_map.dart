@@ -51,6 +51,7 @@ class PlaceMapRequest {
     this.animateFocus = false,
     this.philippinesOverview = false,
     this.iconOnlyAttribution = false,
+    this.compactMarkers = false,
   });
   final List<MapPin> pins;
   final void Function(double latitude, double longitude)? onSelect;
@@ -66,6 +67,7 @@ class PlaceMapRequest {
   final bool animateFocus;
   final bool philippinesOverview;
   final bool iconOnlyAttribution;
+  final bool compactMarkers;
 }
 
 typedef PlaceMapBuilder = Widget Function(PlaceMapRequest request);
@@ -199,9 +201,9 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
             'wayday-stops',
             'wayday-dots',
             CircleLayerProperties(
-              circleRadius: 15,
+              circleRadius: widget.request.compactMarkers ? 10 : 15,
               circleColor: markerColor,
-              circleStrokeWidth: 3,
+              circleStrokeWidth: widget.request.compactMarkers ? 2 : 3,
               circleStrokeColor: markerText,
             ),
           );
@@ -210,7 +212,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
             'wayday-labels',
             SymbolLayerProperties(
               textField: ['get', 'label'],
-              textSize: 13,
+              textSize: widget.request.compactMarkers ? 10 : 13,
               textColor: markerText,
               textAllowOverlap: true,
               textFont: ['Noto Sans Regular'],

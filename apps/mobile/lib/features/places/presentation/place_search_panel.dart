@@ -15,7 +15,6 @@ class PlaceSearchPanel extends StatefulWidget {
     required this.onNameOnly,
     required this.onClose,
     this.savedError = false,
-    this.showSourceChoices = true,
     this.onRetrySaved,
     this.onUseLocation,
     this.onOpenSettings,
@@ -28,7 +27,6 @@ class PlaceSearchPanel extends StatefulWidget {
   final ValueChanged<PlaceIntent> onSelect;
   final VoidCallback onNameOnly, onClose;
   final bool savedError;
-  final bool showSourceChoices;
   final VoidCallback? onRetrySaved;
   final VoidCallback? onUseLocation, onOpenSettings;
   final bool locating;
@@ -54,14 +52,7 @@ class _PlaceSearchPanelState extends State<PlaceSearchPanel> {
   String? get locationMessage => widget.locationMessage;
   // Both source groups keep these controls and rows when the keyboard opens.
   List<Widget> _controls(BuildContext context, List<SavedPlace> matches) => [
-    if (widget.showSourceChoices && search.sourceChoice != null)
-      _SearchSourceButtons(search: search)
-    else if (!widget.showSourceChoices && search.hasSearch)
-      IconButton(
-        tooltip: 'Refresh results',
-        onPressed: search.canRefresh ? search.refreshResults : null,
-        icon: const Icon(Icons.refresh_rounded),
-      ),
+    _SearchSourceButtons(search: search),
     if (onUseLocation != null) ...[
       Text(
         search.originLabel,
@@ -150,13 +141,14 @@ class _PlaceSearchPanelState extends State<PlaceSearchPanel> {
             ? 'Place search is unavailable.'
             : 'Some search sources are unavailable.',
       ),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton(
-          onPressed: search.loading ? null : search.retry,
-          child: const Text('Retry search'),
+      if (!search.hasUpdates)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: search.loading ? null : search.retry,
+            child: const Text('Retry search'),
+          ),
         ),
-      ),
     ] else if (search.emptySuccess)
       const Text('No matching places found. Try another name or move the map.'),
     if (search.usesGoogle && search.googleMessage != null)
@@ -390,20 +382,6 @@ class _PlaceSearchPanelState extends State<PlaceSearchPanel> {
               ),
             ),
           ),
-          if (search.hasUpdates)
-            Positioned(
-              top: 0,
-              right: 20,
-              child: Material(
-                color: context.colors.surface,
-                child: TextButton.icon(
-                  key: const Key('updated-search-results'),
-                  onPressed: search.applyUpdates,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Updated results'),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -414,41 +392,63 @@ class _SearchSourceButtons extends StatelessWidget {
   const _SearchSourceButtons({required this.search});
   final PlaceSearchController search;
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 12,
+  Widget build(BuildContext context) => Row(
     children: [
-      if (search.hasSearch)
-        IconButton(
-          tooltip: 'Refresh results',
-          onPressed: search.canRefresh ? search.refreshResults : null,
-          icon: const Icon(Icons.refresh_rounded),
-        ),
-      for (final source in SearchSource.values)
-        Semantics(
-          selected: source == search.source,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              foregroundColor: source == search.source
-                  ? context.colors.secondary
-                  : context.colors.onSurfaceVariant,
-              backgroundColor: Colors.transparent,
-            ),
-            onPressed: () => search.chooseSource(source),
-            child: Text(
-              source == SearchSource.google ? 'Google' : 'Other sources',
-              style: TextStyle(
-                fontWeight: source == search.source
-                    ? FontWeight.w700
-                    : FontWeight.w500,
-                decoration: source == search.source
-                    ? TextDecoration.underline
-                    : TextDecoration.none,
-                decorationThickness: 2,
+      if (search.sourceChoice != null)
+        for (final source in SearchSource.values)
+          Expanded(
+            flex: source == SearchSource.google ? 1 : 2,
+            child: Semantics(
+              selected: source == search.source,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  foregroundColor: source == search.source
+                      ? context.colors.secondary
+                      : context.colors.onSurfaceVariant,
+                  backgroundColor: Colors.transparent,
+                ),
+                onPressed: () => search.chooseSource(source),
+                child: Text(
+                  source == SearchSource.google ? 'Google' : 'Other sources',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: source == search.source
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    decoration: source == search.source
+                        ? TextDecoration.underline
+                        : TextDecoration.none,
+                    decorationThickness: 2,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+      SizedBox(
+        width: 88,
+        height: 48,
+        child: search.hasUpdates
+            ? TextButton(
+                key: const Key('updated-search-results'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+                onPressed: search.applyUpdates,
+                child: const Text('Updates'),
+              )
+            : search.canRefresh && !search.failed
+            ? Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  tooltip: 'Refresh results',
+                  onPressed: search.refreshResults,
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
+              )
+            : null,
+      ),
     ],
   );
 }

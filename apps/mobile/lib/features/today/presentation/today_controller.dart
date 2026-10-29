@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/day_repository.dart';
 import '../domain/day.dart';
+import '../../errands/domain/errand_order.dart';
 import '../../places/domain/place_intent.dart';
 
 final dayRepositoryProvider = Provider<DayRepository>(
@@ -16,18 +17,40 @@ final todayProvider = NotifierProvider<TodayController, DayPlan>(
 
 class TodayController extends Notifier<DayPlan> {
   int _nextId = 0;
+  DayPlan? recoveredOrder;
+  bool _disposed = false;
   @override
   DayPlan build() {
+    _disposed = false;
+    ref.onDispose(() => _disposed = true);
     final day = ref.read(dayRepositoryProvider).read();
     _nextId = _nextSequence(day.errands.map((item) => item.id), const [
       'new-',
       'copy-',
     ]);
-    return day;
+    final order = ErrandOrder.reconcile(day.errands);
+    if (!order.changed) return day;
+    recoveredOrder = day;
+    final corrected = day.copyWith(
+      errands: order.items,
+      revision: day.revision + 1,
+    );
+    scheduleMicrotask(() {
+      if (!_disposed && identical(state, corrected)) _persist(corrected);
+    });
+    return corrected;
   }
 
-  void _commit(DayPlan day) {
-    state = day;
+  void _commit(DayPlan day, {bool reconcile = true}) {
+    final order = reconcile ? ErrandOrder.reconcile(day.errands) : null;
+    state = day.copyWith(
+      errands: order?.items ?? day.errands,
+      revision: state.revision + 1,
+    );
+    _persist(state);
+  }
+
+  void _persist(DayPlan day) {
     unawaited(
       persistSafely(
         ref.read(dayRepositoryProvider).save(day),
@@ -100,7 +123,8 @@ class TodayController extends Notifier<DayPlan> {
       errands: state.errands.where((item) => item.id != id).toList(),
     ),
   );
-  void restore(DayPlan day) => _commit(day);
+  void restore(DayPlan day, {bool reconcile = true}) =>
+      _commit(day, reconcile: reconcile);
   void clear() => _commit(
     state.copyWith(
       errands: [],

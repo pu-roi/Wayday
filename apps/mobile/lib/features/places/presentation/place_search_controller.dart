@@ -36,6 +36,17 @@ class PlaceSearchController extends ChangeNotifier {
   GoogleNativeRequest? _googleVisible, _googleStaged;
   int? _googlePending;
   int _googleCount = 0, _googleStagedCount = 0;
+  final _googleBatches = <int,List<GooglePlaceSnapshot>>{};
+  List<GooglePlaceSnapshot> get googleCandidates =>
+      List.unmodifiable(_googleBatches[_googleVisible?.revision] ?? const []);
+  bool get googleCandidatesCurrent => _googleVisible?.search.key==_request().key && !hasUpdates;
+  String get googleCandidateQuery => _googleVisible?.search.text ?? query;
+  void receiveGoogleBatch(int revision, List<GooglePlaceSnapshot> values) {
+    if (_disposed || _suspended || !_open) return;
+    _googleBatches[revision] = values;
+    // Retain only current native presentation work; never a durable catalog.
+    _googleBatches.removeWhere((key, _) => key != revision && key != _googleVisible?.revision);
+  }
   String? _resolvingId;
   bool _detailsStarted = false;
   bool _selecting = false;
@@ -123,6 +134,7 @@ class PlaceSearchController extends ChangeNotifier {
   }
 
   void _clearGoogle() {
+    _googleBatches.clear();
     google?.cancel(_owner);
     _bridge?.cancel();
     _googlePending = null;

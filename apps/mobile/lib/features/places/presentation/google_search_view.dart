@@ -19,16 +19,26 @@ class GoogleSearchView extends StatefulWidget {
 }
 
 class _ChannelBridge implements GoogleSearchBridge {
-  _ChannelBridge(this.channel);
+  _ChannelBridge(this.channel, this.onBatch);
   final MethodChannel channel;
+  final void Function(int,List<GooglePlaceSnapshot>) onBatch;
   @override
   Future<Map<Object?, Object?>> load(GoogleNativeRequest request) async {
     try {
-      return (await channel.invokeMapMethod<Object?, Object?>(
+      final result = (await channel.invokeMapMethod<Object?, Object?>(
             request.placeId == null ? 'search' : 'details',
             request.toJson(),
           )) ??
           {};
+      final records = <GooglePlaceSnapshot>[];
+      for (final raw in result['candidates'] as List? ?? []) {
+        try {
+          final value = GooglePlaceSnapshot.fromJson(Map<Object?,Object?>.from(raw as Map), DateTime.now());
+          if (value.valid) records.add(value);
+        } on FormatException catch (_) { /* Unqualified records cannot enter planning. */ }
+      }
+      onBatch(request.revision, records);
+      return result;
     } on PlatformException catch (error) {
       return {'error': error.code};
     } on MissingPluginException catch (_) {
@@ -60,7 +70,7 @@ class GoogleSearchViewState extends State<GoogleSearchView> {
   void _created(int id) {
     nativeViewId = id;
     final channel = MethodChannel('wayday/google_places/$id');
-    final bridge = _ChannelBridge(channel);
+    final bridge = _ChannelBridge(channel, widget.search.receiveGoogleBatch);
     _bridge = bridge;
     channel.setMethodCallHandler((call) async {
       if (!mounted) return;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../errands/domain/errand_order.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
@@ -114,15 +115,15 @@ class _GroupEditorState extends ConsumerState<GroupEditor> {
   }
 
   Future<void> _edit(Errand item) async {
-    final result = await editErrand(context, item);
+    final result = await editErrand(context, item, errands: _items);
     if (!mounted) return;
     switch (result) {
       case SavedErrand(:final errand):
         setState(
-          () => _items = [
+          () => _items = ErrandOrder.reconcile([
             for (final old in _items)
               if (old.id == errand.id) errand else old,
-          ],
+          ]).items,
         );
       case RemovedErrand():
         final previous = [..._items];

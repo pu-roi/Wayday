@@ -6,6 +6,8 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/errands/domain/errand.dart';
 import 'package:wayday/features/errands/presentation/errand_editor.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
+import 'package:wayday/features/maps/data/location_reader.dart';
+import 'support/fake_location.dart';
 import 'package:wayday/features/places/data/combined_place_search.dart';
 import 'package:wayday/features/places/data/search_adapters.dart';
 import 'package:wayday/features/places/data/search_quota.dart';
@@ -49,6 +51,54 @@ class _ReverseAdapter extends SearchAdapter {
 }
 
 void main() {
+  testWidgets('confirmed current location uses a nearby address in Where', (
+    tester,
+  ) async {
+    final search = CombinedPlaceSearch([
+      _ReverseAdapter(),
+    ], QuotaLedger(read: () async => null, write: (_) async {}));
+    addTearDown(search.dispose);
+    Errand errand = const Errand(id: 'device', title: 'Pick up');
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          combinedPlaceSearchProvider.overrideWithValue(search),
+          locationPlatformProvider.overrideWithValue(FakeLocationPlatform()),
+          placeMapBuilderProvider.overrideWithValue(
+            (_) => const SizedBox.expand(),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildTheme(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  final result = await editErrand(context, errand);
+                  if (result is SavedErrand) errand = result.errand;
+                },
+                child: const Text('Edit'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open map'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Use my location'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm location'));
+    await tester.pumpAndSettle();
+    expect(find.text('San Agustin Avenue, Pinagbuhatan'), findsOneWidget);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(errand.placeIntent.latitude, 14.58);
+    expect(errand.placeIntent.longitude, 121.05);
+    expect(errand.placeIntent.source, 'device');
+  });
   testWidgets('a moved pin survives confirmation, saving, and reopening', (
     tester,
   ) async {
@@ -151,7 +201,7 @@ void main() {
     expect(errand.place, 'San Agustin Avenue, Pinagbuhatan');
   });
 
-  testWidgets('existing Google pins retain a user-editable label in the row', (
+  testWidgets('existing Google pins retain their label in the row', (
     tester,
   ) async {
     Errand errand = const Errand(
@@ -187,16 +237,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('arellano'), findsOneWidget);
     expect(find.text('Google place'), findsNothing);
-    await tester.tap(find.text('Name this location'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).last, 'Arellano campus');
-    await tester.tap(find.text('Save').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Arellano campus'), findsOneWidget);
+    expect(find.text('Name this location'), findsNothing);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(errand.placeIntent.providerPlaceId, 'fixture-id');
-    expect(errand.placeIntent.label, 'Arellano campus');
+    expect(errand.placeIntent.label, 'arellano');
     expect(errand.placeIntent.toJson().containsKey('latitude'), isFalse);
   });
 
@@ -241,11 +286,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Open map'));
     await tester.pumpAndSettle();
+    expect(find.text('Errand location'), findsOneWidget);
     await tester.enterText(find.byKey(const Key('place-name')), 'arellano');
+    await tester.pump();
+    expect(find.text('Google'), findsOneWidget);
+    expect(find.text('Other sources'), findsOneWidget);
+    await tester.tap(find.text('Other sources'));
     await tester.pump(const Duration(seconds: 3));
     await tester.pump();
-    expect(find.text('Google'), findsNothing);
-    expect(choice.value, SearchSource.google);
+    expect(choice.value, SearchSource.others);
     const name = 'Arellano University - Andres Bonifacio Campus';
     await tester.tap(find.text(name));
     await tester.pumpAndSettle();
@@ -258,9 +307,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(errand.place, name);
     expect(errand.placeIntent.longitude, 121.06);
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open map'));
+    await tester.pumpAndSettle();
+    expect(map!.focus!.latitude, 14.57);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(errand.place, name);
   });
 
-  testWidgets('a late address does not replace a user label', (tester) async {
+  testWidgets('a late address does not replace a newer pin', (tester) async {
     final adapter = _ReverseAdapter()..pending = Completer();
     final search = CombinedPlaceSearch([
       adapter,
@@ -301,11 +360,12 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Confirm location'));
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.text('Name this location'));
+    await tester.tap(find.text('Finding address…'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).last, 'My meeting point');
-    await tester.tap(find.text('Save').last);
-    await tester.pumpAndSettle();
+    map!.onSelect!(10.3, 123.9);
+    await tester.pump();
+    await tester.tap(find.text('Confirm location'));
+    await tester.pump();
     adapter.pending!.complete([
       const PlaceSearchResult(
         name: 'Old road',
@@ -316,9 +376,11 @@ void main() {
       ),
     ]);
     await tester.pump();
-    expect(find.text('My meeting point'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 9));
+    expect(find.text('Old road'), findsNothing);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(errand.place, 'My meeting point');
+    expect(errand.placeIntent.latitude, 10.3);
+    expect(errand.placeIntent.longitude, 123.9);
   });
 }

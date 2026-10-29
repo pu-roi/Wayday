@@ -173,6 +173,8 @@ class SavedPlace {
     kind: PlaceKind.saved,
     label: place.label,
     savedPlaceId: id,
+    category: place.category,
+    brand: place.brand,
     latitude: place.latitude,
     longitude: place.longitude,
     source: place.source,

@@ -48,6 +48,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(latest!.philippinesOverview, isTrue);
     expect(latest!.iconOnlyAttribution, isTrue);
+    expect(latest!.interactive, isFalse);
+    expect(latest!.compactMarkers, isTrue);
     expect(find.text('Map preview'), findsNothing);
     expect(find.text('A From · Z To'), findsNothing);
     expect(latest!.pins, isEmpty);

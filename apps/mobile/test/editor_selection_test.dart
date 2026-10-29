@@ -121,12 +121,19 @@ void main() {
     final results = await _openErrand(tester);
     expect(find.byType(DropdownButtonFormField<TimingRule>), findsNothing);
     for (final rule in TimingRule.values) {
-      await _tap(tester, find.text(rule.label));
+      await _tap(tester, find.text('When'));
+      await _tap(tester, _sheetText(rule.label));
       final row = find.ancestor(
-        of: find.text(rule.label),
+        of: _sheetText(rule.label),
         matching: find.byType(RadioListTile<TimingRule>),
       );
       expect(tester.widget<RadioListTile<TimingRule>>(row).selected, isTrue);
+      await tester.tap(_sheetText('Done'));
+      await tester.pumpAndSettle();
+      if (rule != TimingRule.anytime) {
+        await tester.tap(find.text('Save time'));
+        await tester.pumpAndSettle();
+      }
     }
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -141,18 +148,45 @@ void main() {
     tester,
   ) async {
     final results = await _openErrand(tester);
-    await _tap(tester, find.text('Anytime'));
+    await _tap(tester, find.text('When'));
+    await _tap(tester, _sheetText('Anytime'));
+    await tester.tap(_sheetText('Done'));
+    await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(results.single, isNull);
     expect(_errand.minute, 600);
     await tester.tap(find.text('Open errand'));
     await tester.pumpAndSettle();
-    await _tap(tester, find.text('Anytime'));
+    await _tap(tester, find.text('When'));
+    await _tap(tester, _sheetText('Anytime'));
+    await tester.tap(_sheetText('Done'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect((results.last as SavedErrand).errand.minute, isNull);
   });
+
+  testWidgets(
+    'notes appear before Where and a set time can be edited directly',
+    (tester) async {
+      final results = await _openErrand(tester);
+      expect(
+        tester.getTopLeft(find.byKey(const Key('errand-title'))).dy,
+        lessThan(tester.getTopLeft(find.byKey(const Key('errand-notes'))).dy),
+      );
+      await tester.ensureVisible(find.byKey(const Key('errand-time')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('errand-time')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('time-hour')), '11');
+      await tester.tap(find.text('Save time'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect((results.single as SavedErrand).errand.minute, 660);
+    },
+  );
 
   testWidgets('weekday sheet changes only the group draft until Save list', (
     tester,

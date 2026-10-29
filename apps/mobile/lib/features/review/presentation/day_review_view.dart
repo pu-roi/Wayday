@@ -70,7 +70,11 @@ class _DayReviewViewState extends ConsumerState<DayReviewView> {
   }
 
   Future<void> _edit(Errand errand) async {
-    final result = await editErrand(context, errand);
+    final result = await editErrand(
+      context,
+      errand,
+      errands: _review.day.errands,
+    );
     if (!mounted) return;
     switch (result) {
       case SavedErrand(:final errand):
