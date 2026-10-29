@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-30",
+  "decision": "D48",
+  "scope": "direct loading and durable interpretation reuse",
+  "checks": {
+    "static_analysis": "no issues",
+    "focused_tests_passed": 25,
+    "full_suite_passed": 229,
+    "full_suite_existing_failures": 8,
+    "skipped_live_probe": 1,
+    "physical_native_journal": "passed",
+    "physical_native_cached_answer_and_pending_guard": "passed",
+    "physical_fixture_flow": "passed",
+    "android_debug_build": "passed"
+  },
+  "provider_generation_requests_for_this_work": 0,
+  "personal_phone": {
+    "errands_before": 4,
+    "errands_after": 4,
+    "all_errand_columns_preserved": true,
+    "sqlite_integrity": "ok",
+    "remaining_requests_before": 8,
+    "remaining_requests_after": 8
+  },
+  "storage": {
+    "owner": "native request bridge",
+    "location": "private no-backup storage",
+    "max_snapshots": 8,
+    "maximum_file_bytes": 1300000,
+    "sqlite_migration": false
+  },
+  "invalidation": [
+    "current titles and notes",
+    "errand identities and order",
+    "submitted timing/duration/priority/dependency/confirmation fields",
+    "fixed-place intent and flexible place preferences",
+    "model/policy/prompt/schema/generation configuration"
+  ],
+  "reuse": [
+    "matching completed answers after restart",
+    "unchanged needs after routing-only edits",
+    "Google coordinate lease expiry without changed fixed-place intent",
+    "duplicate in-flight calls"
+  ],
+  "interruption_policy": "Persist pending before dispatch and completed before callback. Uncertain pending, failed or corrupt outcomes require explicit retry; no automatic duplicate generation.",
+  "limits": [
+    "Only new completed responses can populate this journal; the old memory-only build cannot be recovered after update.",
+    "Retains interpretation results, not unaccepted review checkboxes or route estimates.",
+    "Bounded snapshot eviction and model/prompt changes can require a fresh interpretation."
+  ]
+}

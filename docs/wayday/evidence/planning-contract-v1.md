@@ -1,6 +1,10 @@
 # Wayday pilot planning contract v1
 
+Current implementation planning now lives in the owner-requested [Plan my day implementation plan](../PLANNING.md), created on 2026-10-30 under D46. This evidence document, including the earlier phone-only handoff below, preserves specification history. Use PLANNING.md for the latest presentation-mode boundaries, interface sequence and outstanding technical gates; the original schema/examples are not silently upgraded by that plan.
+
 M5-02 specification, 2026-10-27. This contract follows the measured [routing gate](routing-pilot-2026-10-27.md). It defines future mobile/domain/API behavior; it does not implement FastAPI, recommendation, a solver or mobile planning. The [JSON Schema](planning-contract-v1.schema.json) and [14 synthetic acceptance examples](planning-contract-v1.examples.json) are executable specifications. Their businesses, times and geometry are fixtures, not real planning results.
+
+Current direction note, 2026-10-30: D44 requires phone-only scheduling without a reachable laptop. The original v1 schema, synthetic examples and HTTP descriptions below remain historical specifications. The [mobile planning handoff](#phone-only-planning-handoff-2026-10-30) proposes the revised implementation boundary and shared-stop behavior; it is not an implemented or schema-compatible extension of those examples.
 
 ## Ownership, operations and wire values
 
@@ -75,3 +79,65 @@ From the repository root:
 ```
 
 The fixtures cover automatic pharmacy choice with unknown hours, fixed branch override, duration correction, ambiguous text, optional omission/dependency, appointment waiting, missing endpoint, every operational outcome and preserved-history replanning. Negative tests cover stale revisions, mandatory omission, cycles/references, swapped coordinates, same-day/midnight boundaries, truck parameters, known-hour coverage and false timeout/global-optimality claims. They are specifications for later service/mobile implementation; future solver checks still need fixed matrices, tiny exhaustive comparisons and independent road/schedule validation.
+
+## Phone-only planning handoff, 2026-10-30
+
+### Status and responsibilities
+
+The owner requires the presentation to work using the Android phone and internet alone. Personal state stays local; no laptop, USB connection, developer proxy, local FastAPI service, PostGIS catalog or Valhalla server is a runtime prerequisite. Google-first discovery, traffic-aware Google Routes inputs and a Google map for route review remain the selected direction. Embedded Navigation SDK integration remains separate from calculating and reviewing a plan; route/path rerouting does not automatically reorder errands.
+
+This section is the proposed implementation design following those requirements. The existing v1 schema/examples are preserved. Define and test a versioned mobile input/result extension before using shared stops or changing provider retention semantics; do not silently send the new meaning to the old API. No application implementation, native qualification or capacity benchmark is established by this handoff.
+
+### Inputs, interpretation and correction
+
+- Preserve the current title, free-form notes, original text, confirmed structured values and their provenance. Current title/notes guide new suggestions; an older preserved original title must not reinterpret a renamed errand. Explicit timing, branch and duration overrides win over suggestions.
+- D45 selects Gemini as the sentence interpreter for English, Filipino and Taglish titles and notes, superseding the earlier vocabulary-only proposal. Produce typed, reviewable suggestions for intent, shopping needs, preferences, times and dependencies. Preserve unknown items and original wording. Confirm proposed extra errands or new dependency rules before applying them, and ask focused questions for ambiguous references. Existing finite aliases can support search; they do not define the intended interpretation limit. A failed Gemini request leaves structured editing available. Model selection and protected integration remain pending.
+- Distinguish a fixed specific destination, a flexible need and an unresolved private meeting point. The last case opens the existing search/map-pin picker and requires confirmation. Cancellation retains all entered text. An expired Google reference uses explicit refresh or a new confirmed location.
+- Qualify grocery candidates across supermarkets, discount stores, convenience stores and wet markets using the stated items/preferences. A type/brand is not proof of stock or meal availability. Pares needs a suitable paresan or supported meal evidence, not an arbitrary restaurant substitution.
+- Retain explicit date/timezone. If the selected day is past or its departure has already passed, ask whether to use another dated departure or plan from the current time. Never silently overwrite the draft date or calculate a journey as if a past departure were still possible.
+
+### Dependency order and local consistency
+
+A shared dependency-order operation validates IDs/references/cycles and produces a stable valid ordering. Preserve existing relative order among otherwise unconstrained errands where possible. Saving a dependency edit must update both numbered rows and persisted positions through one repository transaction. Apply it consistently to Today edits, manual review, Recurring drafts and copied groups. Recurring copies still remap dependency IDs and remain independent.
+
+Use the same validated operation for older inconsistent saved lists, with a brief explanation and Undo after a successful correction. Do not erase missing references or circular constraints to force an order. An attempted manual move that breaks a rule is reconciled visibly or rejected with the reason; no accepted displayed order may contradict its saved dependency graph. Changing order alone does not establish travel-time feasibility. Increment the input revision for meaningful edits, accepted order changes and completion changes; apply network/solver results only to the matching request and revision.
+
+The storage audit found existing editable values wired through saving/loading, but revision increments and complete confirmation provenance need implementation. SavedPlace.intent also needs to preserve category/brand metadata when a saved place is reused. Keep any migration additive and preserve the existing v2 records and Google coordinate-lease rules.
+
+### Candidate discovery and recommendation review
+
+Use an explicit preparing/recommendations surface after Plan my day. Search fixed-route anchors and a bounded nearby area for flexible needs; do not restrict every query to the initial device position. Deduplicate request identities and compare at most three qualified candidates per flexible errand initially. Known explicit branch choices remain fixed. Broadening the area, changing the source or retrying a failed request is explicit, not an automatic fan-out.
+
+The proposed Google path extends the existing standard visible UI Kit search session to pass the documented onLoad ID/coordinate records into a bounded candidate session. Validate Philippine eligibility and acquisition times exactly as for selected references. Preserve original native card order, names/details, notices and attribution; a recommended chosen branch can use a standard native details component. Never scrape card text or treat missing callback hours/name/address as available custom data. Do not create an invisible headless UI Kit catalog. Prove this batch/recommendation flow on Android before depending on it; if insufficient, retain the clarified requirements and assess a separately scoped data-access option instead of replacing recommendations with mandatory manual branch selection.
+
+Keep Google-first and explicit Other sources. Automatic provider failure does not silently change sources. Other-source candidates retain complete source records and existing scheduler/cache policies. Search produces candidates; the scheduler compares branch combinations and order. Users may accept the recommendation as a whole or inspect/change alternatives; each accepted override invalidates affected estimates and triggers a bounded recalculation.
+
+### Shared visits and scheduling
+
+Keep errand identity separate from physical stop identity. A proposed stop contains a selected place reference and one or more assigned errand IDs, an internal task order, service durations/buffers, qualification reasons and confidence/provenance. A grocery and ice-cream task can share one visit when the selected place is suitable, or use two nearby stops. Keep separate checkboxes and completed history. Never treat geographic proximity alone as identical businesses or as proof of item availability.
+
+Within a shared visit, respect dependency and timing rules for each task. Explicit durations remain intact; sum sequential task durations unless the user confirms overlap. Apply one documented stop-level arrival/parking buffer rather than duplicating it merely because two errands share the stop. The original per-errand buffer fixtures do not specify this extension; version and test the policy before implementation. A dependency may require internal task sequencing or separate visits; merging must not defeat it. Fixed incompatible places cannot be merged.
+
+Proposed search uses bounded precedence-aware branch-and-bound in a Dart worker isolate, starting from an early feasible schedule and retaining the best independently validated solution within the time limit. Branch over eligible next errands, candidate places, shared visits and optional omission. Do not prune merely because another branch is closer: preserve asymmetric road times, waiting, known hours and the full duration of the visit. Hard constraints and mandatory completion come first, then optional completion, then lower road travel and fewer distinct visits as a tie-breaker. Unknown business hours require a provisional/check-hours result; uncertain item suitability requires a visible qualification rather than a stock claim.
+
+Use the existing five-second solver budget only as an initial policy pending phone benchmarks. UI responsiveness, cancellation and bounded memory must hold throughout; terminate or discard obsolete worker results. Failure to find a solution before the bound is timeout. Only an independently established contradiction or a completed exact search can support a conflict claim. A valid result found before timeout is a feasible estimate, without global-optimality language.
+
+### Road data, request limits and map presentation
+
+Google Routes adapter inputs include coordinates/references, selected mode, explicit date/departure and applicable options. Preserve per-element errors, unreachable pairs, asymmetric values, fallback metadata and source/calculation time. Do not reuse a car matrix for motorcycle/bicycle/truck or turn provider fallback into unqualified traffic certainty. Qualify the actual selected motorcycle mode and the relevant route/matrix endpoints before using them for the owner's demonstration; prior DRIVE qualification is insufficient. Unsupported profiles need an honest message, never silent conversion to DRIVE.
+
+Budget matrix origin-destination elements rather than counting HTTP starts alone. Shared places can reduce distinct matrix nodes; alternative candidates can expand them. The old maximum of 38 locations would imply 1,444 elements in a naive full square, exceeding an ordinary single matrix request; do not carry that assumption into Google unchanged. Estimate the actual pair budget, batch within provider limits, reserve usage before dispatch, honor the configured account/project allowance and stop safely at exhaustion. Confirm Console capacity separately; this design authorizes no quota edit or billing change. No unbounded retries or paid automatic fallback.
+
+An initial matrix may use a common planning departure approximation. After selecting order/branches, obtain a bounded final route validation accounting for intended leg departure times and visit/waiting durations where the endpoint permits it. Do not request all legs as if they start simultaneously or claim that a multi-waypoint route includes Wayday's visit time. Revalidate the schedule and surface changes; cap refinement passes and preserve the last accepted plan on failure.
+
+Render Google Routes content on a Google map with attribution. Navigation SDK supplies map functionality; verify plugin/native dependency compatibility with the current Places bridge before choosing an integration. Existing MapLibre/manual/offline experiences remain separate. Reviewing a map must not start guidance or consume navigation destinations automatically.
+
+### Persistence, failures and verification
+
+Separate editable day input, calculation draft and accepted plan. Save task-owned inputs, accepted branch references, stop-to-errand assignments, revision, provenance and completion state transactionally. Review provider-specific permission for computed schedule values and route geometry before choosing persistent fields. The 30-day coordinate exception does not authorize indefinite route-content storage. Retain user-owned labels and permitted IDs durably; use existing expiring Google coordinate leases and permitted transient response state. No blanket offline Google maps/navigation promise.
+
+Distinguish clarification, unavailable candidates, unavailable road data, unsupported mode, invalid dependencies, independently proven conflict and timeout. Every failure preserves local inputs and the last permitted saved result. Do not invent a business, stock item, opening interval or road estimate to complete the example.
+
+Implementation verification must cover independent schedule checking against fixed asymmetric matrices and exhaustive tiny cases; compatible/incompatible shared visits and durations; missing/private places; current-title versus old-original-text handling; notes with known and unknown items; dependency edits/copies/Undo/restart; stale callbacks and revision changes; optional ancestors and omissions; hours/waiting/deadlines; provider limits/unreachable legs/fallbacks; expired references and storage migration. Measure four-, eight- and twelve-errand workloads on the physical Android device before enabling the corresponding limit.
+
+The decisive presentation check is a standalone APK on the phone with USB/ADB forwarding and development services unnecessary: create/edit errands, calculate real bounded recommendations and a validated schedule over mobile data or ordinary Wi-Fi, change a recommendation, restart, and recover permitted saved state. Repeat with internet disabled to confirm honest failure and retained local inputs. Run Flutter analysis, focused/full tests and an Android build, recording existing failures separately. Native candidate/mode/map/retention qualifications remain gates inside implementation, not capabilities established by this document.

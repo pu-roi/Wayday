@@ -62,6 +62,8 @@ In Run > Edit Configurations > Flutter, add `--dart-define-from-file=../../.tool
 
 ### Google credential configuration and Routes qualification
 
+The shared map picker exposes Your label for any selected location. It starts with the selected label and allows a personal name without changing the pin or Google reference; confirmation returns the edited draft. Google search selections still start with the entered query because the UI Kit callback does not provide the displayed name. Manual and device pins use the existing Geoapify reverse lookup after confirmation when unnamed; Google-sourced coordinates are not sent to Geoapify.
+
 On 2026-10-29 the owner selected Places UI Kit for Google place search, Routes API for traffic-aware planning inputs, and Navigation SDK for embedded Google navigation. The credential slice added local configuration and a bounded Routes tool. D43 now implements standard Google UI Kit search through Places SDK 6.0.2; the bounded isolated native sample now passes after test identity authorization. Planning, Google route rendering and navigation remain unconnected. No background tracking, SQL migration or deployment is included.
 
 Keep two additional values in the same ignored `.env.local`:
@@ -165,7 +167,7 @@ A Google selection requires an ID, valid coordinates, native retrieval timestamp
 
 ### Isolated native qualification
 
-When an unnamed manual From or To pin is confirmed, Today saves the coordinates immediately and asks Geoapify for a nearby street or locality. The lookup shares the existing Geoapify search quota and costs a credit when dispatched; moving the map alone does not send a reverse request. It never substitutes the returned feature coordinates or a nearby business name. The row shows Finding address while waiting and offers Name this pin if no address is available. Existing unnamed pins are looked up after reopening and confirming. If the user replaces the pin, backgrounds the app or the lookup takes over eight seconds, the old result cannot change the endpoint. This is an estimate and depends on provider coverage and connectivity.
+When an unnamed manual From or To pin or a device location is confirmed, Today saves the coordinates immediately and asks Geoapify for a nearby street or locality. The lookup shares the existing Geoapify search quota and costs a credit when dispatched; moving the map alone does not send a reverse request. It never substitutes the returned feature coordinates or a nearby business name. The row shows Finding address while waiting and retains its original label if no address is available. Existing unnamed pins are looked up after reopening and confirming. If the user replaces the pin, backgrounds the app or the lookup takes over eight seconds, the old result cannot change the endpoint. This is an estimate and depends on provider coverage and connectivity.
 
 Today does not display an endpoint credit line, and the errand editor does not display one under Where; credits remain available in Settings. Geoapify guidance calls for a link near geocoding information, so Settings-only attribution should be resolved before public distribution. Clear removes errands and both endpoints and resets departure, deadline and travel profile to their defaults while retaining the selected date. Undo restores the previous plan. Pending address lookups are cancelled on Clear.
 
@@ -187,7 +189,9 @@ Regenerate deliberately with `py -X utf8 tool/build_philippine_boundary.py`. The
 
 ### Current verification and design
 
-In the errand editor, Where uses the Other sources group for new searches and shows the selected provider's place label in the location row. This choice is local to the errand picker and does not alter the From/To source preference. Existing Google references remain usable and retain their labels and coordinate leases; an expired reference can still be refreshed explicitly. A confirmed unnamed manual pin uses the existing bounded Geoapify reverse lookup to display a nearby street or locality while retaining the chosen coordinates. Users can name a location themselves. Manual lookup failure retains the pin, and Save waits for a pending lookup for at most eight seconds.
+The shared errand editor shows Notes directly after the errand name, a compact When selector with a separately editable selected time, and a More details disclosure for visit duration and prerequisites. Prerequisites are selected from the current day or recurring group, remain independent of timing, and use existing local errand IDs. Cyclic choices are unavailable; missing references remain visible for correction. These are input settings only; automatic planning remains unimplemented.
+
+In the errand editor, Where opens the same picker as From and To, with the title Errand location and the shared session source preference. The selected label appears in the location row. Existing Google references remain usable and retain their labels and coordinate leases; an expired reference can still be refreshed explicitly. A confirmed unnamed manual pin or device location uses the existing bounded Geoapify reverse lookup to display a nearby street or locality while retaining the chosen coordinates. Lookup failure retains the pin, and Save waits for a pending lookup for at most eight seconds. The owner removed the separate Name this location action from the editor.
 
 An existing Google reference whose label was originally derived from a search query keeps that label; select the desired result from Other sources or supply a personal label to change it. The app does not convert Google coordinates into another provider's address.
 
@@ -198,3 +202,45 @@ The picker restores the owner's previous search layout: compact underlined sourc
 For a bounded one-query confirmation check, use `./tool/test-map.ps1 -DeviceId <id> -Target integration_test/google_search_test.dart -GoogleSingleSample`. Add `-GoogleRealMap` to exercise the real native map; the full eight-query sample otherwise uses a deterministic map double and public fixture location. At WAYDAY_GOOGLE_IME_READY send system Back; the harness taps the standard native card and checks Confirm location separately. Missing-services qualification was performed only on the task emulator with Google Play services disabled and restored afterward, never on the personal phone.
 
 The initial Google integration had 157 passing tests and nine baseline failures. After the screenshot-based restoration, `flutter analyze` has no issues and `flutter test` has 159 passes and eight failures, all among those nine baseline names; one previously failing case passed in this run. The restoration adds a native-view identity/request-count regression and updates the keyboard layout check. Progress records the current Android build and rendered checks. Google search, coordinates and pin expiry do not implement traffic, routes or navigation.
+
+## Phone-only Plan my day design — D44
+
+### Current implementation — D47
+
+Plan my day now opens preparation, interpretation review, visible Places candidate comparison, bounded local scheduling, Google route review and a locally accepted itinerary. The accepted-plan link appears on Today. Start trip uses the embedded Navigation SDK; progress is marked explicitly and stored on-device. Replanning unfinished tasks acquires a fresh current position and retains completed identities. These runtime paths require the qualification distinctions in [implementation evidence](../../docs/wayday/evidence/phone-planner-implementation-2026-10-30.md); the historical D44/D45 notes below describe the earlier state.
+
+Gemini uses a **private debug installation** with Android Keystore encryption, never a build define or manifest credential. Install the debug APK without uninstalling/resetting the personal app. One-time setup reads ignored `.env.local` without printing the key:
+
+```powershell
+py -3 apps/mobile/tool/provision-gemini.py --device <device-id> --generations 9
+```
+
+Run the command from the repository root only after the intended debug installation is present. The presentation allocation is one qualification attempt and nine phone attempts; do not provision nine onto multiple devices. Omitting `--generations` configures the credential with zero requests. An exhausted allowance requires explicit reprovisioning; do not automatically run this command on every build. After setup the phone only needs internet. A release APK intentionally refuses this private credential path.
+
+The owner confirmed Paid tier and authorized conserving roughly $4 remaining credit. Native and Dart controls cap three attempts per rolling day; Dart caps ten per 31 days, while native storage caps the finite provisioned allocation. Requests contain at most 50,000 UTF-8 bytes and 4,096 output tokens, with no tools/grounding, no automatic retry and memory reuse for unchanged interpretation. At reviewed pricing, reserve approximately $0.025 per attempt. These installation limits do not cap other Cloud projects, survive uninstall or guarantee a fixed monetary invoice. See D47 for the billing boundary.
+
+Google Routes uses the existing restricted configuration with real package/certificate headers and persistent unit accounting. Pilot ceilings are 200 matrix elements/day and 900/31 days, 30 refined route legs/day and 300/31 days, and 20 navigation destinations/day and 100/31 days. They do not override stricter Console quotas or establish remaining shared free capacity. Candidate alternatives may need narrowing before a matrix fits. No API key restrictions or billing settings are changed by the app.
+
+Android dependencies: Google Navigation Flutter 0.11.2, native Navigation 7.9.0, Places 6.0.2, minimum API 24. Navigation supplies Maps classes; exclude standalone play-services-maps to prevent duplicate classes. Enable core-library desugaring and compile the plugin against API 36 to match the current Flutter lifecycle adapter. The app's manually selected maps/pins still use MapLibre; Google routes use a Google map.
+
+Checks:
+
+```powershell
+./apps/mobile/tool/flutter.ps1 test test/planning_scheduler_test.dart test/planning_services_test.dart test/planning_flow_test.dart
+./apps/mobile/tool/test-map.ps1 -DeviceId <emulator-id> -Target integration_test/planning_flow_test.dart
+```
+
+The isolated fixture suite uses `.maptest`, synthetic tasks and no provider generation/route requests. The separate `planning_live_gemini_test.dart` is a deliberate one-request paid qualification after finite provisioning; never add it to unattended regression runs. A successful build/fixture does not establish live guidance, physical-phone performance or all-five travel support. Bicycle is unavailable in this pilot; light-pickup ordinary driving requires explicit confirmation, with heavy vehicles blocked.
+
+The owner clarified on 2026-10-30 that the presentation must run with the phone and internet alone. The proposed scheduler runs on Android and obtains online place/road inputs directly; a laptop-hosted API is not a prerequisite. Plan my day still opens manual review in the current application. Automatic dependency reconciliation, batch recommendations, shared visits, traffic-aware scheduling, accepted-plan storage and the Google route map remain unimplemented by this research. See the [mobile handoff](../../docs/wayday/evidence/planning-contract-v1.md#phone-only-planning-handoff-2026-10-30).
+
+D45 selects Gemini for sentence-level English, Filipino and Taglish interpretation. The owner-supplied GEMINI_API_KEY and GEMINI_PROJECT_NUMBER are saved in ignored .env.local, with blank names in .env.example. They are not included in the search loader, Flutter build defines or Android manifest. No model has been selected, no model call or Firebase/billing change has been made, and runtime integration remains pending. The presentation acceptance check must use a standalone APK without USB/ADB forwarding or a reachable development service, and must separately exercise internet loss and retained local state.
+
+
+## Interpretation reuse and direct entry — D48
+
+Tapping Plan my day opens the loading state immediately. The native bridge checks a private no-backup journal before any model request. Up to eight canonical-input snapshots are retained (bounded to approximately 1.3 MB); model/prompt/schema/settings changes invalidate their keys. Completed model output is committed before the Flutter callback and revalidated against current errand IDs/types on retrieval. No SQLite migration is involved. Routing-only changes do not re-spend interpretation credit, and coordinate lease expiry does not invalidate an unchanged fixed-place need. Changed titles/notes, IDs/order, timing/duration/priority/dependencies, confirmation values or submitted flexible-place preferences select another interpretation key.
+
+Back/Close preserves the source inputs and does not deliberately cancel an already dispatched model request. A completed answer can be reused after restart, offline or with the generation allowance exhausted. Unfinished/failed attempts and unreadable records do not trigger an automatic replacement request: show recovery and explicitly labelled paid-retry actions. Force-kill/network uncertainty cannot guarantee exactly-once provider billing; the app guards it by requiring explicit retry. Do not delete the journal or reprovision the allowance as a routine build step. Review checkboxes/drafts, native Google candidates, road responses and accepted itineraries have their existing separate lifetimes.
+
+`test/interpretation_cache_test.dart` covers invalidation, durable-transport reuse, offline allowance exhaustion, coalescing, interrupted/invalid answers and routing-only edits. `test/planning_entry_test.dart` covers direct loading, Back and re-entry. The isolated Android fixture exercises actual native journal persistence/bounds/corruption and cache lookup without generating a Gemini request. Fixture seeding/self-check methods are available only to the debug `.maptest` package; they are unavailable to the normal app and release builds.

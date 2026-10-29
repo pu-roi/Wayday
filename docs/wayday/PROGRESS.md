@@ -2,6 +2,97 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-10-30] Create the owner-requested Plan my day implementation plan
+
+- Created docs/wayday/PLANNING.md because the owner explicitly requested planning.md before implementation and the current checkout contained no such document. The focused plan records the agreed screen-by-screen interactions, Gemini interpretation, phone-only scheduling, candidate recommendations, shared visits, local consistency/storage, embedded navigation, design-system requirements, remaining technical qualifications and implementation acceptance checks. It does not restore the previous project-wide roadmap or task board.
+- Recorded D46, added the README index entry, and connected agent, architecture and contract-evidence guidance to the active feature plan. Incorporated the latest bicycle-specific-route agreement and the restricted light-pickup ordinary-driving estimate; heavy trucks remain unavailable and five-mode readiness remains unverified.
+- Local documentation links, the unique D46 heading, coverage of the agreed requirements and git diff whitespace checks passed. Documentation changes only. No application behavior, phone data, credentials, service configuration, database migration or live provider call changed. Existing uncommitted application work is preserved. Mobile runtime checks are not claimed for this documentation task.
+
+### [2026-10-30] Store Gemini credential and record sentence-interpretation selection
+
+- Stored the owner-supplied Gemini key and project number in existing ignored .env.local, preserving other configuration entries. Verified exact values without printing them, confirmed ignored/untracked status, and found no copy of the supplied key in 335 tracked or non-ignored files. Added blank configuration names to .env.example; did not extend the Flutter search-defines loader or manifest.
+- Recorded D45 and reconciled current product, agent, architecture, stack, mobile-guide and planning-handoff guidance with the owner's explicit Gemini selection. Original D44 research remains historical. No model request, service credential validation, model choice, runtime integration, Firebase/account creation or billing/quota change occurred. Plan my day interface discussion remains the next design topic; no application screens were changed.
+
+### [2026-10-30] Review phone-only planning requirements and optional Gemini
+
+- Recorded D44's owner requirements and proposed mobile implementation handoff in the existing product, architecture, stack and planning documents. A reachable laptop is no longer a proposed presentation dependency. Automatic dependency order, recommendations with alternatives, shared stops and missing-private-location correction are specified; no runtime planner, Gemini integration, new task board or roadmap was created.
+- Reconnected to the owner's authorized Android application using read-only run-as access and inspected an in-memory copy of its SQLite database. The four current errands contain their expected structured fields and matching duplicated basic values; newly entered grocery notes are present. The saved dependency/list order discrepancy and unchanged revision are still present. No personal database, coordinates, keys or raw dump were saved to the repository, and no phone records were changed.
+- Reviewed official Flutter, Google Maps and Gemini/Firebase documentation. The proposed on-device solver, UI Kit batch bridge, actual motorcycle routing, full request capacity and route-content retention still require implementation qualification. Gemini remains deferred and no key, model request, Firebase setup, account/billing change or hosted service was performed. The preceding focused storage/dependency audit passed twelve existing tests. This pass checked local documentation link targets, the new handoff anchor, the unique D44 heading and git diff whitespace successfully; it does not claim new runtime/device verification.
+
+### [2026-10-29] Make Today map a fixed overview
+
+- Disabled map gestures in the Today preview and reduced its stop badges. The location picker remains interactive, and the preview still follows selected places and retains its attribution control.
+- Flutter analysis and focused Today-map and picker checks passed. The full suite reported 195 passes and eight previously recorded failures. Android visual verification remains pending.
+
+### [2026-10-29] Personalize map pin labels
+
+- Extended the existing Your label field to selected pins from every source; a new selection resets its draft, and edited labels retain coordinates and Google reference leases. Google-derived pins do not trigger the manual Geoapify reverse lookup while applicable third-party usage restrictions remain unresolved.
+- Flutter analysis and focused selection, custom-label, and reverse-lookup checks passed. The full suite reported 195 passes and eight previously recorded failures. Android visual verification was not performed for this change.
+
+### [2026-10-29] Simplify search refresh actions
+
+- Made refresh, staged updates and failure retry contextual, keeping the source choices unobstructed and preserving frozen results while the user interacts. Focused search panel and controller tests cover failure, staged results, source access and stable selection; Flutter analysis passes. Android visual verification remains pending.
+
+### [2026-10-29] Trial compact Google location rows
+
+- The owner rejected this experiment and it was subsequently reverted. The remaining notes record the trial as historical evidence.
+- Added a reversible experiment that loads Google's native compact details component by place ID in the Where, From and To rows. Its attribution stays in the native component, and the saved user label, Google reference and coordinate lease are unchanged. Other sources retain their existing presentation. The shared scheduler now queues separate owners, reserving each binding against the existing ledger.
+- Flutter analysis and 25 focused Google and errand checks passed; the full suite reported 193 passes and eight previously recorded failures. A debug APK built. An isolated Android integration test loaded one native component using a public example place ID; a 300-dp fixture capture showed its name, Maps button and Google attribution. This does not establish fit in actual app rows, larger text, Philippine coverage or end-to-end picker behavior.
+
+### [2026-10-29] Reveal expanded errand details
+
+- More details now scrolls its final control into view after expansion when needed, respecting reduced motion and cancelling a pending adjustment on user drag or collapse. Focused widget coverage checks the visible controls on a 360×640 screen at 1.3 text scale; no Android-device check was performed.
+
+### [2026-10-29] Simplify the More details styling
+
+- Replaced the outlined card with an inline disclosure and subtle divider, matching the existing Repeat control. Kept the animated chevron, reduced-motion handling and expanded semantics. Flutter analysis and five focused checks pass; no Android-device visual check was performed.
+
+### [2026-10-29] Refine More details disclosure
+
+- Grouped the errand editor's More details header and contents in the shared outlined surface and restored a rotating chevron coordinated with the disclosure. The header exposes expanded state, and collapsing clears focus from the hidden fields.
+- Flutter analysis and focused checks passed, including animation reversal, saved drafts, expanded semantics, reduced motion, and a 360×640 widget layout with 1.3 text scaling. No Android-device or TalkBack verification was performed.
+
+### [2026-10-29] Place notes below the errand name
+
+- Corrected the editor order after the owner's clarification: Notes is immediately below What do you need to do?. Flutter analysis and the focused layout/time check pass.
+
+### [2026-10-29] Put notes first in the errand editor
+
+- Moved the Notes field above the errand name as requested and removed duplicate spacing before Where. Flutter analysis and ten focused editor-selection checks pass; no Android-device check was performed.
+
+### [2026-10-29] Restore notes and time visibility
+
+- Moved Notes back immediately after the errand name. Kept the compact When selector and restored a separate clock row for directly viewing and changing the selected time. More details now contains duration and prerequisites.
+- Flutter analysis and 18 focused editor/location checks pass, including notes placement and direct time editing. No Android-device check was performed.
+
+### [2026-10-29] Simplify the errand editor
+
+- Replaced the always-visible timing group with the shared selection sheet and time entry. More details contains duration, notes and a multi-select prerequisite control. Today, review and recurring callers provide their own errand lists; existing dependency IDs and missing references are preserved, and new cycles are disabled. This does not implement planning.
+- Flutter analysis and 11 focused checks pass. The full suite reports 188 passes and the same eight previously recorded failures. No isolated Android device was available; native device layout and interaction remain unverified.
+
+### [2026-10-29] Remove errand location naming action
+
+- Removed the Name this location action and dialog from the errand editor as requested. Flutter analysis and six focused errand-location checks pass; no Android-device check was performed.
+
+### [2026-10-29] Resolve errand current location
+
+- A confirmed device location in the errand editor now uses the same bounded Geoapify street/locality lookup as Today, retaining the selected coordinates and device source. A user-supplied label remains protected from subsequent automatic lookup. Google search references still retain the user query label because the native callback omits the displayed place name.
+- Flutter analysis and 13 focused errand and reverse-geocoding checks pass. No live provider or Android-device verification was performed.
+
+### [2026-10-29] Remove Today pin naming action
+
+- Removed the Name this pin action and its dialog from Today as requested. Endpoint address lookup and the map picker remain available. Flutter analysis and seven focused reverse-geocoding checks pass; no Android-device check was performed.
+
+### [2026-10-29] Name confirmed current-location endpoints
+
+- Confirmed device locations now use the existing Geoapify reverse lookup for a nearby street or locality, while retaining the original coordinates and device source. Failure retains Current location and offers a personal label. The lookup does not infer a nearby business name.
+- Flutter analysis and seven focused reverse-geocoding checks pass. The full suite reports 186 passes and the same eight previously recorded failures. No live lookup or Android-device check was performed.
+
+### [2026-10-29] Share the location picker across endpoints and errands
+
+- Removed the errand-only source restriction. Where now opens the same picker as From and To with the Errand location title, Google and Other sources, and the shared session source preference. Manual-pin lookup and the compact Where row remain in place.
+- Flutter analysis and 44 focused tests pass; the full suite reports 185 passes and the same eight previously recorded failures. No isolated Android device was available for native search and map verification; the connected personal phone was not modified.
+
 ### [2026-10-29] Remove the errand location credit line
 
 - Removed the provider-credit line from the errand editor's Where section at the owner's request. Provider metadata remains with the selected location, and the existing Settings credits page remains available.
@@ -283,3 +374,64 @@ The activity log records completed implementation, research and checks. Historic
 - **Contributor**: Roi Cambe (@pu-roi <roicambe02@gmail.com>)
 - **Component**: Mobile · local data
 - **Summary**: Implemented and verified local Today/Recurring persistence; Flutter analyzer and full tests pass, Android ARM64/x86_64 debug builds succeed, and both lists survive emulator force-stop/relaunch.
+
+
+## 2026-10-30 — Private phone planner implementation (D47)
+
+The owner authorized implementation of PLANNING.md, selected Gemini for sentence interpretation, and confirmed a paid project with approximately $4 remaining credit. After the owner requested conservative request limits and said to proceed, the presentation allocation was bounded to ten paid attempts total (one isolated qualification and nine phone attempts), three attempts per rolling day, bounded text/output, no grounding/tools, no automatic retries/refills and unchanged-input memory reuse. Native and Dart accounting are installation controls, not account-wide financial guarantees. Reserve approximately $0.025 per bounded attempt at the reviewed prices.
+
+Implemented a separate preparation draft; explicit interpretation/addition review; missing meeting-point correction; visible standard Google candidate batches; dependency-order repair with persistence/Undo; dated restricted route matrices; bounded worker-isolate branch/order/shared-stop scheduling; independent result validation and per-departure route refinement; Google result map/timeline; additive v3 accepted-plan storage; embedded foreground guidance with explicit progress; and unfinished-work replanning that preserves completed IDs/prerequisites. The original text, confirmed values, source Today and last accepted plan remain independent. Reconcile the Impeccable surface metadata with current sources; no active Impeccable execution is claimed.
+
+Verification at this checkpoint: 24 focused planning tests pass; the full suite has 219 passes and the same eight baseline failures (195 passes before this work). Static analysis has no issues before the final compatibility test addition. Android debug builds succeed after desugaring, duplicate-Maps exclusion and plugin compile-SDK alignment. Isolated Android fixture screen/native-identity/acceptance and paid-allowance guard checks pass. Twelve-task worker fixtures complete in 176/245 ms with a 150 ms search budget and a validated feasible time-limited result. One bounded live Gemini request passes synthetic English/Filipino/Taglish item/category/dependency/meeting interpretation; a repeated unchanged input uses memory rather than another generation request. The emulator's finite allocation is exhausted; do not refill it.
+
+The owner reconnected the Samsung SM-A546E after the emulator checks. A private ignored pre-install snapshot confirms four Today errands, schema v2 and integrity=ok. Normal-package installation and physical-device verification are being completed without uninstalling/resetting personal state. Physical capacity, service coverage and actual-road guidance must be reported separately from the emulator fixtures. Current pilot limitations include one-anchor discovery with explicit refinement, conservative matrix capacity, unconfirmed hours/stock, unavailable bicycle routing/guidance, and light-pickup-only ordinary-driving estimates with no truck/clearance claim. See [implementation evidence](evidence/phone-planner-implementation-2026-10-30.md).
+
+
+D47 physical/service follow-up: normal-package update succeeded on the Samsung without uninstall/reset. Schema v3 retained all four errands and compared task fields, integrity=ok; nine encrypted Gemini requests remain after provisioning. The separate Android fixture flow passed on that phone, with a validated twelve-task worker result in 169 ms at a 150 ms search budget. One visible Google place binding and Navigation map-only view passed together on the phone. The Dart Routes adapter passed public-fixture WALK, TWO_WHEELER and DRIVE matrices/refinement using twelve elements and three route calls total from the development host. No guidance destination or private GPS was requested by those qualifications. Actual road guidance and a complete unplugged itinerary rehearsal remain unverified. No additional Gemini generation was used beyond the one earlier synthetic request.
+
+
+D47 final checks: static analysis reports no issues; full tests report 219 passes, one deliberately skipped live road probe and the same eight baseline failures. The prototype regression check passes. Final normal-package APK builds and contains no supplied Gemini credential in decompressed contents. The finite phone allowance is retained across app updates, not automatically refilled. [Sanitized qualification counts](evidence/phone-planner-qualification-2026-10-30.json) capture the verified boundary and remaining guidance/unplugged rehearsal limits.
+
+
+## 2026-10-30 — Direct loading and durable interpretation reuse (D48)
+
+The owner removed the introductory Plan my day page and requested persistence to avoid unnecessary repeat Gemini charges after Back/app exit. Entry now renders Understanding your errands immediately and starts a cache-first interpretation, with no Continue button. Back from loading/review exits to Today; already dispatched bounded interpretation can finish and save its answer. Source inputs and accepted plans remain separate.
+
+A native no-backup response journal retains eight snapshots, keyed by SHA-256 of versioned model/policy plus exact canonical input/prompt/schema/settings. It records pending before dispatch and completed before callback; cached output is revalidated against current IDs/types. Current titles/notes, IDs/order, constraints, confirmations and flexible place preferences control identity. Equivalent sets are canonicalized. Routing-only changes and Google coordinate expiry do not spend another interpretation request. Pending/failed/corrupt outcomes block automatic replacements; an explicit paid-retry action is required. Native engine disposal drops callbacks without cancelling the already-dispatched bounded request. No database migration, new storage dependency, cloud state or allowance refill was added.
+
+Verification: 25 focused service/cache/entry/flow tests pass. Static analysis reports no issues. Full suite: 229 passes, one intentionally skipped live road test, and the same eight baseline failures. On the Samsung, the isolated debug test passes actual native journal persistence across repository recreation, bounds/eviction/corruption handling, typed cached-answer retrieval with zero reservations, and an interrupted-attempt guard with zero generation requests. The normal fixture review-to-acceptance flow also passes. No live Gemini generation was used for this work. The personal app had eight requests left before update; retain that count without reprovisioning. An old memory-only result cannot be recovered after updating its process; the next completed interpretation establishes the durable cache. Installation verification is recorded below after completion.
+
+
+D48 installation follow-up: final normal debug package built and was installed with `adb install -r` on the Samsung, without uninstall/reset or credential reprovisioning. All four Today rows and every compared errand column are unchanged; SQLite integrity=ok and eight Gemini requests remain, matching the pre-update count. No live generation was used by this work. The isolated test package was removed after its native journal/cache fixtures passed. The installed first-run flow now opens loading directly; only the next real completed interpretation establishes a durable cache entry for the user's current inputs.
+
+
+## 2026-10-30 — Compact Review errands interface (D49)
+
+The owner questioned the dense interpretation review, ambiguous task-like approval checkboxes and the redundant Review action beside Close. Replaced repeated proposal blocks with compact numbered, expandable errands using existing Cornflower/Figtree tokens. Expanded rows show notes, search/items, existing order and only actual applicable Current/Suggested changes. Use suggestion selects a change bundle; Keep current reverses it. Extra errands use explicit Add/Remove actions with expandable proposal details. Confirmed and equal values are omitted from proposal work. Trip details collapses to a date/mode/time summary and initially expands for missing endpoints or light-pickup confirmation. Required questions/locations remain visible. Next stays anchored, errors are announced above it, and expansion supports reduced motion. The review-stage app bar no longer links to itself.
+
+Verification: static analysis passes. Eight added review/difference/render checks pass, including forward/Back/reversal, protected fields, human-readable timing, narrow 2× text, normal phone and wider layouts. Full Flutter suite: 237 passed, one deliberately skipped live-road test, and the same eight known map/profile/Today-picker failures recorded for D48. Bundled-font synthetic renders were inspected at 390 × 844, 320 × 740 with 2× text, and 768 × 1024. The normal Android debug APK built and was installed on Samsung SM-A546E using install -r; launch succeeded. A before/after private SQLite comparison confirms all four Today errands and all their columns unchanged, integrity=ok. The finite Gemini counter remains eight; no live Gemini request or credential reprovisioning was used.
+
+The requested Wayday UI/frontend skills, Impeccable context and distill/craft guidance informed the refinement. DESIGN.md, the focused PLANNING.md and D49 record the behavior. Impeccable’s existing design.json sidecar is stale relative to DESIGN.md; it was reported without unrelated regeneration. Native TalkBack, predictive Back and a complete real-service trip rehearsal are not established by these widget renders or installation checks. [Qualification evidence](evidence/review-ui-qualification-2026-10-30.json).
+
+
+## 2026-10-30 — Remove redundant location questions and preserve recommendations (D50)
+
+The owner reported Where questions under the already-located pickup and pares errands, then requested the fix and clarified that missing business/activity destinations should receive recommendations. Reproduced the failure before implementation: an existing fixed location could not pass review because its raw model question remained blocking. Added a shared domain policy for review display and forward validation. Recognized location-only questions defer to deterministic location handling: retain usable saved points, recommend places for unattached errands, and request a point for private meetings or expired selected references. Previously cleared locations no longer become required merely because confirmation metadata remains. Eligible compact rows show Place recommendations next. Mixed, ordering, timing and unrecognized questions still require review.
+
+The fix reconciles cached output on read without changing the model prompt, schema, cache identity or raw saved interpretation. No replacement Gemini generation or quota refill was used. Ten added regression checks cover saved points, flexible recommendations, cleared places, expired specific references, private pickups, English/Filipino questions, genuine clarification, and UI/controller consistency. All 29 focused clarification/location/review/cache/flow tests pass; the final additional order-wording guard also passes the five location-policy checks. Analysis reports no issues. Full suite: 247 passed, one deliberately skipped live-road test and the same eight previously recorded failures. Normal/narrow-large-text/wide synthetic review captures were inspected with the existing tokens and bundled fonts.
+
+The normal Android debug APK built and was installed with install -r on the Samsung, then launched successfully. All four Today records and their compared columns are unchanged, SQLite integrity=ok, and the native Gemini count remains seven before/after. Native TalkBack and a complete live trip rehearsal remain unverified; no paid service call was required for this correction. [Qualification evidence](evidence/location-review-qualification-2026-10-30.json).
+
+
+## 2026-10-30 — Clear corrected departure warnings (D51)
+
+The owner reported the past-departure banner while Review showed October 30 at 8:30 AM and the Samsung clock was approximately 3:28 AM on October 30 in Asia/Manila. The date/time check itself was consistent; the view retained a previous local validation error after calendar/time edits. Reproduced the stale banner with two failing widget cases before implementation. Saving calendar/time changes, changing the preparation model and confirming the light-pickup case now clears old local feedback. Cancelling the calendar leaves the error/input intact. Next still validates current inputs and genuine past departures remain rejected. No timezone, trip date, interpretation request or cache identity was changed.
+
+Verification: the two regression cases pass, including calendar cancellation, date correction, numeric time correction and subsequent successful forward navigation. Fifteen focused review/flow/entry tests pass, followed by all seven review checks after adding cancellation coverage. Analysis reports no issues. Full suite: 249 passed, one deliberately skipped live-road test, and the same eight pre-existing failures. The normal Android debug APK built successfully. Phone installation/data-preservation follow-up is recorded below.
+
+D51 installation follow-up: the normal debug package was installed on Samsung with install -r and launched successfully. All four Today errands and compared columns remain unchanged, SQLite integrity=ok, and the native allowance remains seven before/after. No Gemini request or credential reprovisioning was used. The persisted Today date is still October 29; the October 30 correction visible in the owner’s screenshot was a preparation draft. Installation closes that draft, so the owner must choose the intended date again on reopening. This fix does not automatically commit preparation edits to Today.
+
+
+## 2026-10-30 — Refresh planning guidance and publish the current work
+
+At the owner’s request, updated the Wayday planning skill to follow D44–D51 and PLANNING.md: Gemini sentence interpretation, phone-only worker scheduling, finite private-debug request limits, persistent cache/retry semantics, compact explicit review, shared location-question handling, stale validation feedback and current provider/mode qualifications. Removed obsolete AI-deferred and laptop-service assumptions while retaining the historical contract and feasibility evidence. The skill’s frontmatter, required fields, placeholders and local reference targets were checked using a standard-library fallback because the optional PyYAML validator dependency was unavailable. Existing application verification remains the latest 249 passing tests, one deliberately skipped live-road test, eight known baseline failures, clean analysis and successful Android build/install recorded above. Unrelated locally installed skill packages and Codex hook settings are outside this publication.

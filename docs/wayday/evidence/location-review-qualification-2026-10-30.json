@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-30",
+  "decision": "D50",
+  "scope": "Reconcile redundant location questions and unattached place recommendations",
+  "analyze": "passed",
+  "newRegressionChecks": 10,
+  "focusedTestsPassed": 29,
+  "finalLocationPolicyChecksPassed": 5,
+  "flutterSuite": {
+    "passed": 247,
+    "skipped": 1,
+    "knownBaselineFailures": 8
+  },
+  "generationRequestContractChanged": false,
+  "cacheIdentityChanged": false,
+  "paidServiceCalls": 0,
+  "android": {
+    "errands": 4,
+    "allErrandColumnsUnchanged": true,
+    "remainingGenerations": 7,
+    "allowanceUnchanged": true,
+    "integrity": "ok"
+  },
+  "installedPackage": "dev.wayday.wayday",
+  "install": "adb install -r succeeded",
+  "launch": "succeeded",
+  "limitations": [
+    "Cached question schema is untyped: conservative wording recognition preserves mixed or unknown questions",
+    "Native TalkBack and complete live trip rehearsal are not established"
+  ]
+}

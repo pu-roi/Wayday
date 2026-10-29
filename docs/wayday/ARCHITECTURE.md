@@ -2,6 +2,12 @@
 
 Status, 2026-10-27: Android Today, Recurring, and local Drift/SQLite persistence exist at `apps/mobile/`; the browser preview remains in memory. Reconciliation adds an online search adapter, confirmed-place values, map pin selection, manual review, schema migration and legacy-workspace recovery. These additions require integrated Android verification before readiness is claimed. The measured local routing study and versioned planning contract remain feasibility evidence, not production planning. Rudy's bounded place service has been copied into `services/api/` for review; the app does not depend on it. See [README product requirements](../../README.md#product-requirements) and [Decisions](DECISIONS.md) for current product boundaries and rationale.
 
+## Implemented private phone planner — D47
+
+The owner authorized the focused plan after D46. `features/planning/` now separates typed interpretation, native visible candidates, road adapters, an isolate-safe scheduler and independent validator, preparation controller, versioned local accepted itineraries and embedded navigation. Schema v3 is additive. Preparation does not overwrite source Today or the last accepted plan; stale revisions and cancelled work cannot be accepted. Route matrices/geometry/ETAs remain transient, while Google coordinate leases remain independently expiring.
+
+The private debug interpreter uses native Android Keystore storage and a fixed Gemini HTTPS endpoint, not the unconfigured Firebase project or local backend. Release builds refuse that key path. The owner authorized a conservative finite paid-generation allocation after confirming Paid tier and roughly $4 credit. D47 owns limits and billing meaning; [implementation evidence](evidence/phone-planner-implementation-2026-10-30.md) owns executed checks and limitations. Historical proposed/future sections below remain reference context, not an assertion that the current phone depends on a laptop.
+
 ## Responsibility map before D42
 
 This map records the target before the owner's Google direction. The next section explains D42's changes and the narrower configuration/qualification work actually implemented so far.
@@ -30,6 +36,14 @@ D42, selected on 2026-10-29, revises the pre-Google target shown above: Google P
 
 The earlier credential slice implemented configuration and tool-based Routes qualification. D43 now adds the native search bridge described below; Routes remains disconnected from the planner. The shared ignored Flutter defines file now supports the separate Android SDK and Routes keys. Gradle decodes only the Android SDK key into manifest metadata; the earlier credential slice did not install a Google SDK. D43 now pins Places SDK 6.0.2 and initializes it for explicit UI Kit bindings. A standalone bounded REST probe sends package/certificate headers and checks correct and rejected identities for route requests, plus one correct one-element matrix. It is not an application provider or scheduler and never runs at startup, in automated tests, on the phone's location, or in the background. Its report stores only technical counts/statuses, not Google route data or keys. Follow the [mobile README](../../apps/mobile/README.md#google-credential-configuration-and-routes-qualification) for configuration, quota limitations and deliberate repeat qualification. A future direct adapter must recheck endpoint identity enforcement, keep requests bounded, and stop safely on failure. Public distribution and shared accounting remain separate work.
 
+## Phone-only planning boundary — D44, proposed
+
+D45 selects Gemini interpretation and D46 records the owner-requested [Plan my day implementation plan](PLANNING.md). That plan owns the current interface/implementation sequence and presentation-mode qualifications; this document continues to own architectural responsibilities. Neither document establishes runtime readiness.
+
+The owner's 2026-10-30 requirement is a phone-and-internet presentation without a reachable laptop. The phone coordinates place discovery, direct restricted Routes requests, bounded branch/stop scheduling and local persistence. A proposed pure Dart scheduler runs in a worker isolate so calculation does not block editing. Google services supply place and road data; the phone supplies task interpretation, dependency rules, branch comparison and timing validation. The local FastAPI service, PostGIS, Valhalla and OR-Tools remain independent historical/future options rather than runtime dependencies of this flow.
+
+The [mobile planning handoff](evidence/planning-contract-v1.md#phone-only-planning-handoff-2026-10-30) defines the proposed inputs, shared stops, candidate presentation, resource bounds, retention review and verification. Its design has not been implemented or benchmarked. The older backend sections and HTTP interfaces below apply only if a backend is separately authorized. Existing v1 schema/examples remain historical specifications; a versioned mobile extension is required before shared-stop implementation.
+
 ## Frontend: features with MVVM
 
 Organize the mobile application around errands, templates, planning, trips, places, and settings. Views display state; Riverpod-backed view models coordinate actions; repositories own data access and caching. Extract domain logic when scheduling or editing behavior would otherwise spread across view models. Avoid a separate abstraction for every simple function.
@@ -55,7 +69,7 @@ The map feature retains the regional offline-package validator and renderer, and
 
 The shared errand model retains plain-text notes and independent copies. Today settings, errands, Recurring groups and saved places are stored locally on Android. Schema version 2 adds place and errand details without replacing version-1 rows. The recovery flow reads Rudy's workspace and imports into a separate database; when both databases exist, users choose the source and both originals remain. Save failures expose retry. Web preview state remains in memory; no synchronization outbox or account system is present.
 
-Keep limited text parsing on the phone so note entry and correction work offline. Store the original note, explicit edits, and suggestions distinctly. The backend validates the submitted structured constraints; it does not reparse and overwrite confirmed values.
+D45 selects Gemini-assisted sentence interpretation for English, Filipino and Taglish errands and notes. Note entry, original text, explicit fields and structured correction remain local and usable offline; new model interpretation requires its online integration. Keep suggestions separate from confirmed values and review new errands/dependencies before applying them. The phone validates the resulting structured constraints; neither model output nor a possible later backend may silently overwrite confirmed values. The credential is stored locally for development only, without being added to Flutter build defines or the manifest; model and protected runtime integration remain pending.
 
 ### Current location-aware search
 
@@ -130,7 +144,7 @@ Use stable errand IDs for dependencies and template copies. Record dates and the
 1. Validate explicit times, durations, coordinates, references, and dependency cycles. Keep ambiguous interpretation outside the solver.
 2. Retrieve a bounded set of relevant places for each flexible errand. Respect specific-place overrides and source freshness.
 3. Fetch an asymmetric travel-time matrix for the requested mode. Preserve unreachable pairs; never replace them with zero or straight-line travel time.
-4. Model branch alternatives, business intervals, appointments, arrival/completion deadlines, service durations, buffers, waiting, and dependencies in OR-Tools.
+4. Model branch alternatives, shared visits, business intervals, appointments, arrival/completion deadlines, service durations, buffers, waiting and dependencies in the proposed bounded on-device scheduler under D44. The earlier OR-Tools service remains a conditional future option.
 5. Require exactly one candidate for each mandatory errand; allow at most one for an optional errand. Account for optional dependencies consistently when dropping visits.
 6. Enforce hard feasibility first, then favor optional completion and lower travel time. Do not rely on an arbitrary penalty that permits dropping mandatory work.
 7. Validate the returned schedule independently of solver construction. Obtain road geometry for the chosen sequence and attach estimate/source metadata.
@@ -155,7 +169,7 @@ See [Android geofencing](https://developer.android.com/develop/sensors-and-locat
 
 ## Local deployment and scaling
 
-Initially run FastAPI, PostgreSQL/PostGIS, and a small regional Valhalla graph on the existing computer. The phone must reach that computer to request fresh plans. A laptop that is asleep or disconnected is an unavailable backend, even if the phone has internet.
+The earlier proposal ran FastAPI, PostgreSQL/PostGIS and a regional Valhalla graph on the existing computer. D44 supersedes that dependency for the phone-only presentation: fresh scheduling must not require the computer. If an optional backend is separately adopted later, its availability, hosting and phone connectivity must be verified; a sleeping laptop remains an unavailable backend.
 
 Document emulator, Android device, and iOS device networking separately. Localhost on a physical phone refers to that phone. Restrict any development HTTP exception to development builds. Do not expose an unauthenticated development API to the public internet.
 
@@ -183,3 +197,8 @@ The API-36 native build and bounded isolated Google sample now pass after test i
 
 
 D43's screenshot-based design restoration shares one set of source/origin/area controls, saved rows, status copy and full fallback actions across both source groups. Keyboard visibility only resizes the layout; it no longer substitutes a menu. Other sources keeps its lazy list; the Google host remains in a stable keyed Expanded slot between independently scrollable, content-sized controls and fallback regions. Those regions have height ceilings that preserve a 180-unit native viewport on normal panels, or 45 percent on panels of 400 units or less, without reserving empty space. Layout and typography do not change request bindings. Supported XML theme roles reuse Figtree and Cornflower without replacing/reordering native cards or altering attribution.
+
+
+## D48 interpretation persistence boundary
+
+The native Gemini request owner now also owns a bounded response journal in no-backup storage. Persisting there closes the completed-response/Flutter-screen-lifetime gap: pending precedes dispatch, completion precedes callback, and failed/pending outcomes block automatic replacement. A versioned canonical request selects an interpretation independently of routing state; every recovered answer is validated again by the Dart domain parser. This file is distinct from credentials, paid-request accounting, Drift source state and accepted itineraries. Its eight-snapshot cap limits storage without adding a schema migration or cloud state. Source/task edits cannot be overwritten by a stale result because the preparation controller retains its request epoch and the cache lookup uses the current submitted context.
