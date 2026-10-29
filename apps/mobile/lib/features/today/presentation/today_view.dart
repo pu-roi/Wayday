@@ -11,7 +11,8 @@ import '../../../core/widgets/section_surface.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
-import '../../review/presentation/day_review_view.dart';
+import '../../planning/presentation/planning_view.dart';
+import '../../planning/presentation/saved_plan_view.dart';
 import '../../maps/presentation/place_map.dart';
 import '../../maps/presentation/regional_map.dart';
 import '../../places/data/google_pin_cache.dart';
@@ -49,6 +50,19 @@ class _TodayViewState extends ConsumerState<TodayView>
     WidgetsBinding.instance.addObserver(this);
     _placeSearch = ref.read(combinedPlaceSearchProvider);
     _googlePins = ref.read(googlePinCacheProvider)..addListener(_pinsChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final controller = ref.read(todayProvider.notifier);
+      final previous = controller.recoveredOrder;
+      controller.recoveredOrder = null;
+      if (previous != null) {
+        showFeedback(
+          context,
+          'Order updated to match your After rules.',
+          onUndo: () => controller.restore(previous, reconcile: false),
+        );
+      }
+    });
   }
 
   void _pinsChanged() {
@@ -88,8 +102,11 @@ class _TodayViewState extends ConsumerState<TodayView>
   }
 
   void _resolvePin(bool start, PlaceIntent place) {
-    if (place.source != 'manual' ||
-        place.label != 'Dropped pin' ||
+    final unnamedManual =
+        place.source == 'manual' && place.label == 'Dropped pin';
+    final unnamedDevice =
+        place.source == 'device' && place.label == 'Current location';
+    if ((!unnamedManual && !unnamedDevice) ||
         !place.hasCoordinates ||
         place.isGoogle) {
       return;
@@ -132,7 +149,7 @@ class _TodayViewState extends ConsumerState<TodayView>
                 label: result.name,
                 latitude: place.latitude,
                 longitude: place.longitude,
-                source: 'manual',
+                source: place.source,
                 provider: result.provider,
                 retrievedAt: result.retrievedAt?.toIso8601String(),
                 attributions: result.attributions,
@@ -140,43 +157,6 @@ class _TodayViewState extends ConsumerState<TodayView>
             );
       },
     );
-  }
-
-  Future<void> _namePin(bool start) async {
-    setState(() => _cancelLookup(start));
-    final day = ref.read(todayProvider);
-    final original = start ? day.fromPlace : day.toPlace;
-    final input = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Name this pin'),
-        content: TextField(
-          controller: input,
-          autofocus: true,
-          maxLength: 100,
-          decoration: const InputDecoration(labelText: 'Place name'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, input.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    input.dispose();
-    if (!mounted || name == null || name.isEmpty) return;
-    final latest = ref.read(todayProvider);
-    if (!identical(start ? latest.fromPlace : latest.toPlace, original)) return;
-    ref
-        .read(todayProvider.notifier)
-        .setEndpoint(start: start, value: original.withLabel(name));
-    setState(() {});
   }
 
   bool _expanded = true;
@@ -197,12 +177,26 @@ class _TodayViewState extends ConsumerState<TodayView>
   }
 
   Future<void> _edit(Errand errand) async {
-    final result = await editErrand(context, errand);
+    final result = await editErrand(
+      context,
+      errand,
+      errands: ref.read(todayProvider).errands,
+    );
     if (!mounted) return;
     final controller = ref.read(todayProvider.notifier);
     switch (result) {
       case SavedErrand(:final errand):
+        final previous = ref.read(todayProvider);
         controller.update(errand);
+        final current = ref.read(todayProvider);
+        if (previous.errands.map((e) => e.id).join('|') !=
+            current.errands.map((e) => e.id).join('|')) {
+          showFeedback(
+            context,
+            'Order updated to match your After rules.',
+            onUndo: () => controller.restore(previous),
+          );
+        }
       case RemovedErrand():
         final previous = ref.read(todayProvider);
         controller.remove(errand.id);
@@ -298,11 +292,10 @@ class _TodayViewState extends ConsumerState<TodayView>
     ),
   );
   Future<void> _planning() async {
-    final saved = await Navigator.of(
+    await Navigator.of(
       context,
       rootNavigator: true,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const DayReviewView()));
-    if (saved == true && mounted) showFeedback(context, 'Manual order saved.');
+    ).push<void>(MaterialPageRoute(builder: (_) => const PlanningView()));
   }
 
   @override
@@ -369,8 +362,6 @@ class _TodayViewState extends ConsumerState<TodayView>
                       start: true,
                       value: day.from,
                       finding: _finding.contains(true),
-                      place: day.fromPlace,
-                      onName: () => _namePin(true),
                       onTap: () => _place(true),
                     ),
                     const Divider(indent: 20, endIndent: 20),
@@ -473,8 +464,6 @@ class _TodayViewState extends ConsumerState<TodayView>
                       start: false,
                       value: day.to,
                       finding: _finding.contains(false),
-                      place: day.toPlace,
-                      onName: () => _namePin(false),
                       onTap: () => _place(false),
                     ),
                     const Divider(),
@@ -491,6 +480,8 @@ class _TodayViewState extends ConsumerState<TodayView>
                               PlaceMapRequest(
                                 philippinesOverview: true,
                                 iconOnlyAttribution: true,
+                                interactive: false,
+                                compactMarkers: true,
                                 pins: [
                                   if (day.fromPlace.hasCoordinates)
                                     MapPin('A', day.fromPlace),
@@ -527,6 +518,36 @@ class _TodayViewState extends ConsumerState<TodayView>
                 ),
               ),
               const SizedBox(height: 8),
+              ref
+                  .watch(savedItineraryProvider)
+                  .when(
+                    data: (plan) => plan == null
+                        ? const SizedBox.shrink()
+                        : Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () =>
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).push<void>(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          SavedPlanView(initial: plan),
+                                    ),
+                                  ),
+                              icon: const Icon(Icons.route_outlined),
+                              label: Text(
+                                'View saved plan · ${plan.completed.length} done',
+                              ),
+                            ),
+                          ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => TextButton(
+                      onPressed: () => ref.invalidate(savedItineraryProvider),
+                      child: const Text('Retry loading saved plan'),
+                    ),
+                  ),
               Text(
                 kIsWeb
                     ? 'Browser preview · Changes last for this session.'
@@ -575,16 +596,12 @@ class EndpointRow extends StatelessWidget {
     required this.value,
     required this.onTap,
     this.finding = false,
-    this.place,
-    this.onName,
     super.key,
   });
   final bool start;
   final String value;
   final VoidCallback onTap;
   final bool finding;
-  final PlaceIntent? place;
-  final VoidCallback? onName;
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
@@ -618,13 +635,6 @@ class EndpointRow extends StatelessWidget {
                   style: context.type.titleMedium,
                 ),
                 if (finding) const Text('Finding address…'),
-                if (!finding &&
-                    value == 'Dropped pin' &&
-                    place?.hasCoordinates == true)
-                  TextButton(
-                    onPressed: onName,
-                    child: const Text('Name this pin'),
-                  ),
               ],
             ),
           ),

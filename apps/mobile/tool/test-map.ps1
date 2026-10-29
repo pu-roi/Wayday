@@ -10,7 +10,7 @@ $previousMapTest = [Environment]::GetEnvironmentVariable('ORG_GRADLE_PROJECT_WAY
 try {
     $env:ORG_GRADLE_PROJECT_WAYDAY_MAP_TEST = 'true'
     $testArguments = @('test', $Target, '-d', $DeviceId, '--no-uninstall')
-    if ($Target -eq 'integration_test/google_search_test.dart') {
+    if ($Target -in @('integration_test/google_search_test.dart', 'integration_test/planning_google_map_test.dart')) {
         $configuration = & (Join-Path $PSScriptRoot 'configure-search.ps1')
         $testArguments += '--dart-define-from-file=' + $configuration
         if ($GoogleSingleSample) { $testArguments += '--dart-define=WAYDAY_GOOGLE_SINGLE_SAMPLE=true' }

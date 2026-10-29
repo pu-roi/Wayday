@@ -719,14 +719,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(recurringProvider).length, 2);
   });
-  testWidgets('planning still explains unavailable calculations honestly', (
+  testWidgets('planning opens the Gemini flow and preserves Today on cancellation', (
     tester,
   ) async {
     await launch(tester, withFixtures: true);
     await tester.tap(find.text('Plan my day'));
     await tester.pumpAndSettle();
     expect(
-      find.textContaining('Travel times and opening hours are not checked'),
+      find.text('Check saved understanding'),
       findsOneWidget,
     );
     await tester.pageBack();
