@@ -10,7 +10,13 @@ The owner also authorized smoother list motion, optional free-form errand notes,
 
 The frontend lives at `apps/mobile/`. The backend root `services/api/` contains the imported bounded place service for review; the app uses the separate Photon-compatible online search adapter. Current UI work does not authorize new backend scaffolding or connecting the pilot service to nationwide search. The combined location picker, Profile saved-place management and Today map controls are implemented but still require integrated Android verification.
 
+On 2026-10-28 the owner authorized a direct-client multi-provider search presentation pilot with Geoapify, LocationIQ, and Photon, conservative per-installation request limits, caching, category search, and preserved provider attribution. Public download, hosted gateway deployment, and billing activation remain separate later work. See D38 and the mobile README for policy and configuration.
+
 Android is the first implementation and verification target. iOS comes later and is not a prerequisite for starting Android work.
+
+On 2026-10-29 the owner selected Google Places UI Kit, traffic-aware Routes API inputs and embedded Navigation SDK as the next integration direction. D42 records local credential/build configuration and bounded Routes qualification; Google app screens and the planner are not implemented by that preparation. The owner created the Cloud project and credentials manually. Do not expose keys, remove restrictions to work around failures, render Google Routes content on MapLibre, treat trial credit as a spending cap, or claim all five vehicle profiles are supported without qualification. Public deployment, billing activation by tools, background tracking and a full backend remain outside this credential task.
+
+On 2026-10-29 the owner authorized Google-first search, explicit Other sources, a pinned Philippine NSI dictionary and expiring Google coordinate references. D43 records the implementation. The bounded isolated Google sample passes after the test identity was authorized. SDK callbacks omit country/address/name content; use the pinned local Philippine land mask for eligibility and retain conservative coastal/small-island fallback. Do not infer complete data coverage or all-device UX from a sample/build. Routing/navigation and public release remain separate work.
 
 ## Sources of truth
 

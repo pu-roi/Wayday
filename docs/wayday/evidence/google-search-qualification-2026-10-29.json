@@ -1,0 +1,178 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Manila",
+  "scope": "Private Android search pilot; no routing, navigation, release or billing change",
+  "target_api": 36,
+  "native_sdk": "Places 6.0.2",
+  "native_ui": "standard PlaceSearchFragment / PlaceDetailsCompactFragment via hybrid composition",
+  "test_application": "dev.wayday.wayday.maptest",
+  "device": "Android API 37 emulator; physical Samsung attempt interrupted by ADB disconnect",
+  "live_sample": {
+    "search_bindings": 8,
+    "details_bindings": 0,
+    "other_provider_requests": 0,
+    "automatic_retries": 0,
+    "rows": [
+      {
+        "query": "Megamall",
+        "returned_count": 2,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "McDo",
+        "returned_count": 10,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "mcdonals",
+        "returned_count": 10,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "jolibee Cebu",
+        "returned_count": 10,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "Colon Street Cebu",
+        "returned_count": 1,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "Mercury Drug Davao",
+        "returned_count": 10,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "Carbon Market Cebu",
+        "returned_count": 1,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      },
+      {
+        "query": "sari-sari store",
+        "returned_count": 10,
+        "place_ids_present": true,
+        "coordinates_present": true,
+        "callback_names_present": false,
+        "callback_addresses_present": false
+      }
+    ],
+    "selection_checks": [
+      "real card touch",
+      "provider-reference draft",
+      "user-owned original label",
+      "local Philippine membership",
+      "explicit confirmation",
+      "no coordinates/address in durable JSON",
+      "fragment disposal"
+    ],
+    "visual_correctness": {
+      "Megamall": "Native cards display SM Megamall Building A and Building B. No standalone root was returned; no root was manufactured and Google order was retained.",
+      "remaining_sample": "Nonempty native results and IDs/coordinates verified. Callback names/addresses are intentionally absent, so full business-label correctness is not asserted by automated metadata checks."
+    }
+  },
+  "additional_native_checks": {
+    "keyboard_fixture": "PASS: actual Android Back, keyboard hide control, query/results preservation and explicit close",
+    "google_keyboard": "PASS: real IME open, Android Back, retained query/interface and visible Google attribution",
+    "small_phone": "PASS: 360x640 logical viewport, OS font scale 1.3, animations disabled, selection and Confirm; settings restored afterward",
+    "missing_google_services": "PASS: disabled Google Play services only on the task emulator, preserved query, explicit fallback, blocked empty confirmation; services restored afterward",
+    "real_map": "PASS: native MapLibre and Google views coexist through selected reference confirmation",
+    "details_metadata": "Standard compact details loaded once during initial metadata qualification. Like search, it returns ID/location without country/name/address. No raw Places request was substituted."
+  },
+  "country_mask": {
+    "source": "Natural Earth Vector v5.1.2",
+    "commit": "f1890d9f152c896d250a77557a5751a93d494776",
+    "license": "public domain",
+    "polygons": 97,
+    "vertices": 7406,
+    "shoreline_exclusion_m": 250,
+    "generated_bytes": 166846,
+    "limitations": "Cartographic land mask. Coastal reclamation, uncertain shorelines and omitted islands can fail closed; manual and Other sources remain available."
+  },
+  "local_controls": {
+    "google_spacing_ms": 1100,
+    "google_minute_starts": 20,
+    "google_rolling_24_hour_starts": 100,
+    "debounce_ms": 1000,
+    "coordinate_max_days": 30,
+    "accounting": "One shared ledger reserves before component binding; failure blocks dispatch"
+  },
+  "retained_emulator_ledger": {
+    "google_starts": 37,
+    "scope": "Local installation retained across qualification runs; includes denied/failed/fixture-check reservations and repeated deliberate tests. Earlier uninstalled harnesses and other devices are not included; not an account-wide total."
+  },
+  "automated_checks": {
+    "analyze": "PASS, no issues",
+    "flutter_test": {
+      "passes": 157,
+      "existing_failures": 9,
+      "new_failure_names": 0,
+      "baseline_passes": 139,
+      "baseline_failures": 9,
+      "existing_failure_names": [
+        "online_pin_picker_test.dart: map pin confirmation returns chosen coordinates",
+        "regional_map_test.dart: unavailable map preserves label saving and Back cancellation at large text",
+        "saved_places_profile_test.dart: place picker offers the updated saved place",
+        "regional_map_test.dart: settings credits work without a map and report missing notices",
+        "regional_map_test.dart: blank native renderer expires without preventing manual label entry",
+        "saved_places_profile_test.dart: profile edits, cancels and deletes without changing another place",
+        "saved_places_profile_test.dart: empty, unavailable, retry and save failures are visible",
+        "today_test.dart: unset endpoints cancel unchanged and save actual manual labels",
+        "today_test.dart: manual map labels edit endpoints and errand locations without geocoding"
+      ]
+    },
+    "focused_after_final_styling": "20 passes",
+    "android_build": "PASS: normal ARM64 debug APK, API 36"
+  },
+  "configuration": {
+    "isolated_identity_authorized_by_owner": true,
+    "sdk_key_matches_built_manifest": true,
+    "routes_key_absent_from_manifest": true,
+    "sdk_key_values_recorded": false
+  },
+  "limitations": [
+    "Billing dashboard request consumption was not accessible; Console remains account-wide source of truth.",
+    "No complete business coverage or nearest-branch guarantee.",
+    "Google callback text is not available to custom ranking, merging or durable storage.",
+    "TalkBack end-to-end navigation and every keyboard/device remain unverified.",
+    "Personal app was not installed over or uninstalled.",
+    "Keys embedded in the pilot APK remain extractable."
+  ],
+  "apk_checks": {
+    "normal_application_id": true,
+    "target_api_36": true,
+    "sdk_key_matches_local": true,
+    "routes_key_absent_from_manifest": true,
+    "bundled_notices_and_font": {
+      "assets/fonts/OFL.txt": true,
+      "assets/notices/nsi/LICENSE.txt": true,
+      "assets/notices/natural-earth/NOTICE.txt": true,
+      "res/font/figtree.ttf": true
+    }
+  },
+  "source_scan": {
+    "files_scanned": 236,
+    "credential_matches": []
+  }
+}

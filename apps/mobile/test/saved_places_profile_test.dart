@@ -1,3 +1,4 @@
+import 'package:wayday/features/places/data/google_pin_cache.dart';
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -86,7 +87,10 @@ Future<void> openPlaces(WidgetTester tester) async {
 void main() {
   testWidgets('place picker offers the updated saved place', (tester) async {
     final db = WaydayDatabase(NativeDatabase.memory());
-    final local = await LocalRepositories.open(database: db);
+    final local = await LocalRepositories.open(
+      database: db,
+      googlePins: GooglePinCache(read: () async => null, write: (_) async {}),
+    );
     await local.savedPlaces.add(original);
     await local.savedPlaces.update(
       const SavedPlace(
@@ -137,7 +141,13 @@ void main() {
         await repo.add(original);
         await repo.add(other);
         final snapshot = original.intent;
-        final local = await LocalRepositories.open(database: db);
+        final local = await LocalRepositories.open(
+          database: db,
+          googlePins: GooglePinCache(
+            read: () async => null,
+            write: (_) async {},
+          ),
+        );
         await local.today.save(
           DayPlan(
             errands: [
@@ -173,7 +183,13 @@ void main() {
         await db.close();
         db = WaydayDatabase(NativeDatabase(file));
         expect((await SqliteSavedPlaceRepository(db).read()).single.id, 'two');
-        final reopened = await LocalRepositories.open(database: db);
+        final reopened = await LocalRepositories.open(
+          database: db,
+          googlePins: GooglePinCache(
+            read: () async => null,
+            write: (_) async {},
+          ),
+        );
         expect(reopened.today.read().fromPlace.latitude, 14);
         expect(reopened.today.read().errands.single.placeIntent.label, 'Home');
       } finally {

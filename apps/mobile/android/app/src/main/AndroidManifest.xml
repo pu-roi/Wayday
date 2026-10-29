@@ -7,6 +7,10 @@
         android:label="Wayday"
         android:name="${applicationName}"
         android:icon="@drawable/wayday_icon">
+        <!-- Local build configuration; the value is never committed in source. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${waydayGoogleMapsApiKey}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

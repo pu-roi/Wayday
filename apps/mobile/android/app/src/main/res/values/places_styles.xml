@@ -1,0 +1,49 @@
+<resources>
+    <style name="WaydayPlacesTheme" parent="PlacesMaterialTheme">
+        <item name="placesColorPrimary">#285C86</item>
+        <item name="placesColorSurface">#FFFFFF</item>
+        <item name="placesColorOutlineDecorative">#DEE7ED</item>
+        <item name="placesColorOnSurface">#1D2C38</item>
+        <item name="placesColorOnSurfaceVariant">#5A6C7B</item>
+        <item name="placesColorSecondaryContainer">#6AA6DA</item>
+        <item name="placesColorOnSecondaryContainer">#102D44</item>
+        <item name="placesColorButtonBorder">#DEE7ED</item>
+        <item name="placesColorNeutralContainer">#F0F5F8</item>
+        <item name="placesColorOnNeutralContainer">#5A6C7B</item>
+        <item name="placesColorAttributionLightTheme">gray</item>
+        <item name="placesColorAttributionDarkTheme">gray</item>
+        <item name="placesBorderWidth">0dp</item>
+        <item name="placesBorderWidthButton">1dp</item>
+        <item name="placesCornerRadius">0dp</item>
+        <item name="placesCornerRadiusCard">0dp</item>
+        <item name="placesCornerRadiusButton">18dp</item>
+        <item name="placesSpacingExtraSmall">2dp</item>
+        <item name="placesSpacingSmall">4dp</item>
+        <item name="placesSpacingMedium">8dp</item>
+        <item name="placesSpacingLarge">12dp</item>
+        <item name="placesSpacingExtraLarge">16dp</item>
+        <item name="placesSpacingTwoExtraLarge">24dp</item>
+        <item name="placesTextAppearanceTitleSmall">@style/WaydayPlacesTitle</item>
+        <item name="placesTextAppearanceDisplaySmall">@style/WaydayPlacesTitle</item>
+        <item name="placesTextAppearanceBodySmall">@style/WaydayPlacesBody</item>
+        <item name="placesTextAppearanceBodyMedium">@style/WaydayPlacesBody</item>
+        <item name="placesTextAppearanceLabelLarge">@style/WaydayPlacesLabel</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <style name="WaydayPlacesTitle">
+        <item name="fontFamily">@font/figtree</item>
+        <item name="android:fontFamily">@font/figtree</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:letterSpacing">0.018</item>
+    </style>
+    <style name="WaydayPlacesBody">
+        <item name="fontFamily">@font/figtree</item>
+        <item name="android:fontFamily">@font/figtree</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:letterSpacing">0.018</item>
+    </style>
+    <style name="WaydayPlacesLabel" parent="WaydayPlacesBody">
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

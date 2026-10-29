@@ -226,3 +226,14 @@ The sidecar's self-contained HTML/CSS snippets translate native shapes and group
 - **Don't** present illustrative map geometry as geographic data, search results, or a calculated route.
 - **Don't** imply unverified persistence for a new feature or claim that repeat metadata schedules automatic additions. Today/Recurring restart persistence is verified on Android.
 - **Don't** treat native screenshots as verification of TalkBack, predictive Back, or performance.
+
+
+## Shared place search (2026-10-29)
+
+Google and Other sources share the original picker controls and Figtree/Cornflower vocabulary. Keep the title, Close search, and rounded pale query field fixed above the content. The source choices are compact text actions; the active source uses stronger weight and an underline, without a filled selection block. The active origin, Near me / Use my location, Search this area, and Places heading stay in the search content. Correction copy, saved-place rows and failure/retry controls are shared between source groups.
+
+Keep the same controls while typing. Do not replace them with a Search options menu or remove the fallback actions when the keyboard appears. Use name only remains a full icon/title/subtitle row, followed by the separate Back to map action. Other sources retains its lazy, scrolling pin-icon rows, addresses, straight-line distance labels and provider credits. Google uses content-sized controls above its native list and full fallback rows below; on constrained viewports the controls and fallback regions scroll, reserving a 180-unit native results viewport on normal panels and 45 percent on panels of 400 units or less. Their height limits are ceilings, not reserved blank space.
+
+Google retains standard native cards, their order, attribution and required controls. Position the SDK's Google Maps attribution at the bottom of the native results component, above Wayday's name-only/map fallback region; do not replace or hide it. Supported theme overrides use regular-weight sixteen-unit place names, fourteen-unit muted addresses, Figtree, flat white surfaces, quiet outlines and Cornflower actions. The SDK card structure differs from Wayday's custom pin-icon rows; this restoration does not manufacture custom Google results or distance labels. Font resources still come from the existing licensed bundled asset.
+
+The native host keeps its key and tree position through IME, text-scale, status and layout changes. These changes must not rebind a search request. Source switching preserves the query, origin and draft; selecting a record still leads to Your label and Confirm location. Verification and remaining device limitations are recorded in Progress.

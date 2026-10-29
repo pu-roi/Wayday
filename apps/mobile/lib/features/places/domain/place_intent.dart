@@ -1,12 +1,36 @@
-enum PlaceKind { unresolved, specific, saved, search }
+enum PlaceKind { unresolved, specific, saved, search, providerReference }
+
+/// A revocable, temporary coordinate lease. Copies share the original expiry.
+class GooglePinLease {
+  GooglePinLease({DateTime Function()? now}) : now = now ?? DateTime.now;
+  final DateTime Function() now;
+  double? latitude, longitude;
+  DateTime? acquiredAt;
+  bool get valid {
+    final acquired = acquiredAt;
+    return acquired != null &&
+        !now().isBefore(acquired) &&
+        now().isBefore(acquired.add(const Duration(days: 30))) &&
+        latitude != null &&
+        longitude != null;
+  }
+
+  void clear() {
+    latitude = null;
+    longitude = null;
+    acquiredAt = null;
+  }
+}
+
+typedef GooglePinResolver = GooglePinLease Function(String placeId);
 
 /// A label is deliberately unresolved until coordinates or a search rule exist.
 class PlaceIntent {
   const PlaceIntent({
     this.kind = PlaceKind.unresolved,
     this.label = '',
-    this.latitude,
-    this.longitude,
+    double? latitude,
+    double? longitude,
     this.savedPlaceId,
     this.category,
     this.brand,
@@ -14,54 +38,83 @@ class PlaceIntent {
     this.address,
     this.sourceDate,
     this.coordinateKind,
-  });
+    this.provider,
+    this.retrievedAt,
+    this.attributions = const [],
+    this.providerPlaceId,
+    this.googlePin,
+  }) : _latitude = latitude,
+       _longitude = longitude;
 
   final PlaceKind kind;
   final String label;
-  final double? latitude;
-  final double? longitude;
+  final double? _latitude, _longitude;
+  final String? providerPlaceId;
+  final GooglePinLease? googlePin;
+  bool get isGoogle => provider == 'google_ui_kit';
+  double? get latitude => isGoogle
+      ? (googlePin?.valid == true ? googlePin!.latitude : null)
+      : _latitude;
+  double? get longitude => isGoogle
+      ? (googlePin?.valid == true ? googlePin!.longitude : null)
+      : _longitude;
   final String? savedPlaceId;
   final String? category;
   final String? brand;
   final String source;
-  final String? address, sourceDate, coordinateKind;
+  final String? address, sourceDate, coordinateKind, provider, retrievedAt;
+  final List<String> attributions;
 
-  bool get hasCoordinates =>
-      latitude != null &&
-      longitude != null &&
-      latitude!.isFinite &&
-      longitude!.isFinite &&
-      latitude!.abs() <= 90 &&
-      longitude!.abs() <= 180;
+  bool get hasCoordinates {
+    final lat = latitude, lon = longitude;
+    return lat != null &&
+        lon != null &&
+        lat.isFinite &&
+        lon.isFinite &&
+        lat.abs() <= 90 &&
+        lon.abs() <= 180;
+  }
 
   Map<String, Object?> toJson() => {
-    'kind': kind.name,
+    'kind': isGoogle ? PlaceKind.providerReference.name : kind.name,
     'label': label,
-    'latitude': latitude,
-    'longitude': longitude,
+    if (!isGoogle) 'latitude': latitude,
+    if (!isGoogle) 'longitude': longitude,
     'savedPlaceId': savedPlaceId,
-    'category': category,
-    'brand': brand,
+    if (!isGoogle) 'category': category,
+    if (!isGoogle) 'brand': brand,
     'source': source,
-    'address': address,
-    'sourceDate': sourceDate,
-    'coordinateKind': coordinateKind,
+    if (!isGoogle) 'address': address,
+    if (!isGoogle) 'sourceDate': sourceDate,
+    if (!isGoogle) 'coordinateKind': coordinateKind,
+    'provider': provider,
+    if (!isGoogle) 'retrievedAt': retrievedAt,
+    if (providerPlaceId != null) 'providerPlaceId': providerPlaceId,
+    'attributions': attributions,
   };
 
-  factory PlaceIntent.fromJson(Map<String, dynamic> json) {
-    final latitude = (json['latitude'] as num?)?.toDouble();
-    final longitude = (json['longitude'] as num?)?.toDouble();
+  factory PlaceIntent.fromJson(
+    Map<String, dynamic> json, {
+    GooglePinResolver? resolveGooglePin,
+  }) {
+    final google = json['provider'] == 'google_ui_kit';
+    final placeId = json['providerPlaceId'] as String?;
+    if (google && (placeId == null || placeId.trim().isEmpty)) {
+      throw const FormatException('A Google reference needs a place ID');
+    }
+    final latitude = google ? null : (json['latitude'] as num?)?.toDouble();
+    final longitude = google ? null : (json['longitude'] as num?)?.toDouble();
     if ((latitude == null) != (longitude == null) ||
         (latitude != null && (!latitude.isFinite || latitude.abs() > 90)) ||
         (longitude != null && (!longitude.isFinite || longitude.abs() > 180))) {
       throw const FormatException('Invalid place coordinates');
     }
     final kind = PlaceKind.values.byName(json['kind'] as String);
-    if (kind == PlaceKind.specific && latitude == null) {
+    if (!google && kind == PlaceKind.specific && latitude == null) {
       throw const FormatException('A specific place needs coordinates');
     }
     return PlaceIntent(
-      kind: kind,
+      kind: google ? PlaceKind.providerReference : kind,
       label: json['label'] as String,
       latitude: latitude,
       longitude: longitude,
@@ -69,11 +122,35 @@ class PlaceIntent {
       category: json['category'] as String?,
       brand: json['brand'] as String?,
       source: json['source'] as String? ?? 'user',
-      address: json['address'] as String?,
+      address: google ? null : json['address'] as String?,
       sourceDate: json['sourceDate'] as String?,
       coordinateKind: json['coordinateKind'] as String?,
+      provider: json['provider'] as String?,
+      retrievedAt: json['retrievedAt'] as String?,
+      attributions: (json['attributions'] as List?)?.cast<String>() ?? const [],
+      providerPlaceId: placeId,
+      googlePin: google ? resolveGooglePin?.call(placeId!) : null,
     );
   }
+
+  PlaceIntent withLabel(String value) => PlaceIntent(
+    kind: kind,
+    label: value,
+    latitude: latitude,
+    longitude: longitude,
+    savedPlaceId: savedPlaceId,
+    category: category,
+    brand: brand,
+    source: source,
+    address: address,
+    sourceDate: sourceDate,
+    coordinateKind: coordinateKind,
+    provider: provider,
+    retrievedAt: retrievedAt,
+    attributions: attributions,
+    providerPlaceId: providerPlaceId,
+    googlePin: googlePin,
+  );
 }
 
 class SavedPlace {
@@ -81,9 +158,15 @@ class SavedPlace {
   final String id;
   final PlaceIntent place;
   Map<String, Object?> toJson() => {'id': id, 'place': place.toJson()};
-  factory SavedPlace.fromJson(Map<String, dynamic> json) => SavedPlace(
+  factory SavedPlace.fromJson(
+    Map<String, dynamic> json, {
+    GooglePinResolver? resolveGooglePin,
+  }) => SavedPlace(
     id: json['id'] as String,
-    place: PlaceIntent.fromJson(json['place'] as Map<String, dynamic>),
+    place: PlaceIntent.fromJson(
+      json['place'] as Map<String, dynamic>,
+      resolveGooglePin: resolveGooglePin,
+    ),
   );
 
   PlaceIntent get intent => PlaceIntent(
@@ -96,5 +179,10 @@ class SavedPlace {
     address: place.address,
     sourceDate: place.sourceDate,
     coordinateKind: place.coordinateKind,
+    provider: place.provider,
+    retrievedAt: place.retrievedAt,
+    attributions: place.attributions,
+    providerPlaceId: place.providerPlaceId,
+    googlePin: place.googlePin,
   );
 }

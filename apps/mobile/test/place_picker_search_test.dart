@@ -1,3 +1,4 @@
+import 'package:wayday/features/places/data/google_search.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -9,7 +10,9 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/core/data/local_repositories.dart';
 import 'package:wayday/core/widgets/place_picker.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
-import 'package:wayday/features/places/data/philippine_place_search.dart';
+import 'package:wayday/features/places/data/combined_place_search.dart';
+import 'package:wayday/features/places/data/search_adapters.dart';
+import 'package:wayday/features/places/data/search_quota.dart';
 import 'package:wayday/features/places/data/saved_place_repository.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 
@@ -54,9 +57,26 @@ Future<void> launch(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        philippinePlaceSearchProvider.overrideWithValue(
-          PhilippinePlaceSearch(client, Uri.parse('https://example.test/api')),
-        ),
+          searchSourceChoiceProvider.overrideWithValue(SearchSourceChoice()..choose(SearchSource.others)),
+        combinedPlaceSearchProvider.overrideWith((ref) {
+          final service = CombinedPlaceSearch(
+            [
+              HttpSearchAdapter(
+                client,
+                'photon',
+                endpoint: 'https://example.test/api',
+              ),
+            ],
+            QuotaLedger(
+              read: () async => null,
+              write: (_) async {},
+              now: tester.binding.clock.now,
+            ),
+            now: tester.binding.clock.now,
+          );
+          ref.onDispose(service.dispose);
+          return service;
+        }),
         savedPlaceRepositoryProvider.overrideWithValue(saved),
         placeMapBuilderProvider.overrideWithValue((request) {
           map?.call(request);
@@ -102,6 +122,160 @@ Future<void> launch(
 
 void main() {
   testWidgets(
+    'system Back hides the keyboard and preserves search until explicitly closed',
+    (tester) async {
+      var returned = false;
+      var calls = 0;
+      await launch(
+        tester,
+        client: MockClient((_) async {
+          calls++;
+          return results('Cebu City');
+        }),
+        returned: (_) => returned = true,
+      );
+      await tester.enterText(find.byKey(const Key('place-name')), 'Cebu');
+      await tester.pump(const Duration(milliseconds: 1500));
+      await tester.pumpAndSettle();
+      expect(tester.testTextInput.isVisible, isTrue);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(tester.testTextInput.isVisible, isFalse);
+      expect(find.byKey(const Key('place-search-results')), findsOneWidget);
+      expect(find.text('Cebu City'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('place-name')))
+            .controller!
+            .text,
+        'Cebu',
+      );
+      expect(returned, isFalse);
+      // Back delivered after Android has already hidden the IME also stays in search.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('place-search-results')), findsOneWidget);
+      expect(calls, 1);
+      await tester.tap(find.byTooltip('Close search'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('place-search-results')), findsNothing);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('place-name')))
+            .controller!
+            .text,
+        'Cebu',
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(returned, isTrue);
+    },
+  );
+  testWidgets(
+    'keyboard dismissal and inset changes keep query and results open',
+    (tester) async {
+      var calls = 0;
+      addTearDown(tester.view.resetViewInsets);
+      await launch(
+        tester,
+        client: MockClient((_) async {
+          calls++;
+          return results('Cebu City');
+        }),
+      );
+      await tester.enterText(find.byKey(const Key('place-name')), 'Cebu');
+      tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+      await tester.pump(const Duration(milliseconds: 1500));
+      await tester.pumpAndSettle();
+      tester.testTextInput.hide();
+      tester.view.viewInsets = const FakeViewPadding();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('place-search-results')), findsOneWidget);
+      expect(find.text('Cebu City'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('place-name')))
+            .controller!
+            .text,
+        'Cebu',
+      );
+      await tester.pump(const Duration(seconds: 2));
+      expect(calls, 1);
+      // The field remains editable after the phone keyboard is shown again.
+      await tester.showKeyboard(find.byKey(const Key('place-name')));
+      await tester.pumpAndSettle();
+      expect(find.text('Cebu City'), findsOneWidget);
+      expect(calls, 1);
+      await tester.tap(find.byTooltip('Close search'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('place-search-results')), findsNothing);
+    },
+  );
+
+  testWidgets('hiding the keyboard preserves an in-flight search response', (
+    tester,
+  ) async {
+    final pending = Completer<http.Response>();
+    addTearDown(tester.view.resetViewInsets);
+    await launch(tester, client: MockClient((_) => pending.future));
+    await tester.enterText(find.byKey(const Key('place-name')), 'Cebu');
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    await tester.pump(const Duration(milliseconds: 1500));
+    tester.testTextInput.hide();
+    tester.view.viewInsets = const FakeViewPadding();
+    await tester.pump();
+    pending.complete(results('Cebu City'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('place-search-results')), findsOneWidget);
+    expect(find.text('Cebu City'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('place-name')))
+          .controller!
+          .text,
+      'Cebu',
+    );
+  });
+  testWidgets(
+    'category navigation preserves text and waits for Search this area',
+    (tester) async {
+      var calls = 0;
+      PlaceMapRequest? map;
+      await launch(
+        tester,
+        client: MockClient((_) async {
+          calls++;
+          return results('Market');
+        }),
+        map: (value) => map = value,
+      );
+      map!.onViewportChanged!(14.5, 121, 12);
+      await tester.enterText(find.byKey(const Key('place-name')), 'palengke');
+      await tester.pump();
+      await tester.tap(find.text('Find markets in this area'));
+      await tester.pump(const Duration(seconds: 2));
+      // The fixture only enables Photon, which deliberately does not serve categories.
+      expect(calls, 0);
+      await tester.ensureVisible(find.text('Back to map'));
+      await tester.tap(find.text('Back to map'));
+      await tester.pump();
+      expect(find.text('Search this area'), findsOneWidget);
+      map!.onViewportChanged!(14.6, 121, 12);
+      await tester.pump(const Duration(seconds: 2));
+      expect(calls, 0);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('place-name')))
+            .controller!
+            .text,
+        'palengke',
+      );
+      await tester.tap(find.text('Search this area'));
+      await tester.pump(const Duration(seconds: 2));
+      expect(calls, 0);
+    },
+  );
+  testWidgets(
     'small-phone search and confirmation handle long names at larger text',
     (tester) async {
       tester.view.physicalSize = const Size(360, 740);
@@ -115,7 +289,7 @@ void main() {
         client: MockClient((_) async => results(name)),
       );
       await tester.enterText(find.byKey(const Key('place-name')), 'Paaralan');
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.widgetWithText(ListTile, name));
       await tester.tap(find.widgetWithText(ListTile, name));
@@ -144,7 +318,7 @@ void main() {
     expect(find.text('Choose on map'), findsNothing);
     expect(find.text('Use map center'), findsNothing);
     await tester.enterText(find.byKey(const Key('place-name')), 'Cebu');
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 1500));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cebu City'));
     await tester.pumpAndSettle();
@@ -169,7 +343,7 @@ void main() {
       returned: (value) => selected = value,
     );
     await tester.enterText(find.byKey(const Key('place-name')), 'Business');
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 1500));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ListTile, 'Business'));
     await tester.pumpAndSettle();
@@ -228,7 +402,7 @@ void main() {
         find.byKey(const Key('place-name')),
         'Library entrance',
       );
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
       expect(find.text('Place search is unavailable.'), findsOneWidget);
       await tester.ensureVisible(find.text('Use name only'));
@@ -260,9 +434,9 @@ void main() {
         },
       );
       await tester.enterText(find.byKey(const Key('place-name')), 'Cebu');
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 1500));
       expect(calls, 1);
-      await tester.pageBack();
+      await tester.tap(find.byTooltip('Close search'));
       await tester.pumpAndSettle();
       expect(find.text('Move map'), findsOneWidget);
       pending.complete(results('Old Cebu'));

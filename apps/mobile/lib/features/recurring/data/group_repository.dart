@@ -1,3 +1,4 @@
+import '../../places/domain/place_intent.dart';
 import 'dart:convert';
 import 'package:drift/drift.dart';
 
@@ -33,7 +34,10 @@ class SqliteGroupRepository implements GroupRepository {
   final SerialWriteQueue _writes = SerialWriteQueue();
   List<ErrandGroup> _groups;
 
-  static Future<SqliteGroupRepository> open(WaydayDatabase database) async {
+  static Future<SqliteGroupRepository> open(
+    WaydayDatabase database, {
+    GooglePinResolver? resolveGooglePin,
+  }) async {
     final groupRows = await (database.select(
       database.recurringGroups,
     )..orderBy([(row) => OrderingTerm.asc(row.position)])).get();
@@ -54,6 +58,7 @@ class SqliteGroupRepository implements GroupRepository {
               item.details != null
                   ? Errand.fromJson(
                       jsonDecode(item.details!) as Map<String, dynamic>,
+                      resolveGooglePin: resolveGooglePin,
                     )
                   : Errand(
                       id: item.id,

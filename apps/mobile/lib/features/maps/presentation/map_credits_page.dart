@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
 import '../data/regional_map_repository.dart';
+import 'package:flutter/services.dart';
 
 void openMapCredits(BuildContext context) {
   Navigator.of(
@@ -63,6 +64,32 @@ class MapCreditsPage extends ConsumerWidget {
                     ],
                   ),
                 ),
+            Text('Place search', style: context.type.titleMedium),
+            const SelectableText(
+              'Google Maps · Powered by Geoapify · Search by LocationIQ.com · Photon / OpenStreetMap contributors',
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Philippine brand vocabulary: OpenStreetMap Name Suggestion Index 8.0.20260918. No logos or branch coordinates are bundled.',
+            ),
+            FutureBuilder<String>(
+              future: rootBundle.loadString('assets/notices/nsi/LICENSE.txt'),
+              builder: (context, snapshot) => snapshot.hasData
+                  ? SelectableText(snapshot.data!)
+                  : const Text('NSI BSD-3-Clause notice is loading.'),
+            ),
+            const SizedBox(height: 24),
+            const SelectableText(
+              'Philippine search eligibility: Made with Natural Earth, public-domain country data (v5.1.2). Cartographic land mask; coastal precision and small-island coverage are limited. https://www.naturalearthdata.com/about/terms-of-use/',
+            ),
+            const SizedBox(height: 24),
+            const Text('Figtree font · SIL Open Font License 1.1'),
+            FutureBuilder<String>(
+              future: rootBundle.loadString('assets/fonts/OFL.txt'),
+              builder: (context, snapshot) => snapshot.hasData
+                  ? SelectableText(snapshot.data!)
+                  : const Text('Font license is loading.'),
+            ),
           ],
         ),
       ),

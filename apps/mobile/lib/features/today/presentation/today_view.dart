@@ -13,6 +13,7 @@ import '../../errands/presentation/errand_list.dart';
 import '../../review/presentation/day_review_view.dart';
 import '../../maps/presentation/place_map.dart';
 import '../../maps/presentation/regional_map.dart';
+import '../../places/data/google_pin_cache.dart';
 import '../domain/day.dart';
 import 'today_controller.dart';
 
@@ -31,6 +32,23 @@ class TodayView extends ConsumerStatefulWidget {
 }
 
 class _TodayViewState extends ConsumerState<TodayView> {
+  late final GooglePinCache _googlePins;
+  @override
+  void initState() {
+    super.initState();
+    _googlePins = ref.read(googlePinCacheProvider)..addListener(_pinsChanged);
+  }
+
+  void _pinsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _googlePins.removeListener(_pinsChanged);
+    super.dispose();
+  }
+
   bool _expanded = true;
   bool _showAll = false;
   void _clear() {

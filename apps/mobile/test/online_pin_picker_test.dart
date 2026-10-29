@@ -1,4 +1,7 @@
+import 'package:wayday/features/places/data/google_search.dart';
+import 'package:wayday/features/places/data/google_pin_cache.dart';
 import 'dart:async';
+import 'support/fake_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,12 +14,53 @@ import 'package:wayday/features/maps/data/location_reader.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 
 void main() {
-  testWidgets('bookmark saves the selected pin locally', (tester) async {
-    final database = WaydayDatabase(NativeDatabase.memory());
-    final repositories = await LocalRepositories.open(database: database);
+  testWidgets('zoom label follows the map camera above location control', (
+    tester,
+  ) async {
+    PlaceMapRequest? request;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
+          placeMapBuilderProvider.overrideWithValue((value) {
+            request = value;
+            return const SizedBox.expand();
+          }),
+        ],
+        child: const MaterialApp(home: OnlinePinPicker(initial: null)),
+      ),
+    );
+    expect(find.byKey(const Key('map-zoom-label')), findsNothing);
+    request!.onZoomChanged!(4.7);
+    await tester.pump();
+    expect(find.text('Z: 4.7'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const Key('map-zoom-label'))).width,
+      tester.getSize(find.byKey(const Key('map-location-control'))).width,
+    );
+    expect(
+      tester.getBottomLeft(find.byKey(const Key('map-zoom-label'))).dy,
+      lessThan(tester.getTopLeft(find.byTooltip('Use my location')).dy),
+    );
+    request!.onZoomChanged!(12.34);
+    await tester.pump();
+    expect(find.text('Z: 12.3'), findsOneWidget);
+  });
+
+  testWidgets('bookmark saves the selected pin locally', (tester) async {
+    final database = WaydayDatabase(NativeDatabase.memory());
+    final repositories = await LocalRepositories.open(
+      database: database,
+      googlePins: GooglePinCache(read: () async => null, write: (_) async {}),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
           localRepositoriesProvider.overrideWithValue(repositories),
           placeMapBuilderProvider.overrideWithValue(
             (request) => TextButton(
@@ -46,10 +90,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          locationReaderProvider.overrideWithValue(
-            () async => throw const LocationUnavailable(
-              'Location permission is unavailable. Move the map to choose your pin.',
-            ),
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
+          locationPlatformProvider.overrideWithValue(
+            FakeLocationPlatform(access: LocationAccess.denied)
+              ..grant = LocationAccess.denied,
           ),
           placeMapBuilderProvider.overrideWithValue(
             (request) => TextButton(
@@ -89,8 +135,13 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            locationReaderProvider.overrideWithValue(
-              () async => const LocationFix(14.5, 121.0, 30),
+            searchSourceChoiceProvider.overrideWithValue(
+              SearchSourceChoice()..choose(SearchSource.others),
+            ),
+            locationPlatformProvider.overrideWithValue(
+              FakeLocationPlatform(
+                reader: () async => const LocationFix(14.5, 121.0, 30),
+              ),
             ),
             placeMapBuilderProvider.overrideWithValue((value) {
               request = value;
@@ -105,6 +156,8 @@ void main() {
       await tester.tap(find.byTooltip('Use my location'));
       await tester.pumpAndSettle();
       expect(request!.focus!.latitude, 14.5);
+      expect(request!.focusZoom, 18);
+      expect(request!.animateFocus, isTrue);
       expect(find.textContaining('Accuracy about 30 m'), findsOneWidget);
       expect(
         tester
@@ -125,6 +178,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
           placeMapBuilderProvider.overrideWithValue(
             (request) => TextButton(
               onPressed: () => request.onSelect!(10.3, 123.9),
@@ -180,6 +236,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            searchSourceChoiceProvider.overrideWithValue(
+              SearchSourceChoice()..choose(SearchSource.others),
+            ),
             placeMapBuilderProvider.overrideWithValue((value) {
               request = value;
               return const SizedBox();
@@ -210,6 +269,7 @@ void main() {
       );
       request!.onMoveStarted!();
       await tester.pump();
+      expect(find.text('Positioning pin…'), findsNothing);
       expect(
         tester
             .widget<FilledButton>(
@@ -221,7 +281,14 @@ void main() {
       request!.onSelect!(10.4, 123.8);
       await tester.pump();
       expect(find.text('Old address'), findsNothing);
-      expect(find.text('Dropped pin'), findsWidgets);
+      expect(find.text('Dropped pin'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('place-name')))
+            .controller!
+            .text,
+        'Branch',
+      );
       expect(
         tester
             .widget<FilledButton>(
@@ -233,6 +300,43 @@ void main() {
     },
   );
 
+  testWidgets('map movement leaves an empty search field empty', (
+    tester,
+  ) async {
+    PlaceMapRequest? request;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
+          placeMapBuilderProvider.overrideWithValue((value) {
+            request = value;
+            return const SizedBox.expand(key: Key('test-map'));
+          }),
+        ],
+        child: const MaterialApp(home: OnlinePinPicker(initial: null)),
+      ),
+    );
+    request!.onSelect!(14.5, 121);
+    await tester.pump();
+    final mapHeight = tester.getSize(find.byKey(const Key('test-map'))).height;
+    request!.onMoveStarted!();
+    await tester.pump();
+    expect(tester.getSize(find.byKey(const Key('test-map'))).height, mapHeight);
+    expect(find.text('Positioning pin…'), findsNothing);
+    request!.onSelect!(14.6, 121.1);
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('place-name')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+    expect(find.text('Dropped pin'), findsOneWidget);
+  });
+
   testWidgets('moving the map wins over a late device-location result', (
     tester,
   ) async {
@@ -241,7 +345,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          locationReaderProvider.overrideWithValue(() => fix.future),
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
+          locationPlatformProvider.overrideWithValue(
+            FakeLocationPlatform(reader: () => fix.future),
+          ),
           placeMapBuilderProvider.overrideWithValue((value) {
             request = value;
             return const SizedBox();

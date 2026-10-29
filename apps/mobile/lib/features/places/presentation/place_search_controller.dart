@@ -1,99 +1,553 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../data/philippine_place_search.dart';
+import '../data/combined_place_search.dart';
+import '../domain/place_search.dart';
+import '../domain/search_ranking.dart';
+import '../domain/search_terms.dart';
+import '../domain/place_intent.dart';
+import '../data/google_search.dart';
+import '../data/google_pin_cache.dart';
 
-/// Debounces queries and runs at most one request, retaining only the latest query.
 class PlaceSearchController extends ChangeNotifier {
-  PlaceSearchController(this.search);
-  final Future<List<PlaceSearchResult>> Function(String) search;
-  String query = '';
-  List<PlaceSearchResult> results = const [];
-  bool loading = false, failed = false, searched = false;
-  Timer? _debounce;
-  bool _running = false, _queued = false, _disposed = false;
-  int _revision = 0;
-  final _cache = <String, List<PlaceSearchResult>>{};
+  PlaceSearchController(
+    this.service, {
+    this.google,
+    this.sourceChoice,
+    this.pins,
+  }) {
+    sourceChoice?.addListener(_sourceChanged);
+  }
+  final GoogleSearchService? google;
+  final SearchSourceChoice? sourceChoice;
+  final GooglePinCache? pins;
+  GoogleSearchBridge? _bridge;
+  GoogleNativeRequest? _googleVisible, _googleStaged;
+  int? _googlePending;
+  int _googleCount = 0, _googleStagedCount = 0;
+  String? _resolvingId;
+  bool _detailsStarted = false;
+  bool _selecting = false;
+  bool _original = false;
+  String? _suggested;
+  ValueChanged<PlaceIntent>? onGoogleSelection;
+  String? googleMessage;
+  SearchSource get source => sourceChoice?.value ?? SearchSource.others;
+  bool get usesGoogle => source == SearchSource.google;
+  bool get googleSupported => google?.enabled == true;
+  SearchInterpretation? _interpreted;
+  String? _interpretationKey;
+  SearchInterpretation get interpretation {
+    final text = _suggested ?? query;
+    final key = '$text|$_original';
+    if (_interpretationKey != key) {
+      _interpretationKey = key;
+      _interpreted = interpretSearch(text, useOriginal: _original);
+    }
+    return _interpreted!;
+  }
 
-  void change(String value) {
-    final next = value.trim();
-    if (next == query) return;
-    _reset(next);
-    if (query.length >= 2) {
-      _debounce = Timer(const Duration(milliseconds: 600), _request);
+  String get interpretedText => interpretation.providerText;
+  void chooseSource(SearchSource value) => sourceChoice?.choose(value);
+  void _sourceChanged() {
+    _newOriginSearch();
+  }
+
+  void attachGoogle(GoogleSearchBridge bridge) {
+    _bridge = bridge;
+    if (usesGoogle && _started && !_suspended) _launch();
+  }
+
+  void detachGoogle(GoogleSearchBridge bridge) {
+    if (_bridge == bridge) {
+      google?.cancel(_owner);
+      _bridge = null;
+      _googlePending = null;
+      _googleVisible = null;
     }
   }
 
-  void _reset(String value) {
-    _debounce?.cancel();
-    _revision++;
-    query = value;
-    _queued = false;
-    loading = false;
-    failed = false;
-    searched = false;
-    results = const [];
-    notifyListeners();
+  void _clearGoogle() {
+    google?.cancel(_owner);
+    _bridge?.cancel();
+    _googlePending = null;
+    _googleVisible = null;
+    _googleStaged = null;
+    _resolvingId = null;
+    _detailsStarted = false;
+    _googleCount = 0;
+    googleMessage = null;
   }
 
-  void dismiss() => _reset('');
-
-  void submit() {
-    _debounce?.cancel();
-    if (!searched && !loading) _request();
+  void searchOriginal() {
+    _original = true;
+    _suggested = null;
+    _clearGoogle();
+    _newOriginSearch();
   }
 
-  void retry() {
-    failed = false;
-    _request();
+  void chooseSuggestion(String text) {
+    _suggested = text;
+    _original = false;
+    _clearGoogle();
+    _newOriginSearch();
   }
 
-  Future<void> _request() async {
-    if (_disposed || query.length < 2) return;
-    if (_running) {
-      _queued = true;
+  Future<void> googleSelected(GooglePlaceSnapshot snapshot) async {
+    if (_disposed || !usesGoogle || _suspended || _selecting) return;
+    final visible = _googleVisible;
+    final resolving =
+        snapshot.resolved &&
+        snapshot.revision == _googlePending &&
+        snapshot.placeId == _resolvingId;
+    if (snapshot.resolved && !resolving) return;
+    if (!resolving && snapshot.revision != visible?.revision) return;
+    if (!snapshot.valid) {
+      if (!snapshot.resolved && _resolvingId == null) {
+        _resolvingId = snapshot.placeId;
+        _loadGoogleDetails(snapshot.placeId);
+      } else {
+        googleMessage =
+            'This place’s Philippine location could not be verified. Choose another result or use Other sources.';
+        notifyListeners();
+      }
       return;
     }
-    final value = query;
     final revision = _revision;
-    if (_cache.containsKey(value)) {
-      results = _cache[value]!;
-      searched = true;
-      failed = false;
+    final label = query;
+    _selecting = true;
+    try {
+      await pins!.put(
+        snapshot.placeId,
+        snapshot.latitude!,
+        snapshot.longitude!,
+        snapshot.retrievedAt,
+      );
+      if (_disposed || revision != _revision || !usesGoogle || _suspended) {
+        return;
+      }
+      onGoogleSelection?.call(
+        PlaceIntent(
+          kind: PlaceKind.providerReference,
+          label: label.isEmpty ? 'My place' : label,
+          provider: 'google_ui_kit',
+          providerPlaceId: snapshot.placeId,
+          source: 'google_ui_kit',
+          googlePin: pins!.lease(snapshot.placeId),
+          attributions: const ['Google Maps'],
+        ),
+      );
+    } catch (_) {
+      if (!_disposed) {
+        googleMessage = 'The temporary pin could not be stored. Try again.';
+        notifyListeners();
+      }
+    } finally {
+      _selecting = false;
+    }
+  }
+
+  void refreshGoogleReference(PlaceIntent place) {
+    if (!place.isGoogle || place.providerPlaceId == null) return;
+    chooseSource(SearchSource.google);
+    query = place.label;
+    _resolvingId = place.providerPlaceId;
+    _activeRequest = PlaceSearchRequest(query, origin: origin);
+    _started = true;
+    if (_bridge != null) _loadGoogleDetails(place.providerPlaceId!);
+  }
+
+  void _loadGoogleDetails(String id) {
+    if (_detailsStarted) return;
+    if (_bridge == null) return;
+    _detailsStarted = true;
+    _launchGoogle(
+      _activeRequest ?? PlaceSearchRequest(query, origin: origin),
+      immediate: true,
+      placeId: id,
+    );
+  }
+
+  void _launchGoogle(
+    PlaceSearchRequest request, {
+    bool immediate = false,
+    String? placeId,
+  }) {
+    final bridge = _bridge;
+    if (bridge == null) {
+      sources['google_ui_kit'] = SourceState(
+        googleSupported ? SourcePhase.waiting : SourcePhase.disabled,
+      );
       notifyListeners();
       return;
     }
-    _running = true;
-    loading = true;
-    failed = false;
-    notifyListeners();
-    try {
-      final found = await search(value);
-      if (_disposed) return;
-      if (_cache.length >= 20) _cache.remove(_cache.keys.first);
-      _cache[value] = found;
-      if (revision == _revision) {
-        results = found;
-        searched = true;
-      }
-    } catch (_) {
-      if (!_disposed && revision == _revision) failed = true;
-    } finally {
-      _running = false;
-      if (!_disposed) {
-        if (revision == _revision) loading = false;
-        notifyListeners();
-        if (_queued) {
-          _queued = false;
-          _request();
+    final revision = _revision;
+    _googlePending = google!.search(
+      _owner,
+      bridge,
+      request,
+      (state) {
+        if (_disposed || revision != _revision || !usesGoogle || _suspended) {
+          return;
         }
+        sources['google_ui_kit'] = state;
+        notifyListeners();
+      },
+      (native, count) {
+        if (_disposed || revision != _revision || !usesGoogle || _suspended) {
+          return;
+        }
+        if (_frozen && _googleVisible != null && placeId == null) {
+          _googleStaged = native;
+          _googleStagedCount = count;
+        } else {
+          _googleCount = count;
+          _googleVisible = native;
+          bridge.show(native.revision);
+        }
+        notifyListeners();
+      },
+      immediate: immediate,
+      placeId: placeId,
+    );
+  }
+
+  final CombinedPlaceSearch service;
+  final Object _owner = Object();
+  String query = '';
+  List<PlaceSearchResult> results = [];
+  final Map<String, SourceState> sources = {};
+  SearchArea? _area;
+  SearchCategory? category;
+  bool _disposed = false, _started = false, _suspended = false;
+  int _revision = 0;
+  String? _requestKey;
+  PlaceSearchRequest? _activeRequest;
+  final Map<String, List<PlaceSearchResult>> _batches = {};
+  SearchOrigin? _device;
+  SearchOrigin? _selectedArea;
+  bool _areaSelected = false, _frozen = false, _replacementUsed = false;
+  List<PlaceSearchResult>? _staged;
+  SearchOrigin? _visibleOrigin;
+  SearchOrigin? get origin => _areaSelected ? _selectedArea : _device;
+  SearchOrigin? get visibleOrigin => _visibleOrigin;
+  String get originLabel => origin?.label ?? 'Philippines';
+  bool get hasUpdates => _staged != null || _googleStaged != null;
+  bool get nearMe => !_areaSelected && _device != null;
+  void freezeResults() {
+    _frozen = true;
+  }
+
+  void applyUpdates() {
+    _frozen = false;
+    final native = _googleStaged;
+    if (native != null) {
+      _googleVisible = native;
+      _googleCount = _googleStagedCount;
+      _googleStaged = null;
+      _bridge?.show(native.revision);
+    }
+    _publish();
+    notifyListeners();
+  }
+
+  void _resetRanking() {
+    _frozen = false;
+    _staged = null;
+    _replacementUsed = false;
+    _batches.clear();
+  }
+
+  void useNearMe() {
+    _areaSelected = false;
+    _selectedArea = null;
+    _newOriginSearch();
+  }
+
+  void _newOriginSearch() {
+    service.cancel(_owner);
+    _clearGoogle();
+    _revision++;
+    _resetRanking();
+    results = [];
+    sources.clear();
+    _started = false;
+    if ((category != null || query.length >= 2) && !needsLocalArea) {
+      _launch(immediate: true);
+    } else {
+      notifyListeners();
+    }
+  }
+
+  void updateDeviceLocation(SearchOrigin? value) {
+    final previous = _device;
+    _device = value;
+    if (_resolvingId != null || _selecting) {
+      notifyListeners();
+      return;
+    }
+    if (_areaSelected) {
+      notifyListeners();
+      return;
+    }
+    final active = _activeRequest;
+    final moved =
+        value != null &&
+        (active?.origin == null ||
+            distanceMeters(
+                  active!.origin!.latitude,
+                  active.origin!.longitude,
+                  value.latitude,
+                  value.longitude,
+                ) >=
+                250);
+    if (_started &&
+        !_suspended &&
+        value != null &&
+        moved &&
+        !_replacementUsed) {
+      final dispatched = sources.values.any(
+        (s) =>
+            s.phase == SourcePhase.loading || s.phase == SourcePhase.complete,
+      );
+      if (dispatched) _replacementUsed = true;
+      // Preserve visible records until replacement candidates are ready.
+      _revision++;
+      _launch(immediate: dispatched, preserveResults: true);
+    } else if (previous?.rankingKey != value?.rankingKey) {
+      _publish();
+      notifyListeners();
+    }
+  }
+
+  SearchArea? get area => _area;
+  SearchCategory? get suggestion => SearchCategory.match(query);
+  bool get needsLocalArea =>
+      category != null && (_area?.local != true || origin?.area.local != true);
+  bool get loading => sources.values.any(
+    (s) => s.phase == SourcePhase.waiting || s.phase == SourcePhase.loading,
+  );
+  bool get failed =>
+      sources.values.any((s) => s.phase == SourcePhase.unavailable) ||
+      (_started &&
+          sources.values.every((s) => s.phase == SourcePhase.disabled));
+  bool get searched => _started && !loading;
+  bool get emptySuccess =>
+      searched && !failed && (usesGoogle ? _googleCount == 0 : results.isEmpty);
+  void updateArea(SearchArea area) {
+    final wasLocal = _area?.local == true;
+    _area = area;
+    if (wasLocal != area.local) notifyListeners();
+  }
+
+  void change(String value) {
+    final next = normalizeSearch(value);
+    if (next == query && category == null) return;
+    service.cancel(_owner);
+    _clearGoogle();
+    _original = false;
+    _suggested = null;
+    _revision++;
+    _resetRanking();
+    query = next;
+    category = null;
+    results = [];
+    sources.clear();
+    _started = false;
+    notifyListeners();
+    if (query.length >= 3 && query.length <= 100) _launch();
+  }
+
+  void chooseCategory(SearchCategory value) {
+    service.cancel(_owner);
+    _clearGoogle();
+    _revision++;
+    _resetRanking();
+    category = value;
+    if (_device == null && _area?.local == true) {
+      _areaSelected = true;
+      _selectedArea = SearchOrigin.map(_area!);
+    }
+    results = [];
+    sources.clear();
+    _started = false;
+    if (needsLocalArea) {
+      notifyListeners();
+      return;
+    }
+    _launch(immediate: true);
+  }
+
+  void searchThisArea() {
+    if (_area?.local != true) return;
+    _areaSelected = true;
+    _selectedArea = SearchOrigin.map(_area!);
+    _newOriginSearch();
+  }
+
+  void submit() {
+    if (query.length < 2 || query.length > 100 || needsLocalArea) return;
+    if (usesGoogle && sources['google_ui_kit']?.phase == SourcePhase.loading) {
+      return;
+    }
+    if (_requestKey == _request().key &&
+        _started &&
+        !loading &&
+        sources.values.every(
+          (s) =>
+              s.phase == SourcePhase.complete ||
+              s.phase == SourcePhase.disabled,
+        )) {
+      return;
+    }
+    _launch(immediate: true);
+  }
+
+  PlaceSearchRequest _request() => PlaceSearchRequest(
+    _suggested ?? query,
+    category: category,
+    origin: origin,
+    useOriginal: _original,
+  );
+
+  void retry() {
+    if (loading) return;
+    if (usesGoogle && _resolvingId != null && _detailsStarted) {
+      googleMessage =
+          'This selection could not be resolved. Choose another result or use Other sources.';
+      notifyListeners();
+      return;
+    }
+    final ids = sources.entries
+        .where((e) => e.value.phase == SourcePhase.unavailable)
+        .map((e) => e.key)
+        .toSet();
+    if (ids.isNotEmpty) _launch(immediate: true, only: ids);
+  }
+
+  void _launch({
+    bool immediate = false,
+    Set<String>? only,
+    bool preserveResults = false,
+  }) {
+    final request = only != null && _activeRequest != null
+        ? _activeRequest!
+        : _request();
+    if (only == null && request.key != _requestKey) {
+      _revision++;
+      if (!preserveResults) results = [];
+      _batches.clear();
+      sources.clear();
+    }
+    _requestKey = request.key;
+    _suspended = false;
+    _activeRequest = request;
+    final revision = _revision;
+    _started = true;
+    if (usesGoogle) {
+      if (_resolvingId != null) {
+        _loadGoogleDetails(_resolvingId!);
+      } else {
+        _launchGoogle(request, immediate: immediate);
+      }
+      return;
+    }
+    service.search(
+      _owner,
+      request,
+      (id, state, batch) {
+        if (_disposed || revision != _revision) return;
+        sources[id] = state;
+        if (state.phase == SourcePhase.complete) {
+          _batches[id] = batch;
+          _publish();
+        }
+        notifyListeners();
+      },
+      immediate: immediate,
+      only: only,
+    );
+  }
+
+  void _publish() {
+    final merged = <PlaceSearchResult>[];
+    final sorted = rankPlaces(
+      _batches.values.expand((v) => v),
+      interpretedText,
+      origin,
+    );
+    for (final candidate in sorted) {
+      final existing = merged.indexWhere(
+        (value) => sameSearchPlace(value, candidate),
+      );
+      if (existing >= 0) {
+        merged[existing] = merged[existing].withCredits(candidate.attributions);
+      } else {
+        merged.add(candidate);
       }
     }
+    final next = merged.take(30).toList();
+    if (_frozen) {
+      // Records as well as order stay fixed while someone is choosing a row.
+      if (next.length != results.length ||
+          List.generate(
+            next.length,
+            (i) =>
+                i >= results.length ||
+                next[i].sourceId != results[i].sourceId ||
+                next[i].provider != results[i].provider ||
+                next[i].name != results[i].name ||
+                next[i].address != results[i].address ||
+                next[i].category != results[i].category ||
+                next[i].retrievedAt != results[i].retrievedAt ||
+                next[i].attributions.join('|') !=
+                    results[i].attributions.join('|') ||
+                next[i].latitude != results[i].latitude ||
+                next[i].longitude != results[i].longitude,
+          ).any((changed) => changed) ||
+          _visibleOrigin?.rankingKey != origin?.rankingKey) {
+        _staged = next;
+      } else {
+        _staged = null;
+      }
+    } else {
+      results = next;
+      _visibleOrigin = origin;
+      _staged = null;
+    }
+  }
+
+  void dismiss() {
+    service.cancel(_owner);
+    _clearGoogle();
+    _revision++;
+    _resetRanking();
+    query = '';
+    category = null;
+    results = [];
+    sources.clear();
+    _started = false;
+    if (!_disposed) notifyListeners();
+  }
+
+  void suspend() {
+    _suspended = true;
+    service.cancel(_owner);
+    _clearGoogle();
+    _revision++;
+    for (final id in sources.keys.toList()) {
+      if (sources[id]!.phase == SourcePhase.waiting ||
+          sources[id]!.phase == SourcePhase.loading) {
+        sources[id] = const SourceState(SourcePhase.unavailable);
+      }
+    }
+    notifyListeners();
   }
 
   @override
   void dispose() {
+    service.cancel(_owner);
+    _clearGoogle();
+    sourceChoice?.removeListener(_sourceChanged);
     _disposed = true;
-    _debounce?.cancel();
     super.dispose();
   }
 }

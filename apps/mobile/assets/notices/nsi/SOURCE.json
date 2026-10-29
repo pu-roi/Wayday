@@ -1,0 +1,24 @@
+{
+  "version": "8.0.20260918",
+  "commit": "fd4f3c84636838ac2f514a3f00e6a5eb415d59ae",
+  "license": "BSD-3-Clause",
+  "brands": 389,
+  "source_paths": [
+    "amenity/fast_food",
+    "amenity/restaurant",
+    "amenity/cafe",
+    "amenity/pharmacy",
+    "amenity/bank",
+    "amenity/fuel",
+    "shop/convenience",
+    "shop/supermarket",
+    "shop/department_store",
+    "shop/mall",
+    "shop/bakery"
+  ],
+  "omissions": {
+    "unsupported_geography": 862,
+    "outside_philippines": 5969
+  },
+  "scope": "Explicit PH/global country rules only; no logos, coordinates, or complex geography."
+}

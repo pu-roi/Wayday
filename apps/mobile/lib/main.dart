@@ -65,6 +65,7 @@ class _RecoveryBootstrapState extends State<_RecoveryBootstrap> {
                     ? RecoveryChoice.rudy
                     : RecoveryChoice.roi,
               );
+        repositories.googlePins?.observeLifecycle();
         if (mounted) {
           setState(() {
             _repositories = repositories;
@@ -90,6 +91,7 @@ class _RecoveryBootstrapState extends State<_RecoveryBootstrap> {
     });
     try {
       final repositories = await _recovery.open(choice);
+      repositories.googlePins?.observeLifecycle();
       if (mounted) {
         setState(() {
           _repositories = repositories;

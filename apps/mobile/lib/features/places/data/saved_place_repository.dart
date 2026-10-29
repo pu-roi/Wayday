@@ -33,12 +33,16 @@ class MemorySavedPlaceRepository implements SavedPlaceRepository {
 }
 
 class SqliteSavedPlaceRepository implements SavedPlaceRepository {
-  SqliteSavedPlaceRepository(this.database);
+  SqliteSavedPlaceRepository(this.database, {this.resolveGooglePin});
+  final GooglePinResolver? resolveGooglePin;
   final WaydayDatabase database;
   @override
   Future<List<SavedPlace>> read() async => [
     for (final row in await database.select(database.savedPlaces).get())
-      SavedPlace.fromJson(jsonDecode(row.payload) as Map<String, dynamic>),
+      SavedPlace.fromJson(
+        jsonDecode(row.payload) as Map<String, dynamic>,
+        resolveGooglePin: resolveGooglePin,
+      ),
   ];
   @override
   Future<void> add(SavedPlace place) => database

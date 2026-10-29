@@ -31,7 +31,10 @@ class SqliteDayRepository implements DayRepository {
   final SerialWriteQueue _writes = SerialWriteQueue();
   DayPlan _day;
 
-  static Future<SqliteDayRepository> open(WaydayDatabase database) async {
+  static Future<SqliteDayRepository> open(
+    WaydayDatabase database, {
+    GooglePinResolver? resolveGooglePin,
+  }) async {
     final settings = await database
         .select(database.daySettings)
         .getSingleOrNull();
@@ -68,10 +71,14 @@ class SqliteDayRepository implements DayRepository {
             ? null
             : PlaceIntent.fromJson(
                 details!['fromPlace'] as Map<String, dynamic>,
+                resolveGooglePin: resolveGooglePin,
               ),
         toPlace: details?['toPlace'] == null
             ? null
-            : PlaceIntent.fromJson(details!['toPlace'] as Map<String, dynamic>),
+            : PlaceIntent.fromJson(
+                details!['toPlace'] as Map<String, dynamic>,
+                resolveGooglePin: resolveGooglePin,
+              ),
         date: details?['date'] as String?,
         timeZone: details?['timeZone'] as String? ?? 'Asia/Manila',
         revision: details?['revision'] as int? ?? 0,
@@ -85,6 +92,7 @@ class SqliteDayRepository implements DayRepository {
             row.details != null
                 ? Errand.fromJson(
                     jsonDecode(row.details!) as Map<String, dynamic>,
+                    resolveGooglePin: resolveGooglePin,
                   )
                 : Errand(
                     id: row.id,

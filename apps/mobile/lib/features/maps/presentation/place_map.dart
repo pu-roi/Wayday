@@ -8,6 +8,8 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../app/theme.dart';
 import '../../places/domain/place_intent.dart';
+import '../../places/data/google_pin_cache.dart';
+import '../../places/presentation/search_attribution.dart';
 import 'map_credits_page.dart';
 import 'regional_map.dart';
 
@@ -39,20 +41,29 @@ class PlaceMapRequest {
     this.onSelect,
     this.onMoveStarted,
     this.onMoveCancelled,
+    this.onZoomChanged,
+    this.onViewportChanged,
     this.interactive = true,
     this.centerPicker = false,
     this.focus,
     this.focusRevision = 0,
+    this.focusZoom = 16,
+    this.animateFocus = false,
     this.philippinesOverview = false,
     this.iconOnlyAttribution = false,
   });
   final List<MapPin> pins;
   final void Function(double latitude, double longitude)? onSelect;
   final VoidCallback? onMoveStarted, onMoveCancelled;
+  final ValueChanged<double>? onZoomChanged;
+  final void Function(double latitude, double longitude, double zoom)?
+  onViewportChanged;
   final bool interactive;
   final bool centerPicker;
   final PlaceIntent? focus;
   final int focusRevision;
+  final double focusZoom;
+  final bool animateFocus;
   final bool philippinesOverview;
   final bool iconOnlyAttribution;
 }
@@ -71,14 +82,22 @@ final placeMapBuilderProvider = Provider<PlaceMapBuilder>((ref) {
         );
 });
 
-class PlaceMap extends StatefulWidget {
+class PlaceMap extends ConsumerStatefulWidget {
   const PlaceMap({required this.request, super.key});
   final PlaceMapRequest request;
   @override
-  State<PlaceMap> createState() => _PlaceMapState();
+  ConsumerState<PlaceMap> createState() => _PlaceMapState();
 }
 
-class _PlaceMapState extends State<PlaceMap> {
+class _PlaceMapState extends ConsumerState<PlaceMap> {
+  late final GooglePinCache _googlePins;
+  void _pinsExpired() {
+    if (mounted) {
+      if (_ready) _sync();
+      setState(() {});
+    }
+  }
+
   MapLibreMapController? _controller;
   bool _ready = false;
   bool _slow = false;
@@ -106,15 +125,20 @@ class _PlaceMapState extends State<PlaceMap> {
     final place = widget.request.focus;
     if (place == null || !place.hasCoordinates || _controller == null) return;
     _cameraTarget = LatLng(place.latitude!, place.longitude!);
+    final camera = CameraUpdate.newLatLngZoom(
+      LatLng(place.latitude!, place.longitude!),
+      widget.request.focusZoom,
+    );
+    final animated =
+        widget.request.animateFocus && !MediaQuery.disableAnimationsOf(context);
     unawaited(
-      _controller!
-          .moveCamera(
-            CameraUpdate.newLatLngZoom(
-              LatLng(place.latitude!, place.longitude!),
-              16,
-            ),
-          )
-          .timeout(const Duration(seconds: 3))
+      (animated
+              ? _controller!.animateCamera(
+                  camera,
+                  duration: const Duration(milliseconds: 2500),
+                )
+              : _controller!.moveCamera(camera))
+          .timeout(const Duration(seconds: 6))
           .catchError((Object _) {
             if (mounted) setState(() => _slow = true);
             return false;
@@ -128,6 +152,7 @@ class _PlaceMapState extends State<PlaceMap> {
   @override
   void initState() {
     super.initState();
+    _googlePins = ref.read(googlePinCacheProvider)..addListener(_pinsExpired);
     _watchLoading();
   }
 
@@ -247,6 +272,7 @@ class _PlaceMapState extends State<PlaceMap> {
 
   @override
   void dispose() {
+    _googlePins.removeListener(_pinsExpired);
     _timer?.cancel();
     // MapLibreMap owns and disposes its native controller.
     super.dispose();
@@ -294,6 +320,12 @@ class _PlaceMapState extends State<PlaceMap> {
                     featureTapsTriggersMapClick: true,
                     onCameraMove: (position) {
                       _cameraTarget = position.target;
+                      widget.request.onViewportChanged?.call(
+                        position.target.latitude,
+                        position.target.longitude,
+                        position.zoom,
+                      );
+                      widget.request.onZoomChanged?.call(position.zoom);
                       if (_ready &&
                           widget.request.centerPicker &&
                           _pointerIntent &&
@@ -328,6 +360,18 @@ class _PlaceMapState extends State<PlaceMap> {
                         _ready = true;
                         _slow = false;
                       });
+                      final position = _controller?.cameraPosition;
+                      if (position != null) {
+                        widget.request.onViewportChanged?.call(
+                          position.target.latitude,
+                          position.target.longitude,
+                          position.zoom,
+                        );
+                      }
+                      final zoom = position?.zoom;
+                      if (zoom != null) {
+                        widget.request.onZoomChanged?.call(zoom);
+                      }
                       if (widget.request.centerPicker) {
                         _focus();
                       } else if (!widget.request.centerPicker) {
@@ -387,6 +431,16 @@ class _PlaceMapState extends State<PlaceMap> {
                       ],
                     ),
                   ),
+                ),
+              ),
+            if (_pins.any((pin) => pin.place.isGoogle) ||
+                widget.request.focus?.isGoogle == true &&
+                    widget.request.focus!.hasCoordinates)
+              const Positioned(
+                left: 4,
+                bottom: 4,
+                child: Material(
+                  child: SearchAttribution(credits: ['Google Maps']),
                 ),
               ),
             if (widget.request.iconOnlyAttribution)
