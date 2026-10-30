@@ -2,7 +2,9 @@ param(
     [Parameter(Mandatory = $true)][string]$DeviceId,
     [string]$Target = 'integration_test/regional_map_test.dart',
     [switch]$GoogleSingleSample,
-    [switch]$GoogleRealMap
+    [switch]$GoogleRealMap,
+    [switch]$RecommendationRehearsal,
+    [switch]$PlacesOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,6 +22,13 @@ $previousMapTest = [Environment]::GetEnvironmentVariable('ORG_GRADLE_PROJECT_WAY
 try {
     $env:ORG_GRADLE_PROJECT_WAYDAY_MAP_TEST = 'true'
     $testArguments = @('test', $Target, '-d', $DeviceId, '--no-uninstall')
+    if ($Target -eq 'integration_test/recommendation_live_test.dart') {
+        if (-not $RecommendationRehearsal) { throw 'The live recommendation rehearsal must be requested explicitly.' }
+        $configuration = & (Join-Path $PSScriptRoot 'configure-search.ps1')
+        $testArguments += '--dart-define-from-file=' + $configuration
+        $testArguments += '--dart-define=WAYDAY_LIVE_RECOMMENDATION_REHEARSAL=true'
+        if ($PlacesOnly) { $testArguments += '--dart-define=WAYDAY_LIVE_PLACES_ONLY=true' }
+    }
     if ($Target -in @('integration_test/google_search_test.dart', 'integration_test/planning_google_map_test.dart')) {
         $configuration = & (Join-Path $PSScriptRoot 'configure-search.ps1')
         $testArguments += '--dart-define-from-file=' + $configuration

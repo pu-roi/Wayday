@@ -55,6 +55,7 @@ class PlaceIntent {
   final String? providerPlaceId;
   final GooglePinLease? googlePin;
   bool get isGoogle => isGoogleProvider(provider);
+  bool get usesGoogleSdk => provider == 'google_places_sdk' || source.startsWith('google_places_sdk');
   double? get latitude => isGoogle
       ? (googlePin?.valid == true ? googlePin!.latitude : null)
       : _latitude;

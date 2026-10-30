@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../places/data/google_pin_cache.dart';
@@ -23,23 +25,29 @@ typedef PlacesInvoker =
     );
 
 class GoogleRecommendationDiscovery implements RecommendationDiscovery {
-  GoogleRecommendationDiscovery(this.ledger, this.pins, {PlacesInvoker? invoke})
-    : invoke = invoke ?? _native;
+  GoogleRecommendationDiscovery(
+    this.ledger,
+    this.pins, {
+    PlacesInvoker? invoke,
+    this.requestTimeout = const Duration(seconds: 15),
+  }) : invoke = invoke ?? _native;
   final QuotaLedger ledger;
   final GooglePinCache pins;
   final PlacesInvoker invoke;
+  final Duration requestTimeout;
   static const channel = MethodChannel('wayday/recommendations');
   static Future<List<Object?>> _native(
     String method,
     Map<String, Object?> args,
-  ) async =>
-      await channel
-          .invokeListMethod<Object?>(method, args)
-          .timeout(const Duration(seconds: 15)) ??
-      [];
+  ) async {
+    final raw = await channel.invokeMethod<Object?>(method, args);
+    if (raw is! List) throw const FormatException('Invalid place response');
+    return raw.cast<Object?>();
+  }
+
   final _waiters = <String, List<bool Function()>>{};
-  final _pending = <String, Future<List<RecommendationPlace>>>{};
-  final _cache = <String, ({DateTime at, List<RecommendationPlace> values})>{};
+  final _pending = <String, Future<_PlaceBatch>>{};
+  final _cache = <String, ({DateTime at, _PlaceBatch values})>{};
   final _places = <String, RecommendationPlace>{};
 
   @override
@@ -54,15 +62,17 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
         maximumRequests,
         ProviderPolicy.forId('google_ui_kit'),
       );
-    } on SearchFailure {
-      throw const PlanningFailure(
-        'There is not enough Google search capacity for this recommendation batch. Your choices are kept.',
-        kind: 'quota',
+    } on SearchFailure catch (e) {
+      throw RecommendationFailure(
+        e.kind == SearchFailureKind.accounting
+            ? RecommendationFailureKind.accounting
+            : RecommendationFailureKind.quota,
+        RecommendationOperation.configuration,
       );
     }
   }
 
-  Future<List<RecommendationPlace>> _request(
+  Future<_PlaceBatch> _request(
     String method,
     Map<String, Object?> args, {
     bool Function()? cancelled,
@@ -109,20 +119,38 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
               throw const FormatException('Unbounded place response');
             }
             final values = <RecommendationPlace>[];
+            final exclusions = <PlaceExclusion, int>{};
+            void exclude(PlaceExclusion reason) =>
+                exclusions.update(reason, (n) => n + 1, ifAbsent: () => 1);
             for (final record in raw) {
               try {
                 final place = RecommendationPlace.fromJson(
                   Map<Object?, Object?>.from(record as Map),
                 );
-                if (method == 'details'
-                    ? place.countryEligible
-                    : place.eligible) {
+                final reason = !place.countryEligible
+                    ? PlaceExclusion.country
+                    : method == 'details'
+                    ? null
+                    : place.name.isEmpty
+                    ? PlaceExclusion.missingName
+                    : {
+                        'CLOSED_PERMANENTLY',
+                        'CLOSED_TEMPORARILY',
+                      }.contains(place.status)
+                    ? PlaceExclusion.closed
+                    : !place.eligible
+                    ? PlaceExclusion.addressOnly
+                    : null;
+                if (reason == null) {
                   values.add(place);
+                } else {
+                  exclude(reason);
                 }
-              } on FormatException {
-                /* A malformed record is not a candidate. */
+              } catch (_) {
+                exclude(PlaceExclusion.malformed);
               }
             }
+            final batch = _PlaceBatch(values, raw.length, exclusions);
             for (final p in values) {
               _places[p.id] = p;
             }
@@ -132,38 +160,96 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
             while (_cache.length >= 32) {
               _cache.remove(_cache.keys.first);
             }
-            _cache[key] = (at: DateTime.now(), values: values);
             await ledger.succeeded('google_ui_kit');
-            return values;
+            _cache[key] = (at: DateTime.now(), values: batch);
+            return batch;
           } on PlanningFailure {
             rethrow;
           } on SearchFailure catch (e) {
-            throw PlanningFailure(
+            throw RecommendationFailure(
               e.kind == SearchFailureKind.accounting
-                  ? 'Place search accounting could not be saved.'
-                  : 'Google place search capacity is unavailable. Your choices are kept.',
-              kind: e.kind == SearchFailureKind.accounting
-                  ? 'accounting'
-                  : 'quota',
+                  ? RecommendationFailureKind.accounting
+                  : RecommendationFailureKind.quota,
+              _operation(method, args),
+            );
+          } on PlatformException catch (e) {
+            if (e.code == 'not_found') {
+              return _PlaceBatch([], 0, {});
+            }
+            final status = e.details is Map
+                ? (e.details as Map)['status']
+                : null;
+            final cause = switch (e.code) {
+              'configuration' => RecommendationFailureKind.configuration,
+              'access' => RecommendationFailureKind.access,
+              'quota' => RecommendationFailureKind.quota,
+              'invalid_request' => RecommendationFailureKind.invalidRequest,
+              'network' => RecommendationFailureKind.network,
+              'timeout' => RecommendationFailureKind.timeout,
+              'cancelled' => RecommendationFailureKind.cancelled,
+              _ => RecommendationFailureKind.unavailable,
+            };
+            throw RecommendationFailure(
+              cause,
+              _operation(method, args),
+              providerStatus: status is int ? status : null,
+            );
+          } on MissingPluginException {
+            throw RecommendationFailure(
+              RecommendationFailureKind.configuration,
+              _operation(method, args),
+            );
+          } on FormatException {
+            throw RecommendationFailure(
+              RecommendationFailureKind.unexpectedResponse,
+              _operation(method, args),
             );
           } catch (_) {
-            throw const PlanningFailure(
-              'Place recommendations are unavailable. Your choices are kept; retry or search for a place.',
-              kind: 'places_unavailable',
+            throw RecommendationFailure(
+              RecommendationFailureKind.unexpectedResponse,
+              _operation(method, args),
             );
           }
         }();
     _pending[key] = future;
+    void completed() {
+      if (identical(_pending[key], future)) _pending.remove(key);
+      if (waiters.isEmpty) _waiters.remove(key);
+    }
+
+    // A caller timeout must not detach the still-running provider request.
+    // A subsequent explicit retry attaches until native completion/cancellation.
+    unawaited(
+      future.then<void>((_) => completed(), onError: (Object _) => completed()),
+    );
     try {
-      return await future;
+      return await future.timeout(requestTimeout);
+    } on TimeoutException {
+      throw RecommendationFailure(
+        RecommendationFailureKind.timeout,
+        _operation(method, args),
+      );
+    } on RecommendationFailure catch (failure) {
+      if (kDebugMode) {
+        debugPrint(
+          'WaydayRecommendations operation=${failure.operation.name} kind=${failure.kind} status=${failure.providerStatus}',
+        );
+      }
+      rethrow;
     } finally {
       waiters.remove(watcher);
-      if (waiters.isEmpty) {
-        _waiters.remove(key);
-        _pending.remove(key);
-      }
+      if (waiters.isEmpty && !_pending.containsKey(key)) _waiters.remove(key);
     }
   }
+
+  RecommendationOperation _operation(
+    String method,
+    Map<String, Object?> args,
+  ) => method == 'details'
+      ? RecommendationOperation.refresh
+      : args.containsKey('polyline')
+      ? RecommendationOperation.corridor
+      : RecommendationOperation.anchor;
 
   @override
   Future<RecommendationPlace?> hydrate(
@@ -178,9 +264,10 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
             const Duration(minutes: 5)) {
       return current;
     }
-    final values = await _request('details', {
+    final batch = await _request('details', {
       'id': place.providerPlaceId,
     }, cancelled: cancelled);
+    final values = batch.places;
     if (values.isEmpty || values.single.id != place.providerPlaceId) {
       throw const PlanningFailure(
         'This selected Google place could not be refreshed. Choose its actual location.',
@@ -193,7 +280,7 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
   }
 
   @override
-  Future<List<PlanCandidate>> discover(
+  Future<DiscoveryResult> discover(
     ErrandNeed need, {
     required String? polyline,
     required List<PlaceIntent> anchors,
@@ -211,6 +298,10 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
 
     check();
     final pool = <String, RecommendationPlace>{};
+    final exclusions = <PlaceExclusion, int>{};
+    var returnedCount = 0, contextsEvaluated = 0;
+    void exclude(PlaceExclusion reason, [int count = 1]) =>
+        exclusions.update(reason, (n) => n + count, ifAbsent: () => count);
     final contexts = <Map<String, Object?>>[
       if (polyline != null) {'query': need.query, 'polyline': polyline},
       for (final p in anchors.where((p) => p.hasCoordinates).take(2))
@@ -221,10 +312,15 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
       check();
       if (!seen.add(jsonEncode(context))) continue;
       final brand = brandSearchTerm(need.query)?.brand;
-      for (final p in await _request('search', context, cancelled: cancelled)) {
+      final batch = await _request('search', context, cancelled: cancelled);
+      contextsEvaluated++;
+      returnedCount += batch.returnedCount;
+      batch.exclusions.forEach(exclude);
+      for (final p in batch.places) {
         if (brand != null &&
             !brand.landmark &&
             brandSearchTerm(p.name)?.brand.name != brand.name) {
+          exclude(PlaceExclusion.brand);
           continue;
         }
         final types = switch (need.category) {
@@ -245,7 +341,11 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
           },
           _ => <String>{},
         };
-        if (types.isNotEmpty && !p.types.any(types.contains)) continue;
+        if (types.isNotEmpty && !p.types.any(types.contains)) {
+          exclude(PlaceExclusion.category);
+          continue;
+        }
+        if (pool.containsKey(p.id)) exclude(PlaceExclusion.duplicate);
         pool[p.id] = p;
       }
       check();
@@ -306,6 +406,24 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
         ),
       );
     }
-    return result;
+    final report = DiscoveryResult(
+      result,
+      returnedCount: returnedCount,
+      contextsEvaluated: contextsEvaluated,
+      exclusions: exclusions,
+    );
+    if (kDebugMode) {
+      debugPrint(
+        'WaydayRecommendations outcome=${report.outcome.name} returned=${report.returnedCount} candidates=${report.candidates.length} exclusions=${report.exclusions.map((key, value) => MapEntry(key.name, value))}',
+      );
+    }
+    return report;
   }
+}
+
+class _PlaceBatch {
+  _PlaceBatch(this.places, this.returnedCount, this.exclusions);
+  final List<RecommendationPlace> places;
+  final int returnedCount;
+  final Map<PlaceExclusion, int> exclusions;
 }

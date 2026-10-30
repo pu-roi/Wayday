@@ -10,6 +10,7 @@ class WaydayColors extends ThemeExtension<WaydayColors> {
   final Color mist;
   final Color accent;
   final Color link;
+  Color get attention => const Color(0xFF7A4500);
   static const canvas = Color(0xFFFBFBF8);
   static const cornflower = Color(0xFF6AA6DA);
   static const referenceMist = Color(0xFFDBE3E9);

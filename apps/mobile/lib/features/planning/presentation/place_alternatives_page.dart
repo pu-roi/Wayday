@@ -60,7 +60,7 @@ class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
           (s) => s.tasks.any((t) => t.errandId == current),
         );
         final points = {for (final p in model.points) p.key: p.place};
-        loaded[current] = await model.discovery!.discover(
+        final batch = await model.discovery!.discover(
           model.effectiveNeed(
             model.activeErrands.firstWhere((e) => e.id == current),
           )!,
@@ -76,6 +76,7 @@ class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
           limit: 3,
           cancelled: () => !mounted || epoch != revision,
         );
+        if (mounted && epoch == revision) loaded[current] = batch.candidates;
       }
     } catch (e) {
       if (mounted && epoch == revision) error = e.toString();

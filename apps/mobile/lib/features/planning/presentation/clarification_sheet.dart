@@ -128,27 +128,24 @@ class _ClarificationSheetState extends State<ClarificationSheet> {
 
   Future<void> chooseFlexibility() async {
     watchingOutcome = false;
-    final need = widget.model.effectiveNeed(widget.errand)!;
-    if (need.questionKind == 'preference' && need.questionRequired == false) {
-      try {
-        await widget.model.clarifications.applyStructured(
-          question,
-          ClarificationResolution(
-            outcome: 'flexible',
-            kind: 'preference',
-            summary: need.category == 'grocery'
-                ? 'General groceries · Choose items at the store'
-                : 'Open to suitable places',
-            query: need.query.isEmpty ? null : need.query,
-            items: need.items,
-          ),
-          'Let Wayday recommend',
-        );
-        if (mounted) Navigator.pop(context);
-      } catch (_) {}
-    } else {
-      answer.text = 'Let Wayday recommend. I’ll decide when I get there.';
-      await widget.model.clarifications.saveDraft(question, answer.text);
+    setState(() {
+      submitting = true;
+      localError = null;
+    });
+    focus.unfocus();
+    try {
+      await widget.model.recommendPlaces(widget.errand);
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          submitting = false;
+          if (widget.model.clarifications.storageError == null) {
+            localError =
+                'This choice could not be applied. Review the current question.';
+          }
+        });
+      }
     }
   }
 
@@ -262,7 +259,7 @@ class _ClarificationSheetState extends State<ClarificationSheet> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  if (!missing && !busy)
+                  if (widget.model.canRecommendPlaces(widget.errand) && !busy)
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton(
@@ -352,7 +349,11 @@ class _ClarificationSheetState extends State<ClarificationSheet> {
                       label: const Text('Choose a time'),
                     ),
                   ],
-                  if (missing) ...[
+                  if (missing ||
+                      needsLocationUnderstanding(
+                        widget.errand,
+                        widget.model.effectiveNeed(widget.errand),
+                      )) ...[
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: busy

@@ -9,6 +9,8 @@ import '../../today/domain/day.dart';
 import '../data/gemini_interpreter.dart';
 import '../data/clarification_repository.dart';
 import '../data/clarification_resolver.dart';
+import '../data/location_intent_resolver.dart';
+import '../domain/location_assessment.dart';
 import '../domain/clarification.dart';
 import 'clarification_coordinator.dart';
 import '../data/itinerary_repository.dart';
@@ -24,6 +26,7 @@ import '../domain/recommendation.dart';
 import '../data/recommendation_draft_repository.dart';
 
 part 'recommendation_preparation.dart';
+part 'location_understanding.dart';
 
 final planningBudgetProvider = Provider((ref) => PlanningBudget());
 final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
@@ -43,6 +46,10 @@ final clarificationRepositoryProvider = Provider<ClarificationRepository>((
 final clarificationResolverProvider = Provider<ClarificationResolver>(
   (ref) => GeminiClarificationResolver(),
 );
+final locationIntentResolverProvider = Provider<LocationIntentResolver>(
+  (ref) => GeminiLocationIntentResolver(),
+);
+
 typedef PlanningSolver =
     Future<Map<String, dynamic>> Function(Map<String, dynamic> input);
 Future<Map<String, dynamic>> solveInWorker(Map<String, dynamic> input) =>
@@ -85,6 +92,7 @@ class PlanningController extends ChangeNotifier {
     this.solver = solveInWorker,
     ClarificationRepository? clarificationRepository,
     ClarificationResolver? clarificationResolver,
+    LocationIntentResolver? locationResolver,
     this.resolveGooglePin,
     this.discovery,
     RecommendationDraftRepository? drafts,
@@ -99,6 +107,7 @@ class PlanningController extends ChangeNotifier {
     clarifications = ClarificationCoordinator(
       clarificationRepository ?? MemoryClarificationRepository(),
       clarificationResolver ?? GeminiClarificationResolver(),
+      locationResolver: locationResolver,
     );
     clarifications.addListener(_clarificationChanged);
   }
@@ -141,7 +150,7 @@ class PlanningController extends ChangeNotifier {
   /// The same projection is committed by applyReview; the baseline stays intact.
   Errand _baseReview(Errand e) =>
       approved.contains(e.id) ? needs[e.id]!.apply(e) : e;
-  ClarificationContext questionContext(Errand e) =>
+  ClarificationContext _originalQuestionContext(Errand e) =>
       ClarificationContext.create(_baseReview(reviewInput(e)), needs[e.id]!, [
         for (final x in _reviewItems.values)
           if (_originalIds.contains(x.id) || additions.contains(x.id))
@@ -150,44 +159,94 @@ class PlanningController extends ChangeNotifier {
           if (additions.contains(n.id) && !_reviewItems.containsKey(n.id))
             n.apply(Errand(id: n.id, title: n.proposedTitle!)),
       ]);
+  ClarificationContext questionContext(Errand e) {
+    final original = _originalQuestionContext(e), n = needs[e.id]!;
+    if (original.question.isNotEmpty) return original;
+    if (e.placeIntent.hasCoordinates ||
+        hasSpecificSource(e) ||
+        n.locationIntent == LocationIntent.specific) {
+      return original;
+    }
+    return ClarificationContext({
+      ...original.facts,
+      'question':
+          'Do you have a specific place in mind, or should Wayday suggest one?',
+      'kind': 'location',
+    });
+  }
+
   ClarificationRecord? answerFor(Errand e) =>
       needs[e.id] == null ? null : clarifications.record(questionContext(e));
   ErrandNeed? effectiveNeed(Errand e) {
-    final n = needs[e.id], r = answerFor(e);
+    var n = needs[e.id];
     if (n == null) return null;
-    if (r?.applied == true) {
-      final refined = r!.resolution!.refine(n),
-          preference = reviewInput(e).placeIntent;
-      if (preference.kind == PlaceKind.search &&
-          (preference.label.trim().isNotEmpty ||
-              preference.brand?.trim().isNotEmpty == true)) {
-        return refined.copyWith(
-          query: [
-            if (preference.brand?.isNotEmpty == true) preference.brand!,
-            preference.label,
-          ].join(' ').trim(),
-        );
-      }
-      return refined;
+    final r = answerFor(e),
+        assessment = clarifications.locationAssessment(locationContext(e));
+    if (assessment?.applied == true) {
+      n = n.copyWith(
+        locationIntent: assessment!.result!.intent,
+        requiresSpecificLocation:
+            assessment.result!.intent == LocationIntent.specific,
+        query: assessment.result!.query,
+        category: assessment.result!.category,
+      );
     }
-    if (r?.resolution?.kind == 'location') {
-      return n.copyWith(requiresSpecificLocation: true);
+    if (r?.applied == true) {
+      var refined = r!.resolution!.refine(n);
+      // A legacy structured flexibility choice already granted recommendations.
+      // Reuse that saved decision, without matching the user's answer wording.
+      if (n.locationIntent == null &&
+          r.context.facts['locationIntent'] == null &&
+          r.context.facts['fixedPlace'] == false &&
+          r.resolution!.outcome == 'flexible' &&
+          r.resolution!.kind == 'preference' &&
+          !hasSpecificSource(e)) {
+        refined = refined.copyWith(locationIntent: LocationIntent.flexible);
+      }
+      n = refined;
+    }
+    final preference = reviewInput(e).placeIntent;
+    if (preference.kind == PlaceKind.search &&
+        (preference.label.trim().isNotEmpty ||
+            preference.brand?.trim().isNotEmpty == true)) {
+      return n.copyWith(
+        query: [
+          if (preference.brand?.isNotEmpty == true) preference.brand!,
+          preference.label,
+        ].join(' ').trim(),
+      );
     }
     return n;
   }
 
   bool questionResolved(Errand e) {
-    final kind = needs[e.id]?.questionKind ?? answerFor(e)?.resolution?.kind;
-    if (kind == 'location' && e.placeIntent.hasCoordinates) return true;
-    return answerFor(e)?.applied == true;
+    final record = answerFor(e);
+    final kind = record?.resolution?.kind ?? needs[e.id]?.questionKind;
+    if (kind == 'location') {
+      if (e.placeIntent.hasCoordinates) return true;
+      if (record?.applied == true) {
+        return !needsLocationUnderstanding(e, effectiveNeed(e));
+      }
+      return false;
+    }
+    return record?.applied == true;
   }
 
   String? questionFor(Errand e) {
-    final q = outstandingQuestion(
-      effectiveNeed(e),
-      clarified: questionResolved(e),
-    );
-    return q != null && durationOnlyQuestion(q) ? null : q;
+    final need = effectiveNeed(e), record = answerFor(e);
+    if (record?.status == 'unresolved') return record?.resolution?.followUp;
+    final q = outstandingQuestion(need, clarified: questionResolved(e));
+    final nonLocation = needs[e.id]?.questionKind != 'location';
+    if (q != null && nonLocation && !durationOnlyQuestion(q)) return q;
+    final location = locationIntentQuestion(e, need);
+    if (location != null) {
+      final assessment = clarifications.locationAssessment(locationContext(e));
+      return assessment?.applied == true &&
+              assessment?.result?.intent == LocationIntent.unclear
+          ? assessment!.result!.question
+          : location;
+    }
+    return null;
   }
 
   bool questionBlocks(Errand e) {
@@ -199,7 +258,8 @@ class PlanningController extends ChangeNotifier {
         {'timing', 'dependency'}.contains(n?.questionKind)) {
       return true;
     }
-    return questionFor(e) != null && n?.questionRequired != false;
+    return needsLocationUnderstanding(e, n) ||
+        (questionFor(e) != null && n?.questionRequired != false);
   }
 
   Map<String, String> get deferred => {
@@ -245,12 +305,23 @@ class PlanningController extends ChangeNotifier {
               : null,
           'rules': answerFor(e)?.rulesApproved ?? false,
           'deferred': deferred[e.id],
+          'location':
+              clarifications.locationAssessment(locationContext(e))?.applied ==
+                  true
+              ? clarifications
+                    .locationAssessment(locationContext(e))!
+                    .result!
+                    .toJson()
+              : null,
         }),
     };
     var changed = false;
     for (final id in {..._answerEffects.keys, ...effects.keys}) {
       if (_answerEffects[id] != effects[id]) {
-        if (!overrides.containsKey(id)) candidates.remove(id);
+        if (!overrides.containsKey(id)) {
+          candidates.remove(id);
+          discoveryResults.remove(id);
+        }
         result = null;
         changed = true;
       }
@@ -280,6 +351,11 @@ class PlanningController extends ChangeNotifier {
   bool interpretationStale = false;
   final needs = <String, ErrandNeed>{};
   final candidates = <String, List<PlanCandidate>>{};
+  final discoveryResults = <String, DiscoveryResult>{};
+  PlanningFailure? recommendationFailure;
+  String? failedRecommendationErrand;
+  RecommendationOperation? recommendationOperation;
+  Future<void>? _recommendationFlight;
   final overrides = <String, String>{};
   final approved = <String>{};
   final additions = <String>{};
@@ -502,6 +578,7 @@ class PlanningController extends ChangeNotifier {
       ]).items,
     );
     candidates.remove(value.id);
+    discoveryResults.remove(value.id);
     overrides.remove(value.id);
     result = null;
     _emit();
@@ -718,6 +795,14 @@ class PlanningController extends ChangeNotifier {
         );
       }
       final selected = points;
+      if (activeErrands.any(
+        (e) => questionBlocks(e) || needsActualLocation(e, effectiveNeed(e)),
+      )) {
+        throw const PlanningFailure(
+          'Resolve the missing location understanding or confirm its actual place before calculating.',
+          kind: 'missing_location',
+        );
+      }
       if (selected.any((p) => !p.place.hasCoordinates)) {
         throw const PlanningFailure(
           'A selected location has expired. Return to review and refresh its actual location.',
@@ -735,6 +820,7 @@ class PlanningController extends ChangeNotifier {
           kind: 'needs_clarification',
         );
       }
+      recommendationOperation = RecommendationOperation.matrix;
       final matrix = await _matrixFor(
         selected,
         () => _closed || epoch != _epoch,
@@ -780,6 +866,7 @@ class PlanningController extends ChangeNotifier {
       }
       progress = 'Checking the selected route at each departure…';
       _emit();
+      recommendationOperation = RecommendationOperation.refinement;
       final refined = await roads.refine(
         day.copyWith(errands: activeErrands),
         schedule,
@@ -807,6 +894,11 @@ class PlanningController extends ChangeNotifier {
       await saveRecommendationDraft();
     } catch (e) {
       if (_closed || epoch != _epoch) return;
+      recommendationFailure = e is PlanningFailure
+          ? e
+          : const PlanningFailure(
+              'Planning is unavailable. Your choices are kept.',
+            );
       error = e is PlanningFailure
           ? e.message
           : 'Planning is unavailable. Your errands and previous plan are kept.';

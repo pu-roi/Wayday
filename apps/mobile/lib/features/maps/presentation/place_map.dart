@@ -102,6 +102,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
     }
   }
 
+  PlaceIntent? get _safeFocus => widget.request.focus?.usesGoogleSdk == true ? null : widget.request.focus;
   MapLibreMapController? _controller;
   bool _ready = false;
   bool _slow = false;
@@ -111,10 +112,10 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
   LatLng? _cameraTarget;
   bool _pointerIntent = false, _gestureSelection = false;
   int _cameraRevision = 0;
-  LatLng get _initialTarget => widget.request.focus?.hasCoordinates == true
+  LatLng get _initialTarget => _safeFocus?.hasCoordinates == true
       ? LatLng(
-          widget.request.focus!.latitude!,
-          widget.request.focus!.longitude!,
+          _safeFocus!.latitude!,
+          _safeFocus!.longitude!,
         )
       : _pins.isEmpty
       ? widget.request.philippinesOverview
@@ -126,7 +127,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
     _cameraRevision++;
     _pointerIntent = false;
     _gestureSelection = false;
-    final place = widget.request.focus;
+    final place = _safeFocus;
     if (place == null || !place.hasCoordinates || _controller == null) return;
     _cameraTarget = LatLng(place.latitude!, place.longitude!);
     final camera = CameraUpdate.newLatLngZoom(
@@ -151,7 +152,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
   }
 
   List<MapPin> get _pins =>
-      widget.request.pins.where((p) => p.place.hasCoordinates).toList();
+      widget.request.pins.where((p) => p.place.hasCoordinates && !p.place.usesGoogleSdk).toList();
 
   @override
   void initState() {
@@ -302,7 +303,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
                       zoom:
                           widget.request.philippinesOverview &&
                               _pins.isEmpty &&
-                              widget.request.focus?.hasCoordinates != true
+                              _safeFocus?.hasCoordinates != true
                           ? 4.7
                           : widget.request.centerPicker
                           ? 16
@@ -438,8 +439,8 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
                 ),
               ),
             if (_pins.any((pin) => pin.place.isGoogle) ||
-                widget.request.focus?.isGoogle == true &&
-                    widget.request.focus!.hasCoordinates)
+                _safeFocus?.isGoogle == true &&
+                    _safeFocus!.hasCoordinates)
               const Positioned(
                 left: 4,
                 bottom: 4,

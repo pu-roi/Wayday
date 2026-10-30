@@ -2,6 +2,10 @@ package dev.wayday.wayday
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.content.pm.ApplicationInfo
+import android.os.Handler
+import android.os.Looper
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
@@ -11,6 +15,7 @@ import com.google.android.libraries.places.api.model.SearchAlongRouteParameters
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.SearchByTextRequest
+import com.google.android.libraries.places.api.net.PlacesStatusCodes
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.util.Locale
@@ -19,15 +24,25 @@ import java.util.Locale
 class RecommendationBridge(private val activity: Activity, messenger: BinaryMessenger) {
     private val channel = MethodChannel(messenger, "wayday/recommendations")
     private var disposed = false
+    private val handler = Handler(Looper.getMainLooper())
+    private val active = mutableSetOf<Reply>()
     private val fields = listOf(Place.Field.ID, Place.Field.DISPLAY_NAME, Place.Field.LOCATION,
         Place.Field.FORMATTED_ADDRESS, Place.Field.ADDRESS_COMPONENTS, Place.Field.TYPES,
         Place.Field.PRIMARY_TYPE, Place.Field.BUSINESS_STATUS)
     init {
         channel.setMethodCallHandler { call, result ->
             if (disposed) { result.error("closed", "Place service closed", null); return@setMethodCallHandler }
+            if (call.method == "status") {
+                result.success(mapOf("configured" to keyConfigured(), "bridgeVersion" to 2))
+                return@setMethodCallHandler
+            }
+            if (call.method !in listOf("search", "details")) { result.notImplemented(); return@setMethodCallHandler }
+            val args = call.arguments as? Map<*, *>
+            val operation = if (call.method == "details") "refresh" else if (args?.get("polyline") != null) "corridor" else "anchor"
+            val reply = Reply(result, operation)
             try {
-                if (!initialize()) { result.error("configuration", "Google Places is not configured", null); return@setMethodCallHandler }
-                val args = call.arguments as? Map<*, *> ?: throw IllegalArgumentException()
+                if (!initialize()) { reply.fail("configuration", null); return@setMethodCallHandler }
+                require(args != null)
                 val client = Places.createClient(activity)
                 when (call.method) {
                     "search" -> {
@@ -35,6 +50,8 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
                         require(query.isNotEmpty() && query.length <= 200)
                         val builder = SearchByTextRequest.builder(query, fields).setMaxResultCount(10)
                             .setPureServiceAreaBusinessesIncluded(false)
+                            .setRegionCode("PH")
+                            .setCancellationToken(reply.cancellation.token)
                         val polyline = args["polyline"] as? String
                         if (polyline != null) {
                             require(polyline.isNotEmpty() && polyline.length <= 200000)
@@ -46,19 +63,19 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
                             builder.setLocationBias(CircularBounds.newInstance(LatLng(latitude, longitude), 5000.0))
                         }
                         client.searchByText(builder.build())
-                            .addOnSuccessListener { if (!disposed) result.success(it.places.map(::snapshot)) }
-                            .addOnFailureListener { failure(result, it) }
+                            .addOnSuccessListener { reply.success(it.places.map(::snapshot)) }
+                            .addOnFailureListener { reply.failure(it) }
                     }
                     "details" -> {
                         val id = args["id"] as? String ?: throw IllegalArgumentException()
                         require(id.isNotEmpty() && id.length <= 512)
-                        client.fetchPlace(FetchPlaceRequest.newInstance(id, fields))
-                            .addOnSuccessListener { if (!disposed) result.success(listOf(snapshot(it.place))) }
-                            .addOnFailureListener { failure(result, it) }
+                        client.fetchPlace(FetchPlaceRequest.builder(id, fields).setCancellationToken(reply.cancellation.token).build())
+                            .addOnSuccessListener { reply.success(listOf(snapshot(it.place))) }
+                            .addOnFailureListener { reply.failure(it) }
                     }
                     else -> result.notImplemented()
                 }
-            } catch (_: Exception) { result.error("invalid_request", "Place request is unavailable", null) }
+            } catch (error: Exception) { reply.failure(error) }
         }
     }
     @Suppress("DEPRECATION")
@@ -69,6 +86,11 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
         if (!Places.isInitialized()) Places.initializeWithNewPlacesApiEnabled(activity.applicationContext, key, Locale.US)
         return true
     }
+    @Suppress("DEPRECATION")
+    private fun keyConfigured(): Boolean = try {
+        !activity.packageManager.getApplicationInfo(activity.packageName, PackageManager.GET_META_DATA)
+            .metaData?.getString("com.google.android.geo.API_KEY").isNullOrEmpty()
+    } catch (_: Exception) { false }
     private fun snapshot(place: Place): Map<String, Any?> {
         val components = place.addressComponents?.asList().orEmpty()
         val country = components.firstOrNull { it.types.contains("country") }?.shortName
@@ -80,9 +102,57 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
             "types" to place.placeTypes.orEmpty(), "status" to place.businessStatus?.name,
             "attributions" to place.attributions.orEmpty(), "at" to System.currentTimeMillis())
     }
-    private fun failure(result: MethodChannel.Result, error: Exception) {
-        if (!disposed) result.error(if ((error as? ApiException)?.statusCode == 9010) "quota" else "places_unavailable",
-            "Google Places could not complete this request", null)
+    private inner class Reply(val result: MethodChannel.Result, val operation: String) {
+        val cancellation = CancellationTokenSource()
+        private var finished = false
+        private val timeout = Runnable {
+            cancellation.cancel() // Best effort; this does not reverse charges.
+            fail("timeout", 15)
+        }
+        init { active.add(this); handler.postDelayed(timeout, 45000) }
+        private fun take(): Boolean {
+            if (finished || disposed) return false
+            finished = true
+            handler.removeCallbacks(timeout)
+            active.remove(this)
+            return true
+        }
+        fun success(value: Any) { if (take()) result.success(value) }
+        fun fail(kind: String, status: Int?, reason: String = "unclassified") {
+            if (!take()) return
+            if (activity.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) android.util.Log.i("WaydayRecommendations", "operation=$operation kind=$kind status=$status reason=$reason")
+            result.error(kind, "Place request failed", mapOf("status" to status, "operation" to operation, "reason" to reason))
+        }
+        fun failure(error: Exception) {
+            val status = (error as? ApiException)?.statusCode
+            val kind = when {
+                error is IllegalArgumentException -> "invalid_request"
+                status == PlacesStatusCodes.REQUEST_DENIED -> "access"
+                status == PlacesStatusCodes.OVER_QUERY_LIMIT || status == 23 -> "quota"
+                status == PlacesStatusCodes.INVALID_REQUEST -> "invalid_request"
+                status == PlacesStatusCodes.NOT_FOUND -> "not_found"
+                status == 7 -> "network"
+                status == 15 || status == 22 -> "timeout"
+                status == 16 -> "cancelled"
+                status == 10 -> "configuration"
+                else -> "unavailable"
+            }
+            val message = error.message.orEmpty().lowercase(Locale.US)
+            val reason = when {
+                message.contains("android") && (message.contains("blocked") || message.contains("not authorized")) -> "android_identity"
+                message.contains("api_key_service_blocked") || message.contains("api restrictions") -> "api_restriction"
+                message.contains("not enabled") || message.contains("disabled") || message.contains("has not been used") -> "service_disabled"
+                message.contains("billing") -> "billing"
+                message.contains("expired") -> "expired_key"
+                else -> "unclassified"
+            }
+            fail(kind, status, reason)
+        }
+        fun cancel() { cancellation.cancel(); fail("cancelled", 16) }
     }
-    fun dispose() { disposed = true; channel.setMethodCallHandler(null) }
+    fun dispose() {
+        active.toList().forEach { it.cancel() }
+        disposed = true
+        channel.setMethodCallHandler(null)
+    }
 }

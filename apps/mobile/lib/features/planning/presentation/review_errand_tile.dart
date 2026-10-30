@@ -5,6 +5,7 @@ import '../domain/planning_models.dart';
 import '../domain/errand_location_review.dart';
 import '../domain/clarification.dart';
 import 'review_changes.dart';
+import 'review_question_state.dart';
 
 class ReviewErrandTile extends StatefulWidget {
   const ReviewErrandTile({
@@ -23,6 +24,10 @@ class ReviewErrandTile extends StatefulWidget {
     this.deferral,
     this.onRulesApproval,
     this.onRemoveExtra,
+    this.questionText,
+    this.useModelQuestion = false,
+    this.answerBusy = false,
+    this.answerStorageError = false,
     required this.clarified,
     required this.currentOrder,
     super.key,
@@ -39,6 +44,8 @@ class ReviewErrandTile extends StatefulWidget {
   final String? deferral;
   final ValueChanged<bool>? onRulesApproval;
   final VoidCallback? onRemoveExtra;
+  final String? questionText;
+  final bool useModelQuestion, answerBusy, answerStorageError;
   @override
   State<ReviewErrandTile> createState() => _ReviewErrandTileState();
 }
@@ -50,7 +57,9 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
     final e = widget.errand, need = widget.need;
     final changes = widget.changes;
     final rawQuestion = outstandingQuestion(need, clarified: widget.clarified);
-    final question = widget.clarified
+    final question = widget.useModelQuestion
+        ? widget.questionText
+        : widget.clarified
         ? null
         : rawQuestion != null && durationOnlyQuestion(rawQuestion)
         ? null
@@ -242,16 +251,17 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
               ],
             ),
           ),
-        if (widget.deferral == null && widget.answer?.applied == true)
+        if (widget.deferral == null &&
+            widget.answer?.applied == true &&
+            !widget.answerStorageError)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: TextButton.icon(
-              onPressed: widget.onClarify,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: Text(
-                '${ruleSuggestion && !widget.answer!.rulesApproved ? 'Suggested: ' : ''}${widget.answer!.resolution!.summary}',
-                textAlign: TextAlign.start,
-              ),
+            child: ReviewQuestionState(
+              question: null,
+              optional: false,
+              summary: widget.answer!.resolution!.summary,
+              awaitingApproval: ruleSuggestion && !widget.answer!.rulesApproved,
+              onTap: widget.onClarify,
             ),
           ),
         if (widget.deferral == null && (question != null || missingLocation))
@@ -261,13 +271,13 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (question != null)
-                  TextButton.icon(
-                    onPressed: widget.onClarify,
-                    icon: const Icon(Icons.help_outline),
-                    label: Text(
-                      '${need?.questionRequired == false ? 'Optional: ' : ''}$question',
-                      textAlign: TextAlign.start,
-                    ),
+                  ReviewQuestionState(
+                    question: question,
+                    optional:
+                        need?.questionRequired == false &&
+                        !needsLocationUnderstanding(e, need),
+                    busy: widget.answerBusy,
+                    onTap: widget.onClarify,
                   ),
                 if (missingLocation)
                   OutlinedButton.icon(

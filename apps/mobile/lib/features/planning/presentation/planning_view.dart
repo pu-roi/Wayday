@@ -16,6 +16,7 @@ import '../domain/review_timing_edit.dart';
 import 'clarification_sheet.dart';
 import '../../places/data/google_pin_cache.dart';
 import 'planning_controller.dart';
+import 'clarification_coordinator.dart';
 import 'understanding_failure_view.dart';
 import 'planning_review.dart';
 import 'review_feedback.dart';
@@ -26,6 +27,7 @@ import '../data/recommendation_discovery.dart';
 import '../data/recommendation_draft_repository.dart';
 import 'recommendation_page.dart';
 import 'place_alternatives_page.dart';
+import 'recommendation_recovery.dart';
 
 class PlanningView extends ConsumerStatefulWidget {
   const PlanningView({this.initial, this.history, super.key});
@@ -91,6 +93,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       resolveGooglePin: ref.read(googlePinCacheProvider).lease,
       clarificationRepository: ref.read(clarificationRepositoryProvider),
       clarificationResolver: ref.read(clarificationResolverProvider),
+      locationResolver: ref.read(locationIntentResolverProvider),
     );
     model.addListener(changed);
     truckConfirmed = widget.history?.lightPickupConfirmed ?? false;
@@ -136,6 +139,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
         model.reviewErrands.map(model.questionContext),
       );
       await model.restoreRecommendationDraft();
+      await model.clarifications.resumeLocationAssessments(
+        model.reviewErrands.map(model.locationContext),
+      );
     }
   }
 
@@ -598,7 +604,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       PreparationStage.failed ||
       PreparationStage.understanding => 'Plan my day',
       PreparationStage.review => 'Review errands',
-      PreparationStage.discovery => 'Find suitable places',
+      PreparationStage.discovery => 'Recommended places',
       PreparationStage.calculating => 'Building your day',
       PreparationStage.recommendations => 'Recommended places',
       PreparationStage.result => 'Your day',
@@ -666,26 +672,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
               ),
             ),
             PreparationStage.review => review,
-            PreparationStage.discovery => ListView(
-              children: [
-                notice(
-                  model.error ??
-                      'Place choices changed. Recalculate the trip before continuing.',
-                ),
-                if (model.recommendationStorageError != null)
-                  notice(model.recommendationStorageError!),
-                button('Retry recommendations', model.buildRecommendations),
-                for (final e in model.unresolved)
-                  ListTile(
-                    title: Text(e.title),
-                    trailing: TextButton(
-                      onPressed: () => manualCandidate(e),
-                      child: const Text('Choose place'),
-                    ),
-                  ),
-                button('Review errands', model.review),
-              ],
-            ),
+            PreparationStage.discovery => RecommendationRecovery(model: model, onManual: manualCandidate),
             PreparationStage.recommendations => recommendations(),
             PreparationStage.result => result(),
           },

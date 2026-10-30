@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../../today/domain/day.dart';
@@ -163,21 +164,24 @@ class PlanningRoads {
           )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode == 429) {
-        throw const PlanningFailure(
+        throw PlanningFailure(
           'Google routing quota is exhausted. Your draft is kept.',
           kind: 'quota',
+          providerStatus: response.statusCode,
         );
       }
       if (response.statusCode == 401 || response.statusCode == 403) {
-        throw const PlanningFailure(
+        throw PlanningFailure(
           'Routing access was denied for this app. Check the restricted key configuration.',
           kind: 'access',
+          providerStatus: response.statusCode,
         );
       }
       if (response.statusCode == 400) {
-        throw const PlanningFailure(
+        throw PlanningFailure(
           'This travel mode or dated request is unavailable for these locations.',
           kind: 'unsupported_profile',
+          providerStatus: response.statusCode,
         );
       }
       if (response.statusCode != 200 || response.body.length > 1500000) {
@@ -186,6 +190,16 @@ class PlanningRoads {
       return jsonDecode(response.body);
     } on PlanningFailure {
       rethrow;
+    } on TimeoutException {
+      throw const PlanningFailure(
+        'Road estimates took too long. Your choices are kept; you can try again.',
+        kind: 'timeout',
+      );
+    } on http.ClientException {
+      throw const PlanningFailure(
+        'Road estimates could not connect. Check your internet connection and try again.',
+        kind: 'network',
+      );
     } catch (_) {
       throw const PlanningFailure(
         'Road estimates are unavailable. Your errands and previous plan are kept.',

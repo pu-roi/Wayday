@@ -15,7 +15,6 @@ import '../../places/presentation/place_search_controller.dart';
 import '../../places/presentation/place_search_panel.dart';
 import '../data/location_reader.dart';
 import 'place_map.dart';
-import 'google_pin_picker_map.dart';
 
 class OnlinePinPicker extends ConsumerStatefulWidget {
   const OnlinePinPicker({
@@ -58,10 +57,12 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _focus = widget.initial;
-    if (widget.initial?.hasCoordinates == true ||
-        widget.initial?.isGoogle == true) {
-      _point = widget.initial;
+    // An SDK recommendation belongs on its Google result map. Manual
+    // replacement starts independently and cancellation leaves the caller intact.
+    final initial = _manualMapEligible(widget.initial) ? widget.initial : null;
+    _focus = initial;
+    if (initial?.hasCoordinates == true || initial?.isGoogle == true) {
+      _point = initial;
     }
     _googlePins = ref.read(googlePinCacheProvider)..addListener(_refresh);
     _search =
@@ -177,7 +178,17 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
     setState(() => _searchOpen = false);
   }
 
+  bool _manualMapEligible(PlaceIntent? place) => place?.usesGoogleSdk != true;
+
   void _choose(PlaceIntent place) {
+    if (!_manualMapEligible(place)) {
+      setState(
+        () => _locationInfo =
+            'This Google recommendation stays on its result map. Choose a new manual pin or search for a place.',
+      );
+      _closeSearch();
+      return;
+    }
     _cancelLocation();
     _areaCategory = null;
     setState(() {
@@ -417,39 +428,31 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: widget.forPlanning
-                          ? GooglePinPickerMap(
-                              focus: _focus,
-                              revision: _focusRevision,
-                              onSelect: _select,
-                            )
-                          : ref.watch(placeMapBuilderProvider)(
-                              PlaceMapRequest(
-                                centerPicker: true,
-                                philippinesOverview: true,
-                                iconOnlyAttribution: true,
-                                focus: _focus,
-                                focusRevision: _focusRevision,
-                                focusZoom: _focusIsCurrentLocation ? 18 : 16,
-                                animateFocus: _focusIsCurrentLocation,
-                                onSelect: _select,
-                                onViewportChanged: (latitude, longitude, zoom) {
-                                  _search.updateArea(
-                                    SearchArea(latitude, longitude, zoom),
-                                  );
-                                },
-                                onMoveStarted: _moveStarted,
-                                onZoomChanged: (zoom) {
-                                  if (zoom.isFinite &&
-                                      mounted &&
-                                      zoom != _zoom) {
-                                    setState(() => _zoom = zoom);
-                                  }
-                                },
-                                onMoveCancelled: () =>
-                                    setState(() => _moving = false),
-                              ),
-                            ),
+                      child: ref.watch(placeMapBuilderProvider)(
+                        PlaceMapRequest(
+                          centerPicker: true,
+                          philippinesOverview: true,
+                          iconOnlyAttribution: true,
+                          focus: _focus,
+                          focusRevision: _focusRevision,
+                          focusZoom: _focusIsCurrentLocation ? 18 : 16,
+                          animateFocus: _focusIsCurrentLocation,
+                          onSelect: _select,
+                          onViewportChanged: (latitude, longitude, zoom) {
+                            _search.updateArea(
+                              SearchArea(latitude, longitude, zoom),
+                            );
+                          },
+                          onMoveStarted: _moveStarted,
+                          onZoomChanged: (zoom) {
+                            if (zoom.isFinite && mounted && zoom != _zoom) {
+                              setState(() => _zoom = zoom);
+                            }
+                          },
+                          onMoveCancelled: () =>
+                              setState(() => _moving = false),
+                        ),
+                      ),
                     ),
                     Positioned(
                       right: 16,

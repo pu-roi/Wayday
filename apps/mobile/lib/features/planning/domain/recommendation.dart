@@ -1,6 +1,8 @@
 import '../../places/domain/philippine_eligibility.dart';
 import '../../places/domain/place_intent.dart';
 import 'planning_models.dart';
+import 'discovery_result.dart';
+export 'discovery_result.dart';
 
 /// Provider display data lives only in the current recommendation session.
 class RecommendationPlace {
@@ -140,7 +142,7 @@ class RecommendationLeg {
 
 abstract interface class RecommendationDiscovery {
   Future<void> preflight(int maximumRequests);
-  Future<List<PlanCandidate>> discover(
+  Future<DiscoveryResult> discover(
     ErrandNeed need, {
     required String? polyline,
     required List<PlaceIntent> anchors,

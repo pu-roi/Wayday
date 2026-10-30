@@ -89,6 +89,8 @@ extension RecommendationPreparation on PlanningController {
             'minute': n.minute,
             'optional': n.optional,
             'specific': n.requiresSpecificLocation,
+            if (n.locationIntent != null)
+              'locationIntent': n.locationIntent!.name,
             'title': n.proposedTitle,
           },
         )
@@ -132,6 +134,7 @@ extension RecommendationPreparation on PlanningController {
       );
       final allowed = {...needs.keys};
       if (draft.choices.keys.any((id) => !allowed.contains(id)) ||
+          draft.pendingCandidates.keys.any((id) => !allowed.contains(id)) ||
           draft.approved.any((id) => !allowed.contains(id)) ||
           draft.additions.any((id) => !allowed.contains(id))) {
         throw const FormatException('Draft errands have changed');
@@ -146,6 +149,17 @@ extension RecommendationPreparation on PlanningController {
         ..clear()
         ..addAll(draft.choices);
       overrides.clear();
+      for (final entry in draft.pendingCandidates.entries) {
+        candidates[entry.key] = [
+          for (final p in entry.value)
+            PlanCandidate(
+              key: placeKey(p),
+              place: p,
+              errandIds: {entry.key},
+              reason: 'Found for this trip; route comparison still needed.',
+            ),
+        ];
+      }
       for (final entry in draft.choices.entries) {
         final p = entry.value;
         candidates[entry.key] = [
@@ -197,6 +211,13 @@ extension RecommendationPreparation on PlanningController {
         RecommendationDraft(
           context: _recommendationContext,
           choices: choices,
+          pendingCandidates: {
+            for (final entry in candidates.entries)
+              if (!choices.containsKey(entry.key) &&
+                  entry.value.isNotEmpty &&
+                  activeErrands.any((e) => e.id == entry.key))
+                entry.key: entry.value.map((p) => p.place).toList(),
+          },
           overrides: overrides.keys.where(choices.containsKey).toSet(),
           approved: {...approved},
           additions: {...additions},
@@ -220,7 +241,18 @@ extension RecommendationPreparation on PlanningController {
     }
   }
 
-  Future<void> buildRecommendations() async {
+  Future<void> buildRecommendations() {
+    if (_recommendationFlight != null) return _recommendationFlight!;
+    final flight = _buildRecommendations();
+    _recommendationFlight = flight;
+    return flight.whenComplete(() {
+      if (identical(_recommendationFlight, flight)) {
+        _recommendationFlight = null;
+      }
+    });
+  }
+
+  Future<void> _buildRecommendations() async {
     try {
       applyReview();
     } catch (e) {
@@ -228,6 +260,9 @@ extension RecommendationPreparation on PlanningController {
       _emit();
       return;
     }
+    recommendationFailure = null;
+    failedRecommendationErrand = null;
+    recommendationOperation = RecommendationOperation.configuration;
     final service = discovery;
     final epoch = ++_epoch;
     bool cancelled() => _closed || epoch != _epoch;
@@ -258,6 +293,7 @@ extension RecommendationPreparation on PlanningController {
               .length;
       if (requests > 0) await service?.preflight(requests);
       if (cancelled()) return;
+      recommendationOperation = RecommendationOperation.refresh;
       for (final group in candidates.values) {
         for (final candidate in group) {
           if (candidate.place.isGoogle) {
@@ -266,6 +302,7 @@ extension RecommendationPreparation on PlanningController {
                 'Google place refresh is unavailable.',
               );
             }
+            failedRecommendationErrand = candidate.errandIds.firstOrNull;
             final metadata = await service.hydrate(
               candidate.place,
               cancelled: cancelled,
@@ -298,6 +335,8 @@ extension RecommendationPreparation on PlanningController {
               ),
           PlanCandidate(key: '@end', place: day.toPlace, errandIds: {}),
         ];
+        failedRecommendationErrand = null;
+        recommendationOperation = RecommendationOperation.seed;
         final route = await roads.discoveryRoute(
           day,
           fixed,
@@ -305,6 +344,10 @@ extension RecommendationPreparation on PlanningController {
         );
         if (cancelled()) return;
         for (final e in [...unresolved]) {
+          failedRecommendationErrand = e.id;
+          recommendationOperation = route == null
+              ? RecommendationOperation.anchor
+              : RecommendationOperation.corridor;
           progress = 'Finding places for “${e.title}”…';
           _emit();
           final tasks = activeErrands,
@@ -328,7 +371,7 @@ extension RecommendationPreparation on PlanningController {
           final anchorAfter = following.isNotEmpty
               ? following.first.placeIntent
               : day.toPlace;
-          final values = await service.discover(
+          final batch = await service.discover(
             effectiveNeed(e)!,
             polyline: route,
             anchors: [anchorBefore, anchorAfter],
@@ -336,10 +379,16 @@ extension RecommendationPreparation on PlanningController {
             cancelled: cancelled,
           );
           if (cancelled()) return;
+          final values = batch.candidates;
+          discoveryResults[e.id] = batch;
           if (values.isEmpty && !e.optional) {
             throw PlanningFailure(
-              'No suitable place was found for “${e.title}”. Search for a place or review this errand.',
-              kind: 'no_candidates',
+              batch.outcome == DiscoveryOutcome.noMatches
+                  ? 'The completed searches returned no matches for “${e.title}” along this trip.'
+                  : 'Places were returned for “${e.title}”, but none passed the location and suitability checks.',
+              kind: batch.outcome == DiscoveryOutcome.noMatches
+                  ? 'no_candidates'
+                  : 'candidates_rejected',
             );
           }
           candidates[e.id] = values
@@ -354,15 +403,30 @@ extension RecommendationPreparation on PlanningController {
                 ),
               )
               .toList();
+          _recommendationDraftChanged = true;
         }
       }
+      failedRecommendationErrand = null;
+      recommendationOperation = RecommendationOperation.matrix;
       if (!cancelled()) await calculate();
     } catch (e) {
       if (cancelled()) return;
+      recommendationFailure = e is RecommendationFailure
+          ? (failedRecommendationErrand == null
+                ? e
+                : e.forErrand(failedRecommendationErrand!))
+          : e is PlanningFailure
+          ? e
+          : const PlanningFailure(
+              'Recommendations are unavailable. Your choices are kept.',
+            );
+      if (e is RecommendationFailure) recommendationOperation = e.operation;
       error = e is PlanningFailure
           ? e.message
           : 'Recommendations are unavailable. Your choices are kept.';
       stage = PreparationStage.discovery;
+      await saveRecommendationDraft();
+      if (cancelled()) return;
       _emit();
     }
   }

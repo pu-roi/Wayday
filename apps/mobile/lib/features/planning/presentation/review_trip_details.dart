@@ -64,6 +64,7 @@ class _ReviewTripDetailsState extends State<ReviewTripDetails> {
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         shape: const Border(),
         collapsedShape: const Border(),
+        leading: Icon(Icons.route_outlined, color: context.colors.secondary),
         title: Text(
           'Trip details',
           style: context.type.bodyMedium?.copyWith(fontWeight: FontWeight.w600),

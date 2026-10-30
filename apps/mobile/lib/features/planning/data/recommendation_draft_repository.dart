@@ -25,6 +25,7 @@ class RecommendationDraft {
     this.scrollOffset = 0,
     this.from,
     this.to,
+    this.pendingCandidates = const {},
   });
   final String context;
   final Map<String, PlaceIntent> choices;
@@ -32,6 +33,7 @@ class RecommendationDraft {
   final String? selectedErrand;
   final double scrollOffset;
   final PlaceIntent? from, to;
+  final Map<String, List<PlaceIntent>> pendingCandidates;
   Map<String, Object?> toJson() => {
     'version': 1,
     'context': context,
@@ -43,6 +45,10 @@ class RecommendationDraft {
     'offset': scrollOffset,
     'from': from?.toJson(),
     'to': to?.toJson(),
+    if (pendingCandidates.isNotEmpty)
+      'pendingCandidates': pendingCandidates.map(
+        (id, values) => MapEntry(id, values.map((p) => p.toJson()).toList()),
+      ),
   };
   factory RecommendationDraft.fromJson(
     Map<String, dynamic> json, {
@@ -81,6 +87,25 @@ class RecommendationDraft {
       ),
     );
     final overrides = ids('overrides'), selected = json['selected'];
+    final pending = json['pendingCandidates'] ?? <String, dynamic>{};
+    if (pending is! Map ||
+        pending.length > 12 ||
+        pending.entries.any(
+          (e) =>
+              e.key is! String ||
+              choices.containsKey(e.key) ||
+              e.value is! List ||
+              (e.value as List).isEmpty ||
+              (e.value as List).length > 3,
+        ) ||
+        pending.values.fold<int>(
+                  0,
+                  (n, values) => n + (values as List).length,
+                ) +
+                choices.length >
+            12) {
+      throw const FormatException('Invalid pending place candidates');
+    }
     if (overrides.any((id) => !choices.containsKey(id)) ||
         (selected != null &&
             (selected is! String || !choices.containsKey(selected)))) {
@@ -89,6 +114,16 @@ class RecommendationDraft {
     return RecommendationDraft(
       context: context,
       choices: Map<String, PlaceIntent>.from(choices),
+      pendingCandidates: {
+        for (final e in pending.entries)
+          e.key as String: [
+            for (final value in e.value as List)
+              PlaceIntent.fromJson(
+                Map<String, dynamic>.from(value as Map),
+                resolveGooglePin: resolver,
+              ),
+          ],
+      },
       overrides: overrides,
       approved: ids('approved'),
       additions: ids('additions'),
