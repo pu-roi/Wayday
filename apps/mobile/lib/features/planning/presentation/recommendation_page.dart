@@ -267,6 +267,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
                                               ? 'Travel estimate unavailable'
                                               : '${(leg.seconds / 60).ceil()} min${leg.meters == null ? '' : ' · ${(leg.meters! / 1000).toStringAsFixed(1)} km'} from ${i == 0 ? 'start' : 'stop $i'}',
                                         ),
+                                        if (places[stop.placeKey]!
+                                            .reason
+                                            .isNotEmpty)
+                                          Text(
+                                            places[stop.placeKey]!.reason,
+                                            style: context.type.bodySmall,
+                                          ),
                                       ],
                                     ),
                                     trailing: Icon(
@@ -290,7 +297,14 @@ class _RecommendationPageState extends State<RecommendationPage> {
                                           if (metadata?.address.isNotEmpty ==
                                               true)
                                             Text(metadata!.address),
-                                          Text(places[stop.placeKey]!.reason),
+                                          if (metadata?.types.isNotEmpty ==
+                                              true)
+                                            Text(
+                                              metadata!.types.first.replaceAll(
+                                                '_',
+                                                ' ',
+                                              ),
+                                            ),
                                           if (stop.tasks.length > 1)
                                             const Text(
                                               'Shared visit · errands remain separate',

@@ -94,6 +94,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(TextField), findsNothing);
         expect(find.text('Use name only'), findsNothing);
+        expect(find.text('Your selected location.'), findsNWidgets(2));
         expect(find.text('Next: see my day').hitTestable(), findsOneWidget);
         if (Platform.environment['WAYDAY_CAPTURE'] == '1') {
           await tester.runAsync(() async {
