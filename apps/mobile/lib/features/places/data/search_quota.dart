@@ -107,6 +107,18 @@ class QuotaLedger {
   }
 
   /// Null reserves a call. A future time means wait without consuming a call.
+  Future<void> checkCapacity(String id, int count, ProviderPolicy policy) =>
+      _serial(() async {
+        await _load();
+        final time = now().toUtc();
+        final recent = (_starts[id] ?? []).where(
+          (d) => d.isAfter(time.subtract(const Duration(hours: 24))),
+        );
+        if (count < 0 || recent.length + count > policy.daily) {
+          throw const SearchFailure(SearchFailureKind.daily);
+        }
+      });
+
   Future<DateTime?> reserve(String id, ProviderPolicy policy) =>
       _serial(() async {
         await _load();

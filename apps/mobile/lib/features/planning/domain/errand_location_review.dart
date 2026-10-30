@@ -7,8 +7,15 @@ import 'planning_models.dart';
 bool needsActualLocation(Errand errand, ErrandNeed? need) {
   final place = errand.placeIntent;
   if (place.hasCoordinates) return false;
+  // Retrieving existing belongings requires their actual location, including
+  // older cached interpretations that predate specificLocation metadata.
+  final existingPickup = RegExp(
+    r'\b(pick\s*up|collect|retrieve)\b.*\b(laundry|clothes|parcel|package)\b|\b(kunin|kunin ko|pickup)\b.*\b(labada|nilabhan|damit|parcel|package)\b',
+    caseSensitive: false,
+  ).hasMatch(errand.title);
   if (need?.meeting == true ||
       need?.requiresSpecificLocation == true ||
+      existingPickup ||
       place.isGoogle) {
     return true;
   }

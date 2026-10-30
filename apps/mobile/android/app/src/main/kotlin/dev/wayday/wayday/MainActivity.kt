@@ -6,9 +6,11 @@ import android.content.Intent
 
 class MainActivity : FlutterFragmentActivity() {
     private var planning: PlanningBridge? = null
+    private var recommendations: RecommendationBridge? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         planning = PlanningBridge(this, flutterEngine.dartExecutor.binaryMessenger)
+        recommendations = RecommendationBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         flutterEngine.platformViewsController.registry.registerViewFactory(
             "wayday/google_places", GooglePlacesFactory(this, flutterEngine.dartExecutor.binaryMessenger))
     }
@@ -19,6 +21,8 @@ class MainActivity : FlutterFragmentActivity() {
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         planning?.dispose()
         planning = null
+        recommendations?.dispose()
+        recommendations = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 }
