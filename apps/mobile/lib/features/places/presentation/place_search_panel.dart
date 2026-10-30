@@ -20,6 +20,8 @@ class PlaceSearchPanel extends StatefulWidget {
     this.onOpenSettings,
     this.locating = false,
     this.locationMessage,
+    this.allowNameOnly = true,
+    this.mapActionLabel = 'Back to map',
     super.key,
   });
   final PlaceSearchController search;
@@ -31,6 +33,8 @@ class PlaceSearchPanel extends StatefulWidget {
   final VoidCallback? onUseLocation, onOpenSettings;
   final bool locating;
   final String? locationMessage;
+  final bool allowNameOnly;
+  final String mapActionLabel;
   @override
   State<PlaceSearchPanel> createState() => _PlaceSearchPanelState();
 }
@@ -156,7 +160,7 @@ class _PlaceSearchPanelState extends State<PlaceSearchPanel> {
   ];
 
   List<Widget> _fallbackActions() => [
-    if (search.query.isNotEmpty)
+    if (widget.allowNameOnly && search.query.isNotEmpty)
       ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.edit_location_alt_outlined),
@@ -169,7 +173,7 @@ class _PlaceSearchPanelState extends State<PlaceSearchPanel> {
       child: TextButton.icon(
         onPressed: onClose,
         icon: const Icon(Icons.map_outlined),
-        label: const Text('Back to map'),
+        label: Text(widget.mapActionLabel),
       ),
     ),
   ];

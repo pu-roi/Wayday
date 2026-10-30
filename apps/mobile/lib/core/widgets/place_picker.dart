@@ -7,10 +7,15 @@ Future<PlaceIntent?> choosePlace(
   required String title,
   required String initial,
   PlaceIntent? initialPlace,
+  bool forPlanning = false,
 }) => Navigator.of(context, rootNavigator: true).push<PlaceIntent>(
   MaterialPageRoute(
-    builder: (_) =>
-        PlacePicker(title: title, initial: initial, initialPlace: initialPlace),
+    builder: (_) => PlacePicker(
+      title: title,
+      initial: initial,
+      initialPlace: initialPlace,
+      forPlanning: forPlanning,
+    ),
   ),
 );
 
@@ -20,15 +25,19 @@ class PlacePicker extends StatelessWidget {
     required this.title,
     required this.initial,
     this.initialPlace,
+    this.forPlanning = false,
     super.key,
   });
   final String title;
   final String initial;
   final PlaceIntent? initialPlace;
+  final bool forPlanning;
 
   @override
   Widget build(BuildContext context) => OnlinePinPicker(
     title: title,
     initial: initialPlace ?? PlaceIntent(label: initial),
+    forPlanning: forPlanning,
+    allowSave: !forPlanning,
   );
 }

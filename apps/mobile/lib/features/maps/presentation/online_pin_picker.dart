@@ -15,17 +15,20 @@ import '../../places/presentation/place_search_controller.dart';
 import '../../places/presentation/place_search_panel.dart';
 import '../data/location_reader.dart';
 import 'place_map.dart';
+import 'google_pin_picker_map.dart';
 
 class OnlinePinPicker extends ConsumerStatefulWidget {
   const OnlinePinPicker({
     required this.initial,
     this.title = 'Choose a location',
     this.allowSave = true,
+    this.forPlanning = false,
     super.key,
   });
   final PlaceIntent? initial;
   final String title;
   final bool allowSave;
+  final bool forPlanning;
   @override
   ConsumerState<OnlinePinPicker> createState() => _OnlinePinPickerState();
 }
@@ -279,7 +282,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
         _focusRevision++;
         _moving = false;
         _locationInfo =
-            'Accuracy about ${fix.accuracy.round()} m. Check the pin before confirming.';
+            '${fix.approximate ? 'Approximate location. ' : ''}Accuracy about ${fix.accuracy.round()} m. Check the pin before confirming.';
       });
     } on LocationUnavailable catch (error) {
       if (mounted && attempt == _locationAttempt) {
@@ -351,6 +354,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
     final canConfirm =
         point != null &&
         point.label.trim().isNotEmpty &&
+        (!widget.forPlanning || point.hasCoordinates) &&
         (!point.isGoogle || point.hasCoordinates) &&
         !_moving &&
         !_locating;
@@ -413,31 +417,39 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: ref.watch(placeMapBuilderProvider)(
-                        PlaceMapRequest(
-                          centerPicker: true,
-                          philippinesOverview: true,
-                          iconOnlyAttribution: true,
-                          focus: _focus,
-                          focusRevision: _focusRevision,
-                          focusZoom: _focusIsCurrentLocation ? 18 : 16,
-                          animateFocus: _focusIsCurrentLocation,
-                          onSelect: _select,
-                          onViewportChanged: (latitude, longitude, zoom) {
-                            _search.updateArea(
-                              SearchArea(latitude, longitude, zoom),
-                            );
-                          },
-                          onMoveStarted: _moveStarted,
-                          onZoomChanged: (zoom) {
-                            if (zoom.isFinite && mounted && zoom != _zoom) {
-                              setState(() => _zoom = zoom);
-                            }
-                          },
-                          onMoveCancelled: () =>
-                              setState(() => _moving = false),
-                        ),
-                      ),
+                      child: widget.forPlanning
+                          ? GooglePinPickerMap(
+                              focus: _focus,
+                              revision: _focusRevision,
+                              onSelect: _select,
+                            )
+                          : ref.watch(placeMapBuilderProvider)(
+                              PlaceMapRequest(
+                                centerPicker: true,
+                                philippinesOverview: true,
+                                iconOnlyAttribution: true,
+                                focus: _focus,
+                                focusRevision: _focusRevision,
+                                focusZoom: _focusIsCurrentLocation ? 18 : 16,
+                                animateFocus: _focusIsCurrentLocation,
+                                onSelect: _select,
+                                onViewportChanged: (latitude, longitude, zoom) {
+                                  _search.updateArea(
+                                    SearchArea(latitude, longitude, zoom),
+                                  );
+                                },
+                                onMoveStarted: _moveStarted,
+                                onZoomChanged: (zoom) {
+                                  if (zoom.isFinite &&
+                                      mounted &&
+                                      zoom != _zoom) {
+                                    setState(() => _zoom = zoom);
+                                  }
+                                },
+                                onMoveCancelled: () =>
+                                    setState(() => _moving = false),
+                              ),
+                            ),
                     ),
                     Positioned(
                       right: 16,
@@ -525,6 +537,10 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                           onClose: _backToMap,
                           onNameOnly: () =>
                               _choose(PlaceIntent(label: _query.text.trim())),
+                          allowNameOnly: !widget.forPlanning,
+                          mapActionLabel: widget.forPlanning
+                              ? 'Choose on map'
+                              : 'Back to map',
                         ),
                       ),
                   ],
