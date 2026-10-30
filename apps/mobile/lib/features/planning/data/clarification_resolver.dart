@@ -28,6 +28,7 @@ class GeminiClarificationResolver implements ClarificationResolver {
     final reply = await client.request(
       clarificationRequest(context, answer, history),
       purpose: 'clarification',
+      legacyBody: legacyClarificationRequest(context, answer, history),
       retry: retry,
       savedOnly: savedOnly,
     );
@@ -45,7 +46,7 @@ class GeminiClarificationResolver implements ClarificationResolver {
   }
 }
 
-String clarificationRequest(
+String legacyClarificationRequest(
   ClarificationContext context,
   String answer,
   List<String> history,
@@ -140,4 +141,37 @@ String clarificationRequest(
     );
   }
   return body;
+}
+
+String clarificationRequest(
+  ClarificationContext context,
+  String answer,
+  List<String> history,
+) {
+  final body =
+      jsonDecode(legacyClarificationRequest(context, answer, history))
+          as Map<String, dynamic>;
+  body['systemInstruction']['parts'][0]['text'] +=
+      ' Location intent clarification policy v1: consider the complete errand and confirmed facts with this answer in English, Filipino or Taglish. '
+      'Return locationIntent flexible, specific or unclear when this answer establishes or changes destination intent; otherwise null. '
+      'Correct an earlier mistaken assumption in either direction unless it conflicts with explicit user-confirmed source constraints. '
+      'Do not infer destination intent from category alone. A newly arranged meeting may use recommendations, an existing order/arrangement needs its actual place. '
+      'A place name is not a confirmed map point. unclear requires outcome unresolved and a focused followUp. '
+      'For a location question a resolved/flexible outcome must include flexible or specific locationIntent.';
+  body['generationConfig']['responseSchema']['properties']['locationIntent'] = {
+    'type': 'STRING',
+    'nullable': true,
+    'enum': LocationIntent.values.map((v) => v.name).toList(),
+  };
+  body['generationConfig']['responseSchema']['required'] =
+      (body['generationConfig']['responseSchema']['properties'] as Map).keys
+          .toList();
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten this answer before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
 }

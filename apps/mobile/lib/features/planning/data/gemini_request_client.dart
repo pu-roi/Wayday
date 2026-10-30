@@ -33,13 +33,20 @@ class GeminiRequestClient {
     String body, {
     String purpose = 'interpretation',
     String? legacyBody,
+    List<String> legacyBodies = const [],
     bool retry = false,
     bool savedOnly = false,
   }) {
     final key = '$purpose:$body';
     final existing = _flights[key];
     if (existing != null) return existing;
-    final result = _request(body, purpose, legacyBody, retry, savedOnly);
+    final result = _request(
+      body,
+      purpose,
+      [?legacyBody, ...legacyBodies],
+      retry,
+      savedOnly,
+    );
     _flights[key] = result;
     return result.whenComplete(() {
       if (identical(_flights[key], result)) _flights.remove(key);
@@ -74,7 +81,7 @@ class GeminiRequestClient {
   Future<GeminiReply> _request(
     String body,
     String purpose,
-    String? legacy,
+    List<String> historical,
     bool retry,
     bool savedOnly,
   ) async {
@@ -83,7 +90,7 @@ class GeminiRequestClient {
       if (status['state'] == 'completed') {
         return GeminiReply(body, status['response'] as String);
       }
-      if (legacy != null && legacy != body) {
+      for (final legacy in historical.toSet().where((value) => value != body)) {
         final old = await _status(legacy, purpose, retry);
         if (old['state'] == 'completed') {
           return GeminiReply(legacy, old['response'] as String);

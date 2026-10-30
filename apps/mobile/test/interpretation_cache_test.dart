@@ -28,6 +28,10 @@ String answer(String body) {
                   for (final e in input)
                     {
                       'id': e['id'],
+                      if ((request['generationConfig']['responseSchema']['properties']['needs']['items']['properties']
+                              as Map)
+                          .containsKey('locationIntent'))
+                        'locationIntent': 'flexible',
                       'query': 'grocery',
                       'category': 'grocery',
                       'items': ['rice'],
@@ -400,6 +404,21 @@ void main() {
       expect(requests, 0);
     },
   );
+  test('the immediately previous typed interpretation is reused without generation', () async {
+    final body = previousInterpretationRequest(day());
+    disk[body] = {'state': 'completed', 'response': answer(body)};
+    configured = false;
+    final result = await interpreter().interpret(day());
+    expect(result.needs.single.locationIntent, isNull);
+    expect(requests, 0);
+  });
+  for (final state in ['pending', 'failed', 'corrupt', 'recovery']) {
+    test('a $state previous typed result cannot spend after a version change', () async {
+      disk[previousInterpretationRequest(day())] = {'state': state};
+      await expectLater(interpreter().interpret(day()), throwsA(isA<PlanningFailure>()));
+      expect(requests, 0);
+    });
+  }
   for (final state in ['pending', 'failed']) {
     test(
       'a $state legacy outcome cannot silently retry through a schema upgrade',

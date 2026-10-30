@@ -45,7 +45,10 @@ class GeminiInterpreter
     if (_lastInput == body && _lastResult != null) return _lastResult!;
     final reply = await client.request(
       body,
-      legacyBody: legacyInterpretationRequest(day),
+      legacyBodies: [
+        previousInterpretationRequest(day),
+        legacyInterpretationRequest(day),
+      ],
       retry: retry,
       savedOnly: savedOnly,
     );
@@ -56,6 +59,15 @@ class GeminiInterpreter
           (usage?['candidatesTokenCount'] as int? ?? 0) +
           (usage?['thoughtsTokenCount'] as int? ?? 0);
       final result = Interpretation.fromJson(reply.value, day);
+      if (reply.body == body &&
+          [
+            ...result.needs,
+            ...result.additions,
+          ].any((n) => n.locationIntent == null)) {
+        throw const FormatException(
+          'Current understanding omitted destination intent',
+        );
+      }
       _lastInput = body;
       _lastResult = result;
       return result;

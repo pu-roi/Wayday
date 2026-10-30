@@ -3,9 +3,19 @@ import '../../today/domain/day.dart';
 import '../domain/clarification.dart';
 import '../data/clarification_repository.dart';
 import '../data/clarification_resolver.dart';
+import '../data/location_intent_resolver.dart';
+import '../domain/location_assessment.dart';
+
+part 'location_assessment_coordinator.dart';
 
 class ClarificationCoordinator extends ChangeNotifier {
-  ClarificationCoordinator(this.repository, this.resolver);
+  ClarificationCoordinator(
+    this.repository,
+    this.resolver, {
+    LocationIntentResolver? locationResolver,
+  }) : locationResolver = locationResolver ?? GeminiLocationIntentResolver();
+  final LocationIntentResolver locationResolver;
+  final _locationFlights = <String, Future<void>>{};
   final ClarificationRepository repository;
   final ClarificationResolver resolver;
   ClarificationSession session = ClarificationSession();
@@ -64,28 +74,46 @@ class ClarificationCoordinator extends ChangeNotifier {
   }
 
   ClarificationRecord? record(ClarificationContext c) {
-    final direct = session.records[c.key];
-    if (direct != null &&
-        direct.status != 'draft' &&
-        !_sameResolvedScope(direct, c)) {
-      return direct;
-    }
-    ClarificationRecord? latest;
+    ClarificationRecord? latest = session.records[c.key];
     for (final r in session.records.values) {
-      if (_sameResolvedScope(r, c) &&
+      if ((_sameResolvedScope(r, c) ||
+              (r.status == 'cleared' &&
+                  r.context.preferenceKey == c.preferenceKey)) &&
           (latest == null || r.revision > latest.revision)) {
         latest = r;
       }
     }
-    return latest ?? direct;
+    return latest;
   }
 
   Future<void> _save() async {
     final key = sourceKey!, current = session;
     bool isCurrent() => sourceKey == key && identical(session, current);
+    final records = {
+      for (final e in current.records.entries)
+        e.key: (e.value, e.value.updatedAt),
+    };
+    final assessments = {
+      for (final e in current.locationAssessments.entries)
+        e.key: (e.value, e.value.updatedAt),
+    };
     try {
       await repository.save(key, current);
-      if (isCurrent()) storageError = null;
+      if (isCurrent()) {
+        storageError = null;
+        for (final e in records.entries) {
+          if (identical(current.records[e.key], e.value.$1) &&
+              e.value.$1.updatedAt == e.value.$2) {
+            e.value.$1.persisted = true;
+          }
+        }
+        for (final e in assessments.entries) {
+          if (identical(current.locationAssessments[e.key], e.value.$1) &&
+              e.value.$1.updatedAt == e.value.$2) {
+            e.value.$1.persisted = true;
+          }
+        }
+      }
     } catch (_) {
       if (isCurrent()) {
         storageError =
@@ -98,6 +126,26 @@ class ClarificationCoordinator extends ChangeNotifier {
   }
 
   Future<void> saveDraft(ClarificationContext c, String text) async {
+    final previous = record(c);
+    // Explicitly emptying a saved answer withdraws it. Keep a newer tombstone
+    // so restart/clock changes/late completion cannot revive the old result.
+    if (text.trim().isEmpty && previous != null && previous.answer.isNotEmpty) {
+      session.records[c.key] = ClarificationRecord(
+        context: c,
+        status: 'cleared',
+        draft: text,
+        revision: _stamp(previous.revision),
+        updatedAt: _stamp(previous.updatedAt),
+        draftRevision: _stamp(previous.draftRevision),
+        persisted: false,
+      );
+      errors.remove(c.key);
+      _emit();
+      try {
+        await _save();
+      } catch (_) {}
+      return;
+    }
     final r = session.records.putIfAbsent(
       c.key,
       () => ClarificationRecord(context: c),
@@ -160,6 +208,7 @@ class ClarificationCoordinator extends ChangeNotifier {
     final key = sourceKey;
     session.records[c.key] = r;
     r.status = 'processing';
+    r.persisted = false;
     r.updatedAt = _stamp(r.updatedAt);
     errors.remove(c.key);
     _emit();
@@ -178,6 +227,7 @@ class ClarificationCoordinator extends ChangeNotifier {
         'id': c.id,
         ...proposed.toJson(),
       }, c);
+      r.persisted = false;
       r.resolution = result;
       r.status = result.outcome;
       r.draft = null;
@@ -219,6 +269,7 @@ class ClarificationCoordinator extends ChangeNotifier {
       resolution: result,
       revision: _stamp(previous?.revision ?? 0),
       updatedAt: _stamp(previous?.updatedAt ?? 0),
+      persisted: false,
     );
     await _save();
   }

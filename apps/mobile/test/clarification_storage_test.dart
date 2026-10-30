@@ -9,9 +9,66 @@ import 'package:wayday/core/data/local_repositories.dart';
 import 'package:wayday/features/planning/data/clarification_repository.dart';
 import 'package:wayday/features/planning/domain/clarification.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
+import 'package:wayday/features/planning/presentation/clarification_coordinator.dart';
+import 'package:wayday/features/planning/data/clarification_resolver.dart';
 import 'helpers/planning_fixtures.dart';
 
 void main() {
+  test(
+    'SQLite restart preserves explicit answer withdrawal over an older result',
+    () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'wayday-cleared-answer-',
+      );
+      final file = File('${dir.path}/app.sqlite');
+      var db = WaydayDatabase(NativeDatabase(file));
+      final source = fixture(),
+          c = ClarificationContext.create(
+            source.errands.first,
+            const ErrandNeed(
+              id: 'a',
+              query: 'gym',
+              question: 'Your gym or recommend one?',
+              locationIntent: LocationIntent.unclear,
+              questionKind: 'location',
+              questionRequired: true,
+            ),
+            source.errands,
+          );
+      final coordinator = ClarificationCoordinator(
+        SqliteClarificationRepository(db),
+        GeminiClarificationResolver(),
+      );
+      await coordinator.bind('source');
+      await coordinator.applyStructured(
+        c,
+        const ClarificationResolution(
+          outcome: 'flexible',
+          kind: 'location',
+          summary: 'Suitable gym',
+          locationIntent: LocationIntent.flexible,
+        ),
+        'Let Wayday recommend',
+      );
+      final old = ClarificationSession.fromJson(coordinator.session.toJson());
+      await coordinator.saveDraft(c, '');
+      await SqliteClarificationRepository(db).save('source', old);
+      coordinator.dispose();
+      await db.close();
+      db = WaydayDatabase(NativeDatabase(file));
+      try {
+        final restored = await SqliteClarificationRepository(db).read('source');
+        expect(restored.records[c.key]!.status, 'cleared');
+        expect(restored.records[c.key]!.resolution, isNull);
+        expect(restored.records[c.key]!.draft, isEmpty);
+        expect(restored.records[c.key]!.applied, isFalse);
+      } finally {
+        await db.close();
+        await dir.delete(recursive: true);
+      }
+    },
+  );
+
   test(
     'v4 upgrade and restart preserve source data, answer drafts and dated deferrals',
     () async {

@@ -134,7 +134,7 @@ String legacyInterpretationRequest(DayPlan day) {
 }
 
 /// Typed questions for uncached inputs; the legacy builder stays byte-compatible.
-String interpretationRequest(DayPlan day) {
+String previousInterpretationRequest(DayPlan day) {
   final body =
       jsonDecode(legacyInterpretationRequest(day)) as Map<String, dynamic>;
   final instruction = body['systemInstruction']['parts'][0];
@@ -163,6 +163,49 @@ String interpretationRequest(DayPlan day) {
     entry['properties']['specificLocation'] = {'type': 'BOOLEAN'};
     entry['required'] = (entry['properties'] as Map<String, dynamic>).keys
         .toList();
+  }
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten these notes before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
+}
+
+/// Current semantic contract. Historical builders above remain frozen lookups.
+String interpretationRequest(DayPlan day) {
+  final body =
+      jsonDecode(previousInterpretationRequest(day)) as Map<String, dynamic>;
+  final instruction = body['systemInstruction']['parts'][0];
+  var text = instruction['text'] as String;
+  text = text.replaceAll(
+    'A private pickup/meeting needs category meeting; grocery, food (including pares), pharmacy, marketplace and convenience are flexible needs. ',
+    'Categories describe activities, not whether their destination is fixed. ',
+  );
+  text = text.replaceAll(
+    'For null questions clarification is null. specificLocation is true for private meetings or an existing pickup such as collecting clothes from a laundry, not an arbitrary new business.',
+    '',
+  );
+  instruction['text'] =
+      '$text Location intent policy v1: interpret the whole title, notes, explicit preferences and confirmed facts in English, Filipino or Taglish. '
+      'locationIntent is flexible when the user can visit a suitable recommended place, specific when an existing arrangement, belongings, order or explicit destination binds the visit, or unclear when essential intention is ambiguous. '
+      'Never decide from a verb, keyword or category alone. A meeting being arranged can use a recommended venue; an existing meeting cannot be moved. '
+      'For unclear return a concise essential question with clarification kind location and required true. For specific, use the map confirmation flow; do not ask duplicate where questions. '
+      'Existing source locations remain authoritative; do not invent businesses, coordinates or stock. Optional preferences do not block recommendations. '
+      'Examples of the policy, not a phrase dictionary: buy detergent / bumili ng sabon -> flexible; collect an already paid order / kunin ang inorder ko -> specific; check the court, unspecified intention -> unclear; '
+      'maghanap ng cafe para sa meeting -> flexible; pumunta sa napagkasunduang meeting place -> specific; pick up food without context -> unclear. '
+      'A supplied confirmed location does not answer unrelated timing or dependency questions.';
+  for (final key in ['needs', 'additions']) {
+    final entry =
+        body['generationConfig']['responseSchema']['properties'][key]['items'];
+    entry['properties'].remove('specificLocation');
+    entry['properties']['locationIntent'] = {
+      'type': 'STRING',
+      'enum': LocationIntent.values.map((v) => v.name).toList(),
+    };
+    entry['required'] = (entry['properties'] as Map).keys.toList();
   }
   final result = jsonEncode(body);
   if (utf8.encode(result).length > 50000) {
