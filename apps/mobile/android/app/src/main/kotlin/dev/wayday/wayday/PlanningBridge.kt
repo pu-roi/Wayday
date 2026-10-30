@@ -31,6 +31,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
     private val main = Handler(Looper.getMainLooper())
     @Volatile private var disposed = false
     private val journal = InterpretationJournal(File(activity.noBackupFilesDir, "gemini-interpretations.bin"))
+    private val clarificationJournal = InterpretationJournal(File(activity.noBackupFilesDir, "gemini-clarifications.bin"), 32)
     private companion object { val requestLock = Any() }
     private val alias = "wayday.gemini.private-installation.v1"
     fun refreshCredential() {
@@ -59,7 +60,10 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                 val state = args["state"] as String
                                 require(state in setOf("pending", "completed"))
                                 val response = args["response"] as? String
-                                journal.put(InterpretationJournal.Entry(key, state, response))
+                                val purpose = args["purpose"] as? String ?: "interpretation"
+                                require(purpose in setOf("interpretation", "clarification"))
+                                val fixtureJournal = if (purpose == "clarification") clarificationJournal else journal
+                                fixtureJournal.put(InterpretationJournal.Entry(key, state, response))
                                 main.post { if (!disposed) result.success(null) }
                             } catch (_: Exception) { main.post { if (!disposed) result.error("fixture", "Cache fixture unavailable", null) } }
                         }
@@ -102,38 +106,46 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                 "geminiStatus", "interpretationStatus", "invalidateInterpretation", "interpret" -> executor.execute {
                     synchronized(requestLock) {
                         var attemptKey: String? = null
+                        var requestJournal = journal
+                        var providerResponseReceived = false
                         try {
                             if (call.method == "geminiStatus") {
                                 val key = credential()
-                                val remaining = remainingGenerations()
-                                main.post { if (!disposed) result.success(mapOf("configured" to !key.isNullOrEmpty(), "remainingGenerations" to remaining, "model" to "gemini-3.1-flash-lite")) }
+                                main.post { if (!disposed) result.success(mapOf("configured" to !key.isNullOrEmpty(), "model" to "gemini-3.1-flash-lite")) }
                                 return@synchronized
                             }
                             val args = call.arguments as? Map<*, *> ?: throw IllegalArgumentException()
+                            val purpose = args["purpose"] as? String ?: "interpretation"
+                            require(purpose in setOf("interpretation", "clarification"))
+                            requestJournal = if (purpose == "clarification") clarificationJournal else journal
                             val body = args["body"] as? String ?: throw IllegalArgumentException()
                             val cacheKey = fingerprint(body)
                             if (call.method == "invalidateInterpretation") {
-                                if (journal.find(cacheKey) != null) {
-                                    journal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = "invalid_response"))
+                                if (requestJournal.find(cacheKey) != null) {
+                                    requestJournal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = "invalid_response"))
                                 }
                                 main.post { if (!disposed) result.success(null) }
                                 return@synchronized
                             }
                             val retry = args["retry"] == true
-                            val saved = try { journal.find(cacheKey) } catch (error: IOException) {
+                            val saved = try { requestJournal.find(cacheKey) } catch (error: IOException) {
                                 if (!retry || call.method != "interpret") throw error
                                 null
                             }
+                            // A recovered installation may have its original task database
+                            // but no understanding requestJournal. Never silently spend to replace it.
+                            val recovery = File(activity.noBackupFilesDir, "interpretation-recovery-retry-required")
+                            val recoveryMissing = purpose == "interpretation" && saved == null && recovery.exists()
                             if (call.method == "interpretationStatus") {
-                                main.post { if (!disposed) result.success(mapOf("state" to (saved?.state ?: "missing"), "response" to saved?.response)) }
+                                main.post { if (!disposed) result.success(mapOf("state" to (saved?.state ?: if (recoveryMissing) "recovery" else "missing"), "response" to saved?.response)) }
                                 return@synchronized
                             }
                             if (saved?.state == "completed") {
                                 main.post { if (!disposed) result.success(saved.response) }
                                 return@synchronized
                             }
-                            if (saved != null && !retry) {
-                                val code = if (saved.state == "pending") "interrupted" else "previous_failure"
+                            if ((saved != null || recoveryMissing) && !retry) {
+                                val code = if (saved?.state == "pending") "interrupted" else "previous_failure"
                                 main.post { if (!disposed) result.error(code, "An explicit retry is required", null) }
                                 return@synchronized
                             }
@@ -143,12 +155,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                 return@synchronized
                             }
                             // Fail closed if durable pending state or accounting cannot be saved.
-                            journal.put(InterpretationJournal.Entry(cacheKey, "pending"), recoverCorrupt = retry)
-                            if (!reserveGeneration()) {
-                                journal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = "paid_allowance"))
-                                main.post { if (!disposed) result.error("paid_allowance", "Gemini paid-generation allowance is paused or exhausted", null) }
-                                return@synchronized
-                            }
+                            requestJournal.put(InterpretationJournal.Entry(cacheKey, "pending"), recoverCorrupt = retry)
                             attemptKey = cacheKey
                             val connection = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent").openConnection() as HttpURLConnection
                             try {
@@ -164,20 +171,24 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                     // Bounded read: never accumulate an unbounded provider response.
                                     val bytes = connection.inputStream.use { it.readBytesBounded(150000) }
                                     val data = String(bytes, Charsets.UTF_8)
-                                    journal.put(InterpretationJournal.Entry(cacheKey, "completed", response = data))
+                                    providerResponseReceived = true
+                                    requestJournal.put(InterpretationJournal.Entry(cacheKey, "completed", response = data))
+                                    if (purpose == "interpretation") recovery.delete()
                                     main.post { if (!disposed) result.success(data) }
                                 } else {
+                                    providerResponseReceived = true
                                     val kind = when (status) { 401,403 -> "access";429 -> "quota";else -> "unavailable" }
-                                    journal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = kind))
+                                    requestJournal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = kind))
                                     main.post { if (!disposed) result.error(kind, "Gemini could not interpret these errands", null) }
                                 }
                             } finally { connection.disconnect() }
                         } catch (_: IOException) {
                             // Pending stays durable if completion could not be saved. Do not resend.
-                            main.post { if (!disposed) result.error("cache", "Saved understanding is unavailable", null) }
+                            val code = if (attemptKey != null && !providerResponseReceived) "connection" else "cache"
+                            main.post { if (!disposed) result.error(code, "Understanding is unavailable; no automatic retry was sent", null) }
                         } catch (_: Exception) {
                             if (attemptKey != null) {
-                                try { journal.put(InterpretationJournal.Entry(attemptKey, "failed", failure = "unavailable")) } catch (_: Exception) { }
+                                try { requestJournal.put(InterpretationJournal.Entry(attemptKey, "failed", failure = "unavailable")) } catch (_: Exception) { }
                             }
                             main.post { if (!disposed) result.error("unavailable", "Gemini interpretation is unavailable", null) }
                         }
@@ -227,28 +238,6 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
         return generator.generateKey()
     }
-    private fun remainingGenerations(): Int {
-        val file = File(activity.noBackupFilesDir, "gemini-credential.json")
-        if (!file.exists()) return 0
-        return JSONObject(file.readText()).optInt("remainingGenerations", 0).coerceIn(0, 10)
-    }
-    private fun reserveGeneration(): Boolean {
-        val file = File(activity.noBackupFilesDir, "gemini-credential.json")
-        val value = JSONObject(file.readText())
-        val remaining = value.optInt("remainingGenerations", 0)
-        if (remaining !in 1..10) return false
-        val now = System.currentTimeMillis()
-        val previous = value.optJSONArray("generationTimes") ?: org.json.JSONArray()
-        val times = (0 until previous.length()).map { previous.getLong(it) }
-        // A backward clock fails closed; failed dispatched attempts count too.
-        if (times.any { it > now } || times.count { it >= now - 86400000L } >= 3) return false
-        value.put("remainingGenerations", remaining - 1)
-        value.put("generationTimes", org.json.JSONArray(times + now))
-        val pending = File(file.parentFile, file.name + ".pending")
-        pending.writeText(value.toString())
-        check(pending.renameTo(file))
-        return true
-    }
     private fun credential(): String? {
         val encrypted = File(activity.noBackupFilesDir, "gemini-credential.json")
         val provision = File(activity.filesDir, "wayday-private-gemini.json")
@@ -257,8 +246,6 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
             try {
                 require(provision.length() in 1..4096)
                 val value = JSONObject(provision.readText()).getString("key")
-                val allowance = JSONObject(provision.readText()).optInt("generations", 0)
-                require(allowance in 0..10)
                 require(value.length in 20..300 && !value.any { it.isWhitespace() })
                 val cipher = Cipher.getInstance("AES/GCM/NoPadding")
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey())
@@ -267,8 +254,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                 val pending = File(encrypted.parentFile, encrypted.name + ".pending")
                 pending.writeText(JSONObject().put("iv", Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
                     .put("data", Base64.encodeToString(payload, Base64.NO_WRAP))
-                    .put("remainingGenerations", allowance)
-                    .put("generationTimes", org.json.JSONArray()).toString())
+                    .toString())
                 check(pending.renameTo(encrypted))
             } finally { provision.delete() }
         }

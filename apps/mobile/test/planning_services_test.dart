@@ -40,46 +40,32 @@ PlanningBudget budget() =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  test(
-    'paid generation stays paused without an explicitly provisioned allowance',
-    () async {
-      const channel = MethodChannel('wayday/test-paid-gate');
-      var dispatched = false, writes = 0;
-      final messenger =
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      messenger.setMockMethodCallHandler(channel, (call) async {
-        if (call.method == 'interpretationStatus') return {'state': 'missing'};
-        if (call.method == 'geminiStatus') {
-          return {'configured': true, 'remainingGenerations': 0};
-        }
-        dispatched = true;
-        return null;
-      });
-      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
-      final ledger = PlanningBudget(
-        read: () async => null,
-        write: (_) async {
-          writes++;
-        },
-      );
-      await expectLater(
-        GeminiInterpreter(ledger, channel: channel).interpret(
-          DayPlan(
-            errands: [const Errand(id: 'a', title: 'Grocery')],
-          ),
+  test('configured Gemini has no local finite-attempt gate', () async {
+    const channel = MethodChannel('wayday/test-paid-gate');
+    var dispatched = false;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'interpretationStatus') return {'state': 'missing'};
+      if (call.method == 'geminiStatus') {
+        return {'configured': true, 'remainingGenerations': 0};
+      }
+      dispatched = true;
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    await expectLater(
+      GeminiInterpreter(channel: channel).interpret(
+        DayPlan(
+          errands: [const Errand(id: 'a', title: 'Grocery')],
         ),
-        throwsA(
-          isA<PlanningFailure>().having(
-            (e) => e.kind,
-            'kind',
-            'paid_allowance',
-          ),
-        ),
-      );
-      expect(dispatched, isFalse);
-      expect(writes, 0);
-    },
-  );
+      ),
+      throwsA(
+        isA<PlanningFailure>().having((e) => e.kind, 'kind', 'interrupted'),
+      ),
+    );
+    expect(dispatched, isTrue);
+  });
   test(
     'serialized accounting counts matrix elements and persists across instances',
     () async {
@@ -158,10 +144,7 @@ void main() {
           ),
         ],
       );
-      final result = await GeminiInterpreter(
-        budget(),
-        channel: channel,
-      ).interpret(day);
+      final result = await GeminiInterpreter(channel: channel).interpret(day);
       expect(result.needs.single.items, ['bigas', 'toyo']);
       expect(request, contains('Bili ng bigas and toyo'));
       expect(request, isNot(contains('14.58')));
@@ -319,6 +302,8 @@ void main() {
       final local = await LocalRepositories.open(database: db);
       await local.today.save(day);
       await db.customStatement('DROP TABLE accepted_itineraries');
+      await db.customStatement('DROP TABLE review_trips');
+      await db.customStatement('DROP TABLE clarification_sessions');
       await db.customStatement('PRAGMA user_version=2');
       await db.close();
       db = WaydayDatabase(NativeDatabase(file));

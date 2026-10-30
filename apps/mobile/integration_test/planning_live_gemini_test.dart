@@ -3,11 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:wayday/features/planning/data/gemini_interpreter.dart';
-import 'package:wayday/features/planning/data/planning_budget.dart';
 import 'package:wayday/features/today/domain/day.dart';
 
 /// Deliberate one-request qualification; never run as an unattended regression.
-/// Uses the separately provisioned private debug credential and finite allowance.
+/// Uses the separately provisioned private debug credential after explicit authorization.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('one bounded live Taglish interpretation', (tester) async {
@@ -39,7 +38,7 @@ void main() {
         ),
       ],
     );
-    final interpreter = GeminiInterpreter(PlanningBudget());
+    final interpreter = GeminiInterpreter();
     final result = await interpreter.interpret(day);
     expect(
       result.needs.map((n) => n.id).toSet(),
@@ -61,14 +60,8 @@ void main() {
       result.needs.firstWhere((n) => n.id == 'fixture-grocery').items,
       isNotEmpty,
     );
-    final before = await const MethodChannel(
-      'wayday/planning',
-    ).invokeMapMethod<String, dynamic>('geminiStatus');
-    await interpreter.interpret(day);
-    final after = await const MethodChannel(
-      'wayday/planning',
-    ).invokeMapMethod<String, dynamic>('geminiStatus');
-    expect(after?['remainingGenerations'], before?['remainingGenerations']);
+    final saved = await interpreter.saved(day);
+    expect(saved.needs.map((n) => n.id), result.needs.map((n) => n.id));
     // Report validation only; never model output, coordinates, task bodies or keys.
     debugPrint('WAYDAY_LIVE_GEMINI_TAGLISH_PASSED requests=1 cacheReused=true');
   });

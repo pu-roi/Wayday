@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/features/planning/data/gemini_interpreter.dart';
 import 'package:wayday/features/planning/data/interpretation_request.dart';
-import 'package:wayday/features/planning/data/planning_budget.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 import 'package:wayday/features/today/domain/day.dart';
@@ -57,7 +56,7 @@ void main() {
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late Map<String, Map<String, dynamic>> disk;
-  late int requests, writes;
+  late int requests;
   late bool configured;
   Completer<void>? delay;
   DayPlan day() => DayPlan(
@@ -69,26 +68,17 @@ void main() {
       ),
     ],
   );
-  GeminiInterpreter interpreter() => GeminiInterpreter(
-    PlanningBudget(
-      read: () async => null,
-      write: (_) async {
-        writes++;
-      },
-    ),
-    channel: channel,
-  );
+  GeminiInterpreter interpreter() => GeminiInterpreter(channel: channel);
   setUp(() {
     disk = {};
     requests = 0;
-    writes = 0;
     configured = true;
     delay = null;
     messenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'geminiStatus') {
         return {
           'configured': configured,
-          'remainingGenerations': configured ? 3 : 0,
+          'remainingGenerations': 0, // Legacy counters no longer gate requests.
         };
       }
       final args = Map<String, dynamic>.from(call.arguments as Map);
@@ -119,16 +109,29 @@ void main() {
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
   test(
+    'more than three changed inputs process without app-imposed caps',
+    () async {
+      for (var i = 0; i < 4; i++) {
+        await interpreter().interpret(
+          day().copyWith(
+            errands: [
+              day().errands.single.copyWith(notes: 'Current grocery need $i'),
+            ],
+          ),
+        );
+      }
+      expect(requests, 4);
+    },
+  );
+  test(
     'recreated interpreter reuses durable answer offline without charging allowance',
     () async {
       await interpreter().interpret(day());
       expect(requests, 1);
-      expect(writes, 1);
       configured = false;
       final restored = await interpreter().interpret(day());
       expect(restored.needs.single.id, 'a');
       expect(requests, 1);
-      expect(writes, 1);
     },
   );
   test(
@@ -269,6 +272,32 @@ void main() {
     },
   );
   test(
+    'check saved understanding never dispatches a missing or changed input',
+    () async {
+      await expectLater(
+        interpreter().saved(day()),
+        throwsA(
+          isA<PlanningFailure>().having((e) => e.kind, 'kind', 'cache_miss'),
+        ),
+      );
+      expect(requests, 0);
+      await interpreter().interpret(day());
+      await interpreter().saved(day());
+      expect(requests, 1);
+      await expectLater(
+        interpreter().saved(
+          day().copyWith(
+            errands: [
+              day().errands.single.copyWith(notes: 'Different current need'),
+            ],
+          ),
+        ),
+        throwsA(isA<PlanningFailure>()),
+      );
+      expect(requests, 1);
+    },
+  );
+  test(
     'interrupted and failed attempts require explicit retry rather than automatic payment',
     () async {
       final source = day();
@@ -284,10 +313,28 @@ void main() {
         throwsA(isA<PlanningFailure>()),
       );
       expect(requests, 0);
-      expect(writes, 0);
       await interpreter().retry(source);
       expect(requests, 1);
-      expect(writes, 1);
+    },
+  );
+  test(
+    'installation recovery never silently replaces lost understanding',
+    () async {
+      final source = day();
+      disk[interpretationRequest(source)] = {'state': 'recovery'};
+      await expectLater(
+        interpreter().interpret(source),
+        throwsA(
+          isA<PlanningFailure>().having(
+            (e) => e.message,
+            'message',
+            contains('installation recovery'),
+          ),
+        ),
+      );
+      expect(requests, 0);
+      await interpreter().retry(source);
+      expect(requests, 1);
     },
   );
   test(
@@ -325,6 +372,8 @@ void main() {
             confirmedFields: {'place', 'duration'},
             afterErrandIds: ['b', 'c'],
           ),
+          const Errand(id: 'b', title: 'Earlier visit'),
+          const Errand(id: 'c', title: 'Another earlier visit'),
         ],
       );
       final b = source.copyWith(
@@ -333,9 +382,35 @@ void main() {
             confirmedFields: {'duration', 'place'},
             afterErrandIds: ['c', 'b'],
           ),
+          const Errand(id: 'b', title: 'Earlier visit'),
+          const Errand(id: 'c', title: 'Another earlier visit'),
         ],
       );
       expect(interpretationRequest(a), interpretationRequest(b));
     },
   );
+  test(
+    'completed legacy understanding is reused before generating typed output',
+    () async {
+      final body = legacyInterpretationRequest(day());
+      disk[body] = {'state': 'completed', 'response': answer(body)};
+      configured = false;
+      final result = await interpreter().interpret(day());
+      expect(result.needs.single.items, ['rice']);
+      expect(requests, 0);
+    },
+  );
+  for (final state in ['pending', 'failed']) {
+    test(
+      'a $state legacy outcome cannot silently retry through a schema upgrade',
+      () async {
+        disk[legacyInterpretationRequest(day())] = {'state': state};
+        await expectLater(
+          interpreter().interpret(day()),
+          throwsA(isA<PlanningFailure>()),
+        );
+        expect(requests, 0);
+      },
+    );
+  }
 }

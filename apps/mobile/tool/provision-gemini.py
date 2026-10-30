@@ -17,11 +17,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--device', required=True)
     parser.add_argument('--package', default='dev.wayday.wayday')
-    parser.add_argument('--generations', type=int, default=0,
-                        help='Explicitly authorized paid-generation allowance, 0..10; default is paused')
     args = parser.parse_args()
-    if not 0 <= args.generations <= 10:
-        raise ValueError('The generation allowance must be between 0 and 10')
     if not re.fullmatch(r'[A-Za-z0-9_.]+', args.package):
         raise ValueError('Invalid package')
     root = Path(__file__).resolve().parents[3]
@@ -43,7 +39,7 @@ def main():
 
     if run(['shell', 'run-as', args.package, 'id']).returncode:
         raise ValueError('Connect the selected device and install the private debug APK first')
-    payload = json.dumps({'key': key, 'generations': args.generations}).encode('utf-8')
+    payload = json.dumps({'key': key}).encode('utf-8')
     if run(['shell', '-T', f"run-as {args.package} sh -c 'umask 077; cat > files/wayday-private-gemini.json'"], input=payload).returncode:
         raise ValueError('Private provisioning failed')
     try:
@@ -53,7 +49,7 @@ def main():
         for _ in range(40):
             if run(['shell', f"run-as {args.package} sh -c 'test ! -e files/wayday-private-gemini.json && test -s no_backup/gemini-credential.json'"]).returncode == 0:
                 print('Gemini credential imported into this private installation with Android Keystore encryption.')
-                print(f'Paid generation allowance: {args.generations} requests. No API generation request was made by this setup.')
+                print('Gemini has no app-imposed request cap. No generation request was made by this setup.')
                 return
             time.sleep(.25)
         raise ValueError('Encrypted import was not confirmed; the temporary provisioning file has been removed')

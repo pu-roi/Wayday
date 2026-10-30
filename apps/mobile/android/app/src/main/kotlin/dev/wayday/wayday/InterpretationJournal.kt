@@ -10,7 +10,8 @@ import java.io.IOException
  * A completed response is durable before the Flutter callback is delivered.
  * Pending/failed attempts survive process death and never imply a safe retry.
  */
-class InterpretationJournal(private val file: File) {
+class InterpretationJournal(private val file: File, private val capacity: Int = 8) {
+    init { require(capacity in 1..32) }
     data class Entry(val key: String, val state: String, val response: String? = null,
                      val failure: String? = null)
 
@@ -22,7 +23,7 @@ class InterpretationJournal(private val file: File) {
             if (!recoverCorrupt) throw error
             emptyList()
         }
-        val updated = listOf(entry) + entries.filter { it.key != entry.key }.take(7)
+        val updated = listOf(entry) + entries.filter { it.key != entry.key }.take(capacity - 1)
         file.parentFile?.mkdirs()
         val pending = File(file.parentFile, file.name + ".pending")
         FileOutputStream(pending).use { output ->
@@ -45,12 +46,12 @@ class InterpretationJournal(private val file: File) {
 
     private fun read(): List<Entry> {
         if (!file.exists()) return emptyList()
-        if (file.length() !in 1..1300000) throw IOException("Invalid interpretation journal")
+        if (file.length() !in 1..(capacity * 151000L + 256)) throw IOException("Invalid interpretation journal")
         try {
             DataInputStream(file.inputStream().buffered()).use { input ->
                 if (input.readUTF() != "WAYDAY_INTERPRETATION_1") throw IOException("Unsupported interpretation journal")
                 val count = input.readInt()
-                if (count !in 0..8) throw IOException("Invalid interpretation count")
+                if (count !in 0..capacity) throw IOException("Invalid interpretation count")
                 val entries = (0 until count).map {
                     val key = input.readUTF()
                     val state = input.readUTF()
