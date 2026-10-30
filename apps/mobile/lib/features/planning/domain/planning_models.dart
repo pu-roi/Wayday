@@ -202,7 +202,7 @@ class PlanCandidate {
 }
 
 String placeKey(PlaceIntent place) => place.providerPlaceId != null
-    ? '${place.provider}:${place.providerPlaceId}'
+    ? '${place.isGoogle ? 'google' : place.provider}:${place.providerPlaceId}'
     : place.savedPlaceId != null
     ? 'saved:${place.savedPlaceId}'
     : '${place.source}:${place.latitude},${place.longitude}:${place.label}';

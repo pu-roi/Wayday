@@ -1,5 +1,8 @@
 enum PlaceKind { unresolved, specific, saved, search, providerReference }
 
+bool isGoogleProvider(String? provider) =>
+    provider == 'google_ui_kit' || provider == 'google_places_sdk';
+
 /// A revocable, temporary coordinate lease. Copies share the original expiry.
 class GooglePinLease {
   GooglePinLease({DateTime Function()? now}) : now = now ?? DateTime.now;
@@ -51,7 +54,7 @@ class PlaceIntent {
   final double? _latitude, _longitude;
   final String? providerPlaceId;
   final GooglePinLease? googlePin;
-  bool get isGoogle => provider == 'google_ui_kit';
+  bool get isGoogle => isGoogleProvider(provider);
   double? get latitude => isGoogle
       ? (googlePin?.valid == true ? googlePin!.latitude : null)
       : _latitude;
@@ -97,7 +100,7 @@ class PlaceIntent {
     Map<String, dynamic> json, {
     GooglePinResolver? resolveGooglePin,
   }) {
-    final google = json['provider'] == 'google_ui_kit';
+    final google = isGoogleProvider(json['provider'] as String?);
     final placeId = json['providerPlaceId'] as String?;
     if (google && (placeId == null || placeId.trim().isEmpty)) {
       throw const FormatException('A Google reference needs a place ID');
