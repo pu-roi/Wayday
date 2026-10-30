@@ -56,6 +56,8 @@ components:
 
 # Design System: Wayday mobile
 
+The latest focused review repair preserves existing layout, labels, Edit errand and Choose actual location. Required unanswered questions use a question-bubble icon, Needs your answer and semantic dark amber #7A4500; optional questions retain normal colors and Optional. Stored, resolved answers use a normal-color check-circle. Processing, unresolved results, failed saving and rules awaiting approval must remain distinguishable. Clearing a saved answer withdraws its resolution and restores its unanswered treatment after the user's edit; a nonempty draft does not apply a new answer. Let Wayday recommend saves an explicit choice directly, without inserting a generated sentence. Trip details retains its wording and disclosure behavior with a normal-blue route icon. See [the current planning contract](docs/wayday/PLANNING.md#automatic-recommendation-repair--d60-current-contract). The subsequent D60 repair removes separate location-recheck and assessment recovery controls; users answer the existing question instead. Recommendation recovery retains real choices, identifies an unfinished trip, uses failure-specific actions and keeps manual search secondary. A service rejection must not be described as no matching businesses. Long recovery actions stack beneath text on narrow/enlarged layouts.
+
 ## Overview
 
 Product context for design tools is maintained in [the README product requirements](README.md#product-requirements), including the product schema marker and platform/stack context. Supply README.md explicitly when a tool needs product context. See [the documentation index](README.md) for the remaining project documents.

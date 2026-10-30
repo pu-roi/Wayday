@@ -26,6 +26,11 @@ Treat historical references as provisional. Identify which interaction or visual
 
 ## Review the affected flow
 
+For the current focused planning repair, preserve the review layout, labels, Edit errand and Choose actual location. Required unanswered questions use a question bubble, #7A4500 attention and Needs your answer; optional questions keep Optional and normal colors. A stored, resolved answer uses a normal-color check-circle. Clearing an applied answer restores its unanswered state; typing or closing alone cannot mark it resolved. Let Wayday recommend applies a direct choice without generated answer text. Keep the Trip details route icon in normal blue. The manual picker is restored to MapLibre/center-pin interaction; custom SDK/Routes content remains Google-backed with separate provenance.
+
 Check the primary action, edit/save/cancel behavior, empty and populated lists, long content, keyboard visibility, loading/failure states, and offline/stale-plan messages relevant to the change. Keep template drafts independent from today's copies. Load `wayday-mobile` when the change affects state, persistence, or platform behavior, and `wayday-planning` when it changes timing or omission semantics.
 
 When runnable UI exists and the task authorizes verification, inspect representative screens at mobile sizes and larger text settings. Record what was actually rendered or tested. During foundation-only work, deliver the design reasoning or documentation change without inventing screenshots or claiming device validation.
+
+
+D60 removes the separate Recheck location needs with Gemini action and assessment retry/credit controls. The existing question/answer sheet owns missing meaning and correction. Recommendation failures use a concise recovery view with retained choices, unfinished-route wording, appropriate retry behavior and secondary manual search. Do not label a provider rejection as an empty search or replace the automatic experience with a mandatory manual-selection wizard. Keep long actions below row text when enlarged text would consume the row width.
