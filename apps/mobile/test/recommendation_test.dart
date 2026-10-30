@@ -12,7 +12,7 @@ void main() {
       expect(
         needsActualLocation(
           const Errand(id: 'x', title: 'Pick up laundry'),
-          const ErrandNeed(id: 'x', query: 'laundry shop'),
+          const ErrandNeed(id: 'x', query: 'laundry shop', locationIntent: LocationIntent.specific),
         ),
         isTrue,
       );

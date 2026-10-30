@@ -46,6 +46,7 @@ class Interpreter implements ErrandInterpreter {
         id: e.id,
         query: e.title,
         category: 'grocery',
+        locationIntent: LocationIntent.flexible,
         durationMinutes: 15,
         after: e.id == 'b' ? ['a'] : [],
       ),

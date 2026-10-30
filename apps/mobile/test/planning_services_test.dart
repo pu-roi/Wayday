@@ -25,6 +25,7 @@ const pin = PlaceIntent(
 Map<String, dynamic> need(String id) => {
   'id': id,
   'query': 'grocery store',
+  'locationIntent': 'flexible',
   'category': 'grocery',
   'items': ['bigas', 'toyo'],
   'after': <String>[],

@@ -47,6 +47,7 @@ class Questions implements ErrandInterpreter {
         id: e.id,
         query: 'grocery store',
         category: 'grocery',
+        locationIntent: LocationIntent.flexible,
         items: const ['rice'],
         question: e.id == 'a'
             ? 'What specific grocery items do you need?'
@@ -278,7 +279,8 @@ void main() {
         );
       };
       await coordinator.submit(c, 'Not sure');
-      expect(coordinator.record(c)!.applied, isTrue);
+      expect(coordinator.record(c)!.applied, isFalse);
+      expect(coordinator.record(c)!.resolution, isNotNull);
       expect(coordinator.storageError, isNotNull);
       expect(resolver.generations, 1);
       repo.broken = false;
@@ -399,6 +401,7 @@ void main() {
         id: 'a',
         query: 'grocery',
         question: 'When will you go?',
+        locationIntent: LocationIntent.flexible,
         questionKind: 'timing',
         questionRequired: true,
       );

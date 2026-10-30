@@ -202,13 +202,17 @@ void main() {
             id: 'a',
             query: 'grocery',
             category: 'grocery',
+            locationIntent: LocationIntent.flexible,
             question: 'Where is the grocery store located?',
+            questionKind: 'location',
           ),
           ErrandNeed(
             id: 'b',
             query: 'ice cream',
             category: 'convenience',
+            locationIntent: LocationIntent.flexible,
             question: 'Which store would you like to visit?',
+            questionKind: 'location',
           ),
         ]),
       );
@@ -233,7 +237,9 @@ void main() {
             id: 'a',
             query: 'pickup',
             category: 'meeting',
+            locationIntent: LocationIntent.specific,
             question: 'Where should I pick up Ana?',
+            questionKind: 'location',
           ),
         ]),
       );

@@ -16,7 +16,7 @@ class Discovery implements RecommendationDiscovery {
   Future<void> preflight(int maximumRequests) async {}
   var calls = 0;
   @override
-  Future<List<PlanCandidate>> discover(
+  Future<DiscoveryResult> discover(
     ErrandNeed need, {
     required String? polyline,
     required List<PlaceIntent> anchors,
@@ -24,9 +24,9 @@ class Discovery implements RecommendationDiscovery {
     required bool Function() cancelled,
   }) async {
     calls++;
-    return [
+    return DiscoveryResult([
       PlanCandidate(key: placeKey(pin), place: pin, errandIds: {need.id}),
-    ];
+    ]);
   }
 
   @override
@@ -39,6 +39,58 @@ class Discovery implements RecommendationDiscovery {
 }
 
 void main() {
+  test(
+    'retry retains the successful errand and only repeats failed discovery',
+    () async {
+      final roads = Roads(),
+          discovery = FailingDiscovery(),
+          drafts = MemoryRecommendationDraftRepository();
+      addTearDown(roads.client.close);
+      final model = PlanningController(
+        fixture().copyWith(
+          errands: const [
+            Errand(id: 'a', title: 'Gym'),
+            Errand(id: 'b', title: 'Groceries'),
+          ],
+        ),
+        Interpreter(),
+        roads,
+        MemoryItineraryRepository(),
+        discovery: discovery,
+        drafts: drafts,
+      );
+      addTearDown(model.dispose);
+      await model.understand();
+      await Future.wait([
+        model.buildRecommendations(),
+        model.buildRecommendations(),
+      ]);
+      expect(model.result, isNull);
+      expect(model.candidates['a'], isNotEmpty);
+      expect(model.failedRecommendationErrand, 'b');
+      expect(model.recommendationFailure, isA<RecommendationFailure>());
+      expect(discovery.perErrand, {'a': 1, 'b': 1});
+      final reopened = PlanningController(
+        model.manualReviewDay,
+        Interpreter(),
+        roads,
+        MemoryItineraryRepository(),
+        discovery: discovery,
+        drafts: drafts,
+      );
+      addTearDown(reopened.dispose);
+      await reopened.understand();
+      await reopened.restoreRecommendationDraft();
+      expect(reopened.candidates['a'], isNotEmpty);
+      expect(reopened.overrides, isEmpty);
+      expect(reopened.result, isNull);
+      await model.buildRecommendations();
+      expect(discovery.perErrand, {'a': 1, 'b': 2});
+      expect(model.result, isNotNull);
+      expect(model.stage, PreparationStage.recommendations);
+    },
+  );
+
   test(
     'approved proposals and an included extra errand survive restart',
     () async {
@@ -323,6 +375,33 @@ void main() {
   );
 }
 
+class FailingDiscovery extends Discovery {
+  final perErrand = <String, int>{};
+  @override
+  Future<DiscoveryResult> discover(
+    ErrandNeed need, {
+    required String? polyline,
+    required List<PlaceIntent> anchors,
+    required int limit,
+    required bool Function() cancelled,
+  }) async {
+    final count = perErrand.update(need.id, (n) => n + 1, ifAbsent: () => 1);
+    if (need.id == 'b' && count == 1) {
+      throw RecommendationFailure(
+        RecommendationFailureKind.network,
+        RecommendationOperation.corridor,
+      );
+    }
+    return super.discover(
+      need,
+      polyline: polyline,
+      anchors: anchors,
+      limit: limit,
+      cancelled: cancelled,
+    );
+  }
+}
+
 class CountedRoads extends Roads {
   var calls = 0;
   @override
@@ -341,7 +420,12 @@ class AdditionalInterpreter extends Interpreter {
   Future<Interpretation> interpret(DayPlan day) async => Interpretation(
     (await super.interpret(day)).needs,
     additions: const [
-      ErrandNeed(id: 'extra', query: 'coffee', proposedTitle: 'Buy coffee'),
+      ErrandNeed(
+        id: 'extra',
+        query: 'coffee',
+        locationIntent: LocationIntent.flexible,
+        proposedTitle: 'Buy coffee',
+      ),
     ],
   );
 }

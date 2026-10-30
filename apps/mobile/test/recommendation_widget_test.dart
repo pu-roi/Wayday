@@ -94,7 +94,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(TextField), findsNothing);
         expect(find.text('Use name only'), findsNothing);
-        expect(find.text('Your selected location.'), findsNWidgets(2));
+        // Large text can keep the second row outside ListView's build window.
+        // Every viewport must still present the visible recommendation reason.
+        expect(find.text('Your selected location.'), findsWidgets);
         expect(find.text('Next: see my day').hitTestable(), findsOneWidget);
         if (Platform.environment['WAYDAY_CAPTURE'] == '1') {
           await tester.runAsync(() async {

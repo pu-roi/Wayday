@@ -29,9 +29,26 @@ class _Questions implements ErrandInterpreter {
         id: e.id,
         query: 'grocery store',
         category: 'grocery',
+        locationIntent: LocationIntent.flexible,
         question: 'What specific grocery items do you need?',
         questionKind: 'preference',
         questionRequired: false,
+      ),
+  ]);
+}
+
+class _GymQuestions implements ErrandInterpreter {
+  @override
+  Future<Interpretation> interpret(DayPlan day) async => Interpretation([
+    for (final e in day.errands)
+      ErrandNeed(
+        id: e.id,
+        query: 'gym',
+        category: 'other',
+        locationIntent: LocationIntent.unclear,
+        question: 'Your usual gym, or should Wayday recommend one?',
+        questionKind: 'location',
+        questionRequired: true,
       ),
   ]);
 }
@@ -99,6 +116,7 @@ Future<void> _launch(
   double width = 390,
   DayPlan? day,
   ClarificationRepository? repository,
+  ErrandInterpreter? interpreter,
 }) async {
   if (Platform.environment['WAYDAY_CAPTURE'] == '1') {
     await (FontLoader(
@@ -119,7 +137,7 @@ Future<void> _launch(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        interpreterProvider.overrideWithValue(_Questions()),
+        interpreterProvider.overrideWithValue(interpreter ?? _Questions()),
         if (repository != null)
           clarificationRepositoryProvider.overrideWithValue(repository),
         clarificationResolverProvider.overrideWithValue(answers),
@@ -211,7 +229,11 @@ void main() {
         isNull,
       );
       await tester.tap(find.byTooltip('Close answer'));
-      await tester.pumpAndSettle();
+      // The review row now reports the still-running answer with a spinner.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(ClarificationSheet), findsNothing);
+      expect(find.text('Answer is processing…'), findsOneWidget);
       await tester.tap(question);
       await tester.pump();
       expect(answers.calls, 1);
@@ -268,13 +290,143 @@ void main() {
       await tester.tap(find.text('Let Wayday recommend'));
       await tester.pumpAndSettle();
       expect(
-        find.text('General groceries · Choose items at the store'),
+        find.text('Wayday will recommend suitable places'),
         findsOneWidget,
       );
       expect(answers.calls, 0);
       expect(find.text('Anytime · 15 min estimate'), findsOneWidget);
     },
   );
+  testWidgets(
+    'gym recommendation choice saves directly without a synthetic answer or Gemini',
+    (tester) async {
+      final answers = _Answers();
+      await _launch(
+        tester,
+        answers,
+        interpreter: _GymQuestions(),
+        day: fixture().copyWith(
+          errands: const [Errand(id: 'a', title: 'go to gym')],
+        ),
+      );
+      await tester.tap(
+        find.text('Your usual gym, or should Wayday recommend one?'),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      await tester.tap(find.text('Let Wayday recommend'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ClarificationSheet), findsNothing);
+      expect(answers.calls, 0);
+      final model = tester
+          .widget<PlanningReview>(find.byType(PlanningReview))
+          .model;
+      final errand = model.reviewErrands.single;
+      expect(model.effectiveNeed(errand)!.query, 'gym');
+      expect(model.effectiveNeed(errand)!.category, 'other');
+      expect(model.effectiveNeed(errand)!.items, isEmpty);
+      expect(model.questionBlocks(errand), isFalse);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      await capture(tester, 'gym-recommend-direct');
+    },
+  );
+
+  testWidgets(
+    'clearing a saved gym answer restores attention and survives reopening',
+    (tester) async {
+      final answers = _Answers();
+      await _launch(
+        tester,
+        answers,
+        interpreter: _GymQuestions(),
+        day: fixture().copyWith(
+          errands: const [Errand(id: 'a', title: 'go to gym')],
+        ),
+      );
+      final model = tester
+          .widget<PlanningReview>(find.byType(PlanningReview))
+          .model;
+      final errand = model.reviewErrands.single;
+      await model.clarifications.applyStructured(
+        model.questionContext(errand),
+        const ClarificationResolution(
+          outcome: 'flexible',
+          kind: 'location',
+          summary: 'A suitable gym',
+          locationIntent: LocationIntent.flexible,
+        ),
+        'Any suitable gym',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A suitable gym'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+      expect(find.text('Needs your answer'), findsOneWidget);
+      expect(model.questionBlocks(errand), isTrue);
+      final button = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Needs your answer'),
+          matching: find.byType(TextButton),
+        ),
+      );
+      expect(
+        button.style!.foregroundColor!.resolve({}),
+        const Color(0xFF7A4500),
+      );
+      await capture(tester, 'gym-answer-cleared');
+      await tester.tap(find.byTooltip('Close answer'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text('Your usual gym, or should Wayday recommend one?'),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      expect(model.questionBlocks(errand), isTrue);
+      expect(answers.calls, 0);
+    },
+  );
+
+  testWidgets(
+    'direct recommendation reports storage failure and retries saving without Gemini',
+    (tester) async {
+      final answers = _Answers(), storage = _FlakyStorage();
+      await _launch(
+        tester,
+        answers,
+        interpreter: _GymQuestions(),
+        repository: storage,
+        day: fixture().copyWith(
+          errands: const [Errand(id: 'a', title: 'go to gym')],
+        ),
+      );
+      await tester.tap(
+        find.text('Your usual gym, or should Wayday recommend one?'),
+      );
+      await tester.pumpAndSettle();
+      storage.broken = true;
+      await tester.tap(find.text('Let Wayday recommend'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ClarificationSheet), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+      expect(find.text('Needs your answer'), findsOneWidget);
+      expect(find.text('Retry saving answer'), findsOneWidget);
+      storage.broken = false;
+      await tester.tap(find.text('Retry saving answer'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ClarificationSheet), findsNothing);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(answers.calls, 0);
+    },
+  );
+
   testWidgets(
     'deferral previews dependents, preserves Today and requires explicit inclusion',
     (tester) async {

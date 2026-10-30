@@ -7,6 +7,35 @@ import 'helpers/planning_fixtures.dart';
 
 void main() {
   test(
+    'legacy drafts stay readable and malformed pending groups are rejected',
+    () {
+      final legacy = RecommendationDraft(
+        context: 'x',
+        choices: const {},
+      ).toJson();
+      expect(
+        RecommendationDraft.fromJson(
+          Map<String, dynamic>.from(legacy),
+        ).pendingCandidates,
+        isEmpty,
+      );
+      for (final pending in [
+      {'a': <Object?>[]},
+        {
+          'a': [pin.toJson(), pin.toJson(), pin.toJson(), pin.toJson()],
+        },
+      ]) {
+        expect(
+          () => RecommendationDraft.fromJson({
+            ...legacy,
+            'pendingCandidates': pending,
+          }),
+          throwsFormatException,
+        );
+      }
+    },
+  );
+  test(
     'v5 upgrade and SQLite reopen retain choices and existing accepted data',
     () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -27,6 +56,9 @@ void main() {
         RecommendationDraft(
           context: 'context',
           choices: {'a': pin},
+          pendingCandidates: {
+            'b': [pin],
+          },
           overrides: {'a'},
           selectedErrand: 'a',
           scrollOffset: 64,
@@ -41,6 +73,7 @@ void main() {
         expect(restored!.selectedErrand, 'a');
         expect(restored.overrides, {'a'});
         expect(restored.choices['a']!.toJson(), pin.toJson());
+        expect(restored.pendingCandidates['b']!.single.toJson(), pin.toJson());
         expect(restored.scrollOffset, 64);
         expect(
           (await db
