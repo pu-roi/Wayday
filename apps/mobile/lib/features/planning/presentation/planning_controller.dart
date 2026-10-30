@@ -20,6 +20,10 @@ import '../domain/planning_models.dart';
 import '../domain/errand_location_review.dart';
 import '../domain/trip_departure.dart';
 import '../domain/planning_input_checks.dart';
+import '../domain/recommendation.dart';
+import '../data/recommendation_draft_repository.dart';
+
+part 'recommendation_preparation.dart';
 
 final planningBudgetProvider = Provider((ref) => PlanningBudget());
 final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
@@ -82,7 +86,10 @@ class PlanningController extends ChangeNotifier {
     ClarificationRepository? clarificationRepository,
     ClarificationResolver? clarificationResolver,
     this.resolveGooglePin,
-  }) {
+    this.discovery,
+    RecommendationDraftRepository? drafts,
+  }) : draftRepository = drafts ?? MemoryRecommendationDraftRepository(),
+       _draftSource = reviewTripSourceKey(day) {
     _reviewItems.addEntries(day.errands.map((e) => MapEntry(e.id, e)));
     _sourcePlaces.addAll({
       for (final e in day.errands)
@@ -101,6 +108,21 @@ class PlanningController extends ChangeNotifier {
   final _originalIds = <String>{};
   final _sourcePlaces = <String, String>{};
   final GooglePinResolver? resolveGooglePin;
+  final RecommendationDiscovery? discovery;
+  final RecommendationDraftRepository draftRepository;
+  final String _draftSource;
+  final _proposalChoices = <String, PlaceIntent>{};
+  String? selectedErrand, recommendationStorageError;
+  double recommendationScrollOffset = 0;
+  List<List<int?>>? recommendationMatrix;
+  List<String> recommendationKeys = [];
+  Map<String, dynamic>? _matrixResponse;
+  Map<String, String> _matrixPlaces = {};
+  List<String> _matrixKeys = [];
+  String? _matrixTrip, _calculationSignature;
+  DateTime? _matrixAt;
+  bool _recommendationDraftRestored = false;
+  bool _recommendationDraftChanged = false;
 
   /// The user's draft, before selected suggestions are applied for calculation.
   Errand reviewInput(Errand errand) {
@@ -274,6 +296,7 @@ class PlanningController extends ChangeNotifier {
 
   void cancel() {
     _epoch++;
+    _matrixAt = null;
     result = null;
     if (stage != PreparationStage.discovery) {
       stage = interpretation == null
@@ -466,6 +489,8 @@ class PlanningController extends ChangeNotifier {
   }
 
   void edit(Errand value) {
+    _epoch++;
+    if (busy) stage = PreparationStage.review;
     final previous = reviewInput(value);
     if (previous.title != value.title || previous.notes != value.notes) {
       interpretationStale = true;
@@ -494,16 +519,17 @@ class PlanningController extends ChangeNotifier {
   }
 
   void setEndpoint(bool start, PlaceIntent place) {
+    _epoch++;
+    _recommendationDraftChanged = true;
+    if (busy) stage = PreparationStage.review;
     day = start
         ? day.copyWith(from: place.label, fromPlace: place)
         : day.copyWith(to: place.label, toPlace: place);
-    if (start) {
-      candidates.removeWhere(
-        (id, _) =>
-            !overrides.containsKey(id) &&
-            day.errands.any((e) => e.id == id && !e.placeIntent.hasCoordinates),
-      );
-    }
+    candidates.removeWhere(
+      (id, _) =>
+          !overrides.containsKey(id) &&
+          day.errands.any((e) => e.id == id && !e.placeIntent.hasCoordinates),
+    );
     result = null;
     _emit();
   }
@@ -603,6 +629,7 @@ class PlanningController extends ChangeNotifier {
 
   void overridePlace(String id, PlaceIntent place) {
     final key = placeKey(place);
+    final previous = candidates[id] ?? <PlanCandidate>[];
     candidates[id] = [
       PlanCandidate(
         key: key,
@@ -610,15 +637,18 @@ class PlanningController extends ChangeNotifier {
         errandIds: {id},
         reason: 'Your selected alternative.',
       ),
-    ];
+      ...previous.where((p) => p.key != key),
+    ].take(candidateLimit).toList();
     overrides[id] = key;
     result = null;
+    stage = PreparationStage.discovery;
     _emit();
   }
 
   void chooseAlternative(String id, String key) {
     overrides[id] = key;
     result = null;
+    stage = PreparationStage.discovery;
     _emit();
   }
 
@@ -688,12 +718,32 @@ class PlanningController extends ChangeNotifier {
         );
       }
       final selected = points;
-      final matrix = await roads.matrix(
-        day.copyWith(errands: activeErrands),
+      if (selected.any((p) => !p.place.hasCoordinates)) {
+        throw const PlanningFailure(
+          'A selected location has expired. Return to review and refresh its actual location.',
+          kind: 'missing_location',
+        );
+      }
+      if (selected.any(
+        (p) => {
+          'CLOSED_PERMANENTLY',
+          'CLOSED_TEMPORARILY',
+        }.contains(discovery?.metadata(p.place)?.status),
+      )) {
+        throw const PlanningFailure(
+          'A selected business is reported closed. Review its actual location or defer that errand.',
+          kind: 'needs_clarification',
+        );
+      }
+      final matrix = await _matrixFor(
         selected,
-        cancelled: () => _closed || epoch != _epoch,
+        () => _closed || epoch != _epoch,
       );
       if (_closed || epoch != _epoch) return;
+      recommendationMatrix = (matrix['matrix'] as List)
+          .map((r) => (r as List).cast<int?>())
+          .toList();
+      recommendationKeys = selected.map((p) => p.key).toList();
       progress = 'Comparing places and stop order…';
       _emit();
       final input = <String, dynamic>{
@@ -742,8 +792,19 @@ class PlanningController extends ChangeNotifier {
         refined.geometry,
         refined.fallback || matrix['fallback'] == true,
         warnings: refined.warnings,
+        legs: refined.legs,
+        calculatedAt: DateTime.now(),
       );
       stage = PreparationStage.recommendations;
+      _calculationSignature = _routeInputSignature;
+      final lookup = {for (final p in selected) p.key: p.place};
+      _proposalChoices.clear();
+      for (final stop in result!.schedule.stops) {
+        for (final task in stop.tasks) {
+          _proposalChoices[task.errandId] = lookup[stop.placeKey]!;
+        }
+      }
+      await saveRecommendationDraft();
     } catch (e) {
       if (_closed || epoch != _epoch) return;
       error = e is PlanningFailure
@@ -772,6 +833,18 @@ class PlanningController extends ChangeNotifier {
     AcceptedItinerary? history,
   }) async {
     final route = result;
+    if (route != null &&
+        (_calculationSignature != null &&
+                _calculationSignature != _routeInputSignature ||
+            route.calculatedAt != null &&
+                DateTime.now().difference(route.calculatedAt!) >
+                    const Duration(minutes: 5) ||
+            tripDepartureHasPassed(day))) {
+      throw const PlanningFailure(
+        'These road estimates need updating. Return to review and recalculate.',
+        kind: 'needs_recalculation',
+      );
+    }
     if (currentRevision != sourceRevision || route == null) {
       throw const PlanningFailure(
         'Today changed. Close this draft and plan again with your latest errands.',
