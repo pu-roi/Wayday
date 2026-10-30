@@ -14,12 +14,14 @@ class PlanningReview extends StatelessWidget {
     required this.footer,
     required this.onEdit,
     required this.onLocation,
+    required this.onClarify,
+    required this.onDefer,
     required this.onChanged,
     super.key,
   });
   final PlanningController model;
   final Widget tripDetails, footer;
-  final ValueChanged<Errand> onEdit, onLocation;
+  final ValueChanged<Errand> onEdit, onLocation, onClarify, onDefer;
   final VoidCallback onChanged;
 
   @override
@@ -49,19 +51,32 @@ class PlanningReview extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
+                if (model.clarifications.storageError != null) ...[
+                  Text(model.clarifications.storageError!),
+                  TextButton(
+                    onPressed: () async {
+                      try {
+                        await model.clarifications.retrySave();
+                      } catch (_) {}
+                    },
+                    child: const Text('Retry saving answers'),
+                  ),
+                ],
+                if (model.error != null) Text(model.error!),
                 SectionSurface(
                   child: Column(
                     children: [
-                      for (var i = 0; i < model.day.errands.length; i++) ...[
+                      for (var i = 0; i < model.reviewErrands.length; i++) ...[
                         if (i > 0)
                           const Divider(height: 1, indent: 20, endIndent: 20),
-                        _errand(model.day.errands[i], i + 1),
+                        _errand(model.reviewErrands[i], i + 1),
                       ],
                     ],
                   ),
                 ),
                 for (final n
-                    in model.interpretation?.additions ?? <ErrandNeed>[]) ...[
+                    in (model.interpretation?.additions ?? <ErrandNeed>[])
+                        .where((n) => !model.additions.contains(n.id))) ...[
                   const SizedBox(height: 12),
                   ExpansionTile(
                     tilePadding: EdgeInsets.zero,
@@ -106,7 +121,7 @@ class PlanningReview extends StatelessWidget {
                             if (model.additions.contains(n.id)) {
                               model.additions.remove(n.id);
                             } else {
-                              model.additions.add(n.id);
+                              model.addAddition(n);
                             }
                             onChanged();
                           },
@@ -136,18 +151,18 @@ class PlanningReview extends StatelessWidget {
   );
 
   Widget _errand(Errand e, int index) {
-    final original = model.reviewInput(e), need = model.needs[e.id];
+    final original = model.reviewInput(e), need = model.effectiveNeed(e);
     return ReviewErrandTile(
       key: ValueKey(e.id),
-      errand: original,
+      errand: e,
       index: index,
       need: need,
-      currentOrder: original.afterErrandIds.isEmpty
+      currentOrder: e.afterErrandIds.isEmpty
           ? null
-          : original.afterErrandIds
+          : e.afterErrandIds
                 .map(
                   (id) =>
-                      model.day.errands
+                      model.reviewOrder.items
                           .where((e) => e.id == id)
                           .firstOrNull
                           ?.title ??
@@ -162,7 +177,24 @@ class PlanningReview extends StatelessWidget {
                 Errand(id: n.id, title: n.proposedTitle ?? n.query),
             ]),
       approved: model.approved.contains(e.id),
-      clarified: model.clarified.contains(e.id),
+      clarified: model.questionResolved(e),
+      answer: model.answerFor(e),
+      deferral: model.deferred[e.id],
+      onClarify: () => onClarify(e),
+      onDefer: () => onDefer(e),
+      onInclude: () async {
+        try {
+          await model.clarifications.include(model.day.date, e);
+        } catch (error) {
+          model.error = error.toString();
+          onChanged();
+        }
+      },
+      onRulesApproval: (v) async {
+        try {
+          await model.clarifications.approveRules(model.questionContext(e), v);
+        } catch (_) {}
+      },
       onApproval: (value) {
         if (value) {
           model.approved.add(e.id);
@@ -171,6 +203,9 @@ class PlanningReview extends StatelessWidget {
         }
         onChanged();
       },
+      onRemoveExtra: model.additions.contains(e.id)
+          ? () => model.removeAddition(e.id)
+          : null,
       onEdit: () => onEdit(e),
       onLocation: () => onLocation(e),
     );

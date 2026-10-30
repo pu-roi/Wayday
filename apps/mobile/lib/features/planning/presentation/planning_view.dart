@@ -7,10 +7,20 @@ import '../../places/presentation/search_attribution.dart';
 import '../../today/domain/day.dart';
 import '../../today/presentation/today_controller.dart';
 import '../data/itinerary_repository.dart';
+import '../data/review_trip_repository.dart';
 import '../domain/planning_models.dart';
+import '../domain/clarification.dart';
+import '../domain/trip_departure.dart';
+import '../domain/planning_input_checks.dart';
+import '../domain/review_timing_edit.dart';
 import 'candidate_search_view.dart';
+import 'clarification_sheet.dart';
+import '../../places/data/google_pin_cache.dart';
 import 'planning_controller.dart';
+import 'understanding_failure_view.dart';
 import 'planning_review.dart';
+import 'review_feedback.dart';
+import 'review_trip_details.dart';
 import 'plan_map.dart';
 import 'saved_plan_view.dart';
 
@@ -26,6 +36,10 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     with WidgetsBindingObserver {
   late final PlanningController model;
   late final int sourceRevision;
+  late final DayPlan sourceDay;
+  ReviewTripRepository? tripRepository;
+  String? tripStorageError;
+  Map<String, ReviewTimingEdit> pendingTimingEdits = {};
   bool truckConfirmed = false, saving = false;
   int? selected;
   String? localError;
@@ -57,19 +71,87 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     sourceRevision = ref.read(todayProvider).revision;
+    sourceDay = widget.initial ?? ref.read(todayProvider);
+    if (widget.initial == null && widget.history == null) {
+      tripRepository = ref.read(reviewTripRepositoryProvider);
+    }
     model = PlanningController(
-      widget.initial ?? ref.read(todayProvider),
+      sourceDay,
       ref.read(interpreterProvider),
       ref.read(planningRoadsProvider),
       ref.read(itineraryRepositoryProvider),
       solver: ref.read(planningSolverProvider),
+      resolveGooglePin: ref.read(googlePinCacheProvider).lease,
+      clarificationRepository: ref.read(clarificationRepositoryProvider),
+      clarificationResolver: ref.read(clarificationResolverProvider),
     );
     model.addListener(changed);
     truckConfirmed = widget.history?.lightPickupConfirmed ?? false;
     model.lightPickupConfirmed = truckConfirmed;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) model.understand();
+      if (mounted) startUnderstanding();
     });
+  }
+
+  Future<void> startUnderstanding() async {
+    try {
+      final saved = await tripRepository?.read(sourceDay);
+      if (!mounted) return;
+      if (saved != null) {
+        saved.apply(
+          model.day,
+        ); // Validate references before starting interpretation.
+        model.day = saved.applyTripSettings(model.day);
+        pendingTimingEdits = saved.timingEdits;
+      }
+    } catch (_) {
+      if (!mounted) return;
+      tripStorageError =
+          'Saved review settings could not be restored. Today’s settings are shown.';
+    }
+    if (mounted) await understand();
+  }
+
+  Future<void> understand({bool retry = false, bool savedOnly = false}) async {
+    await model.understand(retry: retry, savedOnly: savedOnly);
+    if (mounted && model.interpretation != null) {
+      await model.restoreHistoryAnswers(widget.history);
+    }
+    if (!mounted || model.stage != PreparationStage.review) return;
+    final edits = pendingTimingEdits;
+    pendingTimingEdits = {};
+    for (final e in model.day.errands) {
+      final edit = edits[e.id];
+      if (edit != null) model.edit(edit.apply(e));
+    }
+    if (mounted && model.interpretation != null) {
+      await model.clarifications.resumeSaved(
+        model.reviewErrands.map(model.questionContext),
+      );
+    }
+  }
+
+  Future<void> saveTripSettings() async {
+    try {
+      await tripRepository?.save(
+        sourceDay,
+        model.manualReviewDay.copyWith(
+          errands: model.manualReviewDay.errands
+              .where(
+                (e) => sourceDay.errands.any((source) => source.id == e.id),
+              )
+              .toList(),
+        ),
+      );
+      if (mounted) setState(() => tripStorageError = null);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => tripStorageError =
+              'Your review changes could not be saved. Retry saving before closing.',
+        );
+      }
+    }
   }
 
   void changed() {
@@ -86,6 +168,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) setState(() {});
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       // Keep interpretation in flight; road estimates become stale on background.
@@ -118,42 +201,66 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     );
     if (!mounted || p == null) return;
     if (errand != null) {
-      model.edit(
-        errand.copyWith(
-          place: p.label,
-          placeIntent: p,
-          confirmedFields: {...errand.confirmedFields, 'place'},
-        ),
-      );
+      await model.confirmPlace(errand, p);
     } else {
       model.setEndpoint(start!, p);
     }
   }
 
   Future<void> edit(Errand e) async {
-    final result = await editErrand(context, e, errands: model.day.errands);
+    final result = await editErrand(
+      context,
+      e,
+      errands: model.reviewOrder.items,
+      allowRemoval: false,
+    );
     if (!mounted) return;
     if (result case SavedErrand(:final errand)) {
+      final oldPlace = clarificationHash(
+        model.reviewInput(e).placeIntent.toJson(),
+      );
       model.edit(errand);
+      if (oldPlace != clarificationHash(errand.placeIntent.toJson())) {
+        await model.confirmPlace(errand, errand.placeIntent);
+      }
+      await saveTripSettings();
     }
   }
 
   Future<void> date() async {
     final now = DateTime.now();
-    final initial = DateTime.parse(model.day.date);
+    final initial = DateTime.tryParse(model.day.date) ?? now;
+    final first = DateTime(now.year, now.month, now.day);
+    final last = DateTime(now.year + 1, 12, 31);
     final value = await showDatePicker(
       context: context,
-      initialDate: initial.isBefore(DateTime(now.year, now.month, now.day))
-          ? now
-          : initial,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: DateTime(now.year + 1, 12, 31),
+      initialDate: initial.isBefore(first)
+          ? first
+          : (initial.isAfter(last) ? last : initial),
+      firstDate: first,
+      lastDate: last,
     );
     if (value != null && mounted) {
       setState(() {
         model.day = model.day.copyWith(date: calendarDate(value));
         localError = null;
       });
+      await saveTripSettings();
+    }
+  }
+
+  void resolveInput(PlanningInputIssue issue) {
+    switch (issue.field) {
+      case PlanningInputField.date:
+        date();
+      case PlanningInputField.departure:
+        time(true);
+      case PlanningInputField.deadline:
+        time(false);
+      case PlanningInputField.errand:
+        edit(issue.errand!);
+      case PlanningInputField.input:
+        back();
     }
   }
 
@@ -170,6 +277,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
             : model.day.copyWith(deadline: value);
         localError = null;
       });
+      await saveTripSettings();
     }
   }
 
@@ -184,109 +292,141 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
     child: Text(text),
   );
+  Future<void> clarify(Errand e, {bool deferOnly = false}) async {
+    final action = await showClarificationSheet(
+      context,
+      model,
+      e,
+      deferOnly: deferOnly,
+    );
+    if (!mounted) return;
+    if (action == 'location') {
+      final scope =
+          model.effectiveNeed(e)?.questionKind ??
+          model.answerFor(e)?.resolution?.kind;
+      await location(errand: e);
+      if (mounted) {
+        final current = model.reviewOrder.items.firstWhere((x) => x.id == e.id);
+        if (current.placeIntent.hasCoordinates && scope == 'location') {
+          await model.clarifications.applyStructured(
+            model.questionContext(current),
+            const ClarificationResolution(
+              outcome: 'resolved',
+              kind: 'location',
+              summary: 'Location selected',
+            ),
+            'Selected a location',
+          );
+        }
+      }
+    }
+    if (action == 'time') {
+      if (!mounted) return;
+      final minute = await chooseTime(
+        context,
+        title: 'Time for ${e.title}',
+        initialMinute: e.minute ?? model.day.departure,
+      );
+      if (!mounted || minute == null) return;
+      final value = model
+          .reviewInput(e)
+          .copyWith(
+            timing: e.timing == TimingRule.anytime ? TimingRule.at : e.timing,
+            minute: minute,
+            confirmedFields: {...e.confirmedFields, 'timing'},
+          );
+      model.edit(value);
+      await saveTripSettings();
+      await model.clarifications.applyStructured(
+        model.questionContext(value),
+        ClarificationResolution(
+          outcome: 'resolved',
+          kind: 'timing',
+          summary: '${formatMinute(minute)} confirmed',
+        ),
+        'Selected a time',
+      );
+    }
+  }
+
   Widget get review => PlanningReview(
     model: model,
     onEdit: edit,
+    onClarify: clarify,
+    onDefer: (e) => clarify(e, deferOnly: true),
     onLocation: (e) => location(errand: e),
     onChanged: changed,
-    tripDetails: ExpansionTile(
-      key: const PageStorageKey('planning-trip-details'),
-      expansionAnimationStyle: MediaQuery.disableAnimationsOf(context)
-          ? AnimationStyle.noAnimation
-          : null,
-      tilePadding: EdgeInsets.zero,
-      shape: const Border(),
-      collapsedShape: const Border(),
+    tripDetails: ReviewTripDetails(
+      day: model.day,
       initiallyExpanded:
+          tripDepartureHasPassed(model.day) ||
           !model.day.fromPlace.hasCoordinates ||
           !model.day.toPlace.hasCoordinates ||
           (model.day.profile == TravelProfile.truck && !truckConfirmed),
-      title: const Text('Trip details'),
-      subtitle: Text(
-        '${MaterialLocalizations.of(context).formatMediumDate(DateTime.parse(model.day.date))} · ${model.day.profile.label}\n${formatMinute(model.day.departure)} – ${formatMinute(model.day.deadline)}',
-      ),
-      children: [
-        ListTile(
-          leading: const Icon(Icons.calendar_today_outlined),
-          title: Text(model.day.date),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: date,
-        ),
-        ListTile(
-          title: const Text('Departure'),
-          trailing: Text(formatMinute(model.day.departure)),
-          onTap: () => time(true),
-        ),
-        ListTile(
-          title: const Text('Finish the day by'),
-          trailing: Text(formatMinute(model.day.deadline)),
-          onTap: () => time(false),
-        ),
-        ListTile(
-          leading: const Icon(Icons.trip_origin),
-          title: Text('From: ${model.day.fromPlace.label}'),
-          subtitle: Text(
-            model.day.fromPlace.hasCoordinates
-                ? 'Location ready'
-                : 'Choose a map location',
-          ),
-          onTap: () => location(start: true),
-        ),
-        ListTile(
-          leading: const Icon(Icons.location_on_outlined),
-          title: Text('To: ${model.day.toPlace.label}'),
-          subtitle: Text(
-            model.day.toPlace.hasCoordinates
-                ? 'Location ready'
-                : 'Choose a map location',
-          ),
-          onTap: () => location(start: false),
-        ),
-        if (model.day.profile == TravelProfile.truck)
-          CheckboxListTile(
-            title: const Text('I am using a compatible light pickup'),
-            subtitle: const Text(
-              'Ordinary driving estimates. No truck restriction, clearance, weight or access verification. Heavy delivery vehicles are unavailable.',
-            ),
-            value: truckConfirmed,
-            onChanged: (v) => setState(() {
-              truckConfirmed = v == true;
-              model.lightPickupConfirmed = truckConfirmed;
-              localError = null;
-            }),
-          ),
-      ],
+      onDate: date,
+      onDeparture: () => time(true),
+      onDeadline: () => time(false),
+      onFrom: () => location(start: true),
+      onTo: () => location(start: false),
+      vehicleConfirmation: model.day.profile == TravelProfile.truck
+          ? CheckboxListTile(
+              title: const Text('I am using a compatible light pickup'),
+              subtitle: const Text(
+                'Ordinary driving estimates. No truck restriction, clearance, weight or access verification. Heavy delivery vehicles are unavailable.',
+              ),
+              value: truckConfirmed,
+              onChanged: (v) => setState(() {
+                truckConfirmed = v == true;
+                model.lightPickupConfirmed = truckConfirmed;
+                localError = null;
+              }),
+            )
+          : null,
     ),
     footer: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (localError != null)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 120),
-            child: SingleChildScrollView(
-              child: Semantics(liveRegion: true, child: notice(localError!)),
-            ),
-          ),
+        ReviewFeedback(
+          day: model.day,
+          error: localError,
+          orderIssue: model.reviewOrder.issue,
+          storageError: tripStorageError,
+          onDate: date,
+          onDeparture: () => time(true),
+          onRetrySave: saveTripSettings,
+          issues: model.inputIssues
+              .where((i) => i.kind != 'no_active_errands')
+              .toList(),
+          onIssue: resolveInput,
+        ),
+        if (model.activeErrands.isEmpty)
+          notice('Include at least one errand to plan this day.'),
         button(
           'Next: find suitable places',
-          () => attempt(() {
-            if (model.day.profile == TravelProfile.bike) {
-              throw const PlanningFailure(
-                'Bicycle routing and in-app guidance are not qualified for the Philippines yet. Return to Today to choose another travel mode.',
-              );
-            }
-            if (model.day.profile == TravelProfile.truck && !truckConfirmed) {
-              throw const PlanningFailure(
-                'Confirm a compatible light pickup. Heavy delivery vehicles are unavailable.',
-              );
-            }
-            if (model.day.departure >= model.day.deadline) {
-              throw const PlanningFailure(
-                'The final deadline must follow departure.',
-              );
-            }
-            model.applyReview();
-          }),
+          tripDepartureHasPassed(model.day) ||
+                  model.reviewOrder.issue != null ||
+                  model.inputIssues.isNotEmpty ||
+                  model.clarifications.storageError != null
+              ? null
+              : () => attempt(() {
+                  if (model.day.profile == TravelProfile.bike) {
+                    throw const PlanningFailure(
+                      'Bicycle routing and in-app guidance are not qualified for the Philippines yet. Return to Today to choose another travel mode.',
+                    );
+                  }
+                  if (model.day.profile == TravelProfile.truck &&
+                      !truckConfirmed) {
+                    throw const PlanningFailure(
+                      'Confirm a compatible light pickup. Heavy delivery vehicles are unavailable.',
+                    );
+                  }
+                  if (model.day.departure >= model.day.deadline) {
+                    throw const PlanningFailure(
+                      'The final deadline must follow departure.',
+                    );
+                  }
+                  model.applyReview();
+                }),
         ),
       ],
     ),
@@ -335,7 +475,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
           for (final task in stop.tasks)
             ListTile(
               title: Text(
-                model.day.errands
+                model.reviewOrder.items
                     .firstWhere((e) => e.id == task.errandId)
                     .title,
               ),
@@ -344,7 +484,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
               ),
               trailing: TextButton(
                 onPressed: () => alternative(
-                  model.day.errands.firstWhere((e) => e.id == task.errandId),
+                  model.reviewOrder.items.firstWhere(
+                    (e) => e.id == task.errandId,
+                  ),
                 ),
                 child: const Text('Change'),
               ),
@@ -451,7 +593,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
             leading: CircleAvatar(radius: 14, child: Text('${i + 1}')),
             title: Text(places[i].label),
             subtitle: Text(
-              'Arrive ${formatMinute((plan.schedule.stops[i].arrival / 60).ceil())} · Leave ${formatMinute((plan.schedule.stops[i].departure / 60).ceil())}\n${plan.schedule.stops[i].tasks.map((t) => '${model.day.errands.firstWhere((e) => e.id == t.errandId).title}: ${formatMinute((t.start / 60).ceil())}–${formatMinute((t.finish / 60).ceil())}').join('\n')}',
+              'Arrive ${formatMinute((plan.schedule.stops[i].arrival / 60).ceil())} · Leave ${formatMinute((plan.schedule.stops[i].departure / 60).ceil())}\n${plan.schedule.stops[i].tasks.map((t) => '${model.reviewOrder.items.firstWhere((e) => e.id == t.errandId).title}: ${formatMinute((t.start / 60).ceil())}–${formatMinute((t.finish / 60).ceil())}').join('\n')}',
             ),
             onTap: () => setState(() => selected = i),
           ),
@@ -462,11 +604,19 @@ class _PlanningViewState extends ConsumerState<PlanningView>
             'Estimated arrival ${formatMinute((plan.schedule.endArrival / 60).ceil())} · Deadline ${formatMinute(model.day.deadline)}',
           ),
         ),
+        for (final e in model.deferred.entries)
+          ListTile(
+            leading: const Icon(Icons.pause_circle_outline),
+            title: Text(
+              '${model.reviewOrder.items.firstWhere((x) => x.id == e.key).title} · Left out',
+            ),
+            subtitle: Text(e.value),
+          ),
         for (final e in plan.schedule.omitted.entries)
           ListTile(
             leading: const Icon(Icons.event_busy_outlined),
             title: Text(
-              '${model.day.errands.firstWhere((x) => x.id == e.key).title} · Not included',
+              '${model.reviewOrder.items.firstWhere((x) => x.id == e.key).title} · Not included',
             ),
             subtitle: Text(e.value),
           ),
@@ -520,25 +670,11 @@ class _PlanningViewState extends ConsumerState<PlanningView>
         ),
         body: SafeArea(
           child: switch (model.stage) {
-            PreparationStage.failed => ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                const Icon(Icons.info_outline, size: 36),
-                const SizedBox(height: 16),
-                Text(
-                  model.error ??
-                      'Understanding was interrupted. Your errands are kept.',
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Check for a saved answer first. A new request is sent only when no saved result exists, or when you explicitly retry a failed or interrupted attempt.',
-                ),
-                button('Check saved understanding', () => model.understand()),
-                OutlinedButton(
-                  onPressed: () => model.understand(retry: true),
-                  child: const Text('Retry Gemini (uses a request)'),
-                ),
-              ],
+            PreparationStage.failed => UnderstandingFailureView(
+              failure: model.understandingFailure,
+              error: model.error,
+              onSaved: () => understand(savedOnly: true),
+              onRetry: () => understand(retry: true),
             ),
             PreparationStage.understanding ||
             PreparationStage.calculating => Center(
@@ -599,12 +735,12 @@ class _PlanningViewState extends ConsumerState<PlanningView>
                   : Column(
                       children: [
                         notice(
-                          'Finding places for “${unresolved.first.title}” (${model.candidates.length + 1} of ${model.day.errands.length}). Compare a few choices together, or tap one place to fix that choice.',
+                          'Finding places for “${unresolved.first.title}” (${model.candidates.length + 1} of ${model.activeErrands.length}). Compare a few choices together, or tap one place to fix that choice.',
                         ),
                         Expanded(
                           child: CandidateSearchView(
                             key: ValueKey(unresolved.first.id),
-                            query: model.needs[unresolved.first.id]!.query,
+                            query: model.effectiveNeed(unresolved.first)!.query,
                             anchor: model.day.fromPlace,
                             onMap: () => manualCandidate(unresolved.first),
                             onFound: (values) =>

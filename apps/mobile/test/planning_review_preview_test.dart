@@ -100,71 +100,101 @@ Future<void> capture(WidgetTester tester, String name) async {
 
 void main() {
   for (final variant in [
-    (390.0, 844.0, 1.0),
-    (320.0, 740.0, 2.0),
-    (768.0, 1024.0, 1.0),
+    (390.0, 844.0, 1.0, false, false),
+    (390.0, 844.0, 1.0, true, false),
+    (320.0, 740.0, 2.0, false, false),
+    (320.0, 740.0, 2.0, true, false),
+    (768.0, 1024.0, 1.0, false, false),
+    (390.0, 844.0, 1.0, false, true),
+    (320.0, 740.0, 2.0, false, true),
   ]) {
-    testWidgets('review preview at ${variant.$1}, text ${variant.$3}', (
-      tester,
-    ) async {
-      if (Platform.environment['WAYDAY_CAPTURE'] == '1') {
-        await (FontLoader(
-          'Figtree',
-        )..addFont(rootBundle.load('assets/fonts/Figtree.ttf'))).load();
-        await (FontLoader(
-          'MaterialIcons',
-        )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
-      }
-      tester.view.physicalSize = Size(variant.$1, variant.$2);
-      tester.view.devicePixelRatio = 1;
-      tester.platformDispatcher.textScaleFactorTestValue = variant.$3;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      final roads = Roads();
-      addTearDown(roads.client.close);
-      await tester.pumpWidget(
-        RepaintBoundary(
-          key: _preview,
-          child: ProviderScope(
-            overrides: [
-              interpreterProvider.overrideWithValue(_Interpreter()),
-              planningRoadsProvider.overrideWithValue(roads),
-              dayRepositoryProvider.overrideWithValue(
-                MemoryDayRepository(initialData: _day),
+    testWidgets(
+      'review preview at ${variant.$1}, text ${variant.$3}, past=${variant.$4}, appointment=${variant.$5}',
+      (tester) async {
+        if (Platform.environment['WAYDAY_CAPTURE'] == '1') {
+          await (FontLoader(
+            'Figtree',
+          )..addFont(rootBundle.load('assets/fonts/Figtree.ttf'))).load();
+          await (FontLoader('MaterialIcons')
+                ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf')))
+              .load();
+        }
+        tester.view.physicalSize = Size(variant.$1, variant.$2);
+        tester.view.devicePixelRatio = 1;
+        tester.platformDispatcher.textScaleFactorTestValue = variant.$3;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        final roads = Roads();
+        addTearDown(roads.client.close);
+        await tester.pumpWidget(
+          RepaintBoundary(
+            key: _preview,
+            child: ProviderScope(
+              overrides: [
+                interpreterProvider.overrideWithValue(_Interpreter()),
+                planningRoadsProvider.overrideWithValue(roads),
+                dayRepositoryProvider.overrideWithValue(
+                  MemoryDayRepository(
+                    initialData: variant.$4
+                        ? _day.copyWith(date: '2020-01-01')
+                        : (variant.$5 ? _day.copyWith(departure: 780) : _day),
+                  ),
+                ),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: buildTheme(),
+                home: const PlanningView(),
               ),
-            ],
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: buildTheme(),
-              home: const PlanningView(),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text('Next: find suitable places').hitTestable(),
-        findsOneWidget,
-      );
-      await capture(tester, 'review-errands-${variant.$1.toInt()}');
-      await tester.scrollUntilVisible(
-        find.text('Eat pares with my love'),
-        160,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Eat pares with my love'));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Use suggestion'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Next: find suitable places').hitTestable(),
-        findsOneWidget,
-      );
-      await capture(tester, 'review-suggestion-${variant.$1.toInt()}');
-      expect(tester.takeException(), isNull);
-    });
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text('Next: find suitable places').hitTestable(),
+          findsOneWidget,
+        );
+        await tester.scrollUntilVisible(
+          find.text('Trip details'),
+          160,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await capture(
+          tester,
+          'review-errands-${variant.$1.toInt()}${variant.$4 ? '-past' : (variant.$5 ? '-appointment' : '')}',
+        );
+        if (!variant.$4) {
+          await tester.tap(find.text('Trip details'));
+          await tester.pumpAndSettle();
+        }
+        await capture(
+          tester,
+          'review-trip-fields-${variant.$1.toInt()}${variant.$4 ? '-past' : (variant.$5 ? '-appointment' : '')}',
+        );
+        expect(tester.takeException(), isNull);
+        await tester.scrollUntilVisible(
+          find.text('Eat pares with my love'),
+          160,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Eat pares with my love'));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Use suggestion'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Next: find suitable places').hitTestable(),
+          findsOneWidget,
+        );
+        await capture(
+          tester,
+          'review-suggestion-${variant.$1.toInt()}${variant.$4 ? '-past' : (variant.$5 ? '-appointment' : '')}',
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 }

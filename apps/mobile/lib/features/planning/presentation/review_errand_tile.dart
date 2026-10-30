@@ -3,6 +3,7 @@ import '../../../app/theme.dart';
 import '../../today/domain/day.dart';
 import '../domain/planning_models.dart';
 import '../domain/errand_location_review.dart';
+import '../domain/clarification.dart';
 import 'review_changes.dart';
 
 class ReviewErrandTile extends StatefulWidget {
@@ -15,6 +16,13 @@ class ReviewErrandTile extends StatefulWidget {
     required this.onApproval,
     required this.onEdit,
     required this.onLocation,
+    required this.onClarify,
+    required this.onDefer,
+    required this.onInclude,
+    this.answer,
+    this.deferral,
+    this.onRulesApproval,
+    this.onRemoveExtra,
     required this.clarified,
     required this.currentOrder,
     super.key,
@@ -26,7 +34,11 @@ class ReviewErrandTile extends StatefulWidget {
   final bool approved, clarified;
   final String? currentOrder;
   final ValueChanged<bool> onApproval;
-  final VoidCallback onEdit, onLocation;
+  final VoidCallback onEdit, onLocation, onClarify, onDefer, onInclude;
+  final ClarificationRecord? answer;
+  final String? deferral;
+  final ValueChanged<bool>? onRulesApproval;
+  final VoidCallback? onRemoveExtra;
   @override
   State<ReviewErrandTile> createState() => _ReviewErrandTileState();
 }
@@ -36,9 +48,17 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
   @override
   Widget build(BuildContext context) {
     final e = widget.errand, need = widget.need;
-    final changes = widget.clarified ? <ReviewChange>[] : widget.changes;
-    final question = outstandingQuestion(need, clarified: widget.clarified);
+    final changes = widget.changes;
+    final rawQuestion = outstandingQuestion(need, clarified: widget.clarified);
+    final question = widget.clarified
+        ? null
+        : rawQuestion != null && durationOnlyQuestion(rawQuestion)
+        ? null
+        : widget.answer?.status == 'unresolved'
+        ? widget.answer!.resolution?.followUp ?? rawQuestion
+        : rawQuestion;
     final missingLocation = needsActualLocation(e, need);
+    final ruleSuggestion = widget.answer?.proposesRules == true;
     final status = widget.approved
         ? 'Suggestion selected'
         : kept
@@ -74,14 +94,20 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
                 '${reviewTiming(e)} · ${e.durationMinutes} min${e.durationConfirmed ? '' : ' estimate'}${e.optional ? ' · If there’s time' : ''}',
                 style: context.type.bodySmall,
               ),
-              if (needsPlaceRecommendation(e, need))
+              if (widget.deferral != null)
+                Text('Left out of this plan', style: context.type.bodySmall),
+              if (widget.deferral == null && needsPlaceRecommendation(e, need))
                 Text(
                   'Place recommendations next',
                   style: context.type.bodySmall,
                 ),
-              if (changes.isNotEmpty)
+              if (changes.isNotEmpty || ruleSuggestion)
                 Text(
-                  status,
+                  ruleSuggestion
+                      ? (widget.answer!.rulesApproved
+                            ? 'Rules selected'
+                            : 'Review suggested rules')
+                      : status,
                   style: context.type.bodySmall?.copyWith(
                     color: context.wayday.link,
                   ),
@@ -99,7 +125,7 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
                     _detail('After', widget.currentOrder!),
                   if (e.placeIntent.hasCoordinates)
                     _detail('Place', e.placeIntent.label),
-                  if (need != null && !need.meeting && !widget.clarified) ...[
+                  if (need != null && !need.meeting) ...[
                     _detail(
                       'Find',
                       need.query.isEmpty ? need.category : need.query,
@@ -160,6 +186,38 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
                   ),
                 ),
               ),
+            if (widget.answer?.applied == true && widget.answer!.proposesRules)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Use proposed rules'),
+                subtitle: Text(
+                  [
+                    if (widget.answer!.resolution!.timing != null)
+                      reviewTiming(widget.answer!.resolution!.applyRules(e)),
+                    if (widget.answer!.resolution!.after != null)
+                      'After: ${widget.answer!.resolution!.after!.isEmpty ? 'Planner chooses' : widget.answer!.resolution!.after!.map((id) => widget.answer!.context.facts['related'][id]).join(', ')}',
+                  ].join(' · '),
+                ),
+                value: widget.answer!.rulesApproved,
+                onChanged: (v) => widget.onRulesApproval?.call(v == true),
+              ),
+            if (widget.onRemoveExtra != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: widget.onRemoveExtra,
+                  child: const Text('Remove extra errand'),
+                ),
+              ),
+            if (widget.deferral == null && !missingLocation)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: widget.onDefer,
+                  child: const Text('Plan the other errands'),
+                ),
+              ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -170,7 +228,33 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
             ),
           ],
         ),
-        if (question != null || missingLocation)
+        if (widget.deferral != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(widget.deferral!, style: context.type.bodySmall),
+                TextButton(
+                  onPressed: widget.onInclude,
+                  child: const Text('Include in this plan'),
+                ),
+              ],
+            ),
+          ),
+        if (widget.deferral == null && widget.answer?.applied == true)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: TextButton.icon(
+              onPressed: widget.onClarify,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: Text(
+                '${ruleSuggestion && !widget.answer!.rulesApproved ? 'Suggested: ' : ''}${widget.answer!.resolution!.summary}',
+                textAlign: TextAlign.start,
+              ),
+            ),
+          ),
+        if (widget.deferral == null && (question != null || missingLocation))
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: Column(
@@ -178,15 +262,23 @@ class _ReviewErrandTileState extends State<ReviewErrandTile> {
               children: [
                 if (question != null)
                   TextButton.icon(
-                    onPressed: widget.onEdit,
+                    onPressed: widget.onClarify,
                     icon: const Icon(Icons.help_outline),
-                    label: Text(question, textAlign: TextAlign.start),
+                    label: Text(
+                      '${need?.questionRequired == false ? 'Optional: ' : ''}$question',
+                      textAlign: TextAlign.start,
+                    ),
                   ),
                 if (missingLocation)
                   OutlinedButton.icon(
                     onPressed: widget.onLocation,
                     icon: const Icon(Icons.location_on_outlined),
                     label: const Text('Choose actual location'),
+                  ),
+                if (missingLocation)
+                  TextButton(
+                    onPressed: widget.onDefer,
+                    child: const Text('Plan the other errands'),
                   ),
               ],
             ),

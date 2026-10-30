@@ -161,7 +161,9 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
                 subtitle: Text(
                   plan.completed.contains(id)
                       ? 'Completed'
-                      : 'Mark complete after finishing this errand',
+                      : plan.clarifications[id]?['resolution']?['summary']
+                                as String? ??
+                            'Mark complete after finishing this errand',
                 ),
                 onChanged: saving || plan.completed.contains(id)
                     ? null
@@ -175,6 +177,15 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
             title: Text(plan.day.toPlace.label),
             subtitle: const Text('Final destination'),
           ),
+          for (final e in plan.deferred.entries)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.pause_circle_outline),
+              title: Text(
+                '${plan.day.errands.firstWhere((x) => x.id == e.key).title} · Left out',
+              ),
+              subtitle: Text(e.value),
+            ),
           for (final e in plan.omitted.entries)
             Text(
               '${plan.day.errands.firstWhere((x) => x.id == e.key).title}: ${e.value}',

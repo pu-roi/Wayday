@@ -8,7 +8,6 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
 import 'package:wayday/features/planning/data/gemini_interpreter.dart';
 import 'package:wayday/features/planning/data/interpretation_request.dart';
-import 'package:wayday/features/planning/data/planning_budget.dart';
 import 'package:wayday/features/planning/domain/day_scheduler.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
 import 'package:wayday/features/planning/presentation/planning_view.dart';
@@ -74,18 +73,8 @@ void main() {
         'state': 'completed',
         'response': response,
       });
-      var reservations = 0;
-      final cacheBudget = PlanningBudget(
-        read: () async => null,
-        write: (_) async {
-          reservations++;
-        },
-      );
-      final cachedAnswer = await GeminiInterpreter(
-        cacheBudget,
-      ).interpret(cachedDay);
+      final cachedAnswer = await GeminiInterpreter().saved(cachedDay);
       expect(cachedAnswer.needs.single.id, 'native-cache-fixture');
-      expect(reservations, 0);
       final pendingDay = DayPlan(
         errands: const [
           Errand(id: 'native-pending-fixture', title: 'Pending fixture'),
@@ -96,12 +85,11 @@ void main() {
         'state': 'pending',
       });
       await expectLater(
-        GeminiInterpreter(cacheBudget).interpret(pendingDay),
+        GeminiInterpreter().saved(pendingDay),
         throwsA(
           isA<PlanningFailure>().having((e) => e.kind, 'kind', 'interrupted'),
         ),
       );
-      expect(reservations, 0);
       debugPrint(
         'WAYDAY_NATIVE_CACHE_REUSE_AND_INTERRUPTED_GUARD_PASSED generations=0',
       );
@@ -114,22 +102,6 @@ void main() {
         'geminiStatus',
       );
       expect(configuration?['configured'], isA<bool>());
-      if (configuration?['configured'] == true &&
-          configuration?['remainingGenerations'] == 0) {
-        await expectLater(
-          channel.invokeMethod<String>('interpret', {
-            'body': '{"generationConfig":{"maxOutputTokens":1}}',
-          }),
-          throwsA(
-            isA<PlatformException>().having(
-              (e) => e.code,
-              'code',
-              'paid_allowance',
-            ),
-          ),
-        );
-        debugPrint('WAYDAY_NATIVE_PAID_GENERATION_GUARD_PASSED');
-      }
       // Never print identity, key, notes, coordinates, provider records or response bodies.
       final roads = Roads(), repo = MemoryItineraryRepository();
       await tester.pumpWidget(

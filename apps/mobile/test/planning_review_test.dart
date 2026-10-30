@@ -5,6 +5,7 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
 import 'package:wayday/features/planning/presentation/planning_view.dart';
 import 'package:wayday/features/planning/presentation/planning_review.dart';
+import 'package:wayday/features/planning/presentation/review_errand_tile.dart';
 import 'package:wayday/features/planning/data/gemini_interpreter.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/today/domain/day.dart';
@@ -49,24 +50,104 @@ class _Questions implements ErrandInterpreter {
 }
 
 void main() {
+  testWidgets(
+    'review blocks an errand deadline before departure and offers editing',
+    (tester) async {
+      final source = fixture();
+      await launchReview(
+        tester,
+        day: source.copyWith(
+          date: '2026-12-01',
+          departure: 780,
+          errands: [
+            source.errands.first.copyWith(
+              title: 'Pick up my girlfriend',
+              timing: TimingRule.arriveBy,
+              minute: 570,
+            ),
+          ],
+        ),
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Next: find suitable places'),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(find.text('Edit Pick up my girlfriend'), findsOneWidget);
+      await tester.tap(find.text('Edit Pick up my girlfriend'));
+      await tester.pumpAndSettle();
+      expect(find.text('Save'), findsOneWidget);
+      expect(find.text('Remove errand'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'selecting an After suggestion reorders review before Next and reverses cleanly',
+    (tester) async {
+      final day = fixture().copyWith(
+        date: '2020-01-01',
+        errands: const [
+          Errand(id: 'pickup', title: 'Pickup', durationConfirmed: true),
+          Errand(id: 'food', title: 'Eat pares', durationConfirmed: true),
+          Errand(id: 'grocery', title: 'Grocery', durationConfirmed: true),
+          Errand(id: 'ice', title: 'Ice cream', durationConfirmed: true),
+        ],
+      );
+      await launchReview(
+        tester,
+        day: day,
+        interpreter: _Questions(const [
+          ErrandNeed(id: 'pickup', query: 'pickup'),
+          ErrandNeed(id: 'food', query: 'pares', after: ['grocery']),
+          ErrandNeed(id: 'grocery', query: 'grocery'),
+          ErrandNeed(id: 'ice', query: 'ice cream'),
+        ]),
+      );
+      await tester.scrollUntilVisible(
+        find.text('Eat pares'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Eat pares'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Use suggestion'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Use suggestion'));
+      await tester.pumpAndSettle();
+      List<String> order() => tester
+          .widgetList<ReviewErrandTile>(find.byType(ReviewErrandTile))
+          .map((w) => w.errand.title)
+          .toList();
+      expect(order(), ['Pickup', 'Grocery', 'Eat pares', 'Ice cream']);
+      await tester.ensureVisible(find.text('Keep current'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Keep current'));
+      await tester.pumpAndSettle();
+      expect(order(), ['Pickup', 'Eat pares', 'Grocery', 'Ice cream']);
+      expect(day.errands[1].afterErrandIds, isEmpty);
+    },
+  );
+
   testWidgets('correcting the trip date clears the stale departure error', (
     tester,
   ) async {
-    const message =
-        'The departure is in the past. Choose a new date and departure time.';
+    const message = 'Departure has passed: 2020-01-01, 8:30 AM.';
     await launchReview(tester, day: fixture().copyWith(date: '2020-01-01'));
     await tester.tap(find.text('Next: find suitable places'));
     await tester.pumpAndSettle();
     expect(find.text(message), findsOneWidget);
-    await tester.tap(find.text('Trip details'));
+    await tester.tap(find.text('Change date'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('2020-01-01'));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(find.text(message), findsOneWidget);
-      await tester.tap(find.text('2020-01-01'));
-      await tester.pumpAndSettle();
+    expect(find.text(message), findsOneWidget);
+    await tester.tap(find.text('Change date'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Next month'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('15'));
@@ -184,6 +265,7 @@ void main() {
       expect(find.text('Suggested: 15 min'), findsNothing);
       final use = find.text('Use suggestion');
       await tester.ensureVisible(use);
+      await tester.pumpAndSettle();
       await tester.tap(use);
       await tester.pumpAndSettle();
       expect(find.text('Suggestion selected'), findsOneWidget);

@@ -29,9 +29,14 @@ Future<ErrandEditResult?> editErrand(
   BuildContext context,
   Errand errand, {
   List<Errand> errands = const [],
+  bool allowRemoval = true,
 }) => Navigator.of(context, rootNavigator: true).push<ErrandEditResult>(
   MaterialPageRoute(
-    builder: (_) => ErrandEditor(errand: errand, errands: errands),
+    builder: (_) => ErrandEditor(
+      errand: errand,
+      errands: errands,
+      allowRemoval: allowRemoval,
+    ),
   ),
 );
 
@@ -39,10 +44,12 @@ class ErrandEditor extends ConsumerStatefulWidget {
   const ErrandEditor({
     required this.errand,
     this.errands = const [],
+    this.allowRemoval = true,
     super.key,
   });
   final Errand errand;
   final List<Errand> errands;
+  final bool allowRemoval;
   @override
   ConsumerState<ErrandEditor> createState() => _ErrandEditorState();
 }
@@ -216,9 +223,12 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
             ..._confirmed,
             if (_title.text.trim() != widget.errand.title) 'title',
             if (_notes.text.trim() != widget.errand.notes) 'notes',
-            if (_timing != widget.errand.timing || _minute != widget.errand.minute) 'timing',
+            if (_timing != widget.errand.timing ||
+                _minute != widget.errand.minute)
+              'timing',
             if (_optional != widget.errand.optional) 'optional',
-            if (!setEquals(_after, widget.errand.afterErrandIds.toSet())) 'dependencies',
+            if (!setEquals(_after, widget.errand.afterErrandIds.toSet()))
+              'dependencies',
           },
           timing: _timing,
           minute: _minute,
@@ -589,13 +599,14 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-                TextButton.icon(
-                  onPressed: () =>
-                      Navigator.pop(context, const RemovedErrand()),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  label: const Text('Remove errand'),
-                ),
+                if (widget.allowRemoval) const SizedBox(height: 32),
+                if (widget.allowRemoval)
+                  TextButton.icon(
+                    onPressed: () =>
+                        Navigator.pop(context, const RemovedErrand()),
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    label: const Text('Remove errand'),
+                  ),
               ],
             ),
           ),
