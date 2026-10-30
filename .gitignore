@@ -89,3 +89,6 @@ Desktop.ini
 
 # Generated clarification UI verification renders
 /.impeccable/clarification/
+
+# Generated recommendation UI verification renders
+/.impeccable/recommendations/

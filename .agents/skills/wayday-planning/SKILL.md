@@ -75,3 +75,8 @@ D53 adds structural source guards before interpretation and shared zero-road tim
 D54 blocks the native harness when the personal package is installed; use a disposable emulator without it. A missing understanding after installation recovery requires explicit paid retry. Never seed the personal journal or dispatch automatically after installation recovery. D55 removes the historical remaining-allocation gate.
 
 D55 removes the former Gemini attempt caps in both Flutter and Android; legacy counter values do not gate requests. Keep Routes/search/navigation accounting independent.
+
+
+## Route-aware recommendations — D58
+
+D58 explicitly replaces the visible-UI-Kit-only recommendation boundary. Use the dedicated native Places SDK adapter for bounded whole-trip discovery and transient business metadata; keep standard UI Kit presentation in manual search. Preserve unified Google identity, coordinate leases, source-bound v6 drafts and provider attribution. Do not persist provider names/addresses as user-owned labels. Seed corridor discovery through fixed points, supplement at most two relevant anchors, shortlist no more than three candidates per errand/twelve assignments overall, and compare branches jointly with the existing scheduler. Preserve actual pickup locations and fixed addresses; address records can hydrate without becoming automatic business recommendations. Reuse recent matrices only in RAM for matching route context/subsets, revalidate selected legs and keep Gemini independent of routing-only changes. Follow D58 evidence for Android/live qualification and existing D54 harness protection.

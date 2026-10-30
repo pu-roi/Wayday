@@ -254,3 +254,12 @@ D53 uses existing Dart/Drift facilities for shared review validation and a backw
 D55 removes app-imposed Gemini usage caps and the interpreter's accounting dependency while retaining the Keystore/native journal architecture, payload bounds and explicit retry policy. It adds no package or hosted service. Google provider quotas and independent routing/search/navigation accounting remain unchanged.
 
 D57 adds a shared Gemini transport, a language clarification resolver, separate native answer snapshots and an additive clarification_sessions table in Drift schema v5. Accepted itinerary JSON advances to v2 while retaining v1 reads. It reuses the existing Flutter modal sheets, Drift, crypto hashing and Android journal/Keystore facilities. No package, hosted service or usage allowance is added. Existing Google provider presentation, retention and independent accounting remain unchanged.
+
+
+## Route-aware discovery — D58
+
+The existing Places SDK 6.0.2 contains PlacesClient, SearchAlongRouteParameters.newInstance(EncodedPolyline), SearchByTextRequest and the required metadata fields; no Places SDK upgrade or solver dependency is added. The native discovery adapter requests explicit basic business fields and omits Places routing summaries/ratings/reviews/opening hours. Standard manual UI Kit components remain. Traffic display uses the existing Navigation plugin's map UI settings; road timing remains in the restricted Routes adapter.
+
+The pure Dart html 0.15.7 package, published by tools.dart.dev, and its csslib dependency parse Google provider-attribution HTML into text/emphasis and safe HTTP(S) links. The authoritative lockfile pins their hashes. The html package uses the MIT permission notice; its parser does not execute HTML, scripts or styles. This addition does not add another UI framework, account or service.
+
+Preserve existing request controls and account-wide uncertainty. Published base rates beyond monthly free usage are $1/1,000 standard UI Kit queries, $5/1,000 UI Kit Pro events and $32/1,000 Text Search Pro requests; fields and route features determine actual SKUs. Local counters do not establish a zero-charge guarantee. Public distribution and any quota/billing changes remain separate. [Google pricing](https://developers.google.com/maps/billing-and-pricing/pricing), [Android route search](https://developers.google.com/maps/documentation/places/android-sdk/search-along-route), [html package](https://pub.dev/packages/html).

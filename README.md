@@ -185,3 +185,6 @@ Skills guide authorized work; they do not start application development or insta
 ## Licensing
 
 This foundation does not assign a license to the team's original work. Third-party software and data retain their own licenses. See the stack inventory before adding or redistributing dependencies, map data, fonts, or assets.
+
+
+D58 adds automatic route-aware whole-trip recommendations, transient Places SDK business metadata, a shared Google map/list, explicit manual alternatives and source-bound Drift v6 draft recovery. It preserves the existing manual UI Kit picker, Google retention/attribution, local personal state and qualified-mode limits. See [implementation evidence](docs/wayday/evidence/route-recommendations-2026-10-31.md) for tests and outstanding live-provider and physical-phone checks.
