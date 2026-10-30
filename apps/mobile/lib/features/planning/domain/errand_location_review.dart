@@ -7,7 +7,11 @@ import 'planning_models.dart';
 bool needsActualLocation(Errand errand, ErrandNeed? need) {
   final place = errand.placeIntent;
   if (place.hasCoordinates) return false;
-  if (need?.meeting == true || place.isGoogle) return true;
+  if (need?.meeting == true ||
+      need?.requiresSpecificLocation == true ||
+      place.isGoogle) {
+    return true;
+  }
   if ({
     PlaceKind.specific,
     PlaceKind.saved,
@@ -48,3 +52,9 @@ bool _locationOnly(String question) {
         r'^(please )?(can|could|would) you (provide|confirm|specify|choose) (the |a |your )?(address|location|meeting point|pickup point)\b',
       ).hasMatch(text);
 }
+
+/// A visit estimate is already present in every valid errand, including 15 min.
+bool durationOnlyQuestion(String question) => RegExp(
+  r'^(how long|how much time|gaano katagal|ilang minuto|what (is the |visit )?duration)\b',
+  caseSensitive: false,
+).hasMatch(question.trim());

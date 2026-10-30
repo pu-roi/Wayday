@@ -22,6 +22,9 @@ class ErrandNeed {
     this.timing,
     this.minute,
     this.proposedTitle,
+    this.questionKind,
+    this.questionRequired,
+    this.requiresSpecificLocation = false,
   });
   final String id, query, category;
   final List<String> items, after;
@@ -29,6 +32,31 @@ class ErrandNeed {
   final int durationMinutes;
   final bool? optional;
   final int? minute;
+  final String? questionKind;
+  final bool? questionRequired;
+  final bool requiresSpecificLocation;
+  ErrandNeed copyWith({
+    String? query,
+    String? category,
+    List<String>? items,
+    bool? requiresSpecificLocation,
+  }) => ErrandNeed(
+    id: id,
+    query: query ?? this.query,
+    category: category ?? this.category,
+    items: items ?? this.items,
+    question: question,
+    durationMinutes: durationMinutes,
+    after: after,
+    optional: optional,
+    timing: timing,
+    minute: minute,
+    proposedTitle: proposedTitle,
+    questionKind: questionKind,
+    questionRequired: questionRequired,
+    requiresSpecificLocation:
+        requiresSpecificLocation ?? this.requiresSpecificLocation,
+  );
   bool get meeting => category == 'meeting';
 
   static const categories = {
@@ -66,6 +94,21 @@ class ErrandNeed {
         (minute != null && (minute is! int || minute < 0 || minute >= 1440))) {
       throw const FormatException('Invalid interpretation');
     }
+    if (json['specificLocation'] != null && json['specificLocation'] is! bool) {
+      throw const FormatException('Invalid destination requirement');
+    }
+    final spec = json['clarification'] as Map?;
+    if (spec != null &&
+        (!{
+              'preference',
+              'location',
+              'timing',
+              'dependency',
+              'other',
+            }.contains(spec['kind']) ||
+            spec['required'] is! bool)) {
+      throw const FormatException('Invalid clarification metadata');
+    }
     return ErrandNeed(
       id: id,
       query: query.trim(),
@@ -78,6 +121,11 @@ class ErrandNeed {
       optional: json['optional'] as bool?,
       timing: timing as String?,
       minute: minute as int?,
+      questionKind: spec?['kind'] as String?,
+      questionRequired: spec?['kind'] == 'preference'
+          ? false
+          : spec?['required'] as bool?,
+      requiresSpecificLocation: json['specificLocation'] == true,
     );
   }
 
