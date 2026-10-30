@@ -485,6 +485,8 @@ Analysis is clean; 68 focused checks pass. The full suite reports 321 passes, on
 
 ## 2026-10-31 — Whole-trip place recommendations (D58)
 
+The owner subsequently requested testing expectations, an updated wayday-planning skill and publication to roi-branch. Reconciled the skill's older UI-Kit-only/corridor limitations with D58 and added the manual rehearsal checklist to PLANNING.md. This follow-up changes documentation only; the existing build and automated evidence remain distinct from the owner's forthcoming live-phone results.
+
 Implemented the owner-approved automatic recommendation continuation: dedicated bounded Places SDK discovery along a Routes seed, transient actual business metadata, unified Google reference identity, geographically varied shortlists and joint branch/order comparison through the existing on-device scheduler. Fixed pickups/addresses remain actual locations. Route refinement retains incoming distance/time and departure context; approximate bypass comparisons exclude service. Existing Google accounting, coordinate expiry, unsupported-mode gates and Gemini reuse remain in force.
 
 Added one shared Google map with numbered stop rows, concise reasons, expandable details, a collapsible layout, separate alternatives/manual search, Previous/Next navigation and explicit current-location confirmation. Planning omits name-only selection and uses Choose on map. Drift v6 retains source/context-bound choices, overrides, approvals/additions, endpoints and navigation independently of Today and accepted progress. Recovery guards cover early Close, late reads, confirmed starts and included suggestions. Provider display text and road data are not written to the new row.

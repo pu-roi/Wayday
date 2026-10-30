@@ -12,6 +12,24 @@ The owner authorized the researched plan on 2026-10-31. The implemented continua
 
 The sequence is Review errands → Build recommendations → Recommended places → Your day → Accept. Alternatives retain Previous/Next navigation and offer Search for a place / Choose on map; planning omits Use name only. Known fixed points and actual pickups remain fixed and offer manual correction rather than automatic branch discovery. Candidates, matrices and comparison quality are bounded rather than globally exhaustive. Traffic now and scheduled traffic estimates remain distinct. D58 supersedes the start-only discovery limitation and visible-UI-Kit-only recommendation restrictions below; historical sequence entries remain evidence of the earlier implementation. See [D58 implementation evidence](evidence/route-recommendations-2026-10-31.md) for validation and remaining live/phone limits.
 
+### Recommendation rehearsal
+
+Use the current D58 Android debug build with internet access. Building or pushing the source does not update an installed phone application; confirm that Review errands shows Build recommendations. Use a future departure, valid trip window and confirmed start/destination. Do not uninstall or clear app data to update the personal installation. The [D58 evidence](evidence/route-recommendations-2026-10-31.md) distinguishes mocked checks and builds from the live behavior being tested here.
+
+Start with Ugong → Palatiw and two flexible errands, Go to gym and Buy coffee. Leave their branches unselected. An After gym rule should apply only if entered or explicitly approved.
+
+| Test | Expected behavior |
+| --- | --- |
+| Build the proposal | Review errands → Build recommendations automatically discovers and compares places for the whole trip. No mandatory search box or per-errand branch-selection step appears first. A gym/coffee combination with less trip travel can beat businesses nearest the house. Live results need not match fixture businesses or times. |
+| Inspect recommendations | One Google map shows start, destination and numbered stops. Map/list selection stays synchronized. Rows show available actual business names, locality, incoming road time/distance and a reason. Expand for address, category, approximate extra travel, uncertainty and calculation time. The map can collapse on a short screen or at enlarged text. |
+| Change a place | Change place opens alternatives. Previous/Next retains choices. Search for a place opens the combined manual search/saved-place/map picker with Choose on map. Cancel retains the previous place. A confirmed change requires recalculation before acceptance. Planning does not offer Use name only. |
+| Revisit or restart | Back returns to the preceding step; Close returns to Today. With unchanged source/context, reopening retains selected references, explicit overrides, approved/additional suggestions and navigation position. Re-entry may open review; rebuilding refreshes estimates and missing display metadata without silently substituting another branch. Routing-only changes reuse unchanged understanding. |
+| Change the start | Use current location obtains a foreground fix and requires confirmation. Approximate status is shown when applicable. Cancel, denied permission, disabled services or a failed fix retain the previous planned start. |
+| Preserve actual errands | An existing laundry/parcel pickup or private meeting requires its actual location. A confirmed fixed point is not replaced by a nearer business. Explicit brands, approved dependencies, existing durations, separate shared-stop tasks and explicit deferrals remain intact. |
+| Check estimates and failures | Traffic now is distinct from scheduled departure estimates. Added travel excludes visit time and is approximate. Hours, inventory, services and membership access remain unconfirmed. A past departure, missing location, unavailable route/provider or exhausted capacity produces an explicit recovery state rather than invented data or silent errand removal. |
+
+For a problem report, record the step/action, selected travel mode, departure/date, what appeared and what was expected. A screenshot and whether the issue survives Close/reopen help distinguish layout, stale-state, provider and persistence failures. Do not include credentials. These manual results must be recorded separately from the existing automated evidence; they are not assumed to pass before the owner tests them.
+
 ## Goal and current state
 
 Wayday will turn user errands and notes into a reviewable day plan: understand the intended needs, recommend suitable places, choose branches and stop order, combine compatible errands into shared visits, and calculate an estimated schedule. Users can accept the recommendation or correct its interpretation and selected places. Starting the trip must open navigation inside Wayday rather than redirecting to the Google Maps application.
