@@ -79,15 +79,42 @@ class AcceptedItineraries extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('ReviewTripRow')
+class ReviewTrips extends Table {
+  IntColumn get id => integer()();
+  TextColumn get sourceKey => text()();
+  TextColumn get payload => text()();
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DataClassName('ClarificationSessionRow')
+class ClarificationSessions extends Table {
+  TextColumn get sourceKey => text()();
+  TextColumn get payload => text()();
+  IntColumn get updatedAt => integer()();
+  @override
+  Set<Column<Object>> get primaryKey => {sourceKey};
+}
+
 @DriftDatabase(
-  tables: [DaySettings, DayErrands, RecurringGroups, GroupErrands, SavedPlaces, AcceptedItineraries],
+  tables: [
+    DaySettings,
+    DayErrands,
+    RecurringGroups,
+    GroupErrands,
+    SavedPlaces,
+    AcceptedItineraries,
+    ReviewTrips,
+    ClarificationSessions,
+  ],
 )
 class WaydayDatabase extends _$WaydayDatabase {
   WaydayDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'wayday'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -101,6 +128,8 @@ class WaydayDatabase extends _$WaydayDatabase {
         });
       }
       if (from < 3) await m.createTable(acceptedItineraries);
+      if (from < 4) await m.createTable(reviewTrips);
+      if (from < 5) await m.createTable(clarificationSessions);
     },
   );
 }

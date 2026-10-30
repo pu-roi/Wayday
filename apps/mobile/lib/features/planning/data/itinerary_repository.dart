@@ -4,6 +4,7 @@ import '../../../core/data/wayday_database.dart';
 import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
+import '../domain/clarification.dart';
 
 /// Durable task-owned choices/progress only: no Google response text, ETAs,
 /// road geometry, matrices or copied coordinates bypassing provider retention.
@@ -15,18 +16,23 @@ class AcceptedItinerary {
     Set<String> completed = const {},
     Map<String, String> omitted = const {},
     this.lightPickupConfirmed = false,
+    Map<String, String> deferred = const {},
+    Map<String, Map<String, dynamic>> clarifications = const {},
   }) : stops = List.unmodifiable(
          stops.map(
            (s) => ItineraryStop(s.place, List.unmodifiable(s.errandIds)),
          ),
        ),
        completed = Set.unmodifiable(completed),
-       omitted = Map.unmodifiable(omitted);
+       omitted = Map.unmodifiable(omitted),
+       deferred = Map.unmodifiable(deferred),
+       clarifications = Map.unmodifiable(clarifications);
   final DayPlan day;
   final List<ItineraryStop> stops;
   final DateTime acceptedAt;
   final Set<String> completed;
-  final Map<String, String> omitted;
+  final Map<String, String> omitted, deferred;
+  final Map<String, Map<String, dynamic>> clarifications;
   final bool lightPickupConfirmed;
   AcceptedItinerary complete(String id) {
     if (!stops.any((s) => s.errandIds.contains(id))) {
@@ -45,24 +51,28 @@ class AcceptedItinerary {
       acceptedAt: acceptedAt,
       completed: {...completed, id},
       omitted: omitted,
+      deferred: deferred,
+      clarifications: clarifications,
       lightPickupConfirmed: lightPickupConfirmed,
     );
   }
 
   Map<String, Object> toJson() => {
-    'version': 1,
+    'version': 2,
     'day': day.toJson(),
     'stops': stops.map((s) => s.toJson()).toList(),
     'acceptedAt': acceptedAt.toUtc().toIso8601String(),
     'completed': completed.toList(),
     'omitted': omitted,
+    'deferred': deferred,
+    'clarifications': clarifications,
     'lightPickupConfirmed': lightPickupConfirmed,
   };
   factory AcceptedItinerary.fromJson(
     Map<String, dynamic> json,
     GooglePinResolver resolver,
   ) {
-    if (json['version'] != 1) {
+    if (json['version'] != 1 && json['version'] != 2) {
       throw const FormatException('Unsupported itinerary version');
     }
     final day = DayPlan.fromJson(
@@ -79,10 +89,50 @@ class AcceptedItinerary {
         .toList();
     final completed = (json['completed'] as List).cast<String>().toSet();
     final omitted = Map<String, String>.from(json['omitted'] as Map);
+    final deferred = json['version'] == 1
+        ? <String, String>{}
+        : Map<String, String>.from(json['deferred'] as Map);
+    final clarifications = json['version'] == 1
+        ? <String, Map<String, dynamic>>{}
+        : (json['clarifications'] as Map).map(
+            (k, v) =>
+                MapEntry(k as String, Map<String, dynamic>.from(v as Map)),
+          );
+    final result = AcceptedItinerary(
+      day: day,
+      stops: stops,
+      acceptedAt: DateTime.parse(json['acceptedAt'] as String),
+      completed: completed,
+      omitted: omitted,
+      deferred: deferred,
+      clarifications: clarifications,
+      lightPickupConfirmed: json['lightPickupConfirmed'] == true,
+    );
+    result.validateAssignments();
+    return result;
+  }
+  void validateAssignments() {
     final ids = day.errands.map((e) => e.id).toSet();
     final assigned = stops.expand((s) => s.errandIds).toList();
-    if (ids.length != day.errands.length ||
+    if (assigned.isEmpty ||
+        ids.length != day.errands.length ||
         stops.any((s) => s.errandIds.isEmpty) ||
+        deferred.entries.any(
+          (e) =>
+              !ids.contains(e.key) ||
+              assigned.contains(e.key) ||
+              omitted.containsKey(e.key) ||
+              e.value.trim().isEmpty ||
+              e.value.length > 240,
+        ) ||
+        clarifications.entries.any(
+          (e) =>
+              !ids.contains(e.key) ||
+              ClarificationRecord.fromJson(e.value).context.id != e.key,
+        ) ||
+        omitted.keys.any(
+          (id) => !day.errands.any((e) => e.id == id && e.optional),
+        ) ||
         day.errands.any(
           (e) =>
               completed.contains(e.id) &&
@@ -95,6 +145,7 @@ class AcceptedItinerary {
         day.errands.any(
           (e) =>
               !assigned.contains(e.id) &&
+              !deferred.containsKey(e.id) &&
               (!e.optional || !omitted.containsKey(e.id)),
         )) {
       throw const FormatException('Invalid itinerary assignments');
@@ -107,14 +158,6 @@ class AcceptedItinerary {
       }
       seen.add(id);
     }
-    return AcceptedItinerary(
-      day: day,
-      stops: stops,
-      acceptedAt: DateTime.parse(json['acceptedAt'] as String),
-      completed: completed,
-      omitted: omitted,
-      lightPickupConfirmed: json['lightPickupConfirmed'] == true,
-    );
   }
 }
 
@@ -149,6 +192,7 @@ class MemoryItineraryRepository implements ItineraryRepository {
   Future<AcceptedItinerary?> read() async => value;
   @override
   Future<void> save(AcceptedItinerary value) async {
+    value.validateAssignments();
     this.value = value;
   }
 }
@@ -172,6 +216,7 @@ class SqliteItineraryRepository implements ItineraryRepository {
 
   @override
   Future<void> save(AcceptedItinerary value) => database.transaction(() async {
+    value.validateAssignments();
     await database
         .into(database.acceptedItineraries)
         .insertOnConflictUpdate(

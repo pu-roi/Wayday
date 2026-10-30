@@ -2,15 +2,19 @@ import 'dart:convert';
 import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
+import '../domain/planning_input_checks.dart';
+import '../../errands/domain/errand_order.dart';
 
 /// Exact, deterministic interpretation context. Route date/profile/endpoints and
 /// raw coordinates are deliberately absent; changed constraints/text invalidate.
-String interpretationRequest(DayPlan day) {
-  if (day.errands.isEmpty || day.errands.length > 12) {
-    throw const PlanningFailure(
-      'Plan between one and twelve errands.',
-      kind: 'invalid_input',
-    );
+String legacyInterpretationRequest(DayPlan day) {
+  final fields = errandFieldChecks(day.errands);
+  if (fields.isNotEmpty) {
+    throw PlanningFailure(fields.first.message, kind: fields.first.kind);
+  }
+  final graphIssue = ErrandOrder.reconcile(day.errands).issue;
+  if (graphIssue != null) {
+    throw PlanningFailure(graphIssue, kind: 'invalid_input');
   }
   final input = day.errands
       .map(
@@ -127,4 +131,45 @@ String interpretationRequest(DayPlan day) {
   }
 
   return body;
+}
+
+/// Typed questions for uncached inputs; the legacy builder stays byte-compatible.
+String interpretationRequest(DayPlan day) {
+  final body =
+      jsonDecode(legacyInterpretationRequest(day)) as Map<String, dynamic>;
+  final instruction = body['systemInstruction']['parts'][0];
+  instruction['text'] =
+      '${instruction['text']} '
+      'Clarification policy v3: never require a shopping list, preferred brand or gym preference for general place recommendations. '
+      'Optional preferences may have a question marked required=false; only genuinely missing essential facts block planning. '
+      'Do not ask again for supplied duration estimates or confirmed rules. '
+      'For each non-null question provide clarification {kind: preference|location|timing|dependency|other, required: boolean}. '
+      'For null questions clarification is null. specificLocation is true for private meetings or an existing pickup such as collecting clothes from a laundry, not an arbitrary new business.';
+  final schema = body['generationConfig']['responseSchema'];
+  for (final key in ['needs', 'additions']) {
+    final entry = schema['properties'][key]['items'];
+    entry['properties']['clarification'] = {
+      'type': 'OBJECT',
+      'nullable': true,
+      'properties': {
+        'kind': {
+          'type': 'STRING',
+          'enum': ['preference', 'location', 'timing', 'dependency', 'other'],
+        },
+        'required': {'type': 'BOOLEAN'},
+      },
+      'required': ['kind', 'required'],
+    };
+    entry['properties']['specificLocation'] = {'type': 'BOOLEAN'};
+    entry['required'] = (entry['properties'] as Map<String, dynamic>).keys
+        .toList();
+  }
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten these notes before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
 }
