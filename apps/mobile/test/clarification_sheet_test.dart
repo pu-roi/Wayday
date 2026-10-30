@@ -348,7 +348,7 @@ void main() {
     expect(
       tester
           .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Next: find suitable places'),
+            find.widgetWithText(FilledButton, 'Build recommendations'),
           )
           .onPressed,
       isNull,

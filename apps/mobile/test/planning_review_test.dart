@@ -12,6 +12,7 @@ import 'package:wayday/features/today/domain/day.dart';
 import 'package:wayday/features/today/data/day_repository.dart';
 import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'helpers/planning_fixtures.dart';
+import 'package:wayday/features/planning/domain/day_scheduler.dart';
 
 Future<void> launchReview(
   WidgetTester tester, {
@@ -32,6 +33,9 @@ Future<void> launchReview(
       overrides: [
         interpreterProvider.overrideWithValue(interpreter ?? Interpreter()),
         planningRoadsProvider.overrideWithValue(roads),
+        planningSolverProvider.overrideWithValue(
+          (input) async => solveDay(input),
+        ),
         dayRepositoryProvider.overrideWithValue(
           MemoryDayRepository(initialData: day ?? fixture()),
         ),
@@ -71,7 +75,7 @@ void main() {
       expect(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Next: find suitable places'),
+              find.widgetWithText(FilledButton, 'Build recommendations'),
             )
             .onPressed,
         isNull,
@@ -138,7 +142,7 @@ void main() {
   ) async {
     const message = 'Departure has passed: 2020-01-01, 8:30 AM.';
     await launchReview(tester, day: fixture().copyWith(date: '2020-01-01'));
-    await tester.tap(find.text('Next: find suitable places'));
+    await tester.tap(find.text('Build recommendations'));
     await tester.pumpAndSettle();
     expect(find.text(message), findsOneWidget);
     await tester.tap(find.text('Change date'));
@@ -154,9 +158,9 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(find.text(message), findsNothing);
-    await tester.tap(find.text('Next: find suitable places'));
+    await tester.tap(find.text('Build recommendations'));
     await tester.pumpAndSettle();
-    expect(find.text('Build my day'), findsOneWidget);
+    expect(find.text('Recommended places'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -165,7 +169,7 @@ void main() {
   ) async {
     const message = 'The final deadline must follow departure.';
     await launchReview(tester, day: fixture().copyWith(departure: 1080));
-    await tester.tap(find.text('Next: find suitable places'));
+    await tester.tap(find.text('Build recommendations'));
     await tester.pumpAndSettle();
     expect(find.text(message), findsOneWidget);
     await tester.tap(find.text('Trip details'));
@@ -176,9 +180,9 @@ void main() {
     await tester.tap(find.text('Save time'));
     await tester.pumpAndSettle();
     expect(find.text(message), findsNothing);
-    await tester.tap(find.text('Next: find suitable places'));
+    await tester.tap(find.text('Build recommendations'));
     await tester.pumpAndSettle();
-    expect(find.text('Build my day'), findsOneWidget);
+    expect(find.text('Recommended places'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -246,7 +250,7 @@ void main() {
     expect(find.text('Review'), findsNothing);
     expect(find.byType(CheckboxListTile), findsNothing);
     expect(find.text('Review errands'), findsOneWidget);
-    final next = find.text('Next: find suitable places');
+    final next = find.text('Build recommendations');
     expect(tester.getRect(next).bottom, lessThan(844));
     expect(next.hitTestable(), findsOneWidget);
     expect(find.text('1 suggested change'), findsOneWidget);
@@ -272,7 +276,7 @@ void main() {
       final model = tester
           .widget<PlanningReview>(find.byType(PlanningReview))
           .model;
-      await tester.tap(find.text('Next: find suitable places'));
+      await tester.tap(find.text('Build recommendations'));
       await tester.pumpAndSettle();
       expect(model.day.errands.last.afterErrandIds, ['a']);
       await tester.pageBack();
@@ -284,7 +288,7 @@ void main() {
       await tester.tap(find.text('Keep current'));
       await tester.pumpAndSettle();
       expect(find.text('Current settings kept'), findsOneWidget);
-      await tester.tap(find.text('Next: find suitable places'));
+      await tester.tap(find.text('Build recommendations'));
       await tester.pumpAndSettle();
       expect(model.day.errands.last.afterErrandIds, isEmpty);
       expect(tester.takeException(), isNull);
@@ -299,10 +303,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Departure'), findsOneWidget);
     expect(find.text('Finish the day by'), findsOneWidget);
-    expect(
-      find.text('Next: find suitable places').hitTestable(),
-      findsOneWidget,
-    );
+    expect(find.text('Build recommendations').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

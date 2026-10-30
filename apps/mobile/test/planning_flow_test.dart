@@ -211,15 +211,12 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(find.text('Review errands'), findsOneWidget);
-      final next = find.text('Next: find suitable places');
+      final next = find.text('Build recommendations');
       await tester.scrollUntilVisible(next, 300);
       await tester.pump();
       await tester.ensureVisible(next);
       await tester.pump();
       await tester.tap(next);
-      await tester.pumpAndSettle();
-      expect(find.text('Build my day'), findsOneWidget);
-      await tester.tap(find.text('Build my day'));
       await tester.pumpAndSettle();
       expect(find.text('Recommended places'), findsOneWidget);
       final day = find.text('Next: see my day');

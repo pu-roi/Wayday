@@ -153,7 +153,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(
-          find.text('Next: find suitable places').hitTestable(),
+          find.text('Build recommendations').hitTestable(),
           findsOneWidget,
         );
         await tester.scrollUntilVisible(
@@ -186,7 +186,7 @@ void main() {
         await tester.ensureVisible(find.text('Use suggestion'));
         await tester.pumpAndSettle();
         expect(
-          find.text('Next: find suitable places').hitTestable(),
+          find.text('Build recommendations').hitTestable(),
           findsOneWidget,
         );
         await capture(
