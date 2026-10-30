@@ -86,3 +86,6 @@ Desktop.ini
 *.swo
 
 # Dependency lockfiles, source screenshots, and documentation remain trackable.
+
+# Generated clarification UI verification renders
+/.impeccable/clarification/

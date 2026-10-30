@@ -69,7 +69,7 @@ Users can accept Wayday's recommended branches or choose alternatives before acc
 
 | Capability | Planned first-version boundary |
 | --- | --- |
-| Errand input | Ordinary text or bullet lines with Gemini-assisted, editable interpretation of English, Filipino and Taglish sentences; private debug pilot with finite paid-request allowance |
+| Errand input | Ordinary text or bullet lines with Gemini-assisted, editable interpretation of English, Filipino and Taglish sentences; private debug pilot with persistent interpretation reuse and explicit retries |
 | Place selection | Automatic recommendations and branch choice using place data; specific/saved places and manual pins are optional overrides |
 | Day planning | Start/end points, departure, final deadline, stop duration, priority, timing rules, and dependencies |
 | Travel | Walking, biking, motorcycle (motor), sedan (low clearance), or truck (high clearance); one profile per trip; no public commute |
@@ -79,7 +79,7 @@ Users can accept Wayday's recommended branches or choose alternatives before acc
 | Reminders | Local time notifications and background location reminders subject to platform permissions and delivery limits |
 | Offline use | Local tasks, templates, saved places, saved itinerary, progress, and previously downloaded map coverage |
 
-Public commute is excluded from current scope, including jeepney, bus, and rail journey planning. D45 selects Gemini-assisted interpretation of sentence-level English, Filipino and Taglish errands and notes. D47 implements a private debug connection with encrypted provisioning and finite paid-request allowances. Live-traffic planning and embedded navigation adapters are implemented under D47 but are not yet fully qualified on the physical phone. Accounts, cross-device synchronization, analytics, and continuous location history are not first-version requirements. Full offline discovery and fresh offline route optimization are also deferred.
+Public commute is excluded from current scope, including jeepney, bus, and rail journey planning. D45 selects Gemini-assisted interpretation of sentence-level English, Filipino and Taglish errands and notes. D47 implements a private debug connection with encrypted provisioning. D55 removes its historical app-imposed request allowances while preserving reuse and explicit retries. Live-traffic planning and embedded navigation adapters are implemented under D47 but are not yet fully qualified on the physical phone. Accounts, cross-device synchronization, analytics, and continuous location history are not first-version requirements. Full offline discovery and fresh offline route optimization are also deferred.
 
 An explicit external-navigation fallback may hand a leg to an installed navigation app. This handoff is a user convenience, not a source of travel-time or place data; Wayday must still show permitted saved stop information when no navigation app is available. Embedded Google navigation is the selected primary direction under D42, with an implemented private pilot adapter and live qualification still required.
 
@@ -99,7 +99,10 @@ Preserve the original text and distinguish explicit user values from suggestions
 
 Proposed categories include groceries/wet markets, haircuts, coffee/food, pharmacies, banks, offices, and other errands. Category coverage and Filipino/Taglish vocabulary require local validation; the prototype's category list is not a complete specification.
 
-### Timing and priority
+#
+D57 implements question-specific answer sheets, contextual Gemini clarification, explicit flexible place needs, local drafts and dated deferrals. It preserves visit estimates, protects known fields and requires approval of proposed rules. Drift v5 and accepted itinerary JSON v2 retain answer progress and deferral reasons; v1 itineraries remain readable. Compatible legacy interpretation reuse, separate answer snapshots and D55’s removal of local usage caps remain in force. Qualification is recorded in [the D57 evidence](docs/wayday/evidence/clarification-flow-2026-10-30.md).
+
+## Timing and priority
 
 - **Anytime:** no user-specified time boundary, but known business hours still matter.
 - **At a set time:** service starts at the specified time; early arrival may require waiting.
@@ -130,7 +133,7 @@ The [original abstract](docs/ASIKASO_ABSTRACT.md) emphasizes public commuting. T
 1. Enter an English, Filipino, or Taglish errand; review suggestions and correct unknown fields without losing the note.
 2. Choose a branch and obtain a schedule using road travel estimates, visit durations, waiting, and known hours.
 3. Demonstrate that arrive-by and finish-before produce different feasibility results for the same arrival and visit duration.
-4. Report an impossible mandatory appointment or final deadline without silently removing mandatory work.
+4. Report an impossible mandatory appointment or final deadline without silently removing mandatory work. Users may explicitly defer errands after reviewing affected dependents, keeping them in Today and retaining their required status.
 5. Explain omitted optional errands. Distinguish missing data and solver timeout from proven conflicts.
 6. Change a branch or report a delay; preserve completed stops and recalculate only the remaining itinerary.
 7. Copy a template into Today, preserve dependencies, avoid duplicate addition, and keep template edits independent from today's copies.

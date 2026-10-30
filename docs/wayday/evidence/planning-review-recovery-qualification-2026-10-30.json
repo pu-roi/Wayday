@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-30",
+  "decision": "D52",
+  "issues": [
+    "delayed dependency projection in review",
+    "manual review trip settings discarded on Close",
+    "genuine expired departure mistaken for stale warning"
+  ],
+  "analyze": "passed",
+  "focusedTestsPassed": 32,
+  "fullSuite": {
+    "passed": 260,
+    "skippedLiveProbe": 1,
+    "knownBaselineFailures": 8,
+    "newFailures": 0
+  },
+  "nativeRecoveryFixture": "passed on Samsung in isolated .maptest package",
+  "postForceStopReviewRow": "persisted and verified",
+  "liveGeminiGenerations": 0,
+  "normalPackage": "dev.wayday.wayday",
+  "install": "install -r and launch passed",
+  "nativeDataVerification": {
+    "schemaVersion": 4,
+    "allPreexistingTablesUnchanged": true,
+    "tableChecks": {
+      "day_settings": true,
+      "day_errands": true,
+      "recurring_groups": true,
+      "group_errands": true,
+      "saved_places": true,
+      "accepted_itineraries": true
+    },
+    "errands": 4,
+    "integrity": "ok",
+    "remainingGeminiAttempts": 7,
+    "allowanceUnchanged": true
+  },
+  "limitations": [
+    "User must explicitly select a future departure; appointments do not move automatically",
+    "Only manual review date/departure/deadline settings are retained here",
+    "Native TalkBack and complete live itinerary rehearsal remain separate checks"
+  ]
+}

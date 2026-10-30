@@ -144,7 +144,7 @@ Fields, primary actions, enclosing groups, and sheet tops use the frontmatter ra
 
 ### Buttons
 
-FilledButton is the Cornflower anchor with dark content, zero authored elevation, and the frontmatter minimum height and radius. Text and icon buttons use readable blue or supporting-text roles. Preserve native pressed, hovered, focused, and disabled states. Today disables **Plan my day** when empty; the enabled action opens an explanation that route calculations are still to come.
+FilledButton is the Cornflower anchor with dark content and zero authored elevation. Filled and outlined actions share a 56-unit minimum height, 18-unit radius, Figtree 16 semibold label and 20-by-12 horizontal/vertical padding. Outlined labels use readable blue. Stacked primary/secondary actions share available width and page insets; longer labels and larger text may increase height rather than clip. Compact text/toolbar actions retain 48-unit targets. Preserve native pressed, hovered, focused and disabled states. Today disables **Plan my day** when empty; enabled entry starts cache-first understanding directly.
 
 ### Cards / Containers
 
@@ -271,6 +271,14 @@ Do not repeat unchanged/protected timing, priority or duration as suggestions, e
 
 Next: find suitable places stays anchored below the scrolling review content, capped with the same 560-unit content column. Errors appear directly above it in a bounded scrollable live region. Expansion respects Remove animations; long labels and enlarged text wrap. The updated review was rendered with the bundled Figtree and Material icons at 390 × 844, 320 × 740 with 2× text, and 768 × 1024. These are synthetic Flutter captures; they do not establish native TalkBack or live-service behavior. Impeccable context and its distill/craft guidance were used for this focused refinement; historical no-tool statements above describe earlier work.
 
+### Discoverable trip editing — D56
+
+Use the review list's existing typography throughout this section: 14-unit `bodyMedium` for the section heading, field labels and field values, semibold only for the heading; 12-unit `bodySmall` for the trip summary and supporting hints. Edit/Hide retains the shared 14-unit action style. Do not enlarge field values to `bodyLarge` or shrink their persistent labels to `bodySmall`. Place the pencil beside the value so long labels can use the field's full content width and the two time controls remain aligned.
+
+Review's Trip details uses the shared outlined white surface and a readable-blue Edit label with a disclosure chevron. Expanded details show labeled, pale filled date, departure, finish-time, From and To controls. Every entire field opens its existing editor; a trailing pencil communicates editing without relying on color alone. The date includes its year, and location values remain separate from their persistent From/To labels. Missing coordinates retain Choose a map location; confirmed points do not repeat Location ready.
+
+Departure and finish time share a row when the inner width is at least 320 units and scaled 14-unit text is no larger than 17; otherwise they stack. Enlarged text also removes the header's redundant Edit/Hide word while keeping the disclosure icon and native expansion semantics. Values wrap without ellipses, fields have at least 64-unit height, and Material ink/focus states and labeled button semantics remain available. The component listens to the expansion controller so restored disclosure state and its header agree. Existing picker, cancellation, validation, persistence and light-pickup confirmation behavior is retained. Verification is recorded separately in Progress.
+
 
 ### Location questions and recommendation cues — D50
 
@@ -280,3 +288,24 @@ A generic model-generated location question does not replace current place state
 ### Validation feedback after editing — D51
 
 Preparation errors describe the input that was checked. Saving a new date/time or changing the preparation model clears the old local warning; cancelling an edit leaves it visible. The next forward action validates current values again. Do not leave a past-departure message under a corrected future departure or automatically rewrite the user’s trip date.
+
+
+### Immediate order preview and departure recovery — D52
+
+Choosing or declining an ordering suggestion immediately updates the numbered review rows using the same projection as forward validation. Keep the baseline for reversal and preserve explicit user fields. A genuinely expired departure expands trip details initially and displays its exact date/time with Change date and Change departure. Next is disabled while it is past or dependency rules are invalid. Keep feedback scrollable within a bounded region at enlarged text sizes; the primary action remains anchored. Refresh clock-dependent feedback on resume without provider work.
+
+Confirmed review date/time edits are retained locally for the matching Today source, independently of Today and the accepted itinerary. Close/reopen restores them; cancellation does not save. Storage failures remain visible with Retry saving trip settings. Replanning keeps its own supplied context. There is no silent movement of appointments, automatic date rollover or extra Gemini generation for this restoration.
+
+### Review field recovery — D53
+
+Use the existing review feedback area for actionable conflicts, naming the errand and offering its editor. Keep Next visible but disabled while a deterministic blocking issue remains. Preserve compact rows and bound/scroll long feedback at large text. Do not introduce another confirmation page or automatic appointment changes. Review editing exposes supported field changes; source-errand removal remains in Today.
+
+### Understanding recovery — D55
+
+Use one short state heading and relevant explanation. Distinguish a missing answer, interrupted processing, connectivity, configuration and a Google provider quota. Check saved understanding is a full-width read-only action, paired with an equally wide Retry Gemini action. Explain the possible request cost once beneath the controls. Do not show obsolete local attempt-count limits.
+
+## Clarification answer sheets — D57
+
+A question opens a focused modal sheet, not the errand editor. Reuse the 560-unit content bound, existing sheet shape, Figtree roles and shared action metrics. Show the errand title, one question, an English/Filipino/Taglish answer field and Use answer. Keep text concise; use context-specific quick actions. Processing shows Understanding your answer, prevents duplicate submission and permits Close. Keyboard insets and scrolling keep actions reachable at narrow widths and enlarged text; disable discretionary sheet transitions under reduced motion.
+
+A successfully saved answer becomes a compact editable summary beneath its errand. Keep the visible 15-minute estimate and estimate label unchanged. Optional preferences never block the next step. Proposed rules stay in expanded details with explicit approval. Unknown essential points expose the existing picker and Plan the other errands. Deferral previews affected tasks, keeps reasons visible and provides Include in this plan; an empty active plan explains that an errand must be included. Drafts stay separate from applied results, and saved-result checks/save retries do not spend generation requests.

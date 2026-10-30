@@ -42,6 +42,10 @@ The authorized presentation allocation is ten Gemini attempts total: one isolate
 
 The owner removed the introductory planning page and authorized a persistent interpretation cache. Start loading immediately; use matching saved understanding before dispatch. Keep a bounded native no-backup journal (eight snapshots) keyed by versioned model/prompt/schema/settings plus exact canonical interpretation inputs. Commit pending before dispatch and completion before Flutter callback. Revalidate model output, preserve source revision guards, do not re-spend for routing-only changes, and never automatically retry a pending/failed/corrupt outcome after app death. An explicit paid-retry action is required. Do not clear the cache or refill the paid allowance on ordinary rebuilds. Native fixture methods are debug `.maptest` only; do not seed the personal app's cache or run live paid requests for these regression checks.
 
+## Review recovery and ordering — D52
+
+The owner requested deeper investigation after the stale-warning fix. Review now uses one effective proposal projection for immediate dependency order and forward validation. Explicitly saved date/departure/deadline settings persist in a separate source-bound singleton Drift v4 row; matching Today input restores them before cache-first understanding. Today and accepted progress stay separate, changed sources invalidate the row, and replanning/history bypasses it. Keep storage failures explicit. A genuinely past departure remains blocked with exact date/time and recovery actions; do not roll dates or shift appointments automatically. D52 supersedes the earlier claim that corrected review trip settings are always discarded on Close. This storage is separate from the native interpretation cache and does not require paid generation.
+
 ## Working constraints
 
 - Use Wayday as the project name. Keep Asikaso's historical filenames and attribution intact.
@@ -76,3 +80,27 @@ Combine skills only when the requested change crosses those boundaries. Do not l
 - For foundation edits, check links, decision consistency, skill validity, and ignore rules. Do not invent mobile/backend checks before those projects exist.
 - When runtime development is authorized, use the relevant acceptance cases in the product and architecture documents. Test behavior and constraints rather than matching implementation wording.
 - Report what changed, what was checked, and any actual limitation. Distinguish planned, implemented, and verified capabilities.
+
+## Planning field verification — D53
+
+D53 adds shared review/calculate preflight checks for structural input, trip windows and zero-road mandatory timing conflicts, with field-specific recovery. Keep arrival distinct from service start/completion, preserve shared-stop semantics, and allow independent optional omissions. Recheck elapsed departure before road requests. The v4 review singleton now also retains manually confirmed source-errand clock differences. Restore trip context before interpretation and those clocks afterward so unchanged original inputs keep their cache identity. Restored clocks do not answer unrelated questions. The review editor does not expose unhandled source removal. Never silently move an appointment or consume paid requests for regression tests.
+
+## Native verification safety and recovery — D54
+
+The Android test/install sequence exposed a personal-app reset despite .maptest and --no-uninstall. The exact trigger is unresolved. `test-map.ps1` now blocks when the primary-user personal package is installed; use a disposable emulator without that package. Do not bypass this protection or rerun the harness on the personal phone. Native installation checks must remain separate from source-data recovery and live itinerary qualification.
+
+A native recovery marker protects missing understanding after installation recovery: status reports recovery and dispatch requires explicit paid retry. Do not seed the personal journal with fixtures or automatically spend to replace it. The current restored allowance remains seven, with two consumed attempts conservatively retained in native/Dart daily accounting. The owner declined further data recovery after the database had already been restored.
+
+## Gemini reuse without app-imposed request caps — D55
+
+The owner's latest direction removes the former Gemini daily/monthly limits and finite presentation allocation. This supersedes the Gemini usage-cap/reprovisioning guidance in D47 and D54, including the historical seven-attempt balance. Do not gate generation on those legacy counters, reset them, replenish an allowance or reprovision during ordinary updates. Existing private credentials remain usable. Google provider quotas/billing and the independent Routes/search/navigation controls remain separate.
+
+Keep persistent exact-context reuse, in-flight coalescing, response/source validation and explicit retry after failed/interrupted/corrupt or recovered processing. Check saved understanding is read-only and must not generate on a cache miss. Keep payload/output bounds, no tools and the debug-only Keystore credential boundary. Use mocks for routine regression checks. The owner also requested consistent action geometry: filled/outlined controls now share theme metrics, while compact text/toolbar actions retain their role.
+
+## Question-specific clarification and explicit deferral — D57
+
+The owner authorized the focused clarification implementation. Questions open answer sheets; keep Edit errand separate. Gemini interprets free-form English, Filipino and Taglish. Typed optional preferences may use an explicit local flexibility choice. Unknown grocery items receive general suitable-place recommendations, never invented shopping lists or inventory claims. Preserve existing durations, including the unconfirmed 15-minute estimate. Drafts do not apply answers. Successful saving produces an editable summary; proposed timing/order rules require approval. Never restore the errand-wide clarified flag.
+
+Drift v5 adds source-bound clarification sessions; deferrals are also plan-date bound. Persist submission before dispatch, merge independent question revisions, and recover pending work with saved-only lookup. Keep the separate 32-entry native clarification journal from evicting the eight initial interpretation snapshots. The frozen legacy request remains a compatible lookup path and cannot bypass pending/failed/corrupt retry guards through version changes. D55 still prohibits app-imposed Gemini usage caps.
+
+Explicit Plan the other errands previews the dependent closure, keeps excluded tasks in Today, preserves required status and records reasons. Re-inclusion is explicit and a plan needs an active errand. Accepted itinerary v2 separates assignments, optional omissions and explicit deferrals, retains summaries/results and reads v1. Preserve provider-backed results and Google presentation/retention. Use mocked regression services and a clean disposable .maptest emulator; never the personal-phone harness or live paid requests. Record native/physical-phone qualification separately.
