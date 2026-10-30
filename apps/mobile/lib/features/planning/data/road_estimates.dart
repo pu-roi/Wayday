@@ -5,6 +5,7 @@ import '../../today/domain/day.dart';
 import '../domain/planning_models.dart';
 import '../domain/day_scheduler.dart';
 import 'planning_budget.dart';
+import '../domain/recommendation.dart';
 
 class PlanningRoads {
   PlanningRoads(
@@ -30,6 +31,74 @@ class PlanningRoads {
   };
   bool traffic(TravelProfile p) =>
       p != TravelProfile.walk && p != TravelProfile.bike;
+
+  Future<void> preflight(int points, int legs, {bool seed = false}) async {
+    if (points > 0) {
+      await budget.reserve(
+        'matrix',
+        points * points,
+        daily: 200,
+        monthly: 900,
+        checkOnly: true,
+      );
+    }
+    await budget.reserve(
+      'routes',
+      legs + (seed ? 1 : 0),
+      daily: 30,
+      monthly: 300,
+      checkOnly: true,
+    );
+  }
+
+  Future<String?> discoveryRoute(
+    DayPlan day,
+    List<PlanCandidate> fixed, {
+    bool Function()? cancelled,
+  }) async {
+    if (cancelled?.call() == true) {
+      throw const PlanningFailure('Cancelled.', kind: 'cancelled');
+    }
+    if (fixed.length == 2 &&
+        fixed.first.place.latitude == fixed.last.place.latitude &&
+        fixed.first.place.longitude == fixed.last.place.longitude) {
+      return null;
+    }
+    await budget.reserve('routes', 1, daily: 30, monthly: 300);
+    final raw = await _post(
+      'computeRoutes',
+      {
+        'origin': waypoint(fixed.first),
+        'destination': waypoint(fixed.last),
+        if (fixed.length > 2)
+          'intermediates': fixed
+              .skip(1)
+              .take(fixed.length - 2)
+              .map(waypoint)
+              .toList(),
+        'travelMode': mode(day.profile),
+        if (traffic(day.profile)) 'routingPreference': 'TRAFFIC_AWARE',
+        if (traffic(day.profile))
+          'departureTime': instant(
+            day,
+            day.departure * 60,
+          ).toUtc().toIso8601String(),
+      },
+      'routes.polyline.encodedPolyline',
+      await headers(),
+    );
+    final routes = (raw as Map)['routes'] as List?;
+    final route = routes?.isNotEmpty == true ? routes!.first as Map : null;
+    final encoded = (route?['polyline'] as Map?)?['encodedPolyline'];
+    if (encoded is! String || encoded.isEmpty) {
+      throw const PlanningFailure(
+        'No route is available for place discovery.',
+        kind: 'no_route',
+      );
+    }
+    return encoded;
+  }
+
   DateTime instant(DayPlan day, int seconds) => DateTime.parse(
     '${day.date}T00:00:00+08:00',
   ).add(Duration(seconds: seconds));
@@ -139,6 +208,7 @@ class PlanningRoads {
     }
     await budget.reserve('matrix', count * count, daily: 200, monthly: 900);
     final rows = List.generate(count, (_) => List<int?>.filled(count, null));
+    final meters = List.generate(count, (_) => List<int?>.filled(count, null));
     var fallback = false;
     for (var origin = 0; origin < count; origin += 10) {
       for (var destination = 0; destination < count; destination += 10) {
@@ -194,6 +264,10 @@ class PlanningRoads {
           }
           if (e['condition'] != 'ROUTE_EXISTS') continue;
           rows[origin + a][destination + b] = seconds(e['duration']);
+          final distance = e['distanceMeters'];
+          if (distance is int && distance >= 0) {
+            meters[origin + a][destination + b] = distance;
+          }
           fallback = fallback || e['fallbackInfo'] != null;
         }
         if (seen.length != origins.length * destinations.length) {
@@ -206,7 +280,7 @@ class PlanningRoads {
         }
       }
     }
-    return {'matrix': rows, 'fallback': fallback};
+    return {'matrix': rows, 'meters': meters, 'fallback': fallback};
   }
 
   Future<RefinedPlan> refine(
@@ -234,6 +308,7 @@ class PlanningRoads {
     final legTimes = <String, int>{};
     final warnings = <String>{};
     var fallback = false;
+    final legs = <RecommendationLeg>[];
     Future<int> fetch(String next) async {
       if (cancelled?.call() == true) {
         throw const PlanningFailure(
@@ -264,6 +339,16 @@ class PlanningRoads {
       }
       final route = routes.first as Map;
       final duration = seconds(route['duration']);
+      final meters = route['distanceMeters'];
+      legs.add(
+        RecommendationLeg(
+          from: at,
+          to: next,
+          seconds: duration,
+          departureSeconds: time,
+          meters: meters is int && meters >= 0 ? meters : null,
+        ),
+      );
       legTimes['$at>$next@$time'] = duration;
       warnings.addAll((route['warnings'] as List? ?? []).whereType<String>());
       final encoded =
@@ -351,6 +436,7 @@ class PlanningRoads {
       geometry,
       fallback,
       warnings: warnings.toList(),
+      legs: legs,
     );
   }
 
@@ -372,11 +458,15 @@ class RefinedPlan {
     this.geometry,
     this.fallback, {
     this.warnings = const [],
+    this.legs = const [],
+    this.calculatedAt,
   });
   final DaySchedule schedule;
   final List<List<List<double>>> geometry;
   final bool fallback;
   final List<String> warnings;
+  final List<RecommendationLeg> legs;
+  final DateTime? calculatedAt;
 }
 
 List<List<double>> decodePolyline(String encoded) {

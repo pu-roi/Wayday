@@ -20,6 +20,7 @@ class PlanningBudget {
     int units, {
     required int daily,
     required int monthly,
+    bool checkOnly = false,
   }) {
     final result = _tail.then((_) async {
       try {
@@ -61,6 +62,7 @@ class PlanningBudget {
             kind: 'quota',
           );
         }
+        if (checkOnly) return;
         entries.add({
           'kind': kind,
           'units': units,
