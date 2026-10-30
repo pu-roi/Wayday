@@ -9,7 +9,7 @@ void main() {
   test(
     'unattached business needs go to recommendations, including cleared places',
     () {
-      const need = ErrandNeed(id: 'a', query: 'grocery', category: 'grocery');
+      const need = ErrandNeed(id: 'a', query: 'grocery', category: 'grocery', locationIntent: LocationIntent.flexible);
       const empty = Errand(
         id: 'a',
         title: 'Grocery',
@@ -28,7 +28,7 @@ void main() {
   );
 
   test('fixed places and missing private points have distinct handling', () {
-    const need = ErrandNeed(id: 'a', query: 'pickup', category: 'meeting');
+    const need = ErrandNeed(id: 'a', query: 'pickup', category: 'meeting', locationIntent: LocationIntent.specific);
     const empty = Errand(id: 'a', title: 'Pick up Ana');
     expect(needsActualLocation(empty, need), isTrue);
     expect(needsPlaceRecommendation(empty, need), isFalse);

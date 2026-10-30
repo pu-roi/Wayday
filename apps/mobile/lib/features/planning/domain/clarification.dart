@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import '../../today/domain/day.dart';
 import 'planning_models.dart';
+import 'location_assessment.dart';
+import 'errand_location_review.dart';
 import '../../errands/domain/errand_order.dart';
 
 String clarificationHash(Object value) =>
@@ -45,7 +47,8 @@ class ClarificationContext {
     'after': (e.afterErrandIds.toList()..sort()),
     'optional': e.optional,
     'confirmedFields': (e.confirmedFields.toList()..sort()),
-    'fixedPlace': n.meeting || n.requiresSpecificLocation,
+    'fixedPlace': n.locationIntent == null ? n.meeting || n.requiresSpecificLocation : hasSpecificSource(e) || n.locationIntent == LocationIntent.specific,
+    if (n.locationIntent != null) 'locationIntent': n.locationIntent!.name,
     'placePreference': e.placeIntent.kind.name == 'search'
         ? {
             'label': e.placeIntent.label,
@@ -76,8 +79,10 @@ class ClarificationResolution {
     this.timing,
     this.minute,
     this.after,
+    this.locationIntent,
   });
   final String outcome, kind, summary;
+  final LocationIntent? locationIntent;
   final String? query, category, followUp, timing;
   final int? minute;
   final List<String> items;
@@ -95,6 +100,7 @@ class ClarificationResolution {
     'timing': timing,
     'minute': minute,
     'after': after,
+    if (locationIntent != null) 'locationIntent': locationIntent!.name,
   };
   factory ClarificationResolution.fromJson(
     Map<String, dynamic> j,
@@ -112,7 +118,15 @@ class ClarificationResolution {
       'timing',
       'minute',
       'after',
+      'locationIntent',
     };
+    final location = j['locationIntent'];
+    if (location != null &&
+        (location is! String ||
+            !LocationIntent.values.any((v) => v.name == location) ||
+            (location == 'unclear' && j['outcome'] != 'unresolved'))) {
+      throw const FormatException('Invalid clarified location intent');
+    }
     final related = c.facts['related'] as Map;
     if (j.keys.any((k) => !fields.contains(k)) ||
         j['id'] != c.id ||
@@ -171,6 +185,9 @@ class ClarificationResolution {
       timing: j['timing'] as String?,
       minute: j['minute'] as int?,
       after: _validatedAfter(j['after'], c),
+      locationIntent: location == null
+          ? null
+          : LocationIntent.values.byName(location as String),
     );
   }
 
@@ -199,11 +216,12 @@ class ClarificationResolution {
 
   ErrandNeed refine(ErrandNeed n) => n.copyWith(
     query: query,
-    category: n.meeting ? n.category : category,
+    category: category,
     items: {...n.items, ...items}.toList(),
-    requiresSpecificLocation:
-        n.requiresSpecificLocation ||
-        (kind == 'location' && n.questionRequired != false),
+    requiresSpecificLocation: locationIntent == null
+        ? n.requiresSpecificLocation
+        : locationIntent == LocationIntent.specific,
+    locationIntent: locationIntent,
   );
   Errand applyRules(Errand e) => e.copyWith(
     timing: timing == null ? null : TimingRule.values.byName(timing!),
@@ -230,12 +248,14 @@ class ClarificationRecord {
     this.revision = 0,
     this.updatedAt = 0,
     this.draftRevision = 0,
+    this.persisted = true,
   });
   final ClarificationContext context;
   String answer, status;
   List<String> history;
   ClarificationResolution? resolution;
   bool rulesApproved;
+  bool persisted;
   String? draft;
   int revision, updatedAt, draftRevision;
   bool get proposesRules {
@@ -251,7 +271,9 @@ class ClarificationRecord {
   }
 
   bool get applied =>
-      {'resolved', 'flexible'}.contains(status) && resolution?.resolved == true;
+      persisted &&
+      {'resolved', 'flexible'}.contains(status) &&
+      resolution?.resolved == true;
   Map<String, dynamic> toJson() => {
     'facts': context.facts,
     'answer': answer,
@@ -273,6 +295,7 @@ class ClarificationRecord {
     final status = j['status'];
     if (!{
           'draft',
+          'cleared',
           'processing',
           'resolved',
           'flexible',
@@ -309,20 +332,27 @@ class ClarificationSession {
     Map<String, Map<String, String>>? deferrals,
     Map<String, int>? deferralRevisions,
     Map<String, Map<String, dynamic>>? places,
+    Map<String, LocationAssessment>? locationAssessments,
   }) : records = records ?? {},
        deferrals = deferrals ?? {},
        deferralRevisions = deferralRevisions ?? {},
-       places = places ?? {};
+       places = places ?? {},
+       locationAssessments = locationAssessments ?? {};
   final Map<String, ClarificationRecord> records;
   final Map<String, Map<String, String>> deferrals;
   final Map<String, int> deferralRevisions;
   final Map<String, Map<String, dynamic>> places;
+  final Map<String, LocationAssessment> locationAssessments;
   Map<String, dynamic> toJson() => {
     'version': 1,
     'records': records.map((k, v) => MapEntry(k, v.toJson())),
     'deferrals': deferrals,
     'deferralRevisions': deferralRevisions,
     'places': places,
+    if (locationAssessments.isNotEmpty)
+      'locationAssessments': locationAssessments.map(
+        (key, value) => MapEntry(key, value.toJson()),
+      ),
   };
   factory ClarificationSession.fromJson(Map<String, dynamic> j) {
     if (j['version'] != 1) {
@@ -337,8 +367,19 @@ class ClarificationSession {
     if (records.entries.any((x) => x.key != x.value.context.key)) {
       throw const FormatException('Invalid question identity');
     }
+    final assessments = (j['locationAssessments'] as Map? ?? {}).map(
+      (k, v) => MapEntry(
+        k as String,
+        LocationAssessment.fromJson(Map<String, dynamic>.from(v as Map)),
+      ),
+    );
+    if (assessments.length > 96 ||
+        assessments.entries.any((e) => e.key != e.value.context.key)) {
+      throw const FormatException('Invalid location assessment identities');
+    }
     return ClarificationSession(
       records: records,
+      locationAssessments: assessments,
       places: (j['places'] as Map? ?? {}).map(
         (k, v) => MapEntry(k as String, Map<String, dynamic>.from(v as Map)),
       ),
@@ -376,6 +417,19 @@ ClarificationSession mergeClarifications(
     copy.draft = draft.draft;
     copy.draftRevision = draft.draftRevision;
     result.records[entry.key] = copy;
+  }
+  for (final entry in incoming.locationAssessments.entries) {
+    final prior = result.locationAssessments[entry.key], next = entry.value;
+    if (prior == null ||
+        next.revision > prior.revision ||
+        (next.revision == prior.revision && next.updatedAt >= prior.updatedAt)) {
+      result.locationAssessments[entry.key] = LocationAssessment.fromJson(
+        next.toJson(),
+      );
+    }
+  }
+  while (result.locationAssessments.length > 96) {
+    result.locationAssessments.remove(result.locationAssessments.keys.first);
   }
   for (final entry in incoming.places.entries) {
     if ((entry.value['revision'] as int) >=

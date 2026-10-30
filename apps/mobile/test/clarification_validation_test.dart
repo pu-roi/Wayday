@@ -49,11 +49,7 @@ void main() {
       );
       expect(unclear.resolved, isFalse);
       final essential = ClarificationResolution.fromJson(
-        result(
-          outcome: 'unresolved',
-          kind: 'location',
-          followUp: 'Choose the actual collection point',
-        ),
+        {...result(outcome: 'unresolved', kind: 'location', followUp: 'Choose the actual collection point'), 'locationIntent': 'specific'},
         c,
       );
       expect(essential.refine(n).requiresSpecificLocation, isTrue);

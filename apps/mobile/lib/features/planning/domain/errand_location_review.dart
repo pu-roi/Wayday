@@ -2,41 +2,50 @@ import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import 'planning_models.dart';
 
-/// Location selection belongs to deterministic place handling, not a generic
-/// model question. Keep the original answer/cache intact and reconcile on read.
-bool needsActualLocation(Errand errand, ErrandNeed? need) {
+/// Explicit source identity is authoritative. Natural language is interpreted
+/// by Gemini, never by title/category keyword guesses in the UI.
+bool hasSpecificSource(Errand errand) {
   final place = errand.placeIntent;
-  if (place.hasCoordinates) return false;
-  // Retrieving existing belongings requires their actual location, including
-  // older cached interpretations that predate specificLocation metadata.
-  final existingPickup = RegExp(
-    r'\b(pick\s*up|collect|retrieve)\b.*\b(laundry|clothes|parcel|package)\b|\b(kunin|kunin ko|pickup)\b.*\b(labada|nilabhan|damit|parcel|package)\b',
-    caseSensitive: false,
-  ).hasMatch(errand.title);
-  if (need?.meeting == true ||
-      need?.requiresSpecificLocation == true ||
-      existingPickup ||
-      place.isGoogle) {
-    return true;
-  }
-  if ({
-    PlaceKind.specific,
-    PlaceKind.saved,
-    PlaceKind.providerReference,
-  }.contains(place.kind)) {
-    return true;
-  }
-  return place.label.trim().isNotEmpty &&
-      place.kind != PlaceKind.search &&
-      errand.confirmedFields.contains('place');
+  return place.isGoogle ||
+      {
+        PlaceKind.specific,
+        PlaceKind.saved,
+        PlaceKind.providerReference,
+      }.contains(place.kind) ||
+      (place.label.trim().isNotEmpty &&
+          place.kind != PlaceKind.search &&
+          errand.confirmedFields.contains('place'));
 }
 
+LocationIntent? effectiveLocationIntent(Errand errand, ErrandNeed? need) =>
+    hasSpecificSource(errand) ? LocationIntent.specific : need?.locationIntent;
+
+bool needsActualLocation(Errand errand, ErrandNeed? need) =>
+    !errand.placeIntent.hasCoordinates &&
+    effectiveLocationIntent(errand, need) == LocationIntent.specific;
+
+bool needsLocationUnderstanding(Errand errand, ErrandNeed? need) =>
+    !errand.placeIntent.hasCoordinates &&
+    (effectiveLocationIntent(errand, need) == null ||
+        effectiveLocationIntent(errand, need) == LocationIntent.unclear);
+
 bool needsPlaceRecommendation(Errand errand, ErrandNeed? need) =>
-    !errand.placeIntent.hasCoordinates && !needsActualLocation(errand, need);
+    !errand.placeIntent.hasCoordinates &&
+    effectiveLocationIntent(errand, need) == LocationIntent.flexible;
+
+String? locationIntentQuestion(Errand errand, ErrandNeed? need) {
+  if (!needsLocationUnderstanding(errand, need)) return null;
+  return need?.locationIntent == LocationIntent.unclear &&
+          need?.questionKind == 'location'
+      ? need!.question
+      : 'Do you have a specific place in mind, or should Wayday suggest one?';
+}
 
 String? outstandingQuestion(ErrandNeed? need, {required bool clarified}) {
   final question = need?.question?.trim();
   if (clarified || question == null || question.isEmpty) return null;
+  if (need?.questionKind == 'location' && need?.locationIntent != null && need?.locationIntent != LocationIntent.unclear) return null;
+  if (need?.questionKind != null || need?.locationIntent != null) return question;
   return _locationOnly(question) ? null : question;
 }
 

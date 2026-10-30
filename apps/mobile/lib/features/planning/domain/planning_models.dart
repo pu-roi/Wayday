@@ -1,9 +1,16 @@
 import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 
+enum LocationIntent { flexible, specific, unclear }
+
 class PlanningFailure implements Exception {
-  const PlanningFailure(this.message, {this.kind = 'unavailable'});
+  const PlanningFailure(
+    this.message, {
+    this.kind = 'unavailable',
+    this.providerStatus,
+  });
   final String message, kind;
+  final int? providerStatus;
   @override
   String toString() => message;
 }
@@ -25,6 +32,7 @@ class ErrandNeed {
     this.questionKind,
     this.questionRequired,
     this.requiresSpecificLocation = false,
+    this.locationIntent,
   });
   final String id, query, category;
   final List<String> items, after;
@@ -35,11 +43,13 @@ class ErrandNeed {
   final String? questionKind;
   final bool? questionRequired;
   final bool requiresSpecificLocation;
+  final LocationIntent? locationIntent;
   ErrandNeed copyWith({
     String? query,
     String? category,
     List<String>? items,
     bool? requiresSpecificLocation,
+    LocationIntent? locationIntent,
   }) => ErrandNeed(
     id: id,
     query: query ?? this.query,
@@ -56,6 +66,7 @@ class ErrandNeed {
     questionRequired: questionRequired,
     requiresSpecificLocation:
         requiresSpecificLocation ?? this.requiresSpecificLocation,
+    locationIntent: locationIntent ?? this.locationIntent,
   );
   bool get meeting => category == 'meeting';
 
@@ -70,6 +81,31 @@ class ErrandNeed {
   };
 
   factory ErrandNeed.fromJson(Map<String, dynamic> json) {
+    const allowed = {
+      'id',
+      'query',
+      'category',
+      'items',
+      'durationMinutes',
+      'after',
+      'question',
+      'title',
+      'optional',
+      'timing',
+      'minute',
+      'clarification',
+      'specificLocation',
+      'locationIntent',
+    };
+    if (json.keys.any((key) => !allowed.contains(key))) {
+      throw const FormatException('Unexpected interpretation field');
+    }
+    final intent = json['locationIntent'];
+    if (intent != null &&
+        (intent is! String ||
+            !LocationIntent.values.any((v) => v.name == intent))) {
+      throw const FormatException('Invalid location intent');
+    }
     final id = json['id'], query = json['query'], category = json['category'];
     final duration = json['durationMinutes'];
     final items = json['items'], after = json['after'];
@@ -109,6 +145,15 @@ class ErrandNeed {
             spec['required'] is! bool)) {
       throw const FormatException('Invalid clarification metadata');
     }
+    if (intent == 'unclear' &&
+        (json['question'] is! String ||
+            (json['question'] as String).trim().isEmpty ||
+            spec?['kind'] != 'location' ||
+            spec?['required'] != true)) {
+      throw const FormatException(
+        'Unclear location intent needs an essential question',
+      );
+    }
     return ErrandNeed(
       id: id,
       query: query.trim(),
@@ -126,6 +171,9 @@ class ErrandNeed {
           ? false
           : spec?['required'] as bool?,
       requiresSpecificLocation: json['specificLocation'] == true,
+      locationIntent: intent == null
+          ? null
+          : LocationIntent.values.byName(intent as String),
     );
   }
 
