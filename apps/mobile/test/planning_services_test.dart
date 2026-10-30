@@ -304,6 +304,7 @@ void main() {
       await db.customStatement('DROP TABLE accepted_itineraries');
       await db.customStatement('DROP TABLE review_trips');
       await db.customStatement('DROP TABLE clarification_sessions');
+      await db.customStatement('DROP TABLE IF EXISTS recommendation_drafts');
       await db.customStatement('PRAGMA user_version=2');
       await db.close();
       db = WaydayDatabase(NativeDatabase(file));

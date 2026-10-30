@@ -128,6 +128,7 @@ void main() {
       ).save(accepted);
       await db.customStatement('DROP TABLE review_trips');
       await db.customStatement('DROP TABLE clarification_sessions');
+      await db.customStatement('DROP TABLE IF EXISTS recommendation_drafts');
       await db.customStatement('PRAGMA user_version=3');
       await db.close();
       db = WaydayDatabase(NativeDatabase(file));
@@ -157,7 +158,7 @@ void main() {
           (await db.customSelect('PRAGMA user_version').getSingle()).read<int>(
             'user_version',
           ),
-          5,
+          6,
         );
         expect(
           (await db.customSelect('PRAGMA integrity_check').getSingle())

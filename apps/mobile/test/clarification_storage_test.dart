@@ -38,6 +38,7 @@ void main() {
         [1, acceptedPayload],
       );
       await db.customStatement('DROP TABLE clarification_sessions');
+      await db.customStatement('DROP TABLE IF EXISTS recommendation_drafts');
       await db.customStatement('PRAGMA user_version=4');
       await db.close();
       db = WaydayDatabase(NativeDatabase(file));

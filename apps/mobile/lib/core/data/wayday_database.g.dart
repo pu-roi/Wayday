@@ -3003,6 +3003,258 @@ class ClarificationSessionsCompanion
   }
 }
 
+class $RecommendationDraftsTable extends RecommendationDrafts
+    with TableInfo<$RecommendationDraftsTable, RecommendationDraftRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecommendationDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, sourceKey, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recommendation_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecommendationDraftRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecommendationDraftRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecommendationDraftRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $RecommendationDraftsTable createAlias(String alias) {
+    return $RecommendationDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class RecommendationDraftRow extends DataClass
+    implements Insertable<RecommendationDraftRow> {
+  final int id;
+  final String sourceKey;
+  final String payload;
+  const RecommendationDraftRow({
+    required this.id,
+    required this.sourceKey,
+    required this.payload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_key'] = Variable<String>(sourceKey);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  RecommendationDraftsCompanion toCompanion(bool nullToAbsent) {
+    return RecommendationDraftsCompanion(
+      id: Value(id),
+      sourceKey: Value(sourceKey),
+      payload: Value(payload),
+    );
+  }
+
+  factory RecommendationDraftRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecommendationDraftRow(
+      id: serializer.fromJson<int>(json['id']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  RecommendationDraftRow copyWith({
+    int? id,
+    String? sourceKey,
+    String? payload,
+  }) => RecommendationDraftRow(
+    id: id ?? this.id,
+    sourceKey: sourceKey ?? this.sourceKey,
+    payload: payload ?? this.payload,
+  );
+  RecommendationDraftRow copyWithCompanion(RecommendationDraftsCompanion data) {
+    return RecommendationDraftRow(
+      id: data.id.present ? data.id.value : this.id,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecommendationDraftRow(')
+          ..write('id: $id, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, sourceKey, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecommendationDraftRow &&
+          other.id == this.id &&
+          other.sourceKey == this.sourceKey &&
+          other.payload == this.payload);
+}
+
+class RecommendationDraftsCompanion
+    extends UpdateCompanion<RecommendationDraftRow> {
+  final Value<int> id;
+  final Value<String> sourceKey;
+  final Value<String> payload;
+  const RecommendationDraftsCompanion({
+    this.id = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.payload = const Value.absent(),
+  });
+  RecommendationDraftsCompanion.insert({
+    this.id = const Value.absent(),
+    required String sourceKey,
+    required String payload,
+  }) : sourceKey = Value(sourceKey),
+       payload = Value(payload);
+  static Insertable<RecommendationDraftRow> custom({
+    Expression<int>? id,
+    Expression<String>? sourceKey,
+    Expression<String>? payload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (payload != null) 'payload': payload,
+    });
+  }
+
+  RecommendationDraftsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? sourceKey,
+    Value<String>? payload,
+  }) {
+    return RecommendationDraftsCompanion(
+      id: id ?? this.id,
+      sourceKey: sourceKey ?? this.sourceKey,
+      payload: payload ?? this.payload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecommendationDraftsCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$WaydayDatabase extends GeneratedDatabase {
   _$WaydayDatabase(QueryExecutor e) : super(e);
   $WaydayDatabaseManager get managers => $WaydayDatabaseManager(this);
@@ -3018,6 +3270,8 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
   late final $ReviewTripsTable reviewTrips = $ReviewTripsTable(this);
   late final $ClarificationSessionsTable clarificationSessions =
       $ClarificationSessionsTable(this);
+  late final $RecommendationDraftsTable recommendationDrafts =
+      $RecommendationDraftsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3031,6 +3285,7 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
     acceptedItineraries,
     reviewTrips,
     clarificationSessions,
+    recommendationDrafts,
   ];
 }
 
@@ -4797,6 +5052,190 @@ typedef $$ClarificationSessionsTableProcessedTableManager =
       ClarificationSessionRow,
       PrefetchHooks Function()
     >;
+typedef $$RecommendationDraftsTableCreateCompanionBuilder =
+    RecommendationDraftsCompanion Function({
+      Value<int> id,
+      required String sourceKey,
+      required String payload,
+    });
+typedef $$RecommendationDraftsTableUpdateCompanionBuilder =
+    RecommendationDraftsCompanion Function({
+      Value<int> id,
+      Value<String> sourceKey,
+      Value<String> payload,
+    });
+
+class $$RecommendationDraftsTableFilterComposer
+    extends Composer<_$WaydayDatabase, $RecommendationDraftsTable> {
+  $$RecommendationDraftsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecommendationDraftsTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $RecommendationDraftsTable> {
+  $$RecommendationDraftsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecommendationDraftsTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $RecommendationDraftsTable> {
+  $$RecommendationDraftsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$RecommendationDraftsTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $RecommendationDraftsTable,
+          RecommendationDraftRow,
+          $$RecommendationDraftsTableFilterComposer,
+          $$RecommendationDraftsTableOrderingComposer,
+          $$RecommendationDraftsTableAnnotationComposer,
+          $$RecommendationDraftsTableCreateCompanionBuilder,
+          $$RecommendationDraftsTableUpdateCompanionBuilder,
+          (
+            RecommendationDraftRow,
+            BaseReferences<
+              _$WaydayDatabase,
+              $RecommendationDraftsTable,
+              RecommendationDraftRow
+            >,
+          ),
+          RecommendationDraftRow,
+          PrefetchHooks Function()
+        > {
+  $$RecommendationDraftsTableTableManager(
+    _$WaydayDatabase db,
+    $RecommendationDraftsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecommendationDraftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecommendationDraftsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecommendationDraftsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+              }) => RecommendationDraftsCompanion(
+                id: id,
+                sourceKey: sourceKey,
+                payload: payload,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String sourceKey,
+                required String payload,
+              }) => RecommendationDraftsCompanion.insert(
+                id: id,
+                sourceKey: sourceKey,
+                payload: payload,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $RecommendationDraftsTable,
+                    RecommendationDraftRow
+                  >(table),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $RecommendationDraftsTable,
+                    RecommendationDraftRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecommendationDraftsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $RecommendationDraftsTable,
+      RecommendationDraftRow,
+      $$RecommendationDraftsTableFilterComposer,
+      $$RecommendationDraftsTableOrderingComposer,
+      $$RecommendationDraftsTableAnnotationComposer,
+      $$RecommendationDraftsTableCreateCompanionBuilder,
+      $$RecommendationDraftsTableUpdateCompanionBuilder,
+      (
+        RecommendationDraftRow,
+        BaseReferences<
+          _$WaydayDatabase,
+          $RecommendationDraftsTable,
+          RecommendationDraftRow
+        >,
+      ),
+      RecommendationDraftRow,
+      PrefetchHooks Function()
+    >;
 
 class $WaydayDatabaseManager {
   final _$WaydayDatabase _db;
@@ -4817,4 +5256,6 @@ class $WaydayDatabaseManager {
       $$ReviewTripsTableTableManager(_db, _db.reviewTrips);
   $$ClarificationSessionsTableTableManager get clarificationSessions =>
       $$ClarificationSessionsTableTableManager(_db, _db.clarificationSessions);
+  $$RecommendationDraftsTableTableManager get recommendationDrafts =>
+      $$RecommendationDraftsTableTableManager(_db, _db.recommendationDrafts);
 }
