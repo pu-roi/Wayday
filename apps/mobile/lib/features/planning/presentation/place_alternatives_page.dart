@@ -203,7 +203,7 @@ class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
                       return false;
                     },
                     child: ListView(
-                      key: ValueKey('alternatives-$id'),
+                      key: PageStorageKey('alternatives-$id'),
                       controller: scroll,
                       shrinkWrap: true,
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),

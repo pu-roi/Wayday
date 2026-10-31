@@ -192,7 +192,7 @@ void main() {
                 .renderObject<RenderRepaintBoundary>(find.byKey(capture))
                 .toImage();
             final data = await image.toByteData(format: ui.ImageByteFormat.png);
-            final dir = Directory('../../.impeccable/alternatives')
+            final dir = Directory('../../.tools/alternatives-screenshots')
               ..createSync(recursive: true);
             File(
               '${dir.path}/sheet-${variant.$1.toInt()}-${variant.$2}.png',
@@ -211,12 +211,33 @@ void main() {
           model.alternativesFor('a').values.map((p) => p.place.savedPlaceId),
           ['a-0', 'a-1', 'a-2', 'a-3', 'a-4', 'a-5'],
         );
+        await tester.scrollUntilVisible(
+          find.text('Show more suggestions'),
+          120,
+          scrollable: find.byType(Scrollable).last,
+        );
+        final savedOffset = tester
+            .widget<ListView>(
+              find.byKey(const PageStorageKey('alternatives-a')),
+            )
+            .controller!
+            .offset;
+        expect(savedOffset, greaterThan(0));
         await tester.tap(find.byTooltip('Next errand'));
         await tester.pumpAndSettle();
         expect(find.textContaining('Errand 2 of 2'), findsOneWidget);
         await tester.tap(find.byTooltip('Previous errand'));
         await tester.pumpAndSettle();
         expect(model.alternativesFor('a').values.length, 6);
+        expect(
+          tester
+              .widget<ListView>(
+                find.byKey(const PageStorageKey('alternatives-a')),
+              )
+              .controller!
+              .offset,
+          closeTo(savedOffset, 1),
+        );
         browser.fail = true;
         await tester.scrollUntilVisible(
           find.text('Show more suggestions'),
