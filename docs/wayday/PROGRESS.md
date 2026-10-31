@@ -530,3 +530,8 @@ Two explicitly accounted minimal requests differed only in Android package heade
 ### [2026-10-31] Confirm corrected Routes test authorization
 
 The owner properly saved the missing test identity. The same restricted-key test request now returns HTTP 200 with a route, resolving the reproduced Android-identity 403. A broader prebuilt rehearsal failed in host-driver package resolution; the runner's default cleanup removed only the disposable app/ledger. No full-flow pass is claimed. Recorded a conservative US$0.782 used floor against the original US$2 disposable allocation before any further live work; do not refill or reset that allowance. Personal phone, application source and Cloud settings were untouched. See [authorization and runner evidence](evidence/one-page-trip-review-2026-10-31.md#authorization-corrected--test-identity-now-accepted).
+
+
+### [2026-10-31] Investigate standalone planning spinner
+
+The owner reported a stalled Finding suitable places screen after a fresh phone-icon launch, apparently recovering when USB was connected. Read-only source/device checks found no laptop backend dependency, a validated phone internet connection and no current Dart/Android debugger pause. Two mocked probes demonstrated unbounded initial preflight waiting and delayed UI notification behind draft persistence. These are confirmed wait/presentation gaps, but the exact disconnected-phone trigger remains unconfirmed. No runtime repair, phone installation/reset, settings change or provider/Gemini request occurred. See [standalone stall investigation](evidence/standalone-planning-stall-2026-10-31.md) for evidence and the narrow repair direction.
