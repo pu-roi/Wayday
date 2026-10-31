@@ -3,12 +3,13 @@ part of 'planning_controller.dart';
 extension PlanningHours on PlanningController {
   HoursQuery hoursQuery(Errand e) =>
       HoursQuery(day.date, day.departure, day.deadline, e.durationMinutes);
-  HoursDay hoursFor(PlaceIntent place) {
+  HoursDay hoursFor(PlaceIntent place) => hoursForDate(place, day.date);
+  HoursDay hoursForDate(PlaceIntent place, String date, {DateTime? now}) {
     final service = discovery;
     return (service is HoursRefreshDiscovery
             ? (service as HoursRefreshDiscovery).hoursStatus(place)
             : service?.metadata(place)?.hours ?? const BusinessHours())
-        .day(day.date);
+        .day(date, now: now);
   }
 
   Map<String, Object?> get hoursIdentity => {

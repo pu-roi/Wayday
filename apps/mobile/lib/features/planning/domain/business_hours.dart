@@ -16,6 +16,9 @@ class HoursDay {
   final bool outsideCoverage;
   final List<String> weekdays;
   final DateTime? checkedAt;
+  bool? openAt(int seconds) => state != HoursState.available || windows == null
+      ? null
+      : windows!.any((w) => seconds >= w[0] && seconds < w[1]);
   bool fits(int start, int finish) =>
       windows == null || windows!.any((w) => start >= w[0] && finish <= w[1]);
   bool possible(int start, int end, int duration) =>
