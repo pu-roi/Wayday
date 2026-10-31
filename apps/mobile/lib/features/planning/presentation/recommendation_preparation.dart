@@ -12,6 +12,7 @@ extension RecommendationPreparation on PlanningController {
     'day': day.toJson(),
     'errands': activeErrands.map((e) => e.toJson()).toList(),
     'points': points.map((p) => [p.key, _coordinateIdentity(p)]).toList(),
+    'hours': hoursIdentity,
   });
   bool _canReuseMatrix(List<PlanCandidate> selected) =>
       _matrixResponse != null &&
@@ -427,13 +428,16 @@ extension RecommendationPreparation on PlanningController {
             anchors: [anchorBefore, anchorAfter],
             limit: candidateLimit,
             cancelled: cancelled,
+            hours: hoursQuery(e),
           );
           if (cancelled()) return;
           final values = batch.candidates;
           discoveryResults[e.id] = batch;
           if (values.isEmpty && !e.optional) {
             throw PlanningFailure(
-              batch.outcome == DiscoveryOutcome.noMatches
+              (batch.exclusions[PlaceExclusion.hours] ?? 0) > 0
+                  ? 'No returned business has a reported opening window long enough for “${e.title}” during this trip. Change the trip time or choose another place.'
+                  : batch.outcome == DiscoveryOutcome.noMatches
                   ? 'The completed searches returned no matches for “${e.title}” along this trip.'
                   : 'Places were returned for “${e.title}”, but none passed the location and suitability checks.',
               kind: batch.outcome == DiscoveryOutcome.noMatches

@@ -136,6 +136,7 @@ extension AlternativeBrowsing on PlanningController {
         excludedKeys: state.values.map((p) => p.key).toSet(),
         limit: (12 - state.values.length).clamp(1, 3),
         cancelled: obsolete,
+        hours: hoursQuery(errand),
       );
       if (obsolete()) return;
       final known = state.values.map((p) => p.key).toSet();

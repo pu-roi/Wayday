@@ -8,6 +8,7 @@ import '../domain/planning_models.dart';
 import '../domain/recommendation.dart';
 import '../domain/errand_location_review.dart';
 import 'planning_controller.dart';
+import 'place_hours.dart';
 
 class AlternativeChoice {
   const AlternativeChoice(this.errandId, this.place);
@@ -126,7 +127,10 @@ class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
   Widget build(BuildContext context) {
     final errands = model.activeErrands,
         index = errands.indexWhere((e) => e.id == id);
-    final state = model.alternativesFor(id), values = state.values;
+    final state = model.alternativesFor(id),
+        values = state.values
+            .where((p) => model.alternativeHasWindow(id, p))
+            .toList();
     final current = model.displayChoices[id];
     final flexible = needsPlaceRecommendation(
       errands[index],
@@ -224,18 +228,28 @@ class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
                               key: ValueKey('alternative-${candidate.key}'),
                               contentPadding: EdgeInsets.zero,
                               title: Text(model.displayPlace(candidate.place)),
-                              subtitle: Text(
-                                [
-                                  if (current != null &&
-                                      placeKey(current) == candidate.key)
-                                    'Current place',
-                                  model.discovery
-                                          ?.metadata(candidate.place)
-                                          ?.locality ??
-                                      '',
-                                  if (comparison(candidate) != null)
-                                    comparison(candidate)!,
-                                ].where((s) => s.isNotEmpty).join(' · '),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    [
+                                      if (current != null &&
+                                          placeKey(current) == candidate.key)
+                                        'Current place',
+                                      model.discovery
+                                              ?.metadata(candidate.place)
+                                              ?.locality ??
+                                          '',
+                                      if (comparison(candidate) != null)
+                                        comparison(candidate)!,
+                                    ].where((s) => s.isNotEmpty).join(' · '),
+                                  ),
+                                  PlaceHours(
+                                    model: model,
+                                    place: candidate.place,
+                                    compact: true,
+                                  ),
+                                ],
                               ),
                               trailing:
                                   current != null &&

@@ -322,7 +322,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                       'Light pickup · ordinary driving estimate. Truck restrictions and clearance are not verified.',
                     ),
                   const Text(
-                    'Opening hours and availability unconfirmed. Visit estimates include a five-minute buffer after each stop.',
+                    'Visit estimates include a five-minute buffer after each stop.',
                   ),
                   for (final e in model.deferred.entries)
                     Text(

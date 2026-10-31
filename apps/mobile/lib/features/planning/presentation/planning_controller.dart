@@ -31,6 +31,7 @@ part 'recommendation_preparation.dart';
 part 'location_understanding.dart';
 part 'alternative_browsing.dart';
 part 'route_refresh.dart';
+part 'planning_hours.dart';
 
 final planningBudgetProvider = googleTestingBudgetProvider;
 final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
@@ -1043,6 +1044,9 @@ class PlanningController extends ChangeNotifier {
         );
       }
       final selected = points;
+      await prepareHours(selected, () => _closed || epoch != _epoch);
+      if (_closed || epoch != _epoch) return;
+      checkHoursOptions(selected);
       if (activeErrands.any(
         (e) => questionBlocks(e) || needsActualLocation(e, effectiveNeed(e)),
       )) {
@@ -1069,6 +1073,7 @@ class PlanningController extends ChangeNotifier {
         );
       }
       recommendationOperation = RecommendationOperation.matrix;
+      final openingWindows = businessWindows(selected);
       final matrix = await _matrixFor(
         selected,
         () => _closed || epoch != _epoch,
@@ -1088,6 +1093,8 @@ class PlanningController extends ChangeNotifier {
         'deadline': day.deadline * 60,
         'start': '@start',
         'end': '@end',
+        'hours': openingWindows,
+        'allowOpeningWait': false,
         'options': {
           for (final e in activeErrands)
             e.id: selected
@@ -1122,6 +1129,10 @@ class PlanningController extends ChangeNotifier {
         cancelled: () => _closed || epoch != _epoch,
       );
       if (_closed || epoch != _epoch) return;
+      final conflict = hoursConflict(refined.schedule, openingWindows);
+      if (conflict != null) {
+        throw PlanningFailure(conflict, kind: 'business_hours');
+      }
       result = RefinedPlan(
         refined.schedule,
         refined.geometry,

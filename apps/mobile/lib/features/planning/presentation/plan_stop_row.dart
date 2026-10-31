@@ -4,6 +4,7 @@ import '../../places/domain/place_intent.dart';
 import '../../today/domain/day.dart';
 import '../domain/planning_models.dart';
 import 'planning_controller.dart';
+import 'place_hours.dart';
 
 class PlanStopRow extends StatelessWidget {
   const PlanStopRow({
@@ -133,7 +134,7 @@ class PlanStopRow extends StatelessWidget {
                   Text(
                     'Calculated ${TimeOfDay.fromDateTime(plan!.calculatedAt!.toLocal()).format(context)}',
                   ),
-                const Text('Opening hours and availability unconfirmed'),
+                if (place != null) PlaceHours(model: model, place: place),
               ],
               TextButton(
                 onPressed: onExpand,

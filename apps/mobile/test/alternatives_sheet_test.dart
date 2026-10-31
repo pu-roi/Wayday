@@ -49,6 +49,7 @@ class Browser implements RecommendationDiscovery, AlternativeDiscovery {
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async => DiscoveryResult(places(n.id).take(limit).toList());
   @override
   Future<AlternativeBatch> moreAlternatives(
@@ -58,6 +59,7 @@ class Browser implements RecommendationDiscovery, AlternativeDiscovery {
     required Set<String> excludedKeys,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async {
     calls++;
     await gate?.future;
@@ -205,6 +207,11 @@ void main() {
           120,
           scrollable: find.byType(Scrollable).last,
         );
+        await Scrollable.ensureVisible(
+          tester.element(find.text('Show more suggestions')),
+          alignment: .5,
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Show more suggestions'));
         await tester.pumpAndSettle();
         expect(
@@ -216,6 +223,7 @@ void main() {
           120,
           scrollable: find.byType(Scrollable).last,
         );
+        await tester.pumpAndSettle();
         final savedOffset = tester
             .widget<ListView>(
               find.byKey(const PageStorageKey('alternatives-a')),
@@ -244,11 +252,21 @@ void main() {
           120,
           scrollable: find.byType(Scrollable).last,
         );
+        await Scrollable.ensureVisible(
+          tester.element(find.text('Show more suggestions')),
+          alignment: .5,
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Show more suggestions'));
         await tester.pumpAndSettle();
         expect(model.alternativesFor('a').values.length, 6);
         expect(find.text('Search temporarily unavailable.'), findsOneWidget);
         browser.fail = false;
+        await Scrollable.ensureVisible(
+          tester.element(find.text('Retry loading suggestions')),
+          alignment: .5,
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Retry loading suggestions'));
         await tester.pumpAndSettle();
         expect(model.alternativesFor('a').values.length, 9);
