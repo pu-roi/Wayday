@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +29,8 @@ import '../data/reusable_trip_repository.dart';
 
 part 'recommendation_preparation.dart';
 part 'location_understanding.dart';
+part 'alternative_browsing.dart';
+part 'route_refresh.dart';
 
 final planningBudgetProvider = googleTestingBudgetProvider;
 final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
@@ -91,6 +94,9 @@ class PlanningController extends ChangeNotifier {
     this.roads,
     this.repository, {
     this.solver = solveInWorker,
+    this.preparationTimeout = const Duration(seconds: 10),
+    this.draftSaveTimeout = const Duration(seconds: 10),
+    this.routeDebounce = const Duration(milliseconds: 500),
     ClarificationRepository? clarificationRepository,
     ClarificationResolver? clarificationResolver,
     LocationIntentResolver? locationResolver,
@@ -122,6 +128,23 @@ class PlanningController extends ChangeNotifier {
   final RecommendationDraftRepository draftRepository;
   final String _draftSource;
   final _proposalChoices = <String, PlaceIntent>{};
+  final Duration preparationTimeout, draftSaveTimeout, routeDebounce;
+  final _alternativeBrowses = <String, AlternativeBrowseState>{};
+  final _alternativeSearches =
+      <
+        String,
+        ({String identity, String? polyline, List<PlaceIntent> anchors})
+      >{};
+  String? _discoveryPolyline;
+  final _draftSaveFlights = <String, Future<void>>{};
+  Timer? _routeRefreshTimer;
+  DateTime? _refreshNotBefore;
+  String? _latestDraftSaveKey;
+  Future<void>? _routeRefreshFlight;
+  int _selectionRevision = 0, _savedSelectionRevision = -1;
+  bool _refreshRequested = false, keepPlanVisible = false;
+  RouteRefreshState routeRefreshState = RouteRefreshState.idle;
+  bool get recommendationSavePending => _draftSaveFlights.isNotEmpty;
   String? selectedErrand, recommendationStorageError;
   double recommendationScrollOffset = 0;
   bool orderChanged = false;
@@ -575,6 +598,10 @@ class PlanningController extends ChangeNotifier {
   }
 
   void cancel() {
+    _stopRouteRefresh();
+    _alternativeBrowses.clear();
+    _alternativeSearches.clear();
+    _discoveryPolyline = null;
     _epoch++;
     roads.invalidate();
     _matrixAt = null;
@@ -592,6 +619,7 @@ class PlanningController extends ChangeNotifier {
       stage == PreparationStage.calculating;
   @override
   void dispose() {
+    _stopRouteRefresh();
     _closed = true;
     clarifications.removeListener(_clarificationChanged);
     clarifications.dispose();
@@ -1111,6 +1139,7 @@ class PlanningController extends ChangeNotifier {
           _proposalChoices[task.errandId] = lookup[stop.placeKey]!;
         }
       }
+      _emit();
       await saveRecommendationDraft();
     } catch (e) {
       if (_closed || epoch != _epoch) return;
@@ -1133,6 +1162,7 @@ class PlanningController extends ChangeNotifier {
   }
 
   void review() {
+    _stopRouteRefresh();
     _epoch++;
     stage = PreparationStage.review;
     error = null;
@@ -1144,6 +1174,12 @@ class PlanningController extends ChangeNotifier {
     int sourceRevision, {
     AcceptedItinerary? history,
   }) async {
+    if (recommendationSavePending || recommendationStorageError != null) {
+      throw const PlanningFailure(
+        'Your place choices still need saving before starting.',
+        kind: 'accounting',
+      );
+    }
     final route = result;
     if (route != null &&
         (!proposalReady ||

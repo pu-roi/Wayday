@@ -207,34 +207,61 @@ extension RecommendationPreparation on PlanningController {
         choices[entry.key] = matches!.first.place;
       }
     }
+    String? saveKey;
     try {
-      await draftRepository.save(
-        _draftSource,
-        RecommendationDraft(
-          context: _recommendationContext,
-          choices: choices,
-          pendingCandidates: {
-            for (final entry in candidates.entries)
-              if (!choices.containsKey(entry.key) &&
-                  entry.value.isNotEmpty &&
-                  activeErrands.any((e) => e.id == entry.key))
-                entry.key: entry.value.map((p) => p.place).toList(),
+      final draft = RecommendationDraft(
+        context: _recommendationContext,
+        choices: choices,
+        pendingCandidates: {
+          for (final entry in candidates.entries)
+            if (!choices.containsKey(entry.key) &&
+                entry.value.isNotEmpty &&
+                activeErrands.any((e) => e.id == entry.key))
+              entry.key: entry.value.map((p) => p.place).toList(),
+        },
+        overrides: overrides.keys.where(choices.containsKey).toSet(),
+        approved: {...approved},
+        additions: {...additions},
+        from: day.fromPlace,
+        to: day.toPlace,
+        selectedErrand: choices.containsKey(selectedErrand)
+            ? selectedErrand
+            : null,
+        scrollOffset: recommendationScrollOffset,
+      );
+      final key = clarificationHash({
+        'source': _draftSource,
+        'draft': draft.toJson(),
+      });
+      _latestDraftSaveKey = key;
+      saveKey = key;
+      final flight = _draftSaveFlights.putIfAbsent(
+        key,
+        () => draftRepository.save(_draftSource, draft),
+      );
+      unawaited(
+        flight.then<void>(
+          (_) {
+            if (identical(_draftSaveFlights[key], flight)) {
+              _draftSaveFlights.remove(key);
+            }
+            if (!_closed) _emit();
           },
-          overrides: overrides.keys.where(choices.containsKey).toSet(),
-          approved: {...approved},
-          additions: {...additions},
-          from: day.fromPlace,
-          to: day.toPlace,
-          selectedErrand: choices.containsKey(selectedErrand)
-              ? selectedErrand
-              : null,
-          scrollOffset: recommendationScrollOffset,
+          onError: (Object _, StackTrace _) {
+            if (identical(_draftSaveFlights[key], flight)) {
+              _draftSaveFlights.remove(key);
+            }
+          },
         ),
       );
-      if (!_closed) recommendationStorageError = null;
+      await flight.timeout(draftSaveTimeout);
+      if (!_closed && _latestDraftSaveKey == key) {
+        recommendationStorageError = null;
+        _emit();
+      }
       return true;
     } catch (_) {
-      if (!_closed) {
+      if (!_closed && (saveKey == null || _latestDraftSaveKey == saveKey)) {
         recommendationStorageError =
             'Place choices could not be saved. Retry saving before closing.';
         _emit();
@@ -287,20 +314,28 @@ extension RecommendationPreparation on PlanningController {
                 ? candidates[e.id]!.length
                 : candidateLimit),
       );
-      await roads.preflight(
-        unresolved.isEmpty && _canReuseMatrix(points) ? 0 : count,
-        activeErrands.length + 1,
-        seed: unresolved.isNotEmpty,
-      );
+      progress = 'Checking planning capacity…';
+      _emit();
+      await roads
+          .preflight(
+            unresolved.isEmpty && _canReuseMatrix(points) ? 0 : count,
+            activeErrands.length + 1,
+            seed: unresolved.isNotEmpty,
+          )
+          .timeout(preparationTimeout);
       final requests =
           unresolved.length * 3 +
           candidates.values
               .expand((v) => v)
               .where((p) => p.place.isGoogle)
               .length;
-      if (requests > 0) await service?.preflight(requests);
+      if (requests > 0) {
+        await service?.preflight(requests).timeout(preparationTimeout);
+      }
       if (cancelled()) return;
       recommendationOperation = RecommendationOperation.refresh;
+      progress = 'Refreshing selected places…';
+      _emit();
       for (final group in candidates.values) {
         for (final candidate in group) {
           if (candidate.place.isGoogle) {
@@ -344,12 +379,15 @@ extension RecommendationPreparation on PlanningController {
         ];
         failedRecommendationErrand = null;
         recommendationOperation = RecommendationOperation.seed;
+        progress = 'Checking the trip route…';
+        _emit();
         final route = await roads.discoveryRoute(
           day,
           fixed,
           cancelled: cancelled,
         );
         if (cancelled()) return;
+        _discoveryPolyline = route;
         for (final e in [...unresolved]) {
           failedRecommendationErrand = e.id;
           recommendationOperation = route == null
@@ -378,6 +416,11 @@ extension RecommendationPreparation on PlanningController {
           final anchorAfter = following.isNotEmpty
               ? following.first.placeIntent
               : day.toPlace;
+          _alternativeSearches[e.id] = (
+            identity: _alternativeSearchIdentity(e.id),
+            polyline: route,
+            anchors: [anchorBefore, anchorAfter],
+          );
           final batch = await service.discover(
             effectiveNeed(e)!,
             polyline: route,
@@ -424,14 +467,18 @@ extension RecommendationPreparation on PlanningController {
                 : e.forErrand(failedRecommendationErrand!))
           : e is PlanningFailure
           ? e
+          : e is TimeoutException
+          ? const PlanningFailure(
+              'Planning preparation took too long. Your choices are kept; you can try again.',
+              kind: 'timeout',
+            )
           : const PlanningFailure(
               'Recommendations are unavailable. Your choices are kept.',
             );
       if (e is RecommendationFailure) recommendationOperation = e.operation;
-      error = e is PlanningFailure
-          ? e.message
-          : 'Recommendations are unavailable. Your choices are kept.';
+      error = recommendationFailure!.message;
       stage = PreparationStage.discovery;
+      _emit();
       await saveRecommendationDraft();
       if (cancelled()) return;
       _emit();

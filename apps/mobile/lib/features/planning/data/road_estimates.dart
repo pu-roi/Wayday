@@ -123,7 +123,13 @@ class PlanningRoads {
         kind: 'configuration',
       );
     }
-    final app = await identity();
+    final app = await identity().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw const PlanningFailure(
+        'Checking the Android identity took too long. Your choices are kept.',
+        kind: 'timeout',
+      ),
+    );
     if (app['package']?.isNotEmpty != true ||
         app['certificate']?.isNotEmpty != true) {
       throw const PlanningFailure(
