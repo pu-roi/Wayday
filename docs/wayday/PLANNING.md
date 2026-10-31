@@ -1,6 +1,14 @@
 # Plan my day implementation plan
 
-## Compact sequential navigation — D64 current contract
+## Current-trip recovery and finishing — D65 current contract
+
+The owner approved keeping unfinished-trip recovery and selected a compact Current trip section at the top of Today, below its title/date and above its errand editor. Show a route icon, completed/assigned errand count and Resume trip; the action opens the existing current-trip summary before guidance. Remove the old bottom View saved plan shortcut. Recovery stays available after accidental exit or restart, including when errands are complete but the final journey has not been explicitly finished. This is independent of the optional Save for reuse action under Recurring.
+
+Back/View plan pauses guidance and preserves Today/progress. Finish trip is available after assigned errands are complete, both in navigation's final-destination state and the current-trip summary, so old completed records need no navigation request to finish. It asks Finish trip and clear Today?, with Cancel and Finish and clear Today. Explain that all Today errands, locations and trip settings reset, including newer/left-out errands. The owner explicitly selected Clear all Today; this is not limited to removing the recovery section. Reusable trips, recurring lists and Profile saved places remain intact.
+
+Commit the empty Today state and matching current-trip deletion in one transaction, ordered with pending Today/progress writes. Reset the date to current Asia/Manila and existing default time/mode values. Guard the run identity and confirmed Today revision; require a fresh confirmation after a revision change. Guard progress updates separately from initial acceptance so late saves cannot recreate a finished trip or replace newer progress. Update visible state only after successful storage; failures retain recovery and explicit retry. Return a finished result through the navigation stack to Today instead of showing an obsolete summary. No existing record is automatically deleted on upgrade. Existing tables and accepted v1/v2 remain compatible; no schema, provider request or history feature is added. See [D65 evidence](evidence/current-trip-finish-2026-10-31.md) for actual verification and delivery.
+
+## Compact sequential navigation — D64
 
 The owner approved the navigation repair and then clarified that navigation must show only one active errand and one completion checkbox at a time. This clarification supersedes the proposed simultaneous shared-stop checkbox presentation. Completing and saving the current errand reveals the next one. Errands at the same location remain independent and sequential; guidance advances only when every errand there is saved as complete. Arrival never completes an errand. Final-destination arrival remains separate from the explicit Finish trip action.
 
