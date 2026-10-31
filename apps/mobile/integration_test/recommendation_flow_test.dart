@@ -34,7 +34,10 @@ void main() {
       final db = WaydayDatabase(),
           drafts = SqliteRecommendationDraftRepository(db),
           roads = Roads();
-      final reusable = SqliteReusableTripRepository(db, (_) => GooglePinLease());
+      final reusable = SqliteReusableTripRepository(
+        db,
+        (_) => GooglePinLease(),
+      );
       addTearDown(db.close);
       addTearDown(roads.client.close);
       await tester.pumpWidget(
@@ -58,8 +61,19 @@ void main() {
       await tester.tap(find.text('Build recommendations'));
       await tester.pumpAndSettle();
       expect(find.text('Your plan'), findsOneWidget);
+      expect(find.text('Trip details'), findsNothing);
       expect(find.text('Search for a place'), findsNothing);
       expect(find.text('Use name only'), findsNothing);
+      await tester.tap(find.text('Change').first);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Errand 1 of 2'), findsOneWidget);
+      await tester.tap(find.byTooltip('Next errand'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Errand 2 of 2'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Choose a place'), findsNothing);
+      expect(find.text('Your plan'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.text('Review errands'), findsOneWidget);
@@ -68,11 +82,17 @@ void main() {
       expect(find.text('Start trip'), findsOneWidget);
       await tester.tap(find.text('Save for reuse'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Synthetic reusable errands');
+      await tester.enterText(
+        find.byType(TextField),
+        'Synthetic reusable errands',
+      );
       await tester.tap(find.widgetWithText(TextButton, 'Save'));
       await tester.pumpAndSettle();
       final saved = await tester.runAsync(reusable.read);
-      expect(saved!.where((t) => t.name == 'Synthetic reusable errands'), isNotEmpty);
+      expect(
+        saved!.where((t) => t.name == 'Synthetic reusable errands'),
+        isNotEmpty,
+      );
       expect(
         (await db.select(db.recommendationDrafts).get()).single.payload,
         isNotEmpty,

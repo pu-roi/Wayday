@@ -131,7 +131,9 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        expect(find.text('Search for a place').hitTestable(), findsOneWidget);
+        await tester.scrollUntilVisible(find.text('Choose a specific place'),150,scrollable:find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
+        expect(find.text('Choose a specific place').hitTestable(), findsOneWidget);
         expect(find.text('Find more along this trip'), findsNothing);
         await tester.tap(find.byTooltip('Next errand'));
         await tester.pumpAndSettle();

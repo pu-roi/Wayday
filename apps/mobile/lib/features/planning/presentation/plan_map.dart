@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -35,7 +36,12 @@ class _PlanMapState extends State<PlanMap> {
   final indices = <String, int>{};
   String? error;
   final markerImages = <nav.ImageDescriptor>[];
+  final iconsByLabel = <String, nav.ImageDescriptor>{};
+  Future<void> _updates = Future.value();
+  int _overlayRevision = 0;
   Future<nav.ImageDescriptor> markerIcon(String label) async {
+    final existing = iconsByLabel[label];
+    if (existing != null) return existing;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder)..scale(2);
     canvas.drawCircle(
@@ -69,6 +75,7 @@ class _PlanMapState extends State<PlanMap> {
       await nav.unregisterImage(descriptor);
     } else {
       markerImages.add(descriptor);
+      iconsByLabel[label] = descriptor;
     }
     return descriptor;
   }
@@ -85,87 +92,127 @@ class _PlanMapState extends State<PlanMap> {
       nav.LatLng(latitude: p.latitude!, longitude: p.longitude!);
   Future<void> created(nav.GoogleMapViewController value) async {
     controller = value;
-    try {
-      final eligible = widget.places.where((p) => p.hasCoordinates).toList();
-      final eligibleIndices = [
-        for (var i = 0; i < widget.places.length; i++)
-          if (widget.places[i].hasCoordinates) i,
-      ];
-      await value.settings.setTrafficEnabled(widget.traffic);
-      final icons = <int, nav.ImageDescriptor>{};
-      for (final i in eligibleIndices) {
-        icons[i] = await markerIcon(
-          i == 0
-              ? 'A'
-              : i == widget.places.length - 1
-              ? 'B'
-              : '$i',
-        );
-        if (!mounted) return;
-      }
-      final markers = await value.addMarkers([
-        for (var i = 0; i < widget.places.length; i++)
-          if (widget.places[i].hasCoordinates)
-            nav.MarkerOptions(
-              icon: icons[i]!,
-              position: point(widget.places[i]),
-              infoWindow: nav.InfoWindow(
-                title:
-                    '${i == 0
-                        ? 'A'
-                        : i == widget.places.length - 1
-                        ? 'B'
-                        : i}. ${widget.labels?[i] ?? widget.places[i].label}',
+    await synchronize();
+  }
+
+  String overlayIdentity(PlanMap value) => jsonEncode([
+    for (var i = 0; i < value.places.length; i++)
+      [
+        value.places[i].latitude,
+        value.places[i].longitude,
+        value.labels?[i] ?? value.places[i].label,
+      ],
+    value.geometry,
+  ]);
+  Future<void> synchronize() {
+    final revision = ++_overlayRevision, snapshot = widget;
+    final routeColor = context.wayday.link;
+    final update = _updates.then((_) async {
+      final value = controller;
+      if (value == null || !mounted || revision != _overlayRevision) return;
+      bool obsolete() => !mounted || revision != _overlayRevision;
+      try {
+        await value.clearPolylines();
+        if (obsolete()) return;
+        await value.clearMarkers();
+        if (obsolete()) return;
+        indices.clear();
+        final eligible = snapshot.places
+            .where((p) => p.hasCoordinates)
+            .toList();
+        final eligibleIndices = [
+          for (var i = 0; i < snapshot.places.length; i++)
+            if (snapshot.places[i].hasCoordinates) i,
+        ];
+        await value.settings.setTrafficEnabled(snapshot.traffic);
+        final icons = <int, nav.ImageDescriptor>{};
+        for (final i in eligibleIndices) {
+          icons[i] = await markerIcon(
+            i == 0
+                ? 'A'
+                : i == snapshot.places.length - 1
+                ? 'B'
+                : '$i',
+          );
+          if (obsolete()) return;
+        }
+        final markers = await value.addMarkers([
+          for (var i = 0; i < snapshot.places.length; i++)
+            if (snapshot.places[i].hasCoordinates)
+              nav.MarkerOptions(
+                icon: icons[i]!,
+                position: point(snapshot.places[i]),
+                infoWindow: nav.InfoWindow(
+                  title:
+                      '${i == 0
+                          ? 'A'
+                          : i == snapshot.places.length - 1
+                          ? 'B'
+                          : i}. ${snapshot.labels?[i] ?? snapshot.places[i].label}',
+                ),
               ),
+        ]);
+        if (obsolete()) return;
+        for (var i = 0; i < markers.length; i++) {
+          final marker = markers[i];
+          if (marker != null) indices[marker.markerId] = eligibleIndices[i];
+        }
+        if (obsolete()) return;
+        await value.addPolylines([
+          for (final leg in snapshot.geometry)
+            nav.PolylineOptions(
+              points: leg
+                  .map((p) => nav.LatLng(latitude: p[0], longitude: p[1]))
+                  .toList(),
+              strokeColor: routeColor,
+              strokeWidth: 5,
             ),
-      ]);
-      for (var i = 0; i < markers.length; i++) {
-        final marker = markers[i];
-        if (marker != null) indices[marker.markerId] = eligibleIndices[i];
-      }
-      if (!mounted) return;
-      await value.addPolylines([
-        for (final leg in widget.geometry)
-          nav.PolylineOptions(
-            points: leg
-                .map((p) => nav.LatLng(latitude: p[0], longitude: p[1]))
-                .toList(),
-            strokeColor: context.wayday.link,
-            strokeWidth: 5,
-          ),
-      ]);
-      if (eligible.isNotEmpty) {
-        final lat = eligible.map((p) => p.latitude!).toList(),
-            lon = eligible.map((p) => p.longitude!).toList();
-        await value.moveCamera(
-          nav.CameraUpdate.newLatLngBounds(
-            nav.LatLngBounds(
-              southwest: nav.LatLng(
-                latitude: lat.reduce(math.min) - .001,
-                longitude: lon.reduce(math.min) - .001,
+        ]);
+        if (obsolete()) return;
+        if (eligible.isNotEmpty) {
+          final lat = eligible.map((p) => p.latitude!).toList(),
+              lon = eligible.map((p) => p.longitude!).toList();
+          for (final leg in snapshot.geometry) {
+            for (final p in leg) {
+              lat.add(p[0]);
+              lon.add(p[1]);
+            }
+          }
+          await value.moveCamera(
+            nav.CameraUpdate.newLatLngBounds(
+              nav.LatLngBounds(
+                southwest: nav.LatLng(
+                  latitude: lat.reduce(math.min) - .001,
+                  longitude: lon.reduce(math.min) - .001,
+                ),
+                northeast: nav.LatLng(
+                  latitude: lat.reduce(math.max) + .001,
+                  longitude: lon.reduce(math.max) + .001,
+                ),
               ),
-              northeast: nav.LatLng(
-                latitude: lat.reduce(math.max) + .001,
-                longitude: lon.reduce(math.max) + .001,
-              ),
+              padding: 44,
             ),
-            padding: 44,
-          ),
-        );
+          );
+        }
+      } catch (_) {
+        if (!obsolete()) {
+          setState(
+            () => error =
+                'The Google map is unavailable. Your stop list is below.',
+          );
+        }
       }
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () =>
-              error = 'The Google map is unavailable. Your stop list is below.',
-        );
-      }
-    }
+    });
+    _updates = update.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    return update;
   }
 
   @override
   void didUpdateWidget(covariant PlanMap old) {
     super.didUpdateWidget(old);
+    if (overlayIdentity(old) != overlayIdentity(widget)) {
+      synchronize();
+    }
     if (old.traffic != widget.traffic) {
       controller?.settings
           .setTrafficEnabled(widget.traffic)

@@ -53,6 +53,10 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       Navigator.pop(context);
       return;
     }
+    if (model.keepPlanVisible) {
+      model.review();
+      return;
+    }
     if (model.busy) {
       model.cancel();
       return;
@@ -462,15 +466,15 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => SizedBox(
-        height: MediaQuery.sizeOf(context).height * .9,
-        child: PlaceAlternativesPage(model: model, errandId: e.id),
-      ),
+      showDragHandle: true,
+      sheetAnimationStyle: MediaQuery.disableAnimationsOf(context)
+          ? AnimationStyle.noAnimation
+          : null,
+      builder: (_) => PlaceAlternativesPage(model: model, errandId: e.id),
     );
     if (!mounted || choice == null) return;
     model.selectedErrand = choice.errandId;
-    model.replacePlannedPlace(choice.errandId, choice.place);
-    await model.saveRecommendationDraft();
+    await model.replaceAndRefresh(choice.errandId, choice.place);
   }
 
   Future<void> manualCandidate(Errand e) async {
@@ -485,8 +489,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       setState(() => localError = 'Choose a place with a map pin.');
       return;
     }
-    model.overridePlace(e.id, p);
-    await model.saveRecommendationDraft();
+    await model.replaceAndRefresh(e.id, p);
   }
 
   Widget recommendations() => RecommendationPage(
@@ -560,15 +563,17 @@ class _PlanningViewState extends ConsumerState<PlanningView>
 
   @override
   Widget build(BuildContext context) {
-    final title = switch (model.stage) {
-      PreparationStage.failed ||
-      PreparationStage.understanding => 'Plan my day',
-      PreparationStage.review => 'Review errands',
-      PreparationStage.discovery => 'Your plan',
-      PreparationStage.calculating => 'Building your day',
-      PreparationStage.recommendations => 'Your plan',
-      PreparationStage.result => 'Your plan',
-    };
+    final title = model.keepPlanVisible
+        ? 'Your plan'
+        : switch (model.stage) {
+            PreparationStage.failed ||
+            PreparationStage.understanding => 'Plan my day',
+            PreparationStage.review => 'Review errands',
+            PreparationStage.discovery => 'Your plan',
+            PreparationStage.calculating => 'Building your day',
+            PreparationStage.recommendations => 'Your plan',
+            PreparationStage.result => 'Your plan',
+          };
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -601,6 +606,8 @@ class _PlanningViewState extends ConsumerState<PlanningView>
               onSaved: () => understand(savedOnly: true),
               onRetry: () => understand(retry: true),
             ),
+            PreparationStage.calculating when model.keepPlanVisible =>
+              recommendations(),
             PreparationStage.understanding ||
             PreparationStage.calculating => Center(
               child: Padding(

@@ -6,6 +6,7 @@ import 'package:wayday/features/planning/domain/day_scheduler.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
 import 'package:wayday/features/planning/presentation/recommendation_page.dart';
+import 'package:wayday/features/planning/presentation/plan_map.dart';
 import 'helpers/planning_fixtures.dart';
 import 'package:wayday/features/today/domain/day.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
@@ -150,8 +151,61 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Change'), findsWidgets);
     final start = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Update plan'),
+      find.widgetWithText(FilledButton, 'Retry route update'),
     );
     expect(start.onPressed, isNull);
+  });
+  testWidgets('inline map state survives refresh notice and route changes', (
+    tester,
+  ) async {
+    final roads = Roads();
+    final model = PlanningController(
+      fixture(),
+      Interpreter(),
+      roads,
+      MemoryItineraryRepository(),
+      solver: (input) async => solveDay(input),
+    );
+    addTearDown(model.dispose);
+    addTearDown(roads.client.close);
+    await model.understand();
+    model.applyReview();
+    await model.calculate();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(),
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: model,
+            builder: (_, child) => RecommendationPage(
+              model: model,
+              onChange: (_) {},
+              onContinue: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.scrollUntilVisible(
+      find.byType(PlanMap),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    final map = tester.state(find.byType(PlanMap));
+    model.replacePlannedPlace(
+      'a',
+      const PlaceIntent(
+        kind: PlaceKind.specific,
+        label: 'Replacement',
+        latitude: 14.6,
+        longitude: 121.07,
+      ),
+    );
+    model.routeRefreshState = RouteRefreshState.refreshing;
+    await tester.pump();
+    expect(identical(tester.state(find.byType(PlanMap)), map), isTrue);
+    await model.calculate();
+    await tester.pump();
+    expect(identical(tester.state(find.byType(PlanMap)), map), isTrue);
   });
 }

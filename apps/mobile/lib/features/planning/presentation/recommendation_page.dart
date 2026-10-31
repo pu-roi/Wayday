@@ -70,6 +70,56 @@ class _RecommendationPageState extends State<RecommendationPage> {
     hour: (seconds ~/ 3600) % 24,
     minute: (seconds ~/ 60) % 60,
   ).format(context);
+  Widget map({bool interactive = false, VoidCallback? refresh}) {
+    return ListenableBuilder(
+      listenable: model,
+      builder: (_, child) {
+        final plan = model.result, choices = model.displayChoices;
+        final order = [
+          if (plan != null)
+            for (final stop in plan.schedule.stops)
+              for (final task in stop.tasks) task.errandId,
+          ...model.activeErrands.map((e) => e.id),
+        ];
+        final seen = <String>{};
+        final located = [
+          for (final id in order)
+            if (choices[id] != null && seen.add(placeKey(choices[id]!))) id,
+        ];
+        final ready = model.proposalReady;
+        final chosen = choices[model.selectedErrand];
+        final selection = chosen == null
+            ? -1
+            : located.indexWhere(
+                (id) => placeKey(choices[id]!) == placeKey(chosen),
+              );
+        return PlanMap(
+          key: ValueKey('plan-map-$interactive'),
+          places: [
+            model.day.fromPlace,
+            for (final id in located) choices[id]!,
+            model.day.toPlace,
+          ],
+          labels: [
+            'Start',
+            for (final id in located) model.displayPlace(choices[id]!),
+            'Destination',
+          ],
+          geometry: ready ? plan!.geometry : const [],
+          interactive: interactive,
+          traffic: traffic,
+          selected: selection < 0 ? null : selection + 1,
+          onSelect: (i) {
+            if (i > 0 && i <= located.length) {
+              select(located[i - 1]);
+              refresh?.call();
+            }
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = model.result;
@@ -92,7 +142,17 @@ class _RecommendationPageState extends State<RecommendationPage> {
         if (choices[id] != null && uniquePlaces.add(placeKey(choices[id]!))) id,
     ];
     final ready = model.proposalReady;
-    final busy = model.busy || widget.saving;
+    final updating =
+        model.routeRefreshState == RouteRefreshState.queued ||
+        model.routeRefreshState == RouteRefreshState.refreshing;
+    final busy =
+        model.busy ||
+        widget.saving ||
+        updating ||
+        (model.recommendationSavePending &&
+            model.recommendationStorageError == null &&
+            model.error == null &&
+            model.routeRefreshState != RouteRefreshState.failed);
     final failure = model.recommendationFailure;
     final mayUpdate = !{
       'testing_budget',
@@ -102,40 +162,6 @@ class _RecommendationPageState extends State<RecommendationPage> {
       'quota',
       'unsupported_profile',
     }.contains(failure?.kind);
-    Widget map({bool interactive = false, VoidCallback? refresh}) {
-      final chosen = choices[model.selectedErrand];
-      final selection = chosen == null
-          ? -1
-          : located.indexWhere(
-              (id) => placeKey(choices[id]!) == placeKey(chosen),
-            );
-      return PlanMap(
-        key: ValueKey(
-          '${plan?.calculatedAt}:${located.map((id) => '${choices[id]!.providerPlaceId}:${choices[id]!.latitude}:${choices[id]!.longitude}').join('|')}:$interactive:$traffic',
-        ),
-        places: [
-          model.day.fromPlace,
-          for (final id in located) choices[id]!,
-          model.day.toPlace,
-        ],
-        labels: [
-          'Start',
-          for (final id in located) model.displayPlace(choices[id]!),
-          'Destination',
-        ],
-        geometry: ready ? plan!.geometry : const [],
-        interactive: interactive,
-        traffic: traffic,
-        selected: selection < 0 ? null : selection + 1,
-        onSelect: (i) {
-          if (i > 0 && i <= located.length) {
-            select(located[i - 1]);
-            refresh?.call();
-          }
-        },
-      );
-    }
-
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
@@ -146,19 +172,6 @@ class _RecommendationPageState extends State<RecommendationPage> {
                 controller: scroll,
                 padding: const EdgeInsets.all(20),
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${model.day.date} · ${model.day.profile.label}\nLeave ${clock(model.day.departure * 60)}',
-                        style: context.type.bodyMedium,
-                      ),
-                      TextButton(
-                        onPressed: busy ? null : model.review,
-                        child: const Text('Trip details'),
-                      ),
-                    ],
-                  ),
                   if (ready)
                     Text(
                       'Arrive at destination ${clock(plan!.schedule.endArrival)} · ${(plan.schedule.travelSeconds / 60).ceil()} min road travel',
@@ -167,8 +180,14 @@ class _RecommendationPageState extends State<RecommendationPage> {
                     const SizedBox(height: 12),
                     const LinearProgressIndicator(),
                     Text(
-                      model.progress,
-                      semanticsLabel: 'Updating plan. ${model.progress}',
+                      updating
+                          ? 'Updating route…'
+                          : model.recommendationSavePending
+                          ? 'Saving your choices…'
+                          : model.progress,
+                      semanticsLabel: updating
+                          ? 'Updating route and schedule'
+                          : model.progress,
                     ),
                   ] else if (!ready) ...[
                     const SizedBox(height: 12),
@@ -178,7 +197,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                     ),
                     Text(
                       model.error ??
-                          'Place choices changed. Update the route and schedule before starting.',
+                          'The route and schedule need checking before starting.',
                     ),
                     const Text(
                       'Your choices are kept. Route and times are not confirmed.',
@@ -209,7 +228,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                                         placeKey(choices[order[i]]!),
                                   ),
                             ready,
-                            busy,
+                            widget.saving,
                           ),
                         ],
                       ],
@@ -232,6 +251,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   ),
                   if (showMap && located.isNotEmpty) ...[
                     SizedBox(
+                      key: const ValueKey('inline-plan-map'),
                       height: MediaQuery.textScalerOf(context).scale(14) > 21
                           ? 160
                           : 220,
@@ -251,6 +271,10 @@ class _RecommendationPageState extends State<RecommendationPage> {
                               context: context,
                               isScrollControlled: true,
                               useSafeArea: true,
+                              sheetAnimationStyle:
+                                  MediaQuery.disableAnimationsOf(context)
+                                  ? AnimationStyle.noAnimation
+                                  : null,
                               builder: (_) => StatefulBuilder(
                                 builder: (sheetContext, refresh) => SizedBox(
                                   height:
@@ -350,14 +374,14 @@ class _RecommendationPageState extends State<RecommendationPage> {
                         : ready
                         ? widget.onContinue
                         : mayUpdate
-                        ? model.updatePlan
+                        ? model.retryRouteRefresh
                         : null,
                     child: Text(
                       busy
-                          ? 'Updating…'
+                          ? 'Updating route…'
                           : ready
                           ? 'Start trip'
-                          : 'Update plan',
+                          : 'Retry route update',
                     ),
                   ),
                   TextButton(

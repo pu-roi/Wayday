@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme.dart';
 import '../../../core/widgets/place_picker.dart';
 import '../../places/domain/place_intent.dart';
 import '../../places/presentation/search_attribution.dart';
 import '../../places/presentation/google_place_attribution.dart';
 import '../domain/planning_models.dart';
+import '../domain/recommendation.dart';
 import '../domain/errand_location_review.dart';
 import 'planning_controller.dart';
 
@@ -27,214 +29,303 @@ class PlaceAlternativesPage extends StatefulWidget {
 
 class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
   late String id = widget.errandId;
-  bool loading = false;
-  String? error;
-  int revision = 0;
-  final loaded = <String, List<PlanCandidate>>{};
+  final scrolls = <String, ScrollController>{};
+  bool manualBusy = false;
+  String? manualError;
   PlanningController get model => widget.model;
-  bool get canDiscover {
-    final errand = model.activeErrands.firstWhere((e) => e.id == id);
-    return needsPlaceRecommendation(errand, model.effectiveNeed(errand));
-  }
-
+  ScrollController get scroll => scrolls.putIfAbsent(
+    id,
+    () => ScrollController(
+      initialScrollOffset: model.alternativesFor(id).scrollOffset,
+    ),
+  );
   @override
   void initState() {
     super.initState();
-    load();
+    model.addListener(changed);
   }
 
-  Future<void> load({bool discover = false}) async {
-    final epoch = ++revision, current = id;
-    setState(() {
-      loading = true;
-      error = null;
-    });
-    try {
-      final saved = loaded[current] ?? model.candidates[current] ?? [];
-      if (!discover || !canDiscover || model.discovery == null) {
-        loaded[current] = saved;
-      } else {
-        // An explicit alternatives search is bounded to two nearby route anchors.
-        final stops = model.result?.schedule.stops ?? [];
-        final index = stops.indexWhere(
-          (s) => s.tasks.any((t) => t.errandId == current),
-        );
-        final points = {for (final p in model.points) p.key: p.place};
-        final batch = await model.discovery!.discover(
-          model.effectiveNeed(
-            model.activeErrands.firstWhere((e) => e.id == current),
-          )!,
-          polyline: null,
-          anchors: [
-            index > 0
-                ? points[stops[index - 1].placeKey]!
-                : model.day.fromPlace,
-            index >= 0 && index < stops.length - 1
-                ? points[stops[index + 1].placeKey]!
-                : model.day.toPlace,
-          ],
-          limit: 3,
-          cancelled: () => !mounted || epoch != revision,
-        );
-        if (mounted && epoch == revision) loaded[current] = batch.candidates;
-      }
-    } catch (e) {
-      if (mounted && epoch == revision) error = e.toString();
+  void changed() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    model.removeListener(changed);
+    for (final s in scrolls.values) {
+      s.dispose();
     }
-    if (mounted && epoch == revision) setState(() => loading = false);
+    super.dispose();
+  }
+
+  void page(String next) {
+    if (scroll.hasClients) {
+      model.alternativesFor(id).scrollOffset = scroll.offset;
+    }
+    setState(() {
+      id = next;
+      manualError = null;
+    });
   }
 
   Future<void> manual() async {
-    final errand = model.activeErrands.firstWhere((e) => e.id == id);
-    final place = await choosePlace(
-      context,
-      title: 'Choose place',
-      initial: errand.title,
-      forPlanning: true,
-    );
-    if (!mounted || place == null) return;
-    if (!place.hasCoordinates) {
-      setState(() => error = 'Choose a place with a map location.');
-      return;
-    }
+    final current = id,
+        errand = model.activeErrands.firstWhere((e) => e.id == id);
+    setState(() {
+      manualBusy = true;
+      manualError = null;
+    });
     try {
+      final place = await choosePlace(
+        context,
+        title: 'Choose place',
+        initial: errand.title,
+        forPlanning: true,
+      );
+      if (!mounted || place == null) return;
+      if (!place.hasCoordinates) {
+        throw const PlanningFailure('Choose a place with a map location.');
+      }
       if (place.isGoogle) await model.discovery?.hydrate(place);
-      if (mounted) Navigator.pop(context, AlternativeChoice(id, place));
+      if (mounted) Navigator.pop(context, AlternativeChoice(current, place));
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) {
+        setState(
+          () => manualError = e is PlanningFailure
+              ? e.message
+              : 'This place could not be selected. Try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => manualBusy = false);
     }
   }
 
-  String comparison(PlanCandidate candidate) {
-    final stops = model.result?.schedule.stops ?? [];
+  String? comparison(PlanCandidate candidate) {
+    if (!model.proposalReady) return null;
+    final stops = model.result!.schedule.stops;
     final index = stops.indexWhere((s) => s.tasks.any((t) => t.errandId == id));
-    if (index < 0) return 'Road estimates will be checked after selection';
+    if (index < 0) return null;
     final before = index == 0 ? '@start' : stops[index - 1].placeKey;
     final after = index == stops.length - 1
         ? '@end'
         : stops[index + 1].placeKey;
-    final detour = model.detourFor(candidate.key, before, after);
-    return detour == null
-        ? 'Road estimates will be checked after selection'
-        : '${(detour.abs() / 60).ceil()} min ${detour < 0 ? 'less' : 'extra'} travel · approximate';
+    final current = model.displayChoices[id];
+    final value = model.detourFor(candidate.key, before, after);
+    final baseline = current == null
+        ? null
+        : model.detourFor(placeKey(current), before, after);
+    if (value == null || baseline == null) return null;
+    final delta = value - baseline;
+    return delta == 0
+        ? 'Similar road travel · approximate'
+        : 'About ${(delta.abs() / 60).ceil()} min ${delta < 0 ? 'less' : 'more'} travel than current · approximate';
   }
 
   @override
   Widget build(BuildContext context) {
     final errands = model.activeErrands,
         index = errands.indexWhere((e) => e.id == id);
-    final values = loaded[id] ?? model.candidates[id] ?? [];
-    return Scaffold(
-      appBar: AppBar(title: const Text('Choose a place')),
-      body: SafeArea(
+    final state = model.alternativesFor(id), values = state.values;
+    final current = model.displayChoices[id];
+    final flexible = needsPlaceRecommendation(
+      errands[index],
+      model.effectiveNeed(errands[index]),
+    );
+    final browse = flexible && model.discovery is AlternativeDiscovery;
+    final height =
+        (MediaQuery.sizeOf(context).height -
+            MediaQuery.paddingOf(context).vertical -
+            MediaQuery.viewInsetsOf(context).bottom) *
+        .9;
+    return Material(
+      color: context.colors.surface,
+      child: SafeArea(
+        top: false,
         child: Center(
+          widthFactor: 1,
+          heightFactor: 1,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: BoxConstraints(maxWidth: 560, maxHeight: height),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Choose a place',
+                          style: context.type.titleLarge,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close place alternatives',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Row(
                     children: [
                       IconButton(
                         tooltip: 'Previous errand',
-                        onPressed: index > 0
-                            ? () {
-                                setState(() => id = errands[index - 1].id);
-                                load();
-                              }
+                        onPressed: !manualBusy && index > 0
+                            ? () => page(errands[index - 1].id)
                             : null,
                         icon: const Icon(Icons.chevron_left),
                       ),
                       Expanded(
                         child: Text(
-                          '${index + 1} of ${errands.length} · ${errands[index].title}',
+                          'Errand ${index + 1} of ${errands.length} · ${errands[index].title}',
+                          style: context.type.bodyMedium,
                         ),
                       ),
                       IconButton(
                         tooltip: 'Next errand',
-                        onPressed: index < errands.length - 1
-                            ? () {
-                                setState(() => id = errands[index + 1].id);
-                                load();
-                              }
+                        onPressed: !manualBusy && index < errands.length - 1
+                            ? () => page(errands[index + 1].id)
                             : null,
                         icon: const Icon(Icons.chevron_right),
                       ),
                     ],
                   ),
                 ),
-                if (loading) const LinearProgressIndicator(),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      for (final candidate in values)
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(model.displayPlace(candidate.place)),
-                          subtitle: Text(
-                            [
-                              model.discovery
-                                      ?.metadata(candidate.place)
-                                      ?.locality ??
-                                  candidate.reason,
-                              comparison(candidate),
-                            ].where((s) => s.isNotEmpty).join('\n'),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      state.scrollOffset = notification.metrics.pixels;
+                      return false;
+                    },
+                    child: ListView(
+                      key: ValueKey('alternatives-$id'),
+                      controller: scroll,
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                      children: [
+                        if (values.any((p) => comparison(p) == null))
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'The route and schedule update after you choose a different place.',
+                            ),
                           ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: loading
-                              ? null
-                              : () => Navigator.pop(
-                                  context,
-                                  AlternativeChoice(id, candidate.place),
-                                ),
+                        for (final candidate in values) ...[
+                          Semantics(
+                            selected:
+                                current != null &&
+                                placeKey(current) == candidate.key,
+                            child: ListTile(
+                              key: ValueKey('alternative-${candidate.key}'),
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(model.displayPlace(candidate.place)),
+                              subtitle: Text(
+                                [
+                                  if (current != null &&
+                                      placeKey(current) == candidate.key)
+                                    'Current place',
+                                  model.discovery
+                                          ?.metadata(candidate.place)
+                                          ?.locality ??
+                                      '',
+                                  if (comparison(candidate) != null)
+                                    comparison(candidate)!,
+                                ].where((s) => s.isNotEmpty).join(' · '),
+                              ),
+                              trailing:
+                                  current != null &&
+                                      placeKey(current) == candidate.key
+                                  ? Icon(
+                                      Icons.check_circle_outline,
+                                      color: context.wayday.link,
+                                    )
+                                  : const Icon(Icons.chevron_right),
+                              onTap: manualBusy
+                                  ? null
+                                  : () => Navigator.pop(
+                                      context,
+                                      AlternativeChoice(id, candidate.place),
+                                    ),
+                            ),
+                          ),
+                          const Divider(height: 1),
+                        ],
+                        if (values.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              'No suggestions yet. You can choose a specific place.',
+                            ),
+                          ),
+                        if (state.loading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: LinearProgressIndicator(
+                              semanticsLabel: 'Loading more suggestions',
+                            ),
+                          ),
+                        if (state.error != null)
+                          Text(state.error!, semanticsLabel: state.error),
+                        if (browse && !state.exhausted && values.length < 12)
+                          TextButton.icon(
+                            onPressed: state.loading || manualBusy
+                                ? null
+                                : () => model.showMoreAlternatives(id),
+                            icon: const Icon(Icons.expand_more),
+                            label: Text(
+                              state.error == null
+                                  ? 'Show more suggestions'
+                                  : 'Retry loading suggestions',
+                            ),
+                          ),
+                        if (browse && (state.exhausted || values.length >= 12))
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              'No more suggestions from these searches',
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: manualBusy ? null : manual,
+                          icon: const Icon(Icons.search),
+                          label: const Text('Choose a specific place'),
                         ),
-                      if (!loading && values.isEmpty)
-                        const Text(
-                          'No suitable alternatives yet. Search for a specific place or choose on the map.',
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8, bottom: 12),
+                          child: Text(
+                            'Search by name or address, use a saved place, or choose on the map.',
+                          ),
                         ),
-                      if (error != null) Text(error!),
-                      if (values.any((p) => p.place.isGoogle))
-                        GooglePlaceAttribution(
-                          showGoogleMaps: false,
+                        if (manualBusy)
+                          const LinearProgressIndicator(
+                            semanticsLabel: 'Checking your selected place',
+                          ),
+                        if (manualError != null) Text(manualError!),
+                        if (values.any((p) => p.place.isGoogle))
+                          GooglePlaceAttribution(
+                            showGoogleMaps: true,
+                            credits: [
+                              for (final p in values)
+                                ...?model.discovery
+                                    ?.metadata(p.place)
+                                    ?.attributions,
+                            ],
+                          ),
+                        SearchAttribution(
                           credits: [
                             for (final p in values.where(
-                              (p) => p.place.isGoogle,
+                              (p) => !p.place.isGoogle,
                             ))
-                              ...?model.discovery
-                                  ?.metadata(p.place)
-                                  ?.attributions,
+                              ...p.place.attributions,
                           ],
                         ),
-                      SearchAttribution(
-                        credits: [
-                          for (final p in values.where(
-                            (p) => !p.place.isGoogle,
-                          ))
-                            ...p.place.attributions,
-                        ],
-                      ),
-                      if (canDiscover)
-                        TextButton(
-                          onPressed: loading
-                              ? null
-                              : () => load(discover: true),
-                          child: const Text('Find more along this trip'),
-                        ),
-                    ],
-                  ),
-                ),
-                if (values.any((p) => p.place.isGoogle))
-                  const GoogleMapsAttributionLabel(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: loading ? null : manual,
-                      icon: const Icon(Icons.search),
-                      label: const Text('Search for a place'),
+                      ],
                     ),
                   ),
                 ),
