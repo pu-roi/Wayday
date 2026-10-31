@@ -7,6 +7,10 @@ description: Plan, implement, or review Wayday errand interpretation rules, plac
 
 D66 adds optional validated PlaceSearchIntent hints to new model responses without runtime phrase classification or automatic cache upgrades. Assign semantic variants to at most one corridor/two anchors total; combine initial bounded results, share suitability with browsing and preserve existing shortlist limits. General groceries favor supermarkets/public markets while appropriate small shops and unrated records remain eligible. Preserve fixed branches, explicit brands and hours. The worker ranks optional completion, suitability, road seconds, then count-tempered ratings with prior 3.5/weight 20; ratings do not prove inventory, access or popularity. Keep conservative US$0.035/US$0.020 rates and all existing accounting protections.
 
+The owner's D66 follow-up requests explicit Open now/Closed now in Details and alternatives. Compute current status locally from fresh hours with an exclusive closing boundary; weekly fallback says Usually. Keep current status separate from trip-date feasibility and calculated visit compatibility. A business closed now can still suit a later visit. Unknown, failed, stale and pin-only hours must not imply closure. Local minute updates make no provider request or isOpen call.
+
+Use [D66 verification evidence](../../../docs/wayday/evidence/place-quality-2026-11-01.md) for the current handoff: clean analysis, 553 full-suite passes, one skip and eight unchanged baseline failures, a successful Android build, earlier mocked Android fixtures and separate native profile results. The emulator's lower picker rebuild count does not establish physical-phone smoothness; live model/listing quality, actual charged SKUs and unplugged-phone behavior remain separately unqualified. Preserve the existing paid-accounting recovery and personal-phone protections.
+
 Read the repository's `AGENTS.md` and current user request before acting. Work within the owner's authorized scope; a planning review does not authorize deployments, account changes or new backend services.
 
 ## Establish the contract

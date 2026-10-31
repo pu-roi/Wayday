@@ -12,6 +12,8 @@ Add optional validated semantic variants/type families to new interpretation and
 
 See [D66 evidence](evidence/place-quality-2026-11-01.md) for implementation and separate qualification results. Keep current budgets, enriched-field rates, five-minute reuse and disposable accounting recovery. No new service/provider/dependency/model, Cloud change or personal-phone installation is authorized.
 
+Implementation handoff (2026-11-01): analysis and the Android build pass; the full suite records 553 passes, one skip and the same eight baseline failures. Full-address layout checks and local opening-status clock checks pass. Separate native profile runs reduced picker map-builder calls from 16 to 12, with noisy emulator frame timings rather than proof of physical-device smoothness. Existing saved understanding remains reusable; upgrading does not generate again. Live recommendation quality, billing reconciliation and unplugged-phone checks remain distinct from these results.
+
 ## Current-trip recovery and finishing — D65 current contract
 
 The owner approved keeping unfinished-trip recovery and selected a compact Current trip section at the top of Today, below its title/date and above its errand editor. Show a route icon, completed/assigned errand count and Resume trip; the action opens the existing current-trip summary before guidance. Remove the old bottom View saved plan shortcut. Recovery stays available after accidental exit or restart, including when errands are complete but the final journey has not been explicitly finished. This is independent of the optional Save for reuse action under Recurring.
