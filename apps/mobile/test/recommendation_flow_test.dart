@@ -22,6 +22,7 @@ class Discovery implements RecommendationDiscovery {
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async {
     calls++;
     return DiscoveryResult([
@@ -384,6 +385,7 @@ class FailingDiscovery extends Discovery {
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async {
     final count = perErrand.update(need.id, (n) => n + 1, ifAbsent: () => 1);
     if (need.id == 'b' && count == 1) {

@@ -7,6 +7,7 @@ enum PlaceExclusion {
   missingName,
   country,
   closed,
+  hours,
   addressOnly,
   brand,
   category,

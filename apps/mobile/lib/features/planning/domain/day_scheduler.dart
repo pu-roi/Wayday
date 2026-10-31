@@ -179,7 +179,8 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
           // Waiting for a known opening interval is part of service timing.
           if (!open(key, service, leave)) {
             final windows = hours[key];
-            if (windows == null || shared || e.timing == TimingRule.at) {
+            if (windows == null || shared || e.timing == TimingRule.at ||
+                input['allowOpeningWait'] == false) {
               continue;
             }
             final valid =
@@ -293,6 +294,10 @@ String? validateSchedule(Map<String, dynamic> input, DaySchedule schedule) {
         return 'The task sequence is invalid.';
       }
       final limit = (e.minute ?? 0) * 60;
+      if (input['allowOpeningWait'] == false && e.timing != TimingRule.at &&
+          task.start != earliest) {
+        return 'Opening-time waiting is not allowed.';
+      }
       if ((e.timing == TimingRule.at && task.start != limit) ||
           (e.timing == TimingRule.arriveBy && stop.arrival > limit) ||
           (e.timing == TimingRule.finishBefore &&

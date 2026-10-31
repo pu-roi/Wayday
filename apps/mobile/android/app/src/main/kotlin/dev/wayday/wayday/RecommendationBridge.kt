@@ -13,6 +13,10 @@ import com.google.android.libraries.places.api.model.CircularBounds
 import com.google.android.libraries.places.api.model.EncodedPolyline
 import com.google.android.libraries.places.api.model.SearchAlongRouteParameters
 import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.OpeningHours
+import com.google.android.libraries.places.api.model.TimeOfWeek
+import java.time.Instant
+import java.time.ZoneOffset
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.SearchByTextRequest
 import com.google.android.libraries.places.api.net.PlacesStatusCodes
@@ -28,12 +32,13 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
     private val active = mutableSetOf<Reply>()
     private val fields = listOf(Place.Field.ID, Place.Field.DISPLAY_NAME, Place.Field.LOCATION,
         Place.Field.FORMATTED_ADDRESS, Place.Field.ADDRESS_COMPONENTS, Place.Field.TYPES,
-        Place.Field.PRIMARY_TYPE, Place.Field.BUSINESS_STATUS)
+        Place.Field.PRIMARY_TYPE, Place.Field.BUSINESS_STATUS,
+        Place.Field.OPENING_HOURS, Place.Field.CURRENT_OPENING_HOURS, Place.Field.UTC_OFFSET)
     init {
         channel.setMethodCallHandler { call, result ->
             if (disposed) { result.error("closed", "Place service closed", null); return@setMethodCallHandler }
             if (call.method == "status") {
-                result.success(mapOf("configured" to keyConfigured(), "bridgeVersion" to 2))
+                result.success(mapOf("configured" to keyConfigured(), "bridgeVersion" to 3))
                 return@setMethodCallHandler
             }
             if (call.method !in listOf("search", "details")) { result.notImplemented(); return@setMethodCallHandler }
@@ -92,6 +97,21 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
             .metaData?.getString("com.google.android.geo.API_KEY").isNullOrEmpty()
     } catch (_: Exception) { false }
     private fun snapshot(place: Place): Map<String, Any?> {
+        val at = System.currentTimeMillis()
+        fun date(value: com.google.android.libraries.places.api.model.LocalDate) =
+            String.format(Locale.US, "%04d-%02d-%02d", value.year, value.month, value.day)
+        fun point(value: TimeOfWeek): Map<String, Any?> = mapOf(
+            "day" to value.day.ordinal, "hour" to value.time.hours,
+            "minute" to value.time.minutes, "date" to value.date?.let(::date),
+            "truncated" to value.isTruncated)
+        fun hours(value: OpeningHours?): Map<String, Any?>? = value?.let {
+            mapOf("periods" to it.periods.map { period ->
+                mapOf("open" to point(period.open), "close" to period.close?.let(::point))
+            }, "weekdays" to it.weekdayText,
+                "specialDays" to it.specialDays.map { day ->
+                    mapOf("date" to date(day.date), "exceptional" to day.isExceptional)
+                })
+        }
         val components = place.addressComponents?.asList().orEmpty()
         val country = components.firstOrNull { it.types.contains("country") }?.shortName
         val locality = listOf("sublocality_level_1", "sublocality", "locality")
@@ -100,7 +120,12 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
             "latitude" to place.location?.latitude, "longitude" to place.location?.longitude,
             "address" to place.formattedAddress, "locality" to locality, "country" to country,
             "types" to place.placeTypes.orEmpty(), "status" to place.businessStatus?.name,
-            "attributions" to place.attributions.orEmpty(), "at" to System.currentTimeMillis())
+            "attributions" to place.attributions.orEmpty(), "at" to at,
+            "hoursVersion" to 1, "utcOffset" to place.utcOffsetMinutes,
+            "hoursDate" to place.utcOffsetMinutes?.let {
+                Instant.ofEpochMilli(at).atOffset(ZoneOffset.ofTotalSeconds(it * 60)).toLocalDate().toString()
+            }, "regularHours" to hours(place.openingHours),
+            "currentHours" to hours(place.currentOpeningHours))
     }
     private inner class Reply(val result: MethodChannel.Result, val operation: String) {
         val cancellation = CancellationTokenSource()

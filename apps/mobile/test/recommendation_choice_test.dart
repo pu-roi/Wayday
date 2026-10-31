@@ -46,6 +46,7 @@ class _Discovery implements RecommendationDiscovery {
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async {
     received.add(need);
     return DiscoveryResult([

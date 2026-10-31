@@ -25,7 +25,10 @@ typedef PlacesInvoker =
     );
 
 class GoogleRecommendationDiscovery
-    implements RecommendationDiscovery, AlternativeDiscovery {
+    implements
+        RecommendationDiscovery,
+        AlternativeDiscovery,
+        HoursRefreshDiscovery {
   GoogleRecommendationDiscovery(
     this.ledger,
     this.pins, {
@@ -88,6 +91,13 @@ class GoogleRecommendationDiscovery
   final _pending = <String, Future<_PlaceBatch>>{};
   final _cache = <String, ({DateTime at, _PlaceBatch values})>{};
   final _places = <String, RecommendationPlace>{};
+  final _failedHours = <String>{};
+
+  @override
+  BusinessHours hoursStatus(PlaceIntent place) =>
+      _failedHours.contains(place.providerPlaceId)
+      ? const BusinessHours(failed: true)
+      : metadata(place)?.hours ?? const BusinessHours();
 
   @override
   RecommendationPlace? metadata(PlaceIntent place) =>
@@ -101,6 +111,14 @@ class GoogleRecommendationDiscovery
         maximumRequests,
         ProviderPolicy.forId('google_ui_kit'),
       );
+      if (maximumRequests > 0) {
+        await ledger.googleBudget?.google(
+          'places_35000',
+          maximumRequests,
+          35000,
+          checkOnly: true,
+        );
+      }
     } on SearchFailure catch (e) {
       throw RecommendationFailure(
         e.kind == SearchFailureKind.accounting
@@ -116,7 +134,7 @@ class GoogleRecommendationDiscovery
     Map<String, Object?> args, {
     bool Function()? cancelled,
   }) async {
-    final key = jsonEncode([method, args]);
+    final key = jsonEncode([1, method, args]); // Requested hours field profile.
     final saved = _cache[key];
     if (saved != null &&
         DateTime.now().difference(saved.at) < const Duration(minutes: 5)) {
@@ -145,7 +163,7 @@ class GoogleRecommendationDiscovery
               final wait = await ledger.reserve(
                 'google_ui_kit',
                 ProviderPolicy.forId('google_ui_kit'),
-                googleUnitMicros: method == 'details' ? 17000 : 32000,
+                googleUnitMicros: method == 'details' ? 20000 : 35000,
               );
               if (wait == null) {
                 reserved = true;
@@ -198,6 +216,7 @@ class GoogleRecommendationDiscovery
             final batch = _PlaceBatch(values, raw.length, exclusions);
             for (final p in values) {
               _places[p.id] = p;
+              _failedHours.remove(p.id);
             }
             while (_places.length > 240) {
               _places.remove(_places.keys.first);
@@ -210,7 +229,7 @@ class GoogleRecommendationDiscovery
             return batch;
           } on PlanningFailure {
             if (reserved && !dispatched) {
-              final rate = method == 'details' ? 17000 : 32000;
+              final rate = method == 'details' ? 20000 : 35000;
               await ledger.googleBudget?.google(
                 'places_$rate',
                 1,
@@ -306,6 +325,23 @@ class GoogleRecommendationDiscovery
       : RecommendationOperation.anchor;
 
   @override
+  Future<RecommendationPlace?> retryHours(PlaceIntent place) async {
+    final id = place.providerPlaceId;
+    _cache.remove(
+      jsonEncode([
+        1,
+        'details',
+        {'id': id},
+      ]),
+    );
+    final previous = metadata(place);
+    if (previous != null) {
+      _places[previous.id] = previous.withHours(previous.hours.failure());
+    }
+    return hydrate(place);
+  }
+
+  @override
   Future<RecommendationPlace?> hydrate(
     PlaceIntent place, {
     bool Function()? cancelled,
@@ -313,24 +349,34 @@ class GoogleRecommendationDiscovery
     if (!place.isGoogle) return null;
     final current = metadata(place);
     if (current != null &&
+        current.hours.checked &&
         place.hasCoordinates &&
         DateTime.now().difference(current.acquiredAt) <
             const Duration(minutes: 5)) {
       return current;
     }
-    final batch = await _request('details', {
-      'id': place.providerPlaceId,
-    }, cancelled: cancelled);
-    final values = batch.places;
-    if (values.isEmpty || values.single.id != place.providerPlaceId) {
-      throw const PlanningFailure(
-        'This selected Google place could not be refreshed. Choose its actual location.',
-        kind: 'missing_location',
-      );
+    try {
+      final batch = await _request('details', {
+        'id': place.providerPlaceId,
+      }, cancelled: cancelled);
+      final values = batch.places;
+      if (values.isEmpty || values.single.id != place.providerPlaceId) {
+        throw const PlanningFailure(
+          'This selected Google place could not be refreshed. Choose its actual location.',
+          kind: 'missing_location',
+        );
+      }
+      final value = values.single;
+      await _persistCoordinates(value);
+      _failedHours.remove(value.id);
+      return value;
+    } catch (_) {
+      _failedHours.add(place.providerPlaceId!);
+      if (current != null) {
+        _places[current.id] = current.withHours(current.hours.failure());
+      }
+      rethrow;
     }
-    final value = values.single;
-    await _persistCoordinates(value);
-    return value;
   }
 
   @override
@@ -340,12 +386,14 @@ class GoogleRecommendationDiscovery
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async => (await _collect(
     need,
     polyline: polyline,
     anchors: anchors,
     limit: limit,
     cancelled: cancelled,
+    hours: hours,
   )).result;
 
   @override
@@ -356,6 +404,7 @@ class GoogleRecommendationDiscovery
     required Set<String> excludedKeys,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   }) async {
     final batch = await _collect(
       need,
@@ -365,6 +414,7 @@ class GoogleRecommendationDiscovery
       excludedKeys: excludedKeys,
       browsing: true,
       cancelled: cancelled,
+      hours: hours,
     );
     return AlternativeBatch(
       batch.result.candidates,
@@ -380,6 +430,7 @@ class GoogleRecommendationDiscovery
     required bool Function() cancelled,
     Set<String> excludedKeys = const {},
     bool browsing = false,
+    HoursQuery? hours,
   }) async {
     void check() {
       if (cancelled()) {
@@ -402,7 +453,7 @@ class GoogleRecommendationDiscovery
         {'query': need.query, 'latitude': p.latitude, 'longitude': p.longitude},
     ];
     bool cached(Map<String, Object?> context) {
-      final saved = _cache[jsonEncode(['search', context])];
+      final saved = _cache[jsonEncode([1, 'search', context])];
       return saved != null &&
           DateTime.now().difference(saved.at) < const Duration(minutes: 5);
     }
@@ -420,6 +471,10 @@ class GoogleRecommendationDiscovery
       returnedCount += batch.returnedCount;
       batch.exclusions.forEach(exclude);
       for (final p in batch.places) {
+        if (hours != null && !hours.permits(p.hours)) {
+          exclude(PlaceExclusion.hours);
+          continue;
+        }
         if (brand != null &&
             !brand.landmark &&
             brandSearchTerm(p.name)?.brand.name != brand.name) {

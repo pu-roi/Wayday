@@ -2,7 +2,9 @@ import '../../places/domain/philippine_eligibility.dart';
 import '../../places/domain/place_intent.dart';
 import 'planning_models.dart';
 import 'discovery_result.dart';
+import 'business_hours.dart';
 export 'discovery_result.dart';
+export 'business_hours.dart';
 
 /// Provider display data lives only in the current recommendation session.
 class RecommendationPlace {
@@ -18,12 +20,28 @@ class RecommendationPlace {
     this.country,
     this.status,
     this.attributions = const [],
+    this.hours = const BusinessHours(),
   });
   final String id, name, address, locality;
   final double latitude, longitude;
   final DateTime acquiredAt;
   final List<String> types, attributions;
   final String? country, status;
+  final BusinessHours hours;
+  RecommendationPlace withHours(BusinessHours value) => RecommendationPlace(
+    id: id,
+    name: name,
+    latitude: latitude,
+    longitude: longitude,
+    acquiredAt: acquiredAt,
+    address: address,
+    locality: locality,
+    types: types,
+    country: country,
+    status: status,
+    attributions: attributions,
+    hours: value,
+  );
 
   factory RecommendationPlace.fromJson(Map<Object?, Object?> json) {
     final id = json['id'],
@@ -75,6 +93,10 @@ class RecommendationPlace {
       status: json['status'] as String?,
       types: strings('types'),
       attributions: strings('attributions'),
+      hours: BusinessHours.fromJson(
+        json,
+        DateTime.fromMillisecondsSinceEpoch(at, isUtc: true),
+      ),
     );
   }
 
@@ -148,6 +170,7 @@ abstract interface class RecommendationDiscovery {
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   });
   Future<RecommendationPlace?> hydrate(
     PlaceIntent place, {
@@ -171,5 +194,11 @@ abstract interface class AlternativeDiscovery {
     required Set<String> excludedKeys,
     required int limit,
     required bool Function() cancelled,
+    HoursQuery? hours,
   });
+}
+
+abstract interface class HoursRefreshDiscovery {
+  Future<RecommendationPlace?> retryHours(PlaceIntent place);
+  BusinessHours hoursStatus(PlaceIntent place);
 }
