@@ -38,3 +38,5 @@ Use the V2 prototype as a provisional interaction reference. Preserve its source
 ## Verify the affected behavior
 
 Choose checks that exercise observable persistence, correction, navigation, and failure behavior. For reminders and offline maps, include physical-device cases from the architecture guide. When only documentation exists, review the design and state which checks remain future work rather than inventing executable application tests.
+
+D61 combines recommendation, route and schedule review; multiple place replacements need one explicit route update without Gemini/discovery. Start trip saves active progress and opens guidance directly, while Save for reuse adds a separately named Recurring entry. Preserve five-minute foreground reuse and invalidate it on background. Reuse remaps task/dependency IDs and refreshes providers without generation. The approved additional Google test allocation is US$8 personal / US$2 disposable, durable without refill or an account-wide guarantee. Keep the personal-phone harness protection. Future sharing/live GPS remains documentation only.

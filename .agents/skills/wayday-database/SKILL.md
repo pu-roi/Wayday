@@ -5,7 +5,7 @@ description: Plan, implement, or review Wayday Drift/SQLite persistence, Postgre
 
 # Wayday database
 
-Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The Android app uses a versioned Drift/SQLite schema and has a recovery path for the previous workspace database. Inspect existing data and migration history before changes. Saved-trip schemas are future work; documentation planning does not authorize runtime implementation.
+Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The Android app uses a versioned Drift/SQLite schema and has a recovery path for the previous workspace database. Inspect existing data and migration history before changes. D61 authorizes additive Drift v7 reusable-trip storage; templates remain separate from active accepted progress and ordinary recurring lists.
 
 Follow the owner's current task for storage scope and acceptance criteria; [Contributing](../../../docs/wayday/CONTRIBUTING.md#regional-maps-and-data) owns package/import practices. Sample-data cleanup removes future seeding/reset behavior while preserving existing rows, including user-edited examples. Repeat settings remain metadata; storage work does not authorize an automatic scheduler.
 
@@ -32,3 +32,5 @@ Choose and document spatial types, SRID, coordinate ordering, and distance units
 Inspect the current schema, consumers, and migration history before changing fields. For real databases, identify the target and current authorization before executing migrations. Prepare data-preserving transformations and a recovery approach for destructive changes; do not assume rollback can recover deleted data. Test on synthetic or authorized disposable data before touching valuable state.
 
 When code exists, verify clean setup and upgrades from the prior supported schema. Exercise app restart, dependency/template integrity, import reruns, and affected spatial query behavior. Review query plans when a change affects catalog scale rather than adding speculative indexes. Keep downloaded extracts, database files, dumps, credentials, and private coordinates out of source control; use small synthetic fixtures for tests.
+
+D61 implements reusable-trip persistence in additive Drift v7, separate from accepted progress and recurring errand lists. Preserve v1/v2 accepted reads and the optional stable run identity. Each reuse clones task IDs and dependencies while retaining validated meaning and permitted place references; do not store provider display text, route matrices, geometry or ETAs in a template. Test v6 upgrade/reopen with existing accepted data. The private Google testing ledger is durable with no refill on ordinary updates; corrupt accounting fails closed.

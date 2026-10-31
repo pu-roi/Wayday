@@ -34,3 +34,5 @@ When runnable UI exists and the task authorizes verification, inspect representa
 
 
 D60 removes the separate Recheck location needs with Gemini action and assessment retry/credit controls. The existing question/answer sheet owns missing meaning and correction. Recommendation failures use a concise recovery view with retained choices, unfinished-route wording, appropriate retry behavior and secondary manual search. Do not label a provider rejection as an empty search or replace the automatic experience with a mandatory manual-selection wizard. Keep long actions below row text when enlarged text would consume the row width.
+
+D61 combines recommendations, schedule and route preview in Your plan. Keep visible Change on every row even during failure. Alternatives use a supporting sheet; several choices require one Update plan before Start trip. Start trip and Save for reuse are separate, and saved trips live under Recurring. Keep arrival versus visit/departure distinct, disclose extra detail and let the inline map yield page scrolling. Use the current theme, accessible action targets and enlarged-text layouts; no extra schedule-acceptance wizard.
