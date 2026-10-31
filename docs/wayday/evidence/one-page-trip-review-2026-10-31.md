@@ -50,3 +50,14 @@ Services are recorded separately. Reservations occur before dispatch; known unse
 ### Remaining qualification
 
 Live whole-trip branch/road quality remains blocked by Routes access. Physical-phone behavior, TalkBack, native map gestures, approximate/denied location behavior and real navigation remain separate qualification work. Saved templates deliberately retain no road geometry, live ETAs, matrices or copied Google business text. A saved template refreshes the selected IDs and roads before starting; it does not promise offline or request-free navigation. Future shared errands/live-location sharing remain documentation only.
+
+
+### Follow-up after owner authorization of the test identity
+
+The owner confirmed adding the disposable Android identity to the Routes key. The first subsequent rehearsal installed successfully but its process was killed after five seconds. Android exit history explicitly records LOW_MEMORY, independently of Google authorization. No provider response was recovered from that interrupted request.
+
+The disposable emulator was restarted with 3,072 MB RAM, without wiping its data. The workspace Gradle daemon was stopped and the repeated build used daemon-disabled execution to release build memory before the test. The bounded repeat built in 311.3 seconds and completed its failure path in four seconds: `kind=access`, `operation=seed`, HTTP `403`. There was no SDK discovery or matrix qualification. The exact remaining Google rejection is still unknown; the newly confirmed Cloud entry alone has not resolved it.
+
+The built test package is `dev.wayday.wayday.maptest`, and its verified signing SHA-1 matches the owner-supplied fingerprint. The request bridge supplies the native package and unseparated signing digest in the documented Android headers. Local Routes and Maps key values are present and distinct; their values were not printed or changed. Account-side key identity, service access and project/billing status remain unverified. Do not infer quota exhaustion or prescribe a quota increase from this 403.
+
+Durable disposable accounting now reserves US$0.03 out of US$2, entirely under `routes_DRIVE`, including dispatched failures and interruption. This is a conservative local estimate, not a confirmed Cloud charge. No refill, Gemini generation, personal-phone harness, personal installation or Cloud change occurred. The ordinary APK was restored from its protected copy with the same recorded SHA-256; the owned emulator was shut down without wiping data. Google Cloud quota inspection remains pending owner-provided limits/usage.
