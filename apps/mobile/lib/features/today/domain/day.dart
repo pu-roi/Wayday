@@ -22,6 +22,7 @@ class DayPlan {
     this.deadline = 1080,
     this.profile = TravelProfile.motor,
     String? date,
+    this.dateSelected = false,
     this.timeZone = 'Asia/Manila',
     this.revision = 0,
     PlaceIntent? fromPlace,
@@ -37,6 +38,17 @@ class DayPlan {
   final int deadline;
   final TravelProfile profile;
   final String date;
+  final bool dateSelected;
+  bool get canDefaultDate =>
+      !dateSelected &&
+      errands.isEmpty &&
+      from.isEmpty &&
+      to.isEmpty &&
+      !fromPlace.hasCoordinates &&
+      !toPlace.hasCoordinates &&
+      departure == 510 &&
+      deadline == 1080 &&
+      profile == TravelProfile.motor;
   final String timeZone;
   final int revision;
   final PlaceIntent fromPlace;
@@ -49,6 +61,7 @@ class DayPlan {
     int? deadline,
     TravelProfile? profile,
     String? date,
+    bool? dateSelected,
     String? timeZone,
     int? revision,
     PlaceIntent? fromPlace,
@@ -61,6 +74,7 @@ class DayPlan {
     deadline: deadline ?? this.deadline,
     profile: profile ?? this.profile,
     date: date ?? this.date,
+    dateSelected: dateSelected ?? this.dateSelected,
     timeZone: timeZone ?? this.timeZone,
     revision: revision ?? this.revision,
     fromPlace:
@@ -76,6 +90,7 @@ class DayPlan {
     'deadline': deadline,
     'profile': profile.name,
     'date': date,
+    'dateSelected': dateSelected,
     'timeZone': timeZone,
     'revision': revision,
     'fromPlace': fromPlace.toJson(),
@@ -112,6 +127,7 @@ class DayPlan {
       deadline: deadline,
       profile: TravelProfile.values.byName(json['profile'] as String),
       date: date,
+      dateSelected: json['dateSelected'] as bool? ?? true,
       timeZone: json['timeZone'] as String,
       revision: json['revision'] as int,
       fromPlace: PlaceIntent.fromJson(

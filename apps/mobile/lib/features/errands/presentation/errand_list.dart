@@ -174,8 +174,9 @@ class ErrandRow extends StatelessWidget {
 }
 
 class ErrandComposer extends StatefulWidget {
-  const ErrandComposer({required this.onAdd, super.key});
+  const ErrandComposer({required this.onAdd, this.onDraftChanged, super.key});
   final ValueChanged<String> onAdd;
+  final ValueChanged<bool>? onDraftChanged;
   @override
   State<ErrandComposer> createState() => _ErrandComposerState();
 }
@@ -192,6 +193,9 @@ class _ErrandComposerState extends State<ErrandComposer>
   @override
   void initState() {
     super.initState();
+    _text.addListener(
+      () => widget.onDraftChanged?.call(_text.text.trim().isNotEmpty),
+    );
     _follow = AnimationController(vsync: this)..addListener(_keepVisible);
   }
 

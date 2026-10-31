@@ -91,8 +91,9 @@ class ReviewTrip {
   }
 }
 
-String reviewTripSourceKey(DayPlan source) =>
-    sha256.convert(utf8.encode(jsonEncode(source.toJson()))).toString();
+String reviewTripSourceKey(DayPlan source) => sha256
+    .convert(utf8.encode(jsonEncode(source.toJson()..remove('dateSelected'))))
+    .toString();
 
 abstract interface class ReviewTripRepository {
   Future<ReviewTrip?> read(DayPlan source);

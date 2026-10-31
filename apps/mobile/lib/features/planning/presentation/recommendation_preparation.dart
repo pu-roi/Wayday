@@ -78,6 +78,7 @@ extension RecommendationPreparation on PlanningController {
             )
             .toJson()
           ..remove('from')
+          ..remove('dateSelected')
           ..remove('to')),
     'needs': needs.values
         .map(
@@ -86,6 +87,8 @@ extension RecommendationPreparation on PlanningController {
             'query': n.query,
             'category': n.category,
             'items': n.items,
+            if (n.searchIntent != null)
+              'searchIntent': n.searchIntent!.toJson(),
             'duration': n.durationMinutes,
             'after': n.after,
             'timing': n.timing,

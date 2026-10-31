@@ -14,6 +14,7 @@ final dayRepositoryProvider = Provider<DayRepository>(
 final todayProvider = NotifierProvider<TodayController, DayPlan>(
   TodayController.new,
 );
+final todayClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 class TodayController extends Notifier<DayPlan> {
   int _nextId = 0;
@@ -141,6 +142,8 @@ class TodayController extends Notifier<DayPlan> {
       departure: 510,
       deadline: 1080,
       profile: TravelProfile.motor,
+      date: pilotToday(ref.read(todayClockProvider)()),
+      dateSelected: false,
     ),
   );
   void setEndpoint({required bool start, required PlaceIntent value}) {
@@ -155,7 +158,14 @@ class TodayController extends Notifier<DayPlan> {
   void setProfile(TravelProfile value) =>
       _commit(state.copyWith(profile: value));
   void setDate(DateTime value) =>
-      _commit(state.copyWith(date: calendarDate(value)));
+      _commit(state.copyWith(date: calendarDate(value), dateSelected: true));
+  void refreshDefaultDate(DateTime now) {
+    final date = pilotToday(now);
+    if (state.canDefaultDate && state.date != date) {
+      _commit(state.copyWith(date: date));
+    }
+  }
+
   void setTimes({int? departure, int? deadline}) =>
       _commit(state.copyWith(departure: departure, deadline: deadline));
 }

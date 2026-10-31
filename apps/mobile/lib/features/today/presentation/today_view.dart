@@ -13,6 +13,8 @@ import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
 import '../../planning/presentation/planning_view.dart';
 import '../../planning/presentation/current_trip_section.dart';
+import '../../planning/presentation/saved_plan_view.dart'
+    show savedItineraryProvider;
 import '../../planning/presentation/finish_trip.dart';
 import '../../maps/presentation/place_map.dart';
 import '../../maps/presentation/regional_map.dart';
@@ -45,14 +47,75 @@ class _TodayViewState extends ConsumerState<TodayView>
   final _finding = <bool>{};
   final _lookupTimers = <bool, Timer>{};
   int _fromRevision = 0, _toRevision = 0;
+  Timer? _midnight;
+  bool _composerDraft = false;
+  int _editors = 0;
+  Future<T> _editor<T>(Future<T> Function() open) async {
+    _editors++;
+    try {
+      return await open();
+    } finally {
+      _editors--;
+      if (mounted) unawaited(_refreshDate());
+    }
+  }
+
+  Future<void> _refreshDate() async {
+    if (!mounted ||
+        _composerDraft ||
+        _editors > 0 ||
+        ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
+    final day = ref.read(todayProvider);
+    if (!day.canDefaultDate) return;
+    try {
+      final trip = await ref.read(savedItineraryProvider.future);
+      if (!mounted ||
+          trip != null ||
+          _composerDraft ||
+          _editors > 0 ||
+          ref.read(todayProvider).revision != day.revision ||
+          ModalRoute.of(context)?.isCurrent == false) {
+        return;
+      }
+      ref
+          .read(todayProvider.notifier)
+          .refreshDefaultDate(ref.read(todayClockProvider)());
+    } catch (_) {
+      // Recovery could not be checked: preserve the existing plan date.
+    }
+  }
+
+  void _watchDate() {
+    _midnight?.cancel();
+    final now = ref.read(todayClockProvider)().toUtc();
+    final manila = now.add(const Duration(hours: 8));
+    final next = DateTime.utc(
+      manila.year,
+      manila.month,
+      manila.day + 1,
+    ).subtract(const Duration(hours: 8));
+    _midnight = Timer(
+      next.difference(now) + const Duration(milliseconds: 100),
+      () {
+        if (!mounted) return;
+        unawaited(_refreshDate());
+        _watchDate();
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _watchDate();
     _placeSearch = ref.read(combinedPlaceSearchProvider);
     _googlePins = ref.read(googlePinCacheProvider)..addListener(_pinsChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      unawaited(_refreshDate());
       final controller = ref.read(todayProvider.notifier);
       final previous = controller.recoveredOrder;
       controller.recoveredOrder = null;
@@ -72,6 +135,7 @@ class _TodayViewState extends ConsumerState<TodayView>
 
   @override
   void dispose() {
+    _midnight?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _cancelLookup(true);
     _cancelLookup(false);
@@ -92,9 +156,14 @@ class _TodayViewState extends ConsumerState<TodayView>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _watchDate();
+      unawaited(_refreshDate());
+    }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
+      _midnight?.cancel();
       setState(() {
         _cancelLookup(true);
         _cancelLookup(false);
@@ -184,6 +253,7 @@ class _TodayViewState extends ConsumerState<TodayView>
       errands: ref.read(todayProvider).errands,
     );
     if (!mounted) return;
+    unawaited(_refreshDate());
     final controller = ref.read(todayProvider.notifier);
     switch (result) {
       case SavedErrand(:final errand):
@@ -214,11 +284,13 @@ class _TodayViewState extends ConsumerState<TodayView>
   Future<void> _place(bool start) async {
     setState(() => _cancelLookup(start));
     final day = ref.read(todayProvider);
-    final value = await choosePlace(
-      context,
-      title: start ? 'Starting point' : 'Final destination',
-      initial: start ? day.from : day.to,
-      initialPlace: start ? day.fromPlace : day.toPlace,
+    final value = await _editor(
+      () => choosePlace(
+        context,
+        title: start ? 'Starting point' : 'Final destination',
+        initial: start ? day.from : day.to,
+        initialPlace: start ? day.fromPlace : day.toPlace,
+      ),
     );
     if (value != null && mounted) {
       ref.read(todayProvider.notifier).setEndpoint(start: start, value: value);
@@ -228,10 +300,12 @@ class _TodayViewState extends ConsumerState<TodayView>
 
   Future<void> _time(bool start) async {
     final day = ref.read(todayProvider);
-    final value = await chooseTime(
-      context,
-      title: start ? 'Leave at' : 'Home by',
-      initialMinute: start ? day.departure : day.deadline,
+    final value = await _editor(
+      () => chooseTime(
+        context,
+        title: start ? 'Leave at' : 'Home by',
+        initialMinute: start ? day.departure : day.deadline,
+      ),
     );
     if (value == null || !mounted) return;
     if ((start && value >= day.deadline) ||
@@ -251,42 +325,46 @@ class _TodayViewState extends ConsumerState<TodayView>
         );
   }
 
-  void _travel() => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'How are you getting around?',
-                style: context.type.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              for (final profile in TravelProfile.values)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(profileIcon(profile)),
-                  title: Text(profile.label),
-                  subtitle: switch (profile) {
-                    TravelProfile.sedan => const Text('Low ground clearance'),
-                    TravelProfile.truck => const Text('High ground clearance'),
-                    _ => null,
-                  },
-                  trailing: ref.read(todayProvider).profile == profile
-                      ? Icon(Icons.check_rounded, color: context.wayday.link)
-                      : null,
-                  onTap: () {
-                    ref.read(todayProvider.notifier).setProfile(profile);
-                    Navigator.pop(sheetContext);
-                  },
+  void _travel() => _editor(
+    () => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How are you getting around?',
+                  style: context.type.titleLarge,
                 ),
-            ],
+                const SizedBox(height: 16),
+                for (final profile in TravelProfile.values)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(profileIcon(profile)),
+                    title: Text(profile.label),
+                    subtitle: switch (profile) {
+                      TravelProfile.sedan => const Text('Low ground clearance'),
+                      TravelProfile.truck => const Text(
+                        'High ground clearance',
+                      ),
+                      _ => null,
+                    },
+                    trailing: ref.read(todayProvider).profile == profile
+                        ? Icon(Icons.check_rounded, color: context.wayday.link)
+                        : null,
+                    onTap: () {
+                      ref.read(todayProvider.notifier).setProfile(profile);
+                      Navigator.pop(sheetContext);
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -312,7 +390,8 @@ class _TodayViewState extends ConsumerState<TodayView>
               day.to.isNotEmpty ||
               day.departure != 510 ||
               day.deadline != 1080 ||
-              day.profile != TravelProfile.motor)
+              day.profile != TravelProfile.motor ||
+              day.dateSelected)
             TextButton.icon(
               key: const Key('clear-errands'),
               onPressed: ref.watch(tripFinishProvider) ? null : _clear,
@@ -344,11 +423,13 @@ class _TodayViewState extends ConsumerState<TodayView>
                         ).formatFullDate(DateTime.parse(day.date)),
                       ),
                       onPressed: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.parse(day.date),
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2100),
+                        final date = await _editor(
+                          () => showDatePicker(
+                            context: context,
+                            initialDate: DateTime.parse(day.date),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          ),
                         );
                         if (date != null && mounted) {
                           ref.read(todayProvider.notifier).setDate(date);
@@ -460,6 +541,7 @@ class _TodayViewState extends ConsumerState<TodayView>
                             ),
                             ErrandComposer(
                               key: const Key('today-composer'),
+                              onDraftChanged: (value) => _composerDraft = value,
                               onAdd: (value) {
                                 ref.read(todayProvider.notifier).add(value);
                                 setState(() => _showAll = true);

@@ -86,6 +86,8 @@ class SqliteDayRepository implements DayRepository {
                 resolveGooglePin: resolveGooglePin,
               ),
         date: details?['date'] as String?,
+        dateSelected:
+            details?['dateSelected'] as bool? ?? details?['date'] != null,
         timeZone: details?['timeZone'] as String? ?? 'Asia/Manila',
         revision: details?['revision'] as int? ?? 0,
         profile: _parseEnum(
@@ -174,6 +176,7 @@ class SqliteDayRepository implements DayRepository {
                 'fromPlace': day.fromPlace.toJson(),
                 'toPlace': day.toPlace.toJson(),
                 'date': day.date,
+                'dateSelected': day.dateSelected,
                 'timeZone': day.timeZone,
                 'revision': day.revision,
               }),
