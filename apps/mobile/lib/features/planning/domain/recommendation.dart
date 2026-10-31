@@ -155,3 +155,21 @@ abstract interface class RecommendationDiscovery {
   });
   RecommendationPlace? metadata(PlaceIntent place);
 }
+
+/// Browsing never expands the automatic solver's shortlist.
+class AlternativeBatch {
+  const AlternativeBatch(this.candidates, {required this.exhausted});
+  final List<PlanCandidate> candidates;
+  final bool exhausted;
+}
+
+abstract interface class AlternativeDiscovery {
+  Future<AlternativeBatch> moreAlternatives(
+    ErrandNeed need, {
+    required String? polyline,
+    required List<PlaceIntent> anchors,
+    required Set<String> excludedKeys,
+    required int limit,
+    required bool Function() cancelled,
+  });
+}

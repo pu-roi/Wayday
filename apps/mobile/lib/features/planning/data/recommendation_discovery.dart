@@ -24,17 +24,56 @@ typedef PlacesInvoker =
       Map<String, Object?> arguments,
     );
 
-class GoogleRecommendationDiscovery implements RecommendationDiscovery {
+class GoogleRecommendationDiscovery
+    implements RecommendationDiscovery, AlternativeDiscovery {
   GoogleRecommendationDiscovery(
     this.ledger,
     this.pins, {
     PlacesInvoker? invoke,
     this.requestTimeout = const Duration(seconds: 15),
+    this.coordinateSaveTimeout = const Duration(seconds: 10),
   }) : invoke = invoke ?? _native;
   final QuotaLedger ledger;
   final GooglePinCache pins;
   final PlacesInvoker invoke;
   final Duration requestTimeout;
+  final Duration coordinateSaveTimeout;
+  final _coordinateSaves = <String, Future<void>>{};
+
+  Future<void> _persistCoordinates(RecommendationPlace place) async {
+    final key = jsonEncode([
+      place.id,
+      place.latitude,
+      place.longitude,
+      place.acquiredAt.toIso8601String(),
+    ]);
+    final flight = _coordinateSaves.putIfAbsent(
+      key,
+      () =>
+          pins.put(place.id, place.latitude, place.longitude, place.acquiredAt),
+    );
+    void done() {
+      if (identical(_coordinateSaves[key], flight)) {
+        _coordinateSaves.remove(key);
+      }
+    }
+
+    unawaited(
+      flight.then<void>(
+        (_) => done(),
+        onError: (Object _, StackTrace _) => done(),
+      ),
+    );
+    try {
+      await flight.timeout(coordinateSaveTimeout);
+    } on TimeoutException {
+      throw const PlanningFailure(
+        'The selected place location could not finish saving. Your choices are kept.',
+        kind: 'accounting',
+      );
+    }
+  }
+
   static const channel = MethodChannel('wayday/recommendations');
   static Future<List<Object?>> _native(
     String method,
@@ -290,7 +329,7 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
       );
     }
     final value = values.single;
-    await pins.put(value.id, value.latitude, value.longitude, value.acquiredAt);
+    await _persistCoordinates(value);
     return value;
   }
 
@@ -301,6 +340,46 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
     required List<PlaceIntent> anchors,
     required int limit,
     required bool Function() cancelled,
+  }) async => (await _collect(
+    need,
+    polyline: polyline,
+    anchors: anchors,
+    limit: limit,
+    cancelled: cancelled,
+  )).result;
+
+  @override
+  Future<AlternativeBatch> moreAlternatives(
+    ErrandNeed need, {
+    required String? polyline,
+    required List<PlaceIntent> anchors,
+    required Set<String> excludedKeys,
+    required int limit,
+    required bool Function() cancelled,
+  }) async {
+    final batch = await _collect(
+      need,
+      polyline: polyline,
+      anchors: anchors,
+      limit: limit,
+      excludedKeys: excludedKeys,
+      browsing: true,
+      cancelled: cancelled,
+    );
+    return AlternativeBatch(
+      batch.result.candidates,
+      exhausted: batch.exhausted,
+    );
+  }
+
+  Future<({DiscoveryResult result, bool exhausted})> _collect(
+    ErrandNeed need, {
+    required String? polyline,
+    required List<PlaceIntent> anchors,
+    required int limit,
+    required bool Function() cancelled,
+    Set<String> excludedKeys = const {},
+    bool browsing = false,
   }) async {
     void check() {
       if (cancelled()) {
@@ -361,10 +440,14 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
           continue;
         }
         if (pool.containsKey(p.id)) exclude(PlaceExclusion.duplicate);
+        if (excludedKeys.contains('google:${p.id}')) continue;
         pool[p.id] = p;
       }
       check();
-      if (pool.length >= limit && polyline != null) break;
+      if (pool.length >= limit + (browsing ? 1 : 0) &&
+          (browsing || polyline != null)) {
+        break;
+      }
     }
     // Retain candidates from different route anchors, rather than only the start.
     final ranked = pool.values.toList();
@@ -410,7 +493,7 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
     final result = <PlanCandidate>[];
     for (final p in chosen) {
       check();
-      await pins.put(p.id, p.latitude, p.longitude, p.acquiredAt);
+      await _persistCoordinates(p);
       final place = p.reference(pins.lease(p.id));
       result.add(
         PlanCandidate(
@@ -432,7 +515,12 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
         'WaydayRecommendations outcome=${report.outcome.name} returned=${report.returnedCount} candidates=${report.candidates.length} exclusions=${report.exclusions.map((key, value) => MapEntry(key.name, value))}',
       );
     }
-    return report;
+    return (
+      result: report,
+      exhausted:
+          pool.length <= limit &&
+          seen.length == contexts.map(jsonEncode).toSet().length,
+    );
   }
 }
 
