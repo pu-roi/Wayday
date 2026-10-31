@@ -3,6 +3,7 @@ import 'package:wayday/features/planning/data/recommendation_discovery.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/places/data/google_pin_cache.dart';
 import 'package:wayday/features/places/data/search_quota.dart';
+import 'package:wayday/features/places/domain/place_intent.dart';
 import 'helpers/planning_fixtures.dart';
 
 void main() {
@@ -62,6 +63,69 @@ void main() {
       expect(original.candidates.length, 3);
       expect(calls, 1);
       expect(more.exhausted, isFalse);
+    },
+  );
+  test(
+    'all fresh contexts are browsed before spending on an unused anchor',
+    () async {
+      var calls = 0;
+      final pins = GooglePinCache(read: () async => null, write: (_) async {});
+      addTearDown(pins.dispose);
+      final service = GoogleRecommendationDiscovery(
+        QuotaLedger(read: () async => null, write: (_) async {}),
+        pins,
+        invoke: (_, args) async {
+          calls++;
+          final prefix = args.containsKey('polyline') ? 'corridor' : 'anchor';
+          return List.generate(
+            3,
+            (i) => {
+              'id': '$prefix$i',
+              'name': 'Gym $prefix $i',
+              'latitude': 14.58 + i * .0001,
+              'longitude': 121.06,
+              'country': 'PH',
+              'types': ['gym'],
+              'at': DateTime.now().millisecondsSinceEpoch,
+            },
+          );
+        },
+      );
+      // Another matching search has already populated the second anchor.
+      const second = PlaceIntent(
+        kind: PlaceKind.specific,
+        latitude: 14.6,
+        longitude: 121.08,
+      );
+      await service.discover(
+        need,
+        polyline: null,
+        anchors: [second],
+        limit: 3,
+        cancelled: () => false,
+      );
+      final original = await service.discover(
+        need,
+        polyline: 'seed',
+        anchors: [pin, second],
+        limit: 3,
+        cancelled: () => false,
+      );
+      final batch = await service.moreAlternatives(
+        need,
+        polyline: 'seed',
+        anchors: [pin, second],
+        limit: 3,
+        excludedKeys: original.candidates.map((p) => p.key).toSet(),
+        cancelled: () => false,
+      );
+      expect(batch.candidates.length, 3);
+      expect(
+        batch.candidates.every((p) => p.key.startsWith('google:anchor')),
+        isTrue,
+      );
+      expect(calls, 2);
+      expect(batch.exhausted, isFalse);
     },
   );
   test(

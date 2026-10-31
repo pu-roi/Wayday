@@ -401,8 +401,17 @@ class GoogleRecommendationDiscovery
       for (final p in anchors.where((p) => p.hasCoordinates).take(2))
         {'query': need.query, 'latitude': p.latitude, 'longitude': p.longitude},
     ];
+    bool cached(Map<String, Object?> context) {
+      final saved = _cache[jsonEncode(['search', context])];
+      return saved != null &&
+          DateTime.now().difference(saved.at) < const Duration(minutes: 5);
+    }
+
+    final searches = browsing
+        ? [...contexts.where(cached), ...contexts.where((c) => !cached(c))]
+        : contexts;
     final seen = <String>{};
-    for (final context in contexts) {
+    for (final context in searches) {
       check();
       if (!seen.add(jsonEncode(context))) continue;
       final brand = brandSearchTerm(need.query)?.brand;
@@ -444,8 +453,7 @@ class GoogleRecommendationDiscovery
         pool[p.id] = p;
       }
       check();
-      if (pool.length >= limit + (browsing ? 1 : 0) &&
-          (browsing || polyline != null)) {
+      if (pool.length >= limit && (browsing || polyline != null)) {
         break;
       }
     }
