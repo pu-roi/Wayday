@@ -10,6 +10,7 @@ import '../../places/domain/place_search.dart';
 import '../../places/domain/search_terms.dart';
 import '../domain/planning_models.dart';
 import '../domain/recommendation.dart';
+import '../domain/place_suitability.dart';
 
 final recommendationDiscoveryProvider = Provider<RecommendationDiscovery>(
   (ref) => GoogleRecommendationDiscovery(
@@ -134,7 +135,11 @@ class GoogleRecommendationDiscovery
     Map<String, Object?> args, {
     bool Function()? cancelled,
   }) async {
-    final key = jsonEncode([1, method, args]); // Requested hours field profile.
+    final key = jsonEncode([
+      2,
+      method,
+      args,
+    ]); // Hours/type/rating field profile.
     final saved = _cache[key];
     if (saved != null &&
         DateTime.now().difference(saved.at) < const Duration(minutes: 5)) {
@@ -331,7 +336,7 @@ class GoogleRecommendationDiscovery
     final id = place.providerPlaceId;
     _cache.remove(
       jsonEncode([
-        1,
+        2,
         'details',
         {'id': id},
       ]),
@@ -444,18 +449,38 @@ class GoogleRecommendationDiscovery
     }
 
     check();
+    final locatedAnchors = anchors.where((p) => p.hasCoordinates).toList();
     final pool = <String, RecommendationPlace>{};
     final exclusions = <PlaceExclusion, int>{};
     var returnedCount = 0, contextsEvaluated = 0;
     void exclude(PlaceExclusion reason, [int count = 1]) =>
         exclusions.update(reason, (n) => n + count, ifAbsent: () => count);
+    final variants = need.searchIntent?.variants ?? [need.query];
+    final explicitBrand = brandSearchTerm(need.query)?.brand;
+    var slot = 0;
+    Map<String, Object?> query(Map<String, Object?> area) {
+      var text = variants[slot++ % variants.length];
+      if (explicitBrand != null &&
+          !explicitBrand.landmark &&
+          brandSearchTerm(text)?.brand.name != explicitBrand.name) {
+        text = need.query;
+      }
+      return {
+        'query': text,
+        ...area,
+        if (need.searchIntent?.acceptableTypes.length == 1 &&
+            need.searchIntent!.acceptableTypes.single != 'meal_takeaway')
+          'type': need.searchIntent!.acceptableTypes.single,
+      };
+    }
+
     final contexts = <Map<String, Object?>>[
-      if (polyline != null) {'query': need.query, 'polyline': polyline},
-      for (final p in anchors.where((p) => p.hasCoordinates).take(2))
-        {'query': need.query, 'latitude': p.latitude, 'longitude': p.longitude},
+      if (polyline != null) query({'polyline': polyline}),
+      for (final p in locatedAnchors.take(2))
+        query({'latitude': p.latitude, 'longitude': p.longitude}),
     ];
     bool cached(Map<String, Object?> context) {
-      final saved = _cache[jsonEncode([1, 'search', context])];
+      final saved = _cache[jsonEncode([2, 'search', context])];
       return saved != null &&
           DateTime.now().difference(saved.at) < const Duration(minutes: 5);
     }
@@ -483,25 +508,7 @@ class GoogleRecommendationDiscovery
           exclude(PlaceExclusion.brand);
           continue;
         }
-        final types = switch (need.category) {
-          'grocery' => {
-            'supermarket',
-            'grocery_store',
-            'market',
-            'convenience_store',
-            'discount_store',
-            'food_store',
-          },
-          'pharmacy' => {'pharmacy', 'drugstore'},
-          'marketplace' => {
-            'market',
-            'farmers_market',
-            'supermarket',
-            'grocery_store',
-          },
-          _ => <String>{},
-        };
-        if (types.isNotEmpty && !p.types.any(types.contains)) {
+        if (placeSuitability(need, p) == 0) {
           exclude(PlaceExclusion.category);
           continue;
         }
@@ -510,15 +517,15 @@ class GoogleRecommendationDiscovery
         pool[p.id] = p;
       }
       check();
-      if (pool.length >= limit && (browsing || polyline != null)) {
+      if (pool.length >= limit && browsing) {
         break;
       }
     }
     // Retain candidates from different route anchors, rather than only the start.
     final ranked = pool.values.toList();
     double cost(RecommendationPlace p) {
-      if (anchors.isEmpty) return 0;
-      final a = anchors.first, b = anchors.last;
+      if (locatedAnchors.isEmpty) return 0;
+      final a = locatedAnchors.first, b = locatedAnchors.last;
       return distanceMeters(
             a.latitude!,
             a.longitude!,
@@ -528,32 +535,83 @@ class GoogleRecommendationDiscovery
           distanceMeters(p.latitude, p.longitude, b.latitude!, b.longitude!);
     }
 
-    ranked.sort((a, b) => cost(a).compareTo(cost(b)));
+    int compare(RecommendationPlace a, RecommendationPlace b) {
+      final suitability = placeSuitability(
+        need,
+        b,
+      ).compareTo(placeSuitability(need, a));
+      if (suitability != 0) return suitability;
+      final geographic = cost(a).compareTo(cost(b));
+      if (geographic != 0) return geographic;
+      final quality = b.quality.compareTo(a.quality);
+      if (quality != 0) return quality;
+      final rank = a.providerRank.compareTo(b.providerRank);
+      return rank != 0 ? rank : a.id.compareTo(b.id);
+    }
+
+    ranked.sort(compare);
     final chosen = <RecommendationPlace>[];
     if (ranked.isNotEmpty) chosen.add(ranked.first);
-    for (final anchor in anchors.reversed) {
+    for (final anchor in locatedAnchors.reversed) {
       if (chosen.length >= limit) break;
       final remaining = ranked.where((p) => !chosen.contains(p)).toList()
         ..sort(
           (a, b) =>
-              distanceMeters(
-                anchor.latitude!,
-                anchor.longitude!,
-                a.latitude,
-                a.longitude,
-              ).compareTo(
-                distanceMeters(
+              placeSuitability(need, b).compareTo(placeSuitability(need, a)) !=
+                  0
+              ? placeSuitability(need, b).compareTo(placeSuitability(need, a))
+              : distanceMeters(
                   anchor.latitude!,
                   anchor.longitude!,
-                  b.latitude,
-                  b.longitude,
+                  a.latitude,
+                  a.longitude,
+                ).compareTo(
+                  distanceMeters(
+                    anchor.latitude!,
+                    anchor.longitude!,
+                    b.latitude,
+                    b.longitude,
+                  ),
                 ),
-              ),
         );
       if (remaining.isNotEmpty) chosen.add(remaining.first);
     }
     for (final p in ranked) {
       if (chosen.length < limit && !chosen.contains(p)) chosen.add(p);
+    }
+    // Keep a complementary preferred family represented when the response has it.
+    final represented = chosen
+        .map((p) => p.primaryType.isEmpty ? p.types.firstOrNull : p.primaryType)
+        .toSet();
+    final complementary = ranked
+        .where(
+          (p) =>
+              placeSuitability(need, p) == 2 &&
+              !represented.contains(
+                p.primaryType.isEmpty ? p.types.firstOrNull : p.primaryType,
+              ),
+        )
+        .firstOrNull;
+    if (complementary != null &&
+        chosen.length > 1 &&
+        !chosen.contains(complementary)) {
+      chosen[chosen.length - 1] = complementary;
+    }
+    final fallback = ranked
+        .where((p) => placeSuitability(need, p) == 1)
+        .firstOrNull;
+    if (fallback != null &&
+        chosen.length >= 3 &&
+        chosen.every((p) => placeSuitability(need, p) == 2)) {
+      // Keep a weaker but plausible option for disconnected/infeasible branches.
+      var replace = chosen.length - 1;
+      for (var i = 1; i < chosen.length; i++) {
+        if (chosen[i].primaryType == chosen.first.primaryType) {
+          replace = i;
+          break;
+        }
+      }
+      chosen[replace] = fallback;
     }
     final result = <PlanCandidate>[];
     for (final p in chosen) {
@@ -565,7 +623,9 @@ class GoogleRecommendationDiscovery
           key: placeKey(place),
           place: place,
           errandIds: {need.id},
-          reason: 'Matches your request; compared within this trip.',
+          reason: placeSuitability(need, p) == 2
+              ? 'Matches the interpreted errand; compared within this trip. Stock and access are unconfirmed.'
+              : 'Possible match from Google; check its suitability before visiting.',
         ),
       );
     }

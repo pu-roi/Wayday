@@ -318,7 +318,7 @@ void main() {
           ),
         ),
       );
-      expect(calls, 1);
+      expect(calls, 2);
       final choice = batches.first.candidates.single;
       expect(service.metadata(choice.place)!.name, 'Actual Coffee Shop');
       expect(choice.place.label, isEmpty);

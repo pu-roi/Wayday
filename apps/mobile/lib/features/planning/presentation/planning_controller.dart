@@ -24,6 +24,7 @@ import '../domain/errand_location_review.dart';
 import '../domain/trip_departure.dart';
 import '../domain/planning_input_checks.dart';
 import '../domain/recommendation.dart';
+import '../domain/place_suitability.dart';
 import '../data/recommendation_draft_repository.dart';
 import '../data/reusable_trip_repository.dart';
 
@@ -989,6 +990,14 @@ class PlanningController extends ChangeNotifier {
     ];
   }
 
+  int _candidateSuitability(Errand errand, PlanCandidate candidate) {
+    final metadata = discovery?.metadata(candidate.place);
+    final need = effectiveNeed(errand);
+    return metadata == null || need == null
+        ? 2
+        : placeSuitability(need, metadata);
+  }
+
   Future<void> calculate() async {
     if (proposalReady &&
         _calculationSignature == _routeInputSignature &&
@@ -1095,6 +1104,20 @@ class PlanningController extends ChangeNotifier {
         'end': '@end',
         'hours': openingWindows,
         'allowOpeningWait': false,
+        'preferences': {
+          for (final e in activeErrands)
+            e.id: {
+              for (final p in selected.where((p) => p.errandIds.contains(e.id)))
+                p.key: {
+                  'suitability':
+                      overrides.containsKey(e.id) ||
+                          e.placeIntent.hasCoordinates
+                      ? 2
+                      : _candidateSuitability(e, p),
+                  'quality': discovery?.metadata(p.place)?.quality ?? 3.5,
+                },
+            },
+        },
         'options': {
           for (final e in activeErrands)
             e.id: selected

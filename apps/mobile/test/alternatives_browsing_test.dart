@@ -61,7 +61,7 @@ void main() {
       expect(more.candidates.length, 3);
       expect(more.candidates.any((p) => excluded.contains(p.key)), isFalse);
       expect(original.candidates.length, 3);
-      expect(calls, 1);
+      expect(calls, 2);
       expect(more.exhausted, isFalse);
     },
   );
@@ -121,10 +121,12 @@ void main() {
       );
       expect(batch.candidates.length, 3);
       expect(
-        batch.candidates.every((p) => p.key.startsWith('google:anchor')),
-        isTrue,
+        batch.candidates.any(
+          (p) => original.candidates.any((o) => o.key == p.key),
+        ),
+        isFalse,
       );
-      expect(calls, 2);
+      expect(calls, 3);
       expect(batch.exhausted, isFalse);
     },
   );

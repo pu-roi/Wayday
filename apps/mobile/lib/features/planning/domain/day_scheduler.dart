@@ -101,6 +101,23 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
   bool timedOut = false;
   DaySchedule? best;
   int bestOptional = -1;
+  List<int>? bestRank;
+  final preferences = input['preferences'] as Map? ?? {};
+  (int, int) preference(List<ScheduledStop> stops) {
+    var suitability = 0, quality = 0;
+    for (final stop in stops) {
+      for (final task in stop.tasks) {
+        final value =
+            (preferences[task.errandId] as Map?)?[stop.placeKey] as Map?;
+        suitability += (value?['suitability'] as int? ?? 2).clamp(0, 2);
+        final rating = value?['quality'] as num? ?? 3.5;
+        quality += ((rating.isFinite ? rating : 3.5).clamp(0, 5) * 1000000)
+            .round();
+      }
+    }
+    return (suitability, quality);
+  }
+
   bool open(String key, int from, int to) =>
       hours[key] == null ||
       hours[key]!.any((w) => w.length == 2 && from >= w[0] && to <= w[1]);
@@ -127,15 +144,26 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
       if (tail == null || time + tail > deadline) return;
       final optional = done.where((id) => byId[id]!.optional).length;
       final total = travel + tail;
-      if (optional > bestOptional ||
-          (optional == bestOptional &&
-              (best == null ||
-                  total < best!.travelSeconds ||
-                  (total == best!.travelSeconds &&
-                      (stops.length < best!.stops.length ||
-                          (stops.length == best!.stops.length &&
-                              time + tail < best!.endArrival)))))) {
+      final (suitability, quality) = preference(stops);
+      final rank = [
+        optional,
+        suitability,
+        -total,
+        quality,
+        -stops.length,
+        -(time + tail),
+      ];
+      var better = bestRank == null;
+      if (bestRank != null) {
+        for (var i = 0; i < rank.length; i++) {
+          if (rank[i] == bestRank![i]) continue;
+          better = rank[i] > bestRank![i];
+          break;
+        }
+      }
+      if (better) {
         bestOptional = optional;
+        bestRank = rank;
         best = DaySchedule(
           stops: [...stops],
           omitted: {
@@ -179,7 +207,9 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
           // Waiting for a known opening interval is part of service timing.
           if (!open(key, service, leave)) {
             final windows = hours[key];
-            if (windows == null || shared || e.timing == TimingRule.at ||
+            if (windows == null ||
+                shared ||
+                e.timing == TimingRule.at ||
                 input['allowOpeningWait'] == false) {
               continue;
             }
@@ -294,7 +324,8 @@ String? validateSchedule(Map<String, dynamic> input, DaySchedule schedule) {
         return 'The task sequence is invalid.';
       }
       final limit = (e.minute ?? 0) * 60;
-      if (input['allowOpeningWait'] == false && e.timing != TimingRule.at &&
+      if (input['allowOpeningWait'] == false &&
+          e.timing != TimingRule.at &&
           task.start != earliest) {
         return 'Opening-time waiting is not allowed.';
       }
