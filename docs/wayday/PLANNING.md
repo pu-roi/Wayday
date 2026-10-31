@@ -1,6 +1,20 @@
 # Plan my day implementation plan
 
-## One-page trip review and sustainable requests — D61 current contract
+## Clearer alternatives and automatic route updates — D62 current contract
+
+The owner approved D62 on 2026-10-31. This supersedes D61's manual multi-edit/Update plan interaction. Keep Your plan visible after a replacement, durably save the selected reference, then debounce road acquisition and scheduling by 500 ms. Preserve every other branch and approved constraint. These updates use neither Gemini nor automatic business discovery. A revisioned coordinator permits one calculation flight, queues the latest saved choice and rejects older results. Show Updating route, retain Change controls and block Start trip. Move markers immediately, hide stale geometry/times, and apply the refreshed road route, order and schedule together. Failure retains choices and offers explicit Retry route update; unchanged failed work does not retry automatically.
+
+Alternatives use a content-sized supporting sheet, bounded to 90% of usable height. Keep the heading, Close and Previous/Next controls visible above scrolling results. The pager reads Errand 3 of 3 · Groceries. Mark the selected business with a checkmark and Current place. Show available approximate road comparisons; otherwise explain once that route and schedule update after selection. Follow results with Show more suggestions, then Choose a specific place and its search/saved-place/map explanation, followed by required provider attribution. Do not restore a nested Scaffold, bottom-anchored manual action or a forced full-height gap.
+
+Maintain a separate transient browsing pool of at most twelve unique suggestions per errand. Reveal up to three per tap, retain row order, selection and per-errand scroll position, and reuse the original bounded search contexts and their full cached results before requesting unused contexts. Retain one corridor/two-anchor bounds, suitability/brand filters, request coalescing and accounting. The solver remains bounded to three candidates per errand and twelve assignments. A successful exhausted search shows No more suggestions from these searches; failed requests retain selectable rows and an inline retry. Browsing never persists copied provider display text.
+
+Remove the entire Trip details block from Your plan; the earlier Review errands section remains. Manual picker cancellation returns to alternatives, sheet/map dismissal returns to the underlying plan, Your plan Back returns to Review, and Close retains saved progress before returning to Today. An unchanged valid proposal can be reused from Review. Native map overlays are explicitly synchronized without recreating the map view when coordinates or route geometry change.
+
+Bound preparation and draft-save waits to ten seconds each, preserving provider timeouts and in-flight work. Timeouts do not prove cancellation, refund accounting or detach overlapping requests. Persist choices before reporting success. Keep late storage responses from changing newer save status. No schema, provider, dependency, Cloud configuration or billing change is part of D62. The disposable live-accounting recovery floor remains mandatory before any further paid checks.
+
+Implementation and verification are recorded in [D62 evidence](evidence/alternatives-and-auto-refresh-2026-10-31.md). Mocked checks, Android fixture behavior, actual provider quality and unplugged physical-phone behavior are separate claims.
+
+## One-page trip review and sustainable requests — D61 historical contract
 
 The owner approved D61 on 2026-10-31. Combine recommended places, a timed stop list and one Google route preview in Your plan. Every errand retains a visible Change action during recovery. Alternatives use a supporting sheet. Apply several choices, then Update plan once; retain the other displayed branches, approved constraints and task identities. Updating chosen places does not invoke Gemini or automatically rediscover businesses. Starting remains blocked until the complete route is validated. This supersedes the separate Next: see my day / Your day acceptance sequence below.
 
