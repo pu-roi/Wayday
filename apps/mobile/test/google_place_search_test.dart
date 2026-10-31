@@ -622,7 +622,7 @@ void main() {
       );
       var current = ledger();
       final policy = ProviderPolicy.forId('google_ui_kit');
-      for (var i = 0; i < 100; i++) {
+      for (var i = 0; i < policy.daily; i++) {
         expect(await current.reserve('google_ui_kit', policy), isNull);
         now = now.add(const Duration(seconds: 4));
         if (i == 49) current = ledger();

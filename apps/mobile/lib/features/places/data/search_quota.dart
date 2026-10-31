@@ -3,8 +3,11 @@ import 'dart:convert';
 import '../domain/place_search.dart';
 import 'quota_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../planning/data/planning_budget.dart';
 
-final searchQuotaLedgerProvider = Provider<QuotaLedger>((ref) => QuotaLedger());
+final searchQuotaLedgerProvider = Provider<QuotaLedger>(
+  (ref) => QuotaLedger(googleBudget: ref.read(googleTestingBudgetProvider)),
+);
 
 class ProviderPolicy {
   const ProviderPolicy(this.spacing, this.minute, this.daily, this.debounce);
@@ -14,7 +17,7 @@ class ProviderPolicy {
       ? const ProviderPolicy(
           Duration(milliseconds: 1100),
           20,
-          100,
+          1000,
           Duration(seconds: 1),
         )
       : id == 'photon'
@@ -37,12 +40,14 @@ class QuotaLedger {
     Future<String?> Function()? read,
     Future<void> Function(String)? write,
     DateTime Function()? now,
+    this.googleBudget,
   }) : read = read ?? readQuotaFile,
        write = write ?? writeQuotaFile,
        now = now ?? DateTime.now;
   final Future<String?> Function() read;
   final Future<void> Function(String) write;
   final DateTime Function() now;
+  final PlanningBudget? googleBudget;
   final Map<String, List<DateTime>> _starts = {};
   final Map<String, DateTime> _cooldowns = {};
   final Map<String, int> _streaks = {};
@@ -119,43 +124,66 @@ class QuotaLedger {
         }
       });
 
-  Future<DateTime?> reserve(String id, ProviderPolicy policy) =>
-      _serial(() async {
-        await _load();
-        final time = now().toUtc();
-        final pause = _cooldowns[id];
-        if (pause != null && pause.isAfter(time)) {
-          throw SearchFailure(SearchFailureKind.rate, retryAt: pause);
-        }
-        final starts = _starts.putIfAbsent(id, () => []);
-        starts.removeWhere(
-          (d) => !d.isAfter(time.subtract(const Duration(hours: 24))),
+  Future<DateTime?> reserve(
+    String id,
+    ProviderPolicy policy, {
+    int googleUnitMicros = 5000,
+  }) => _serial(() async {
+    await _load();
+    final time = now().toUtc();
+    final pause = _cooldowns[id];
+    if (pause != null && pause.isAfter(time)) {
+      throw SearchFailure(SearchFailureKind.rate, retryAt: pause);
+    }
+    final starts = _starts.putIfAbsent(id, () => []);
+    starts.removeWhere(
+      (d) => !d.isAfter(time.subtract(const Duration(hours: 24))),
+    );
+    if (starts.length >= policy.daily) {
+      throw SearchFailure(
+        SearchFailureKind.daily,
+        retryAt: starts.first.add(const Duration(hours: 24)),
+      );
+    }
+    DateTime allowed = time;
+    if (starts.isNotEmpty) {
+      final spaced = starts.last.add(policy.spacing);
+      if (spaced.isAfter(allowed)) allowed = spaced;
+    }
+    final recent = starts
+        .where((d) => d.isAfter(time.subtract(const Duration(minutes: 1))))
+        .toList();
+    if (recent.length >= policy.minute) {
+      final minute = recent[recent.length - policy.minute].add(
+        const Duration(minutes: 1),
+      );
+      if (minute.isAfter(allowed)) allowed = minute;
+    }
+    if (allowed.isAfter(time)) return allowed;
+    if (id == 'google_ui_kit') {
+      await googleBudget?.google(
+        'places_$googleUnitMicros',
+        1,
+        googleUnitMicros,
+      );
+    }
+    starts.add(time);
+    try {
+      await _save();
+    } catch (_) {
+      starts.removeLast();
+      if (id == 'google_ui_kit') {
+        await googleBudget?.google(
+          'places_$googleUnitMicros',
+          1,
+          googleUnitMicros,
+          release: true,
         );
-        if (starts.length >= policy.daily) {
-          throw SearchFailure(
-            SearchFailureKind.daily,
-            retryAt: starts.first.add(const Duration(hours: 24)),
-          );
-        }
-        DateTime allowed = time;
-        if (starts.isNotEmpty) {
-          final spaced = starts.last.add(policy.spacing);
-          if (spaced.isAfter(allowed)) allowed = spaced;
-        }
-        final recent = starts
-            .where((d) => d.isAfter(time.subtract(const Duration(minutes: 1))))
-            .toList();
-        if (recent.length >= policy.minute) {
-          final minute = recent[recent.length - policy.minute].add(
-            const Duration(minutes: 1),
-          );
-          if (minute.isAfter(allowed)) allowed = minute;
-        }
-        if (allowed.isAfter(time)) return allowed;
-        starts.add(time);
-        await _save();
-        return null;
-      });
+      }
+      rethrow;
+    }
+    return null;
+  });
   Future<DateTime?> failed(String id, SearchFailure error) => _serial(() async {
     await _load();
     final time = now().toUtc();

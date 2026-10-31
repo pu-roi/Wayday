@@ -28,7 +28,7 @@ import '../data/recommendation_draft_repository.dart';
 part 'recommendation_preparation.dart';
 part 'location_understanding.dart';
 
-final planningBudgetProvider = Provider((ref) => PlanningBudget());
+final planningBudgetProvider = googleTestingBudgetProvider;
 final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
   final local = ref.watch(localRepositoriesProvider);
   return local == null

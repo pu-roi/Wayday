@@ -13,12 +13,31 @@ class PlanningRoads {
     this.client,
     this.budget, {
     this.apiKey = const String.fromEnvironment('GOOGLE_ROUTES_API_KEY'),
+    this.requestTimeout = const Duration(seconds: 12),
     Future<Map<String, String>> Function()? identity,
   }) : identity = identity ?? _identity;
   final http.Client client;
   final PlanningBudget budget;
   final String apiKey;
   final Future<Map<String, String>> Function() identity;
+  final _pairs =
+      <String, ({DateTime at, int? seconds, int? meters, bool fallback})>{};
+  final _pending = <String, Future<dynamic>>{};
+  final _routes = <String, ({DateTime at, dynamic value})>{};
+  int _generation = 0;
+  final freshness = const Duration(minutes: 5);
+  final Duration requestTimeout;
+  void invalidate() {
+    _generation++;
+    _pairs.clear();
+    _routes.clear();
+  }
+
+  int unitCost(TravelProfile profile) => profile == TravelProfile.motor
+      ? 15000
+      : traffic(profile)
+      ? 10000
+      : 5000;
   static Future<Map<String, String>> _identity() async =>
       (await const MethodChannel(
         'wayday/planning',
@@ -34,22 +53,16 @@ class PlanningRoads {
       p != TravelProfile.walk && p != TravelProfile.bike;
 
   Future<void> preflight(int points, int legs, {bool seed = false}) async {
-    if (points > 0) {
-      await budget.reserve(
-        'matrix',
-        points * points,
-        daily: 200,
-        monthly: 900,
+    // Conservative pre-discovery estimate; actual dispatch reserves only missing work.
+    final elements = points > 1 ? (points - 1) * (points - 1) : 0;
+    if (elements + legs + (seed ? 1 : 0) > 0) {
+      await budget.google(
+        'routes_preflight',
+        elements + legs + (seed ? 1 : 0),
+        15000,
         checkOnly: true,
       );
     }
-    await budget.reserve(
-      'routes',
-      legs + (seed ? 1 : 0),
-      daily: 30,
-      monthly: 300,
-      checkOnly: true,
-    );
   }
 
   Future<String?> discoveryRoute(
@@ -65,7 +78,6 @@ class PlanningRoads {
         fixed.first.place.longitude == fixed.last.place.longitude) {
       return null;
     }
-    await budget.reserve('routes', 1, daily: 30, monthly: 300);
     final raw = await _post(
       'computeRoutes',
       {
@@ -150,19 +162,112 @@ class PlanningRoads {
     String fields,
     Map<String, String> auth,
   ) async {
+    final key = jsonEncode([_generation, operation, data, fields]);
+    final saved = _routes[key];
+    if (saved != null && DateTime.now().difference(saved.at) < freshness) {
+      return saved.value;
+    }
+    final future = _pending.putIfAbsent(key, () async {
+      try {
+        final value = await _dispatch(operation, data, fields, auth);
+        if (operation == 'computeRouteMatrix' && value is List) {
+          final origins = (data['origins'] as List).length;
+          final destinations = (data['destinations'] as List).length;
+          final seen = <String>{};
+          var valid = value.length == origins * destinations;
+          for (final record in value) {
+            if (record is! Map) {
+              valid = false;
+              break;
+            }
+            final a = record['originIndex'] ?? 0,
+                b = record['destinationIndex'] ?? 0;
+            if (a is! int ||
+                b is! int ||
+                a < 0 ||
+                a >= origins ||
+                b < 0 ||
+                b >= destinations ||
+                !seen.add('$a:$b') ||
+                ((record['status'] as Map?)?['code'] ?? 0) != 0 ||
+                !{
+                  'ROUTE_EXISTS',
+                  'ROUTE_NOT_FOUND',
+                }.contains(record['condition'])) {
+              valid = false;
+              break;
+            }
+            if (record['condition'] == 'ROUTE_EXISTS') {
+              seconds(record['duration']);
+            }
+          }
+          if (valid) {
+            if (_routes.length >= 128) _routes.remove(_routes.keys.first);
+            _routes[key] = (at: DateTime.now(), value: value);
+          }
+        }
+        if (operation == 'computeRoutes' &&
+            value is Map &&
+            value['routes'] is List) {
+          final routes = value['routes'] as List;
+          if (routes.isNotEmpty && routes.first is Map) {
+            final encoded =
+                (routes.first['polyline'] as Map?)?['encodedPolyline'];
+            if (encoded is String && decodePolyline(encoded).isNotEmpty) {
+              if (_routes.length >= 128) _routes.remove(_routes.keys.first);
+              _routes[key] = (at: DateTime.now(), value: value);
+            }
+          }
+        }
+        return value;
+      } finally {
+        _pending.remove(key);
+      }
+    });
     try {
-      final response = await client
-          .post(
-            Uri.https(
-              'routes.googleapis.com',
-              operation == 'computeRouteMatrix'
-                  ? '/distanceMatrix/v2:computeRouteMatrix'
-                  : '/directions/v2:computeRoutes',
-            ),
-            headers: {...auth, 'X-Goog-FieldMask': fields},
-            body: jsonEncode(data),
-          )
-          .timeout(const Duration(seconds: 12));
+      return await future.timeout(requestTimeout);
+    } on TimeoutException {
+      throw const PlanningFailure(
+        'Road estimates took too long. Your choices are kept; you can try again.',
+        kind: 'timeout',
+      );
+    }
+  }
+
+  Future<dynamic> _dispatch(
+    String operation,
+    Map<String, dynamic> data,
+    String fields,
+    Map<String, String> auth,
+  ) async {
+    try {
+      final matrix = operation == 'computeRouteMatrix';
+      final units = matrix
+          ? (data['origins'] as List).length *
+                (data['destinations'] as List).length
+          : 1;
+      final rate = data['travelMode'] == 'TWO_WHEELER'
+          ? 15000
+          : data['routingPreference'] == 'TRAFFIC_AWARE'
+          ? 10000
+          : 5000;
+      await budget.google(
+        matrix
+            ? 'matrix_${data['travelMode']}'
+            : 'routes_${data['travelMode']}',
+        units,
+        rate,
+      );
+      final response = await client.post(
+        Uri.https(
+          'routes.googleapis.com',
+          operation == 'computeRouteMatrix'
+              ? '/distanceMatrix/v2:computeRouteMatrix'
+              : '/directions/v2:computeRoutes',
+        ),
+        headers: {...auth, 'X-Goog-FieldMask': fields},
+        body: jsonEncode(data),
+      );
       if (response.statusCode == 429) {
         throw PlanningFailure(
           'Google routing quota is exhausted. Your draft is kept.',
@@ -220,81 +325,169 @@ class PlanningRoads {
         kind: 'capacity',
       );
     }
-    await budget.reserve('matrix', count * count, daily: 200, monthly: 900);
     final rows = List.generate(count, (_) => List<int?>.filled(count, null));
     final meters = List.generate(count, (_) => List<int?>.filled(count, null));
-    var fallback = false;
-    for (var origin = 0; origin < count; origin += 10) {
-      for (var destination = 0; destination < count; destination += 10) {
-        if (cancelled?.call() == true) {
-          throw const PlanningFailure(
-            'Calculation cancelled.',
-            kind: 'cancelled',
-          );
-        }
-        final origins = points.skip(origin).take(10).toList();
-        final destinations = points.skip(destination).take(10).toList();
-        final data = <String, dynamic>{
-          'origins': origins.map((p) => {'waypoint': waypoint(p)}).toList(),
-          'destinations': destinations
-              .map((p) => {'waypoint': waypoint(p)})
-              .toList(),
-          'travelMode': mode(day.profile),
-          if (traffic(day.profile)) 'routingPreference': 'TRAFFIC_AWARE',
-          if (traffic(day.profile))
-            'departureTime': instant(
-              day,
-              day.departure * 60,
-            ).toUtc().toIso8601String(),
-        };
-        final raw = await _post(
-          'computeRouteMatrix',
-          data,
-          'originIndex,destinationIndex,status,condition,duration,distanceMeters,fallbackInfo',
-          auth,
-        );
-        if (raw is! List) {
-          throw const PlanningFailure(
-            'The road matrix response is incomplete.',
-          );
-        }
-        final seen = <String>{};
-        for (final value in raw) {
-          final e = Map<String, dynamic>.from(value as Map);
-          final a = e['originIndex'] as int? ?? 0,
-              b = e['destinationIndex'] as int? ?? 0;
-          if (a < 0 ||
-              a >= origins.length ||
-              b < 0 ||
-              b >= destinations.length ||
-              !seen.add('$a:$b')) {
+    final context = jsonEncode([
+      _generation,
+      day.profile.name,
+      day.date,
+      day.departure,
+    ]);
+    String pair(int a, int b) =>
+        jsonEncode([context, waypoint(points[a]), waypoint(points[b])]);
+    _pairs.removeWhere(
+      (_, value) => DateTime.now().difference(value.at) >= freshness,
+    );
+    bool known(int a, int b) => _pairs.containsKey(pair(a, b));
+    final groups = <String, ({List<int> origins, List<int> destinations})>{};
+    // No valid itinerary travels into @start or out of @end. Keep those
+    // roles distinct even when their geographic coordinates are identical.
+    for (var a = 0; a < count; a++) {
+      if (points[a].key == '@end') continue;
+      final missing = [
+        for (var b = 0; b < count; b++)
+          if (points[b].key != '@start' && !known(a, b)) b,
+      ];
+      if (missing.isEmpty) continue;
+      final signature = missing.join(',');
+      final group = groups.putIfAbsent(
+        signature,
+        () => (origins: <int>[], destinations: missing),
+      );
+      group.origins.add(a);
+    }
+    var dispatchedBlocks = 0;
+    for (final group in groups.values) {
+      for (var oi = 0; oi < group.origins.length; oi += 10) {
+        for (var di = 0; di < group.destinations.length; di += 10) {
+          if (cancelled?.call() == true) {
             throw const PlanningFailure(
-              'The road matrix response contains invalid references.',
+              'Calculation cancelled.',
+              kind: 'cancelled',
             );
           }
-          if ((e['status'] as Map?)?['code'] != null &&
-              (e['status'] as Map)['code'] != 0) {
-            continue;
+          if (dispatchedBlocks++ > 0) {
+            await Future<void>.delayed(const Duration(milliseconds: 1100));
+            if (cancelled?.call() == true) {
+              throw const PlanningFailure(
+                'Calculation cancelled.',
+                kind: 'cancelled',
+              );
+            }
           }
-          if (e['condition'] != 'ROUTE_EXISTS') continue;
-          rows[origin + a][destination + b] = seconds(e['duration']);
-          final distance = e['distanceMeters'];
-          if (distance is int && distance >= 0) {
-            meters[origin + a][destination + b] = distance;
-          }
-          fallback = fallback || e['fallbackInfo'] != null;
-        }
-        if (seen.length != origins.length * destinations.length) {
-          throw const PlanningFailure(
-            'The road matrix is incomplete. Try again later.',
+          final origins = group.origins.skip(oi).take(10).toList();
+          final destinations = group.destinations.skip(di).take(10).toList();
+          final data = <String, dynamic>{
+            'origins': [
+              for (final a in origins) {'waypoint': waypoint(points[a])},
+            ],
+            'destinations': [
+              for (final b in destinations) {'waypoint': waypoint(points[b])},
+            ],
+            'travelMode': mode(day.profile),
+            if (traffic(day.profile)) 'routingPreference': 'TRAFFIC_AWARE',
+            if (traffic(day.profile))
+              'departureTime': instant(
+                day,
+                day.departure * 60,
+              ).toUtc().toIso8601String(),
+          };
+          const matrixFields =
+              'originIndex,destinationIndex,status,condition,duration,distanceMeters,fallbackInfo';
+          final raw = await _post(
+            'computeRouteMatrix',
+            data,
+            matrixFields,
+            auth,
           );
-        }
-        if (destination + 10 < count || origin + 10 < count) {
-          await Future<void>.delayed(const Duration(milliseconds: 1100));
+          if (raw is! List) {
+            throw const PlanningFailure(
+              'The road matrix response is incomplete.',
+            );
+          }
+          final responseAt =
+              _routes[jsonEncode([
+                    _generation,
+                    'computeRouteMatrix',
+                    data,
+                    matrixFields,
+                  ])]
+                  ?.at ??
+              DateTime.now();
+          final block =
+              <
+                String,
+                ({DateTime at, int? seconds, int? meters, bool fallback})
+              >{};
+          final seen = <String>{};
+          for (final value in raw) {
+            final e = Map<String, dynamic>.from(value as Map);
+            final a = e['originIndex'] as int? ?? 0,
+                b = e['destinationIndex'] as int? ?? 0;
+            if (a < 0 ||
+                a >= origins.length ||
+                b < 0 ||
+                b >= destinations.length ||
+                !seen.add('$a:$b')) {
+              throw const PlanningFailure(
+                'The road matrix response contains invalid references.',
+              );
+            }
+            if (((e['status'] as Map?)?['code'] ?? 0) != 0) {
+              throw const PlanningFailure(
+                'A road comparison failed. Your choices are kept.',
+                kind: 'unavailable',
+              );
+            }
+            if (e['condition'] != 'ROUTE_EXISTS' &&
+                e['condition'] != 'ROUTE_NOT_FOUND') {
+              throw const PlanningFailure('A road comparison is incomplete.');
+            }
+            final distance = e['distanceMeters'];
+            block[pair(origins[a], destinations[b])] = (
+              at: responseAt,
+              seconds: e['condition'] == 'ROUTE_EXISTS'
+                  ? seconds(e['duration'])
+                  : null,
+              meters: distance is int && distance >= 0 ? distance : null,
+              fallback: e['fallbackInfo'] != null,
+            );
+          }
+          if (seen.length != origins.length * destinations.length) {
+            throw const PlanningFailure(
+              'The road matrix is incomplete. Try again later.',
+            );
+          }
+          _pairs.addAll(block);
         }
       }
     }
-    return {'matrix': rows, 'meters': meters, 'fallback': fallback};
+    var fallback = false;
+    var acquiredAt = DateTime.now();
+    for (var a = 0; a < count; a++) {
+      for (var b = 0; b < count; b++) {
+        final value = _pairs[pair(a, b)];
+        if (value != null) {
+          if (value.at.isBefore(acquiredAt)) acquiredAt = value.at;
+          rows[a][b] = value.seconds;
+          meters[a][b] = value.meters;
+          fallback = fallback || value.fallback;
+        }
+        if (a == b) {
+          rows[a][b] = 0;
+          meters[a][b] = 0;
+        }
+      }
+    }
+    while (_pairs.length > 2048) {
+      _pairs.remove(_pairs.keys.first);
+    }
+    return {
+      'matrix': rows,
+      'meters': meters,
+      'fallback': fallback,
+      'acquiredAt': acquiredAt.toUtc().toIso8601String(),
+    };
   }
 
   Future<RefinedPlan> refine(
@@ -304,12 +497,6 @@ class PlanningRoads {
     bool Function()? cancelled,
   }) async {
     final auth = await headers();
-    await budget.reserve(
-      'routes',
-      initial.stops.length + 1,
-      daily: 30,
-      monthly: 300,
-    );
     final lookup = {for (final point in points) point.key: point};
     final errands = {for (final e in day.errands) e.id: e};
     var at = '@start', time = day.departure * 60, total = 0;

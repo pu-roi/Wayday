@@ -252,8 +252,17 @@ void main() {
         identity: () async => {'package': 'test.app', 'certificate': 'ABC'},
       );
       final result = await roads.matrix(DayPlan(errands: []), [
-        const PlanCandidate(key: '@start', place: pin, errandIds: {}),
-        const PlanCandidate(key: '@end', place: pin, errandIds: {}),
+        const PlanCandidate(key: 'a', place: pin, errandIds: {}),
+        const PlanCandidate(
+          key: 'b',
+          place: PlaceIntent(
+            kind: PlaceKind.specific,
+            label: 'B',
+            latitude: 14.59,
+            longitude: 121.07,
+          ),
+          errandIds: {},
+        ),
       ]);
       expect(result['matrix'], [
         [0, 124],

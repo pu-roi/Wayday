@@ -98,6 +98,7 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
     final future =
         _pending[key] ??
         () async {
+          var reserved = false, dispatched = false;
           try {
             while (true) {
               check();
@@ -105,8 +106,12 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
               final wait = await ledger.reserve(
                 'google_ui_kit',
                 ProviderPolicy.forId('google_ui_kit'),
+                googleUnitMicros: method == 'details' ? 17000 : 32000,
               );
-              if (wait == null) break;
+              if (wait == null) {
+                reserved = true;
+                break;
+              }
               await Future<void>.delayed(
                 wait.difference(DateTime.now()).isNegative
                     ? Duration.zero
@@ -114,6 +119,7 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
               );
             }
             check();
+            dispatched = true;
             final raw = await invoke(method, args);
             if (raw.length > 10) {
               throw const FormatException('Unbounded place response');
@@ -164,6 +170,15 @@ class GoogleRecommendationDiscovery implements RecommendationDiscovery {
             _cache[key] = (at: DateTime.now(), values: batch);
             return batch;
           } on PlanningFailure {
+            if (reserved && !dispatched) {
+              final rate = method == 'details' ? 17000 : 32000;
+              await ledger.googleBudget?.google(
+                'places_$rate',
+                1,
+                rate,
+                release: true,
+              );
+            }
             rethrow;
           } on SearchFailure catch (e) {
             throw RecommendationFailure(

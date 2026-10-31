@@ -43,7 +43,7 @@ class TripNavigation {
         kind: 'unsupported_profile',
       );
     }
-    await budget.reserve('navigation', 1, daily: 20, monthly: 100);
+    await budget.google('navigation', 1, 25000);
     final status = await nav.GoogleMapsNavigator.setDestinations(
       nav.Destinations(
         displayOptions: nav.NavigationDisplayOptions(),

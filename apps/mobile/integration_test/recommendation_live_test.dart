@@ -60,7 +60,8 @@ void main() {
         longitude: 121.0836,
       );
       final pins = GooglePinCache();
-      final discovery = GoogleRecommendationDiscovery(QuotaLedger(), pins);
+      final budget = PlanningBudget(allocation: () async => 2000000);
+        final discovery = GoogleRecommendationDiscovery(QuotaLedger(googleBudget: budget), pins);
       if (const bool.fromEnvironment('WAYDAY_LIVE_PLACES_ONLY')) {
         addTearDown(pins.dispose);
         for (final need in const [
@@ -102,7 +103,7 @@ void main() {
         }
         return;
       }
-      final roads = PlanningRoads(http.Client(), PlanningBudget());
+      final roads = PlanningRoads(http.Client(), budget);
       final model = PlanningController(
         DayPlan(
           date: calendarDate(DateTime.now().add(const Duration(days: 1))),
