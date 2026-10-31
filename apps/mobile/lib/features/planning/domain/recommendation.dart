@@ -21,6 +21,11 @@ class RecommendationPlace {
     this.status,
     this.attributions = const [],
     this.hours = const BusinessHours(),
+    this.primaryType = '',
+    this.rating,
+    this.ratingCount,
+    this.providerRank = 0,
+    this.qualityChecked = false,
   });
   final String id, name, address, locality;
   final double latitude, longitude;
@@ -28,6 +33,17 @@ class RecommendationPlace {
   final List<String> types, attributions;
   final String? country, status;
   final BusinessHours hours;
+  final String primaryType;
+  final double? rating;
+  final int? ratingCount;
+  final int providerRank;
+  final bool qualityChecked;
+  String? get ratingSummary => rating == null
+      ? null
+      : '${rating!.toStringAsFixed(1)} Google rating${ratingCount == null ? '' : ' · $ratingCount ratings'}';
+  double get quality => rating == null || ratingCount == null
+      ? 3.5
+      : (ratingCount! * rating! + 20 * 3.5) / (ratingCount! + 20);
   RecommendationPlace withHours(BusinessHours value) => RecommendationPlace(
     id: id,
     name: name,
@@ -41,6 +57,11 @@ class RecommendationPlace {
     status: status,
     attributions: attributions,
     hours: value,
+    primaryType: primaryType,
+    rating: rating,
+    ratingCount: ratingCount,
+    providerRank: providerRank,
+    qualityChecked: qualityChecked,
   );
 
   factory RecommendationPlace.fromJson(Map<Object?, Object?> json) {
@@ -92,6 +113,22 @@ class RecommendationPlace {
       country: json['country'] as String?,
       status: json['status'] as String?,
       types: strings('types'),
+      primaryType: text('primaryType'),
+      qualityChecked: json['metadataVersion'] == 2,
+      rating:
+          json['rating'] is num &&
+              (json['rating'] as num).isFinite &&
+              (json['rating'] as num) >= 1 &&
+              (json['rating'] as num) <= 5
+          ? (json['rating'] as num).toDouble()
+          : null,
+      ratingCount:
+          json['ratingCount'] is int && (json['ratingCount'] as int) >= 0
+          ? json['ratingCount'] as int
+          : null,
+      providerRank: json['rank'] is int && (json['rank'] as int) >= 0
+          ? json['rank'] as int
+          : 0,
       attributions: strings('attributions'),
       hours: BusinessHours.fromJson(
         json,

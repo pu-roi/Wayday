@@ -5,6 +5,7 @@ import 'planning_models.dart';
 import 'location_assessment.dart';
 import 'errand_location_review.dart';
 import '../../errands/domain/errand_order.dart';
+import 'place_search_intent.dart';
 
 String clarificationHash(Object value) =>
     sha256.convert(utf8.encode(jsonEncode(value))).toString();
@@ -47,7 +48,9 @@ class ClarificationContext {
     'after': (e.afterErrandIds.toList()..sort()),
     'optional': e.optional,
     'confirmedFields': (e.confirmedFields.toList()..sort()),
-    'fixedPlace': n.locationIntent == null ? n.meeting || n.requiresSpecificLocation : hasSpecificSource(e) || n.locationIntent == LocationIntent.specific,
+    'fixedPlace': n.locationIntent == null
+        ? n.meeting || n.requiresSpecificLocation
+        : hasSpecificSource(e) || n.locationIntent == LocationIntent.specific,
     if (n.locationIntent != null) 'locationIntent': n.locationIntent!.name,
     'placePreference': e.placeIntent.kind.name == 'search'
         ? {
@@ -80,9 +83,11 @@ class ClarificationResolution {
     this.minute,
     this.after,
     this.locationIntent,
+    this.searchIntent,
   });
   final String outcome, kind, summary;
   final LocationIntent? locationIntent;
+  final PlaceSearchIntent? searchIntent;
   final String? query, category, followUp, timing;
   final int? minute;
   final List<String> items;
@@ -101,6 +106,7 @@ class ClarificationResolution {
     'minute': minute,
     'after': after,
     if (locationIntent != null) 'locationIntent': locationIntent!.name,
+    if (searchIntent != null) 'searchIntent': searchIntent!.toJson(),
   };
   factory ClarificationResolution.fromJson(
     Map<String, dynamic> j,
@@ -119,6 +125,7 @@ class ClarificationResolution {
       'minute',
       'after',
       'locationIntent',
+      'searchIntent',
     };
     final location = j['locationIntent'];
     if (location != null &&
@@ -188,6 +195,11 @@ class ClarificationResolution {
       locationIntent: location == null
           ? null
           : LocationIntent.values.byName(location as String),
+      searchIntent: j['searchIntent'] == null
+          ? null
+          : PlaceSearchIntent.fromJson(
+              Map<String, dynamic>.from(j['searchIntent'] as Map),
+            ),
     );
   }
 
@@ -222,6 +234,7 @@ class ClarificationResolution {
         ? n.requiresSpecificLocation
         : locationIntent == LocationIntent.specific,
     locationIntent: locationIntent,
+    searchIntent: searchIntent,
   );
   Errand applyRules(Errand e) => e.copyWith(
     timing: timing == null ? null : TimingRule.values.byName(timing!),
@@ -422,7 +435,8 @@ ClarificationSession mergeClarifications(
     final prior = result.locationAssessments[entry.key], next = entry.value;
     if (prior == null ||
         next.revision > prior.revision ||
-        (next.revision == prior.revision && next.updatedAt >= prior.updatedAt)) {
+        (next.revision == prior.revision &&
+            next.updatedAt >= prior.updatedAt)) {
       result.locationAssessments[entry.key] = LocationAssessment.fromJson(
         next.toJson(),
       );

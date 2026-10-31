@@ -4,6 +4,7 @@ import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
 import '../domain/planning_input_checks.dart';
 import '../../errands/domain/errand_order.dart';
+import '../domain/place_search_intent.dart';
 
 /// Exact, deterministic interpretation context. Route date/profile/endpoints and
 /// raw coordinates are deliberately absent; changed constraints/text invalidate.
@@ -175,7 +176,7 @@ String previousInterpretationRequest(DayPlan day) {
 }
 
 /// Current semantic contract. Historical builders above remain frozen lookups.
-String interpretationRequest(DayPlan day) {
+String locationInterpretationRequest(DayPlan day) {
   final body =
       jsonDecode(previousInterpretationRequest(day)) as Map<String, dynamic>;
   final instruction = body['systemInstruction']['parts'][0];
@@ -205,6 +206,26 @@ String interpretationRequest(DayPlan day) {
       'type': 'STRING',
       'enum': LocationIntent.values.map((v) => v.name).toList(),
     };
+    entry['required'] = (entry['properties'] as Map).keys.toList();
+  }
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten these notes before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
+}
+
+String interpretationRequest(DayPlan day) {
+  final body =
+      jsonDecode(locationInterpretationRequest(day)) as Map<String, dynamic>;
+  body['systemInstruction']['parts'][0]['text'] += PlaceSearchIntent.policy;
+  for (final key in ['needs', 'additions']) {
+    final entry =
+        body['generationConfig']['responseSchema']['properties'][key]['items'];
+    entry['properties']['searchIntent'] = PlaceSearchIntent.schema;
     entry['required'] = (entry['properties'] as Map).keys.toList();
   }
   final result = jsonEncode(body);

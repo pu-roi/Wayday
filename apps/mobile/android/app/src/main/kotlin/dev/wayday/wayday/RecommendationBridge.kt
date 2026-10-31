@@ -33,12 +33,13 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
     private val fields = listOf(Place.Field.ID, Place.Field.DISPLAY_NAME, Place.Field.LOCATION,
         Place.Field.FORMATTED_ADDRESS, Place.Field.ADDRESS_COMPONENTS, Place.Field.TYPES,
         Place.Field.PRIMARY_TYPE, Place.Field.BUSINESS_STATUS,
-        Place.Field.OPENING_HOURS, Place.Field.CURRENT_OPENING_HOURS, Place.Field.UTC_OFFSET)
+        Place.Field.OPENING_HOURS, Place.Field.CURRENT_OPENING_HOURS, Place.Field.UTC_OFFSET,
+        Place.Field.RATING, Place.Field.USER_RATING_COUNT)
     init {
         channel.setMethodCallHandler { call, result ->
             if (disposed) { result.error("closed", "Place service closed", null); return@setMethodCallHandler }
             if (call.method == "status") {
-                result.success(mapOf("configured" to keyConfigured(), "bridgeVersion" to 3))
+                result.success(mapOf("configured" to keyConfigured(), "bridgeVersion" to 3, "metadataVersion" to 2))
                 return@setMethodCallHandler
             }
             if (call.method !in listOf("search", "details")) { result.notImplemented(); return@setMethodCallHandler }
@@ -56,7 +57,12 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
                         val builder = SearchByTextRequest.builder(query, fields).setMaxResultCount(10)
                             .setPureServiceAreaBusinessesIncluded(false)
                             .setRegionCode("PH")
+                            .setRankPreference(SearchByTextRequest.RankPreference.RELEVANCE)
                             .setCancellationToken(reply.cancellation.token)
+                        (args["type"] as? String)?.let {
+                            require(it.length <= 80 && it.matches(Regex("[a-z_]+")))
+                            builder.setIncludedType(it).setStrictTypeFiltering(true)
+                        }
                         val polyline = args["polyline"] as? String
                         if (polyline != null) {
                             require(polyline.isNotEmpty() && polyline.length <= 200000)
@@ -69,7 +75,7 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
                         }
                         client.searchByText(builder.build())
                             .addOnSuccessListener {
-                                try { reply.success(it.places.map(::snapshot)) }
+                                try { reply.success(it.places.mapIndexed { index, place -> snapshot(place) + ("rank" to index) }) }
                                 catch (_: Exception) { reply.fail("unexpected_response", null) }
                             }
                             .addOnFailureListener { reply.failure(it) }
@@ -126,6 +132,8 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
             "latitude" to place.location?.latitude, "longitude" to place.location?.longitude,
             "address" to place.formattedAddress, "locality" to locality, "country" to country,
             "types" to place.placeTypes.orEmpty(), "status" to place.businessStatus?.name,
+            "metadataVersion" to 2, "primaryType" to place.primaryType, "rating" to place.rating,
+            "ratingCount" to place.userRatingCount,
             "attributions" to place.attributions.orEmpty(), "at" to at,
             "hoursVersion" to 1, "utcOffset" to place.utcOffsetMinutes,
             "hoursDate" to place.utcOffsetMinutes?.let {

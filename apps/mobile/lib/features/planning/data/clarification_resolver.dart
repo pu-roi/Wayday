@@ -2,6 +2,7 @@ import 'dart:convert';
 import '../domain/clarification.dart';
 import '../domain/planning_models.dart';
 import 'gemini_request_client.dart';
+import '../domain/place_search_intent.dart';
 
 abstract interface class ClarificationResolver {
   Future<ClarificationResolution> resolve(
@@ -28,7 +29,10 @@ class GeminiClarificationResolver implements ClarificationResolver {
     final reply = await client.request(
       clarificationRequest(context, answer, history),
       purpose: 'clarification',
-      legacyBody: legacyClarificationRequest(context, answer, history),
+      legacyBodies: [
+        locationClarificationRequest(context, answer, history),
+        legacyClarificationRequest(context, answer, history),
+      ],
       retry: retry,
       savedOnly: savedOnly,
     );
@@ -143,7 +147,7 @@ String legacyClarificationRequest(
   return body;
 }
 
-String clarificationRequest(
+String locationClarificationRequest(
   ClarificationContext context,
   String answer,
   List<String> history,
@@ -166,6 +170,28 @@ String clarificationRequest(
   body['generationConfig']['responseSchema']['required'] =
       (body['generationConfig']['responseSchema']['properties'] as Map).keys
           .toList();
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten this answer before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
+}
+
+String clarificationRequest(
+  ClarificationContext context,
+  String answer,
+  List<String> history,
+) {
+  final body =
+      jsonDecode(locationClarificationRequest(context, answer, history))
+          as Map<String, dynamic>;
+  body['systemInstruction']['parts'][0]['text'] += PlaceSearchIntent.policy;
+  final schema = body['generationConfig']['responseSchema'];
+  schema['properties']['searchIntent'] = PlaceSearchIntent.schema;
+  schema['required'] = (schema['properties'] as Map).keys.toList();
   final result = jsonEncode(body);
   if (utf8.encode(result).length > 50000) {
     throw const PlanningFailure(

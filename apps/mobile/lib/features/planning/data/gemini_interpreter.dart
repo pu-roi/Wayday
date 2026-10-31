@@ -46,6 +46,7 @@ class GeminiInterpreter
     final reply = await client.request(
       body,
       legacyBodies: [
+        locationInterpretationRequest(day),
         previousInterpretationRequest(day),
         legacyInterpretationRequest(day),
       ],

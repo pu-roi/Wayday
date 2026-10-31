@@ -112,6 +112,16 @@ void main() {
   });
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
+  test('pre-search-intent location understanding is reused without generation', () async {
+    final body = locationInterpretationRequest(day());
+    disk[body] = {'state': 'completed', 'response': answer(body)};
+    configured = false;
+    final result = await interpreter().interpret(day());
+    expect(result.needs.single.locationIntent, LocationIntent.flexible);
+    expect(result.needs.single.searchIntent, isNull);
+    expect(requests, 0);
+  });
+
   test(
     'more than three changed inputs process without app-imposed caps',
     () async {

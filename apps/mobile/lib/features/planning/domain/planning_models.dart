@@ -1,5 +1,6 @@
 import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
+import 'place_search_intent.dart';
 
 enum LocationIntent { flexible, specific, unclear }
 
@@ -33,6 +34,7 @@ class ErrandNeed {
     this.questionRequired,
     this.requiresSpecificLocation = false,
     this.locationIntent,
+    this.searchIntent,
   });
   final String id, query, category;
   final List<String> items, after;
@@ -44,12 +46,14 @@ class ErrandNeed {
   final bool? questionRequired;
   final bool requiresSpecificLocation;
   final LocationIntent? locationIntent;
+  final PlaceSearchIntent? searchIntent;
   ErrandNeed copyWith({
     String? query,
     String? category,
     List<String>? items,
     bool? requiresSpecificLocation,
     LocationIntent? locationIntent,
+    PlaceSearchIntent? searchIntent,
   }) => ErrandNeed(
     id: id,
     query: query ?? this.query,
@@ -67,6 +71,7 @@ class ErrandNeed {
     requiresSpecificLocation:
         requiresSpecificLocation ?? this.requiresSpecificLocation,
     locationIntent: locationIntent ?? this.locationIntent,
+    searchIntent: searchIntent ?? this.searchIntent,
   );
   bool get meeting => category == 'meeting';
   Map<String, dynamic> toJson() => {
@@ -83,6 +88,7 @@ class ErrandNeed {
     'minute': minute,
     'specificLocation': requiresSpecificLocation,
     if (locationIntent != null) 'locationIntent': locationIntent!.name,
+    if (searchIntent != null) 'searchIntent': searchIntent!.toJson(),
     if (questionKind != null)
       'clarification': {
         'kind': questionKind,
@@ -116,6 +122,7 @@ class ErrandNeed {
       'clarification',
       'specificLocation',
       'locationIntent',
+      'searchIntent',
     };
     if (json.keys.any((key) => !allowed.contains(key))) {
       throw const FormatException('Unexpected interpretation field');
@@ -194,6 +201,11 @@ class ErrandNeed {
       locationIntent: intent == null
           ? null
           : LocationIntent.values.byName(intent as String),
+      searchIntent: json['searchIntent'] == null
+          ? null
+          : PlaceSearchIntent.fromJson(
+              Map<String, dynamic>.from(json['searchIntent'] as Map),
+            ),
     );
   }
 
