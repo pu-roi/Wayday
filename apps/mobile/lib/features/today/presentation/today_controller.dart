@@ -125,6 +125,14 @@ class TodayController extends Notifier<DayPlan> {
   );
   void restore(DayPlan day, {bool reconcile = true}) =>
       _commit(day, reconcile: reconcile);
+
+  /// Finishing already committed this snapshot atomically with trip cleanup.
+  void applyFinishedReset(DayPlan reset) {
+    if (state.revision >= reset.revision) return;
+    state = reset;
+    ref.read(saveFailuresProvider.notifier).saved('Today errands');
+  }
+
   void clear() => _commit(
     state.copyWith(
       errands: [],

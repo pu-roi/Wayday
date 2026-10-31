@@ -290,7 +290,7 @@ class SqliteItineraryRepository implements ItineraryRepository {
     required bool Function() stillCurrent,
     required DateTime now,
   }) {
-    if (today is! SqliteDayRepository) {
+    if (today is! SqliteDayRepository || !today.usesDatabase(database)) {
       throw StateError('Mismatched trip storage');
     }
     return today.finishTrip(

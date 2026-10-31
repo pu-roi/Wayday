@@ -33,6 +33,7 @@ class SqliteDayRepository implements DayRepository {
   SqliteDayRepository._(this._database, this._day);
 
   final WaydayDatabase _database;
+  bool usesDatabase(WaydayDatabase database) => identical(_database, database);
   SerialWriteQueue get _writes => SerialWriteQueue.forOwner(_database);
   DayPlan _day;
 

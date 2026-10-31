@@ -9,6 +9,36 @@ import 'helpers/planning_fixtures.dart';
 
 void main() {
   test(
+    'mismatched database owners cannot perform partial cross-store cleanup',
+    () async {
+      final first = WaydayDatabase(NativeDatabase.memory()),
+          second = WaydayDatabase(NativeDatabase.memory());
+      addTearDown(first.close);
+      addTearDown(second.close);
+      final today = await SqliteDayRepository.open(first);
+      final trips = SqliteItineraryRepository(second, GooglePinCache().lease);
+      final completed = AcceptedItinerary(
+        day: fixture(),
+        stops: [
+          ItineraryStop(pin, ['a', 'b']),
+        ],
+        acceptedAt: DateTime.now(),
+      ).complete('a').complete('b');
+      await trips.save(completed);
+      expect(
+        () => trips.finish(
+          completed.runId,
+          today: today,
+          expectedRevision: 0,
+          stillCurrent: () => true,
+          now: DateTime.now(),
+        ),
+        throwsStateError,
+      );
+      expect(await trips.read(), isNotNull);
+    },
+  );
+  test(
     'finished cleanup remains empty after closing and reopening SQLite',
     () async {
       final directory = await Directory.systemTemp.createTemp('wayday-finish-');

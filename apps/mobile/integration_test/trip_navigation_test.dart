@@ -5,6 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/planning/presentation/trip_view.dart';
+import 'package:wayday/features/planning/data/itinerary_repository.dart';
+import 'package:wayday/features/planning/presentation/planning_controller.dart';
+import 'package:wayday/features/planning/presentation/finish_trip.dart';
+import 'package:wayday/features/today/data/day_repository.dart';
+import 'package:wayday/features/today/presentation/today_controller.dart';
 import '../test/trip_navigation_test.dart' show FakeNavigationDriver;
 import '../test/trip_session_test.dart'
     show FakeTripMap, tripSession, tripFixture;
@@ -20,17 +25,23 @@ void main() {
     ).invokeMapMethod<String, String>('identity');
     expect(identity!['package'], endsWith('.maptest'));
     var saved = tripFixture();
+    final repository = MemoryItineraryRepository();
+    await repository.save(saved);
+    final today = MemoryDayRepository(initialData: saved.day);
     final driver = FakeNavigationDriver();
     void open(BuildContext context) {
       Navigator.push(
         context,
-        MaterialPageRoute<void>(
+        MaterialPageRoute<TripExit>(
           builder: (_) => TripView(
             initial: saved,
             session: tripSession(
               driver,
               plan: saved,
-              save: (value) async => saved = value,
+              save: (value) async {
+                await repository.updateProgress(value);
+                saved = value;
+              },
             ),
             mapBuilder: (_, ready, position) {
               ready(FakeTripMap());
@@ -46,6 +57,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          itineraryRepositoryProvider.overrideWithValue(repository),
+          dayRepositoryProvider.overrideWithValue(today),
+        ],
         child: MaterialApp(
           theme: buildTheme(),
           home: Builder(
@@ -84,6 +99,17 @@ void main() {
     expect(find.text('Final destination'), findsOneWidget);
     await tester.tap(find.text('Finish trip'));
     await tester.pumpAndSettle();
+    expect(find.text('Finish trip and clear Today?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(await repository.read(), isNotNull);
+    await tester.tap(find.text('Finish trip'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finish and clear Today'));
+    await tester.pumpAndSettle();
+    expect(await repository.read(), isNull);
+    expect(today.read().errands, isEmpty);
+    expect(find.text('Open trip'), findsOneWidget);
     expect(tester.takeException(), isNull);
     debugPrint('WAYDAY_COMPACT_NAVIGATION_FIXTURE_PASSED');
   });

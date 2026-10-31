@@ -8,6 +8,7 @@ import '../domain/planning_models.dart';
 import 'planning_controller.dart';
 import 'planning_view.dart';
 import 'trip_view.dart';
+import 'finish_trip.dart';
 export 'trip_view.dart' show TripView;
 
 final savedItineraryProvider = FutureProvider<AcceptedItinerary?>(
@@ -32,7 +33,7 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
     });
     try {
       final next = plan.complete(id);
-      await ref.read(itineraryRepositoryProvider).save(next);
+      await ref.read(itineraryRepositoryProvider).updateProgress(next);
       ref.invalidate(savedItineraryProvider);
       if (mounted) setState(() => plan = next);
     } catch (e) {
@@ -49,11 +50,16 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
   }
 
   Future<void> start() async {
-    final updated = await Navigator.push<AcceptedItinerary>(
+    final updated = await Navigator.push<TripExit>(
       context,
       MaterialPageRoute(builder: (_) => TripView(initial: plan)),
     );
-    if (updated != null && mounted) setState(() => plan = updated);
+    if (!mounted || updated == null) return;
+    if (updated.finished) {
+      Navigator.pop(context);
+    } else if (updated.plan != null) {
+      setState(() => plan = updated.plan!);
+    }
   }
 
   Future<void> replan() async {
@@ -126,7 +132,7 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Your plan')),
+    appBar: AppBar(title: const Text('Current trip')),
     body: SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(20),
@@ -194,6 +200,12 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
               child: Text(error!),
             ),
           const SizedBox(height: 20),
+          if (allTripErrandsComplete(plan))
+            FinishTripAction(
+              plan: plan,
+              enabled: !saving,
+              onFinished: () => Navigator.pop(context),
+            ),
           FilledButton.icon(
             onPressed: saving ? null : start,
             icon: const Icon(Icons.navigation_outlined),

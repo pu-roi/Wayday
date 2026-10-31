@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'trip_session.dart';
+import 'finish_trip.dart';
 
 class TripChecklist extends StatelessWidget {
   const TripChecklist({required this.model, required this.onFinish, super.key});
@@ -55,9 +56,10 @@ class TripChecklist extends StatelessWidget {
               model.plan.day.toPlace.label,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            TextButton(
-              onPressed: model.saving ? null : onFinish,
-              child: const Text('Finish trip'),
+            FinishTripAction(
+              plan: model.plan,
+              enabled: !model.busy,
+              onFinished: onFinish,
             ),
           ],
         ],

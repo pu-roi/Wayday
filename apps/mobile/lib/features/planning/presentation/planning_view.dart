@@ -21,6 +21,7 @@ import 'planning_review.dart';
 import 'review_feedback.dart';
 import 'review_trip_details.dart';
 import 'saved_plan_view.dart';
+import 'finish_trip.dart';
 import '../data/recommendation_discovery.dart';
 import '../data/recommendation_draft_repository.dart';
 import 'recommendation_page.dart';
@@ -546,7 +547,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       ref.invalidate(savedItineraryProvider);
       await Navigator.pushReplacement(
         context,
-        MaterialPageRoute<void>(builder: (_) => TripView(initial: accepted)),
+        MaterialPageRoute<TripExit>(
+          builder: (_) => TripView(initial: accepted),
+        ),
       );
     } catch (e) {
       if (mounted) {

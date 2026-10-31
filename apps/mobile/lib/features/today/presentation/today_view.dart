@@ -12,7 +12,8 @@ import '../../../core/widgets/time_entry_sheet.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
 import '../../planning/presentation/planning_view.dart';
-import '../../planning/presentation/saved_plan_view.dart';
+import '../../planning/presentation/current_trip_section.dart';
+import '../../planning/presentation/finish_trip.dart';
 import '../../maps/presentation/place_map.dart';
 import '../../maps/presentation/regional_map.dart';
 import '../../places/data/google_pin_cache.dart';
@@ -314,249 +315,228 @@ class _TodayViewState extends ConsumerState<TodayView>
               day.profile != TravelProfile.motor)
             TextButton.icon(
               key: const Key('clear-errands'),
-              onPressed: _clear,
+              onPressed: ref.watch(tripFinishProvider) ? null : _clear,
               icon: const Icon(Icons.clear_all_rounded),
               label: const Text('Clear'),
             ),
           const SizedBox(width: 8),
         ],
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    key: const Key('trip-date'),
-                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                    label: Text(
-                      MaterialLocalizations.of(
-                        context,
-                      ).formatFullDate(DateTime.parse(day.date)),
+      body: AbsorbPointer(
+        absorbing: ref.watch(tripFinishProvider),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const Key('trip-date'),
+                      icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                      label: Text(
+                        MaterialLocalizations.of(
+                          context,
+                        ).formatFullDate(DateTime.parse(day.date)),
+                      ),
+                      onPressed: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.parse(day.date),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (date != null && mounted) {
+                          ref.read(todayProvider.notifier).setDate(date);
+                        }
+                      },
                     ),
-                    onPressed: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.parse(day.date),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                      if (date != null && mounted) {
-                        ref.read(todayProvider.notifier).setDate(date);
-                      }
-                    },
                   ),
                 ),
-              ),
-              SectionSurface(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    EndpointRow(
-                      start: true,
-                      value: day.from,
-                      finding: _finding.contains(true),
-                      onTap: () => _place(true),
-                    ),
-                    const Divider(indent: 20, endIndent: 20),
-                    InkWell(
-                      onTap: () => setState(() => _expanded = !_expanded),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.format_list_bulleted_rounded,
-                              size: 20,
-                              color: context.wayday.link,
-                            ),
-                            const SizedBox(width: 14),
-                            Text('Errands', style: context.type.titleMedium),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${day.errands.length}',
-                              style: context.type.bodyMedium?.copyWith(
-                                color: context.colors.onSurfaceVariant,
+                const CurrentTripSection(),
+                SectionSurface(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      EndpointRow(
+                        start: true,
+                        value: day.from,
+                        finding: _finding.contains(true),
+                        onTap: () => _place(true),
+                      ),
+                      const Divider(indent: 20, endIndent: 20),
+                      InkWell(
+                        onTap: () => setState(() => _expanded = !_expanded),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.format_list_bulleted_rounded,
+                                size: 20,
+                                color: context.wayday.link,
                               ),
-                            ),
-                            const Spacer(),
-                            SizedBox(
-                              height: 48,
-                              width: 48,
-                              child: AnimatedRotation(
-                                turns: _expanded ? .5 : 0,
-                                duration: WaydayMotion.duration(context),
-                                curve: WaydayMotion.curve,
-                                child: Icon(
-                                  Icons.keyboard_arrow_down_rounded,
+                              const SizedBox(width: 14),
+                              Text('Errands', style: context.type.titleMedium),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${day.errands.length}',
+                                style: context.type.bodyMedium?.copyWith(
                                   color: context.colors.onSurfaceVariant,
                                 ),
                               ),
+                              const Spacer(),
+                              SizedBox(
+                                height: 48,
+                                width: 48,
+                                child: AnimatedRotation(
+                                  turns: _expanded ? .5 : 0,
+                                  duration: WaydayMotion.duration(context),
+                                  curve: WaydayMotion.curve,
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: context.colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SmoothDisclosure(
+                        key: const Key('today-errands-disclosure'),
+                        expanded: _expanded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SmoothDisclosure(
+                              expanded: day.errands.isEmpty,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  8,
+                                  24,
+                                  16,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'What’s on your way today?',
+                                      style: context.type.titleMedium,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Add an errand. The details can wait.',
+                                      style: context.type.bodyMedium?.copyWith(
+                                        color: context.colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            AnimatedErrandList(
+                              items: day.errands
+                                  .take(_showAll ? day.errands.length : 5)
+                                  .toList(),
+                              onEdit: _edit,
+                            ),
+                            SmoothDisclosure(
+                              expanded: day.errands.length > 5,
+                              child: TextButton(
+                                onPressed: () =>
+                                    setState(() => _showAll = !_showAll),
+                                child: Text(
+                                  _showAll
+                                      ? 'Show fewer'
+                                      : 'Show all ${day.errands.length} errands',
+                                ),
+                              ),
+                            ),
+                            ErrandComposer(
+                              key: const Key('today-composer'),
+                              onAdd: (value) {
+                                ref.read(todayProvider.notifier).add(value);
+                                setState(() => _showAll = true);
+                              },
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    SmoothDisclosure(
-                      key: const Key('today-errands-disclosure'),
-                      expanded: _expanded,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SmoothDisclosure(
-                            expanded: day.errands.isEmpty,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'What’s on your way today?',
-                                    style: context.type.titleMedium,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Add an errand. The details can wait.',
-                                    style: context.type.bodyMedium?.copyWith(
-                                      color: context.colors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          AnimatedErrandList(
-                            items: day.errands
-                                .take(_showAll ? day.errands.length : 5)
-                                .toList(),
-                            onEdit: _edit,
-                          ),
-                          SmoothDisclosure(
-                            expanded: day.errands.length > 5,
-                            child: TextButton(
-                              onPressed: () =>
-                                  setState(() => _showAll = !_showAll),
-                              child: Text(
-                                _showAll
-                                    ? 'Show fewer'
-                                    : 'Show all ${day.errands.length} errands',
-                              ),
-                            ),
-                          ),
-                          ErrandComposer(
-                            key: const Key('today-composer'),
-                            onAdd: (value) {
-                              ref.read(todayProvider.notifier).add(value);
-                              setState(() => _showAll = true);
-                            },
-                          ),
-                        ],
+                      const Divider(indent: 20, endIndent: 20),
+                      EndpointRow(
+                        start: false,
+                        value: day.to,
+                        finding: _finding.contains(false),
+                        onTap: () => _place(false),
                       ),
-                    ),
-                    const Divider(indent: 20, endIndent: 20),
-                    EndpointRow(
-                      start: false,
-                      value: day.to,
-                      finding: _finding.contains(false),
-                      onTap: () => _place(false),
-                    ),
-                    const Divider(),
-                    TripSettings(
-                      day: day,
-                      onLeave: () => _time(true),
-                      onDeadline: () => _time(false),
-                      onTravel: _travel,
-                    ),
-                    SizedBox(
-                      height: 220,
-                      child: ref.watch(mapPlatformSupportedProvider)
-                          ? ref.watch(placeMapBuilderProvider)(
-                              PlaceMapRequest(
-                                philippinesOverview: true,
-                                iconOnlyAttribution: true,
-                                interactive: false,
-                                compactMarkers: true,
-                                pins: [
-                                  if (day.fromPlace.hasCoordinates)
-                                    MapPin('A', day.fromPlace),
-                                  for (var i = 0; i < day.errands.length; i++)
-                                    if (day
-                                        .errands[i]
-                                        .placeIntent
-                                        .hasCoordinates)
-                                      MapPin(
-                                        '${i + 1}',
-                                        day.errands[i].placeIntent,
-                                      ),
-                                  if (day.toPlace.hasCoordinates)
-                                    MapPin('Z', day.toPlace),
-                                ],
+                      const Divider(),
+                      TripSettings(
+                        day: day,
+                        onLeave: () => _time(true),
+                        onDeadline: () => _time(false),
+                        onTravel: _travel,
+                      ),
+                      SizedBox(
+                        height: 220,
+                        child: ref.watch(mapPlatformSupportedProvider)
+                            ? ref.watch(placeMapBuilderProvider)(
+                                PlaceMapRequest(
+                                  philippinesOverview: true,
+                                  iconOnlyAttribution: true,
+                                  interactive: false,
+                                  compactMarkers: true,
+                                  pins: [
+                                    if (day.fromPlace.hasCoordinates)
+                                      MapPin('A', day.fromPlace),
+                                    for (var i = 0; i < day.errands.length; i++)
+                                      if (day
+                                          .errands[i]
+                                          .placeIntent
+                                          .hasCoordinates)
+                                        MapPin(
+                                          '${i + 1}',
+                                          day.errands[i].placeIntent,
+                                        ),
+                                    if (day.toPlace.hasCoordinates)
+                                      MapPin('Z', day.toPlace),
+                                  ],
+                                ),
+                              )
+                            : const Center(
+                                child: Text(
+                                  'Map preview is available on Android.',
+                                ),
                               ),
-                            )
-                          : const Center(
-                              child: Text(
-                                'Map preview is available on Android.',
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => context.go('/recurring'),
-                  icon: const Icon(Icons.playlist_add_rounded, size: 20),
-                  label: const Text('Add from a recurring list'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ref
-                  .watch(savedItineraryProvider)
-                  .when(
-                    data: (plan) => plan == null
-                        ? const SizedBox.shrink()
-                        : Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              onPressed: () =>
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).push<void>(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          SavedPlanView(initial: plan),
-                                    ),
-                                  ),
-                              icon: const Icon(Icons.route_outlined),
-                              label: Text(
-                                'View saved plan · ${plan.completed.length} done',
-                              ),
-                            ),
-                          ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => TextButton(
-                      onPressed: () => ref.invalidate(savedItineraryProvider),
-                      child: const Text('Retry loading saved plan'),
-                    ),
+                      ),
+                    ],
                   ),
-              Text(
-                kIsWeb
-                    ? 'Browser preview · Changes last for this session.'
-                    : 'Saved on this device.',
-                style: context.type.bodySmall?.copyWith(
-                  color: context.colors.onSurfaceVariant,
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => context.go('/recurring'),
+                    icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                    label: const Text('Add from a recurring list'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  kIsWeb
+                      ? 'Browser preview · Changes last for this session.'
+                      : 'Saved on this device.',
+                  style: context.type.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -571,7 +551,10 @@ class _TodayViewState extends ConsumerState<TodayView>
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: day.errands.isEmpty ? null : _planning,
+                  onPressed:
+                      day.errands.isEmpty || ref.watch(tripFinishProvider)
+                      ? null
+                      : _planning,
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

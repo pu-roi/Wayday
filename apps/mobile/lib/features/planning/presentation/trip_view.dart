@@ -12,6 +12,7 @@ import 'saved_plan_view.dart' show savedItineraryProvider;
 import 'trip_session.dart';
 import 'trip_controls.dart';
 import 'trip_map.dart';
+import 'finish_trip.dart';
 
 final tripNavigationProvider = Provider<TripNavigation>(
   (ref) => TripNavigation(ref.read(planningBudgetProvider)),
@@ -66,7 +67,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
             return nav.LatLng(latitude: fix.latitude, longitude: fix.longitude);
           },
           save: (plan) async {
-            await ref.read(itineraryRepositoryProvider).save(plan);
+            await ref.read(itineraryRepositoryProvider).updateProgress(plan);
             container.invalidate(savedItineraryProvider);
           },
         );
@@ -113,10 +114,16 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
   }
 
   void _exit() {
-    if (closing) return;
+    if (closing || ref.read(tripFinishProvider)) return;
     closing = true;
     unawaited(model.pause());
-    Navigator.pop(context, model.plan);
+    Navigator.pop(context, TripExit.paused(model.plan));
+  }
+
+  void _finished() {
+    closing = true;
+    unawaited(model.pause());
+    Navigator.pop(context, const TripExit.finished());
   }
 
   @override
@@ -211,7 +218,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
                         ),
                       ),
               ),
-              TripChecklist(model: model, onFinish: _exit),
+              TripChecklist(model: model, onFinish: _finished),
             ],
           ),
         ),
