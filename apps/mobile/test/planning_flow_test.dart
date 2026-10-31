@@ -230,7 +230,7 @@ void main() {
       expect(find.text('Your trip'), findsOneWidget);
       expect((await repo.read())!.stops, isNotEmpty);
       expect(await library.read(), isEmpty);
-      await tester.tap(find.byTooltip('Stop guidance'));
+      await tester.tap(find.byTooltip('Stop guidance and view plan'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },

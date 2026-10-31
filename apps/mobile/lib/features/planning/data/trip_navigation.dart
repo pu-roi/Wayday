@@ -1,41 +1,204 @@
+import 'dart:async';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart'
     as nav;
 import '../../today/domain/day.dart';
-import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
+import '../domain/trip_waypoints.dart';
 import 'planning_budget.dart';
 
-class TripNavigation {
-  TripNavigation(this.budget);
-  final PlanningBudget budget;
-  bool initialized = false;
-  Future<void> initialize() async {
+export '../domain/trip_waypoints.dart';
+
+enum NavigationSignalKind { arrival, gpsLost, gpsAvailable, routeChanged }
+
+class NavigationSignal {
+  const NavigationSignal(this.kind, {this.target});
+  final NavigationSignalKind kind;
+  final nav.LatLng? target;
+}
+
+/// SDK boundary. Tests substitute a driver without opening a paid session.
+abstract class NavigationDriver {
+  Stream<NavigationSignal> get events;
+  Future<void> initialize(nav.TermsAndConditionsUIParams? colors);
+  Future<nav.NavigationRouteStatus> destinations(
+    List<TripWaypoint> stops,
+    TravelProfile profile,
+  );
+  Future<void> start();
+  Future<void> advance();
+  Future<List<nav.RouteSegment>> segments();
+  Future<void> stop();
+}
+
+class GoogleNavigationDriver implements NavigationDriver {
+  final _events = StreamController<NavigationSignal>.broadcast(sync: true);
+  final List<StreamSubscription<dynamic>> _listeners = [];
+  int _revision = 0;
+  bool _initialized = false;
+  @override
+  Stream<NavigationSignal> get events => _events.stream;
+  @override
+  Future<void> initialize(nav.TermsAndConditionsUIParams? colors) async {
+    final revision = ++_revision;
     final accepted =
         await nav.GoogleMapsNavigator.areTermsAccepted() ||
         await nav.GoogleMapsNavigator.showTermsAndConditionsDialog(
           'Wayday',
           'Wayday',
+          uiParams: colors,
         );
     if (!accepted) {
       throw const PlanningFailure(
         'Accept Google navigation terms to start guidance.',
+        kind: 'terms',
       );
     }
+    if (revision != _revision) return;
     await nav.GoogleMapsNavigator.initializeNavigationSession(
       abnormalTerminationReportingEnabled: false,
       taskRemovedBehavior: nav.TaskRemovedBehavior.quitService,
     );
-    initialized = true;
+    _initialized = true;
+    if (revision != _revision) {
+      await stop();
+      return;
+    }
+    void emit(NavigationSignal event) {
+      if (revision == _revision) _events.add(event);
+    }
+
+    _listeners.add(
+      nav.GoogleMapsNavigator.setOnArrivalListener(
+        (event) => emit(
+          NavigationSignal(
+            NavigationSignalKind.arrival,
+            target: event.waypoint.target,
+          ),
+        ),
+      ),
+    );
+    _listeners.add(
+      nav.GoogleMapsNavigator.setOnRouteChangedListener(
+        () => emit(const NavigationSignal(NavigationSignalKind.routeChanged)),
+      ),
+    );
+    _listeners.add(
+      await nav.GoogleMapsNavigator.setOnGpsAvailabilityChangeListener(
+        (event) => emit(
+          NavigationSignal(
+            event.isGpsLost || !event.isGpsValidForNavigation
+                ? NavigationSignalKind.gpsLost
+                : NavigationSignalKind.gpsAvailable,
+          ),
+        ),
+      ),
+    );
   }
 
-  Future<void> guide(PlaceIntent destination, TravelProfile profile) async {
+  @override
+  Future<nav.NavigationRouteStatus> destinations(
+    List<TripWaypoint> stops,
+    TravelProfile profile,
+  ) => nav.GoogleMapsNavigator.setDestinations(
+    nav.Destinations(
+      displayOptions: nav.NavigationDisplayOptions(),
+      waypoints: [
+        for (final point in stops)
+          nav.NavigationWaypoint.withLatLngTarget(
+            title: point.place.label,
+            target: nav.LatLng(
+              latitude: point.place.latitude!,
+              longitude: point.place.longitude!,
+            ),
+          ),
+      ],
+      routingOptions: nav.RoutingOptions(
+        locationTimeoutMs: 30000,
+        travelMode: switch (profile) {
+          TravelProfile.walk => nav.NavigationTravelMode.walking,
+          TravelProfile.motor => nav.NavigationTravelMode.twoWheeler,
+          TravelProfile.bike => nav.NavigationTravelMode.cycling,
+          TravelProfile.sedan ||
+          TravelProfile.truck => nav.NavigationTravelMode.driving,
+        },
+      ),
+    ),
+  );
+  @override
+  Future<void> start() => nav.GoogleMapsNavigator.startGuidance();
+  @override
+  Future<void> advance() async {
+    await nav.GoogleMapsNavigator.continueToNextDestination();
+  }
+
+  @override
+  Future<List<nav.RouteSegment>> segments() =>
+      nav.GoogleMapsNavigator.getRouteSegments();
+  @override
+  Future<void> stop() async {
+    _revision++;
+    for (final listener in _listeners) {
+      await listener.cancel();
+    }
+    _listeners.clear();
+    if (!_initialized) return;
+    _initialized = false;
+    try {
+      await nav.GoogleMapsNavigator.stopGuidance();
+    } finally {
+      await nav.GoogleMapsNavigator.cleanup();
+    }
+  }
+}
+
+class TripNavigation {
+  TripNavigation(this.budget, {NavigationDriver? driver})
+    : driver = driver ?? GoogleNavigationDriver();
+  final PlanningBudget budget;
+  final NavigationDriver driver;
+  bool initialized = false;
+  Future<void>? _flight;
+  Future<void>? _stopping;
+  Future<void>? _initializing;
+  int _revision = 0;
+  bool get settling => _stopping != null;
+  Stream<NavigationSignal> get events => driver.events;
+  Future<void> initialize({nav.TermsAndConditionsUIParams? colors}) async {
+    final revision = _revision;
+    await _stopping;
+    if (revision != _revision) return;
+    if (_initializing != null) return _initializing!;
+    final work = driver.initialize(colors);
+    _initializing = work;
+    try {
+      await work;
+      if (revision == _revision) initialized = true;
+    } finally {
+      if (identical(_initializing, work)) _initializing = null;
+    }
+  }
+
+  Future<void> guide(List<TripWaypoint> points, TravelProfile profile) {
+    if (_flight != null) return _flight!;
+    final work = _guide(points, profile);
+    _flight = work;
+    unawaited(
+      work.then(
+        (_) {
+          if (identical(_flight, work)) _flight = null;
+        },
+        onError: (Object _, StackTrace _) {
+          if (identical(_flight, work)) _flight = null;
+        },
+      ),
+    );
+    return work;
+  }
+
+  Future<void> _guide(List<TripWaypoint> points, TravelProfile profile) async {
+    final revision = _revision;
     if (!initialized) {
       throw const PlanningFailure('Start the navigation session first.');
-    }
-    if (!destination.hasCoordinates) {
-      throw const PlanningFailure(
-        'Refresh this stop’s location before guidance.',
-      );
     }
     if (profile == TravelProfile.bike) {
       throw const PlanningFailure(
@@ -43,46 +206,86 @@ class TripNavigation {
         kind: 'unsupported_profile',
       );
     }
-    await budget.google('navigation', 1, 25000);
-    final status = await nav.GoogleMapsNavigator.setDestinations(
-      nav.Destinations(
-        displayOptions: nav.NavigationDisplayOptions(),
-        waypoints: [
-          nav.NavigationWaypoint.withLatLngTarget(
-            title: destination.label,
-            target: nav.LatLng(
-              latitude: destination.latitude!,
-              longitude: destination.longitude!,
-            ),
-          ),
-        ],
-        routingOptions: nav.RoutingOptions(
-          travelMode: switch (profile) {
-            TravelProfile.walk => nav.NavigationTravelMode.walking,
-            TravelProfile.motor => nav.NavigationTravelMode.twoWheeler,
-            TravelProfile.bike => nav.NavigationTravelMode.cycling,
-            TravelProfile.sedan ||
-            TravelProfile.truck => nav.NavigationTravelMode.driving,
-          },
-        ),
-      ),
-    );
-    if (status != nav.NavigationRouteStatus.statusOk) {
+    if (points.isEmpty || points.length > 25) {
       throw const PlanningFailure(
-        'Google guidance is unavailable for this stop and travel mode. Your progress is kept.',
-        kind: 'no_route',
+        'Embedded navigation supports up to 25 remaining stops including the destination. Your saved plan is kept.',
+        kind: 'waypoints',
       );
     }
-    await nav.GoogleMapsNavigator.startGuidance();
+    if (points.any((p) => !p.place.hasCoordinates)) {
+      throw const PlanningFailure(
+        'Refresh the expired or missing stop location in your saved plan before guidance.',
+        kind: 'location_reference',
+      );
+    }
+    // Reserve immediately before dispatch, per waypoint. Dispatched failures remain accounted.
+    await budget.google('navigation', points.length, 25000);
+    if (revision != _revision) {
+      await budget.google('navigation', points.length, 25000, release: true);
+      return;
+    }
+    final status = await driver.destinations(points, profile);
+    if (revision != _revision) return;
+    if (status != nav.NavigationRouteStatus.statusOk) {
+      throw routeFailure(status);
+    }
+    await driver.start();
   }
 
-  Future<void> stop() async {
-    if (!initialized) return;
+  static PlanningFailure routeFailure(
+    nav.NavigationRouteStatus status,
+  ) => PlanningFailure(switch (status) {
+    nav.NavigationRouteStatus.locationUnavailable ||
+    nav.NavigationRouteStatus.locationUnknown =>
+      'Google navigation could not establish your location. Check location services and try again.',
+    nav.NavigationRouteStatus.apiKeyNotAuthorized =>
+      'Google navigation access was denied. Your saved plan is kept.',
+    nav.NavigationRouteStatus.quotaExceeded ||
+    nav.NavigationRouteStatus.quotaCheckFailed =>
+      'Google navigation quota rejected this request. Your saved plan is kept.',
+    nav.NavigationRouteStatus.networkError =>
+      'The navigation route could not load. Check your internet connection.',
+    _ =>
+      'Google could not calculate this navigation route and travel mode. Your saved plan is kept.',
+  }, kind: 'navigation_${status.name}');
+  Future<void> advance() {
+    if (_flight != null) return _flight!;
+    final revision = _revision;
+    final work = () async {
+      await driver.advance();
+      if (revision == _revision) await driver.start();
+    }();
+    _flight = work;
+    unawaited(
+      work.then(
+        (_) {
+          if (identical(_flight, work)) _flight = null;
+        },
+        onError: (Object _, StackTrace _) {
+          if (identical(_flight, work)) _flight = null;
+        },
+      ),
+    );
+    return work;
+  }
+
+  Future<void> stop() {
+    if (_stopping != null) return _stopping!;
+    _revision++;
     initialized = false;
-    try {
-      await nav.GoogleMapsNavigator.stopGuidance();
-    } finally {
-      await nav.GoogleMapsNavigator.cleanup();
-    }
+    final work = () async {
+      // A caller timeout is not cancellation. Never overlap a second dispatch.
+      await _initializing?.catchError((Object _) {});
+      await _flight?.catchError((Object _) {});
+      await driver.stop();
+    }();
+    _stopping = work;
+    unawaited(
+      work.then(
+        (_) => _stopping = null,
+        onError: (Object _, StackTrace _) => _stopping = null,
+      ),
+    );
+    return work;
   }
 }
