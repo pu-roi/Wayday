@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/core/data/wayday_database.dart';
 import 'package:wayday/features/today/data/day_repository.dart';
 import 'package:wayday/features/planning/data/review_trip_repository.dart';
-import 'package:wayday/features/today/domain/day.dart';
 
 void main() {
   test(

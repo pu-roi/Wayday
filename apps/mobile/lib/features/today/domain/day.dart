@@ -46,6 +46,10 @@ class DayPlan {
       to.isEmpty &&
       !fromPlace.hasCoordinates &&
       !toPlace.hasCoordinates &&
+      fromPlace.providerPlaceId == null &&
+      toPlace.providerPlaceId == null &&
+      fromPlace.savedPlaceId == null &&
+      toPlace.savedPlaceId == null &&
       departure == 510 &&
       deadline == 1080 &&
       profile == TravelProfile.motor;

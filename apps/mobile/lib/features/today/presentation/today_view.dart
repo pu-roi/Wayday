@@ -541,7 +541,10 @@ class _TodayViewState extends ConsumerState<TodayView>
                             ),
                             ErrandComposer(
                               key: const Key('today-composer'),
-                              onDraftChanged: (value) => _composerDraft = value,
+                              onDraftChanged: (value) {
+                                _composerDraft = value;
+                                if (!value) unawaited(_refreshDate());
+                              },
                               onAdd: (value) {
                                 ref.read(todayProvider.notifier).add(value);
                                 setState(() => _showAll = true);

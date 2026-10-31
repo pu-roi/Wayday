@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/features/today/domain/day.dart';
+import 'package:wayday/features/places/domain/place_intent.dart';
 
 void main() {
   test('only empty default forms follow the Manila day', () {
@@ -8,6 +9,24 @@ void main() {
     expect(empty.copyWith(from: 'Home').canDefaultDate, isFalse);
     expect(empty.copyWith(departure: 600).canDefaultDate, isFalse);
     expect(empty.copyWith(dateSelected: true).canDefaultDate, isFalse);
+    expect(
+      empty
+          .copyWith(
+            fromPlace: const PlaceIntent(
+              kind: PlaceKind.providerReference,
+              provider: 'google_places_sdk',
+              providerPlaceId: 'retained-branch',
+            ),
+          )
+          .canDefaultDate,
+      isFalse,
+    );
+    expect(
+      empty
+          .copyWith(toPlace: const PlaceIntent(savedPlaceId: 'home'))
+          .canDefaultDate,
+      isFalse,
+    );
     expect(
       DayPlan(
         errands: [Errand(id: 'x', title: 'Rice')],

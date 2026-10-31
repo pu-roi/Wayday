@@ -9,8 +9,49 @@ import 'package:wayday/features/today/presentation/today_view.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
+import 'helpers/planning_fixtures.dart';
 
 void main() {
+  testWidgets(
+    'an accepted current trip protects an otherwise empty Today date',
+    (tester) async {
+      final trips = MemoryItineraryRepository();
+      await trips.save(
+        AcceptedItinerary(
+          day: fixture(),
+          stops: [
+            ItineraryStop(pin, ['a', 'b']),
+          ],
+          acceptedAt: DateTime.now(),
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          dayRepositoryProvider.overrideWithValue(
+            MemoryDayRepository(
+              initialData: DayPlan(errands: [], date: '2026-10-31'),
+            ),
+          ),
+          todayClockProvider.overrideWithValue(() => DateTime.utc(2026, 11, 1)),
+          itineraryRepositoryProvider.overrideWithValue(trips),
+          placeMapBuilderProvider.overrideWithValue(
+            (_) => const SizedBox.expand(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(theme: buildTheme(), home: const TodayView()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(todayProvider).date, '2026-10-31');
+      expect(find.text('Current trip'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets(
     'midnight refreshes only an empty form and clear resets a chosen date',
     (tester) async {
@@ -34,7 +75,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-        child: MaterialApp(theme: buildTheme(), home: const TodayView()),
+          child: MaterialApp(theme: buildTheme(), home: const TodayView()),
         ),
       );
       await tester.pumpAndSettle();

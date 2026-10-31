@@ -73,6 +73,23 @@ void main() {
   });
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
   test(
+    'previous location clarification is reused after the semantic schema update',
+    () async {
+      final resolver = GeminiClarificationResolver(
+        client: GeminiRequestClient(channel: channel),
+      );
+      await resolver.resolve(context, 'Rice');
+      final response = disk.values.single;
+      disk.clear();
+      disk['clarification:${locationClarificationRequest(context, 'Rice', [])}'] =
+          response;
+      generations = 0;
+      final restored = await resolver.resolve(context, 'Rice', savedOnly: true);
+      expect(restored.resolved, isTrue);
+      expect(generations, 0);
+    },
+  );
+  test(
     'answer namespace, duplicate coalescing, restart hit and changed-answer miss',
     () async {
       final client = GeminiRequestClient(channel: channel),
