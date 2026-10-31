@@ -145,7 +145,10 @@ class BusinessHours {
         }
 
         final startClock = clock(open), startDay = weekday(open);
-        if (close == null && startDay == 0 && startClock == 0) {
+        if (close == null &&
+            startDay == 0 &&
+            startClock == 0 &&
+            (!dated || open['date'] == null)) {
           windows.add([0, 86400]);
           continue;
         }

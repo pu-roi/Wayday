@@ -63,6 +63,16 @@ void main() {
     ]);
     expect(value.day('2026-11-02').windows, isEmpty);
   });
+  test(
+    'a dated Sunday opening is not a weekly all-day sentinel for Saturday',
+    () {
+      final value = hours([], current: [period(point(0, 0, 0, '2026-11-01'))]);
+      expect(value.day('2026-10-31').windows, isEmpty);
+      expect(value.day('2026-11-01').windows, [
+        [0, 86400],
+      ]);
+    },
+  );
   test('24-hour sentinel is different from missing or closed hours', () {
     expect(hours([period(point(0, 0))]).day('2026-11-15').windows, [
       [0, 86400],
@@ -164,6 +174,41 @@ void main() {
       );
       expect(schedule.stops.single.tasks.length, 2);
       expect(schedule.stops.single.departure, 8 * 3600 + 40 * 60);
+    },
+  );
+  test(
+    'the solver can do another errand first instead of waiting for opening',
+    () {
+      final data = input(
+        [
+          const Errand(id: 'gym', title: 'Gym', durationMinutes: 15),
+          const Errand(id: 'coffee', title: 'Coffee', durationMinutes: 20),
+        ],
+        options: {
+          'gym': ['a'],
+          'coffee': ['b'],
+        },
+      );
+      data['allowOpeningWait'] = false;
+      data['hours'] = {
+        'a': [
+          [8 * 3600 + 30 * 60, 10 * 3600],
+        ],
+        'b': [
+          [8 * 3600, 10 * 3600],
+        ],
+      };
+      final result = DaySchedule.fromJson(
+        solveDay(data)['schedule'] as Map<String, dynamic>,
+      );
+      expect(result.stops.map((s) => s.tasks.single.errandId), [
+        'coffee',
+        'gym',
+      ]);
+      expect(
+        result.stops.every((s) => s.tasks.single.start == s.arrival),
+        isTrue,
+      );
     },
   );
   test(

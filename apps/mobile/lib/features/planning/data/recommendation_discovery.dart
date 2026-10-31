@@ -260,6 +260,8 @@ class GoogleRecommendationDiscovery
               'network' => RecommendationFailureKind.network,
               'timeout' => RecommendationFailureKind.timeout,
               'cancelled' => RecommendationFailureKind.cancelled,
+              'unexpected_response' =>
+                RecommendationFailureKind.unexpectedResponse,
               _ => RecommendationFailureKind.unavailable,
             };
             throw RecommendationFailure(

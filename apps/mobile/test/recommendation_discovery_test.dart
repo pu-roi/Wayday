@@ -135,6 +135,7 @@ void main() {
     'network',
     'timeout',
     'cancelled',
+    'unexpected_response',
   ]) {
     test('preserves safe $code failure and operation', () async {
       final service = create(

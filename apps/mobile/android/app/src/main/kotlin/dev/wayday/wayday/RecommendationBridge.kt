@@ -68,14 +68,20 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
                             builder.setLocationBias(CircularBounds.newInstance(LatLng(latitude, longitude), 5000.0))
                         }
                         client.searchByText(builder.build())
-                            .addOnSuccessListener { reply.success(it.places.map(::snapshot)) }
+                            .addOnSuccessListener {
+                                try { reply.success(it.places.map(::snapshot)) }
+                                catch (_: Exception) { reply.fail("unexpected_response", null) }
+                            }
                             .addOnFailureListener { reply.failure(it) }
                     }
                     "details" -> {
                         val id = args["id"] as? String ?: throw IllegalArgumentException()
                         require(id.isNotEmpty() && id.length <= 512)
                         client.fetchPlace(FetchPlaceRequest.builder(id, fields).setCancellationToken(reply.cancellation.token).build())
-                            .addOnSuccessListener { reply.success(listOf(snapshot(it.place))) }
+                            .addOnSuccessListener {
+                                try { reply.success(listOf(snapshot(it.place))) }
+                                catch (_: Exception) { reply.fail("unexpected_response", null) }
+                            }
                             .addOnFailureListener { reply.failure(it) }
                     }
                     else -> result.notImplemented()
@@ -106,7 +112,7 @@ class RecommendationBridge(private val activity: Activity, messenger: BinaryMess
             "truncated" to value.isTruncated)
         fun hours(value: OpeningHours?): Map<String, Any?>? = value?.let {
             mapOf("periods" to it.periods.map { period ->
-                mapOf("open" to point(period.open), "close" to period.close?.let(::point))
+                mapOf("open" to period.open?.let(::point), "close" to period.close?.let(::point))
             }, "weekdays" to it.weekdayText,
                 "specialDays" to it.specialDays.map { day ->
                     mapOf("date" to date(day.date), "exceptional" to day.isExceptional)
