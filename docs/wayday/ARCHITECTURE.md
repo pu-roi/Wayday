@@ -1,5 +1,11 @@
 # Planned architecture
 
+## D66 place suitability and date-default continuation
+
+Optional PlaceSearchIntent data belongs to validated interpretation/clarification meaning and may travel in existing user-owned template JSON. Provider primary type, result ordinal, ratings, count, addresses and hours belong to transient recommendation snapshots. A pure suitability policy feeds both browsing and initial discovery, while the existing worker receives per-errand/per-place suitability and tempered quality values alongside the road matrix. One corridor/two-anchor acquisition bounds and independent accounting remain unchanged. Prior request builders remain compatible lookup identities; new schema versions do not automatically generate on existing or interrupted input.
+
+Map camera state and revisioned confirmation live outside picker-wide widget updates. Zoom presentation uses an isolated throttled notifier; final idle camera positions resolve bounded confirmation. Today dateSelected is additive JSON metadata, excluded from historical review/draft source identities. Automatic dates apply only to empty/default, unselected, inactive forms without accepted progress. No database migration or public API is added.
+
 Status, 2026-10-27: Android Today, Recurring, and local Drift/SQLite persistence exist at `apps/mobile/`; the browser preview remains in memory. Reconciliation adds an online search adapter, confirmed-place values, map pin selection, manual review, schema migration and legacy-workspace recovery. These additions require integrated Android verification before readiness is claimed. The measured local routing study and versioned planning contract remain feasibility evidence, not production planning. Rudy's bounded place service has been copied into `services/api/` for review; the app does not depend on it. See [README product requirements](../../README.md#product-requirements) and [Decisions](DECISIONS.md) for current product boundaries and rationale.
 
 ## Implemented private phone planner — D47

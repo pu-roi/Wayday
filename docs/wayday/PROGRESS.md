@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-01] Improve place information, pin capture and semantic recommendations
+
+- Implemented D66: full addresses in alternatives, transient Google ratings/type/relevance metadata, bounded complementary venue searches and suitability-first whole-trip comparison. Existing interpretations remain reusable through frozen request builders; optional new semantic hints do not trigger regeneration on upgrade.
+- Removed raw zoom-driven picker rebuilds and added revisioned final-center confirmation. Empty/default Today dates follow Manila startup, resume and midnight while explicit, populated, legacy and accepted-trip contexts remain protected. No provider, schema, dependency or Cloud change was introduced.
+- Verification and its limits, including disposable Android checks, host regressions and native profile measurements, are recorded in [the focused evidence](evidence/place-quality-2026-11-01.md). Personal-phone data and installation remain untouched; no live paid requests were used.
+
 ### [2026-10-30] Create the owner-requested Plan my day implementation plan
 
 - Created docs/wayday/PLANNING.md because the owner explicitly requested planning.md before implementation and the current checkout contained no such document. The focused plan records the agreed screen-by-screen interactions, Gemini interpretation, phone-only scheduling, candidate recommendations, shared visits, local consistency/storage, embedded navigation, design-system requirements, remaining technical qualifications and implementation acceptance checks. It does not restore the previous project-wide roadmap or task board.

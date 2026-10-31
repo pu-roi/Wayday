@@ -5,6 +5,8 @@ description: Plan, implement, or review Wayday errand interpretation rules, plac
 
 # Wayday planning
 
+D66 adds optional validated PlaceSearchIntent hints to new model responses without runtime phrase classification or automatic cache upgrades. Assign semantic variants to at most one corridor/two anchors total; combine initial bounded results, share suitability with browsing and preserve existing shortlist limits. General groceries favor supermarkets/public markets while appropriate small shops and unrated records remain eligible. Preserve fixed branches, explicit brands and hours. The worker ranks optional completion, suitability, road seconds, then count-tempered ratings with prior 3.5/weight 20; ratings do not prove inventory, access or popularity. Keep conservative US$0.035/US$0.020 rates and all existing accounting protections.
+
 Read the repository's `AGENTS.md` and current user request before acting. Work within the owner's authorized scope; a planning review does not authorize deployments, account changes or new backend services.
 
 ## Establish the contract

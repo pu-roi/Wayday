@@ -5,6 +5,8 @@ description: Plan, implement, or review Wayday Flutter state, feature architectu
 
 # Wayday mobile
 
+D66 keeps the manual map mounted, captures the final idle camera with a three-second revision guard, and throttles isolated zoom UI to four updates per second. Superseding gestures/selections invalidate confirmation; map movement never searches. Empty/default Today date refreshes on Manila startup/resume/midnight only without explicit date, active drafts/editors or accepted progress. Preserve legacy date history and source fingerprints. Additive dateSelected JSON needs no schema migration. Keep transient primary type/rating/count metadata and prior interpretation/clarification request lookup compatibility; report native/physical profile timings separately from mock rebuild counts.
+
 Read the repository's `AGENTS.md` and respect the current phase and latest user request. This skill supports authorized work; it does not authorize application development or installations.
 
 ## Read the relevant context

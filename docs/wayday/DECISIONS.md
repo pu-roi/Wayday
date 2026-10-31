@@ -1,5 +1,15 @@
 # Foundation decision log
 
+## D66 — Clear place information, safe pin confirmation and semantic suitability (2026-11-01)
+
+The owner approved full formatted addresses in alternatives, isolated throttled zoom updates, stable confirmation that captures the final idle center, and automatic date defaults only for empty/default forms. Explicit plan dates, entered forms, current trips and legacy unknown date history remain protected. The additive dateSelected field uses existing JSON; review/draft source identity excludes it. There is no schema migration or automatic date movement for existing plans.
+
+During implementation the owner requested explicit open/closed status. Details and alternatives distinguish current Open now/Closed now (or Usually for weekly fallback) from calculated visit compatibility. Derive this locally from sufficient fresh hours, using an exclusive closing boundary and minute refresh, without isOpen or extra requests. Unknown, failed and stale hours never imply closure; known provider business closures remain explicit.
+
+Extend new Gemini interpretations/clarifications with optional bounded semantic search variants and venue types, preserving all prior saved-request lookup paths and failed/interrupted recovery guards. Do not create item/pickup phrase dictionaries or regenerate understanding on upgrade. Use complementary queries within one corridor/two anchors, primary type, provider ordinal, and transient rating/count metadata. Combine initial bounded results before shortlisting and share suitability with alternatives. General groceries favor supermarkets/public markets; appropriate smaller shops and unknown ratings remain eligible. Fixed choices, brands, timing and business-hour feasibility remain authoritative.
+
+The existing worker ranks optional completion, suitability, actual road travel, tempered rating evidence, stops and arrival. Ratings break equal road-time ties; count tempers sparse ratings through a neutral 3.5 prior with weight 20. This is a documented Wayday heuristic rather than a claim about live popularity or stock. Keep existing candidate bounds and request budgets, including conservative US$0.035 search/US$0.020 details estimates and the disposable accounting-recovery floor. No provider, model, dependency, backend or Cloud change is made. See [D66 evidence](evidence/place-quality-2026-11-01.md) for implemented behavior and separate verification limits.
+
 Recorded: 2026-10-15 (Asia/Manila).
 
 **Confirmed** means explicit owner direction. **Selected recommendation** means the technical direction captured by the agreed foundation plan; it is not implemented. **Default assumption** is a planning choice that needs validation before it becomes a release promise.

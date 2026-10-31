@@ -1,5 +1,9 @@
 # Technology stack and dependency inventory
 
+## D66 integration continuation
+
+The existing pinned Places SDK now requests RATING and USER_RATING_COUNT with the D63 hours fields and passes PRIMARY_TYPE plus result ordinal through its transient bridge snapshot. This introduces no dependency/provider/model change. Keep conservative US$0.035 search and US$0.020 details accounting until charged-SKU reconciliation, with the same allocations, restrictions and disposable recovery floor. Written reviews, Atmosphere fields and a new grounding service are not adopted. The existing MapLibre renderer/composition remains; D66 changes Flutter camera/confirmation state and zoom rebuild behavior rather than switching map technology.
+
 Initial research: 2026-10-15; Google credential/Routes qualification added 2026-10-29. Flutter and Today/Recurring Drift/SQLite storage are implemented. The reconciliation adds a configurable online place-search client and online map pin selection, with limited emulator verification. Regional Protomaps resources and a local Valhalla evaluation graph remain separate pilot evidence. Google runtime feature integration, production routing/planning services and the solver remain later tasks. The owner manually configured a Google Cloud project under an existing paid billing account; no account, purchase, billing activation or hosted service was provisioned by this task's tools.
 
 Platform sequencing clarified on 2026-10-16: build and verify Android first; iOS comes later. The iOS considerations below apply to that later phase and do not block Android development.

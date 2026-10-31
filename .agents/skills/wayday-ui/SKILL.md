@@ -5,6 +5,10 @@ description: Design, refine, or review Wayday screens, interactions, visual comp
 
 # Wayday UI
 
+D66 adds wrapping formatted addresses and available Google rating/count to alternatives, preserving the fixed pager, append behavior and compact main rows. Ratings remain in Details/alternatives. Keep Confirm location visually stable during ordinary movement after a valid selection; use bounded revisioned final-center capture, not a stale prior pin. Isolate rounded/throttled zoom updates from whole-picker rebuilds. Today's date is the plan date; automatic defaults apply only to empty/default forms without an explicit date, active draft/editor or current trip. See the D66 planning/evidence documents for implementation and qualification boundaries.
+
+Show fresh Open now/Closed now status with an icon and wording in Details/alternatives. Weekly fallback uses Usually. Current status is separate from trip-day hours and calculated visit compatibility. Keep unknown, failed, stale and pin-only data honest; local minute updates do not request provider data.
+
 Read the root `AGENTS.md` for the current phase and authorized scope. A design request does not by itself authorize scaffolding the mobile application.
 
 ## Establish the reference

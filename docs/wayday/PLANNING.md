@@ -1,5 +1,17 @@
 # Plan my day implementation plan
 
+## Place information, map interaction and recommendation quality — D66
+
+The owner approved full addresses in Choose a place, stable revisioned map confirmation, empty-form date defaults and intent-aware quality, in that order. Preserve the theme, alternatives pager/append/cap behavior and provider boundaries. Display existing addresses without lookups. Isolate throttled zoom updates from picker-wide state and capture final idle coordinates with a three-second confirmation deadline.
+
+Today's date is the plan date. Only empty/default forms without an explicit date, active editor/composer or accepted trip follow Manila midnight/startup/resume. Preserve legacy unknown date history. Clear/Finish reset date selection through existing JSON storage without a migration.
+
+The owner's subsequent comment adds explicit Open now/Closed now status inside Details and Choose a place, computed locally from fresh retrieved hours. Label regular-hours fallback Usually; preserve unknown/failure states and reported business closures. Separate current status from the calculated planned visit and its complete-duration fit. Refresh the clock locally at minute boundaries without provider work.
+
+Add optional validated semantic variants/type families to new interpretation and clarification requests. Retain all previous request builders and recovery guards; updates must not regenerate old understanding. Use primary type, rating/count and provider ordinal metadata transiently. Assign queries to at most one corridor/two anchors total, combine initial responses before the current shortlist and share suitability with browsing. Favor supermarkets/markets for general groceries; retain appropriate small shops and unknown ratings. Preserve fixed places and explicit brands. Compare optional completion, suitability, road travel, then tempered ratings; feasibility/hours remain mandatory. Category/query matching never proves inventory, access or order readiness.
+
+See [D66 evidence](evidence/place-quality-2026-11-01.md) for implementation and separate qualification results. Keep current budgets, enriched-field rates, five-minute reuse and disposable accounting recovery. No new service/provider/dependency/model, Cloud change or personal-phone installation is authorized.
+
 ## Current-trip recovery and finishing — D65 current contract
 
 The owner approved keeping unfinished-trip recovery and selected a compact Current trip section at the top of Today, below its title/date and above its errand editor. Show a route icon, completed/assigned errand count and Resume trip; the action opens the existing current-trip summary before guidance. Remove the old bottom View saved plan shortcut. Recovery stays available after accidental exit or restart, including when errands are complete but the final journey has not been explicitly finished. This is independent of the optional Save for reuse action under Recurring.

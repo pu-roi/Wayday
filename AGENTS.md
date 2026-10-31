@@ -1,6 +1,12 @@
 # Wayday agent instructions
 
+## Place information, picker performance and suitability — D66
+
+The owner approved full addresses in alternatives, isolated four-per-second zoom UI, revisioned final-idle confirmation with a three-second deadline, and automatic Manila date defaults only for empty/default forms without explicit date/drafts/editors/current trips. Preserve entered and legacy dates; Clear/Finish reset dateSelected in existing JSON. Do not replace the map provider or remove attribution/consent. New optional PlaceSearchIntent hints improve semantic retrieval without phrase rules or automatic regeneration; retain previous request builders and journal guards. Use complementary variants within one corridor/two anchors, transient primary type/rating/count and shared suitability before existing shortlists. Preserve fixed choices/brands/hours; rank optional completion, suitability, road seconds, tempered ratings, stops and arrival. Ratings are secondary evidence, not stock/popularity guarantees. Keep budgets, provider boundaries, disposable accounting recovery and personal-phone safeguards. See D66 evidence; mocked/native/build checks do not establish physical-device performance or live model generalization.
+
 ## Current phase
+
+The D66 implementation also follows the owner's subsequent request for explicit open/closed status in Details and alternatives. Use fresh current hours for Open now/Closed now, label weekly fallback Usually, and keep calculated visit compatibility separate. Refresh the displayed clock locally without isOpen or provider requests; missing/failed/stale hours are unknown, not closed.
 
 The Android Flutter shell, Today, and Recurring are implemented. Local Drift/SQLite storage for Today and Recurring was implemented and verified on Android on 2026-10-27; the browser preview remains in memory. Use one light Cornflower theme without appearance controls, compact errand lists, focused editing, and numeric time entry. Repeat settings are metadata, not an automatic scheduler. Do not repeatedly ask for authorization already present in the conversation.
 

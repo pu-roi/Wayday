@@ -56,6 +56,16 @@ components:
 
 # Design System: Wayday mobile
 
+## Place information and stable map confirmation — D66
+
+Choose a place keeps its content-sized sheet and fixed errand pager. Use actual business name, current-place/locality line, wrapping formatted address, trip-day hours and available travel comparison; suppress equal locality/address lines. Available Google rating/count is secondary text in alternatives and Details, without expanding compact main rows or adding rating cutoffs. Missing addresses/ratings are not invented and displaying rows does not fetch data.
+
+Details and alternatives show a labelled Open now/Closed now indicator when fresh current hours support it; weekly fallback says Usually open/closed now. Pair wording with an icon and existing link/attention colors. Keep current status separate from planned-visit compatibility and future trip-day windows. Closed-at-visit and closes-before-completion warnings require an actually calculated visit. Missing, failed, stale and pin-only hours must not turn into a Closed label. Minute-boundary refresh is local and makes no provider request.
+
+Keep the manual center pin and visible Confirm location action. Ordinary panning must not flash its disabled appearance after a valid candidate exists. Confirmation briefly processes while waiting for final idle coordinates, times out after three seconds, and asks for confirmation again after a superseding selection. Invalid/no selection and conflicting operations retain honest disabled/error states. Zoom readout changes are isolated from the picker layout and throttled; native map identity stays stable. Preserve labels, attribution, saved places, current-location consent, keyboard behavior and provider provenance.
+
+Today's displayed date remains the plan date. Only empty/default forms without a chosen date, draft/editor or accepted trip follow Manila startup/resume/midnight. Clear and Finish restore the current default date. Do not silently move a populated plan or legacy date.
+
 The latest focused review repair preserves existing layout, labels, Edit errand and Choose actual location. Required unanswered questions use a question-bubble icon, Needs your answer and semantic dark amber #7A4500; optional questions retain normal colors and Optional. Stored, resolved answers use a normal-color check-circle. Processing, unresolved results, failed saving and rules awaiting approval must remain distinguishable. Clearing a saved answer withdraws its resolution and restores its unanswered treatment after the user's edit; a nonempty draft does not apply a new answer. Let Wayday recommend saves an explicit choice directly, without inserting a generated sentence. Trip details retains its wording and disclosure behavior with a normal-blue route icon. See [the current planning contract](docs/wayday/PLANNING.md#current-trip-recovery-and-finishing--d65-current-contract). The subsequent D60 repair removes separate location-recheck and assessment recovery controls; users answer the existing question instead. Recommendation recovery retains real choices, identifies an unfinished trip, uses failure-specific actions and keeps manual search secondary. A service rejection must not be described as no matching businesses. Long recovery actions stack beneath text on narrow/enlarged layouts.
 
 ## Overview

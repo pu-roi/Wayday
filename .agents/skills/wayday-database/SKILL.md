@@ -5,6 +5,8 @@ description: Plan, implement, or review Wayday Drift/SQLite persistence, Postgre
 
 # Wayday database
 
+D66 stores dateSelected additively in existing Today JSON and preserves legacy dates whose selection history is unknown. Clear/Finish reset this flag and current Manila date. Exclude this UI/default metadata from historical review/draft source fingerprints so saved choices and clocks remain recoverable. Semantic search hints are user-meaning data in existing optional interpretation/clarification/template JSON; provider ratings, names, addresses and hours remain transient. No migration or budget reset is introduced.
+
 Read the root `AGENTS.md`, the storage boundaries in [Architecture](../../../docs/wayday/ARCHITECTURE.md), and the data policies in [Stack](../../../docs/wayday/STACK.md). The Android app uses a versioned Drift/SQLite schema and has a recovery path for the previous workspace database. Inspect existing data and migration history before changes. D61 authorizes additive Drift v7 reusable-trip storage; templates remain separate from active accepted progress and ordinary recurring lists.
 
 Follow the owner's current task for storage scope and acceptance criteria; [Contributing](../../../docs/wayday/CONTRIBUTING.md#regional-maps-and-data) owns package/import practices. Sample-data cleanup removes future seeding/reset behavior while preserving existing rows, including user-edited examples. Repeat settings remain metadata; storage work does not authorize an automatic scheduler.
