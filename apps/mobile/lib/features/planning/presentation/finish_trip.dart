@@ -160,16 +160,21 @@ class _FinishTripActionState extends ConsumerState<FinishTripAction> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       if (error != null) Semantics(liveRegion: true, child: Text(error!)),
-      TextButton(
-        onPressed: widget.enabled && !working && !ref.watch(tripFinishProvider)
-            ? finish
-            : null,
-        child: Text(
-          working
-              ? 'Finishing trip…'
-              : error == null
-              ? 'Finish trip'
-              : 'Retry finishing trip',
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed:
+              widget.enabled && !working && !ref.watch(tripFinishProvider)
+              ? finish
+              : null,
+          icon: const Icon(Icons.flag_outlined),
+          label: Text(
+            working
+                ? 'Finishing trip…'
+                : error == null
+                ? 'Finish trip'
+                : 'Retry finishing trip',
+          ),
         ),
       ),
     ],
