@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ import '../../places/presentation/place_search_controller.dart';
 import '../../places/presentation/place_search_panel.dart';
 import '../data/location_reader.dart';
 import 'place_map.dart';
+import 'map_selection.dart';
 
 class OnlinePinPicker extends ConsumerStatefulWidget {
   const OnlinePinPicker({
@@ -46,10 +48,13 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
   bool _searchOpen = false,
       _locating = false,
       _saving = false,
-      _moving = false,
+      _confirming = false,
       _savedError = false;
   String? _locationInfo;
-  double? _zoom;
+  final _selection = MapSelectionController();
+  final _zoom = ValueNotifier<double?>(null);
+  Timer? _zoomTimer;
+  double? _nextZoom;
   SearchCategory? _areaCategory;
   bool _focusIsCurrentLocation = false;
 
@@ -181,6 +186,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
   bool _manualMapEligible(PlaceIntent? place) => place?.usesGoogleSdk != true;
 
   void _choose(PlaceIntent place) {
+    _selection.cancel();
     if (!_manualMapEligible(place)) {
       setState(
         () => _locationInfo =
@@ -198,7 +204,6 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
       _focusIsCurrentLocation = false;
       _focusRevision++;
       _query.text = place.label;
-      _moving = false;
       _locationInfo = null;
     });
     _closeSearch();
@@ -206,7 +211,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
 
   void _moveStarted() {
     _cancelLocation();
-    if (mounted) setState(() => _moving = true);
+    _selection.begin();
   }
 
   void _select(double latitude, double longitude) {
@@ -223,7 +228,6 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
         (selected!.latitude! - latitude).abs() < .000001 &&
         (selected.longitude! - longitude).abs() < .000001;
     setState(() {
-      _moving = false;
       if (!samePoint) {
         _labelRevision++;
         _locationInfo = null;
@@ -246,6 +250,49 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
       _focus = _point;
       _focusIsCurrentLocation = false;
     });
+    _selection.settle(latitude, longitude);
+  }
+
+  void _zoomChanged(double zoom) {
+    if (!zoom.isFinite) return;
+    _nextZoom = (zoom * 10).round() / 10;
+    if (_zoomTimer != null) return;
+    if (_zoom.value != _nextZoom) _zoom.value = _nextZoom;
+    _zoomTimer = Timer.periodic(const Duration(milliseconds: 250), (timer) {
+      if (!mounted || _zoom.value == _nextZoom) {
+        timer.cancel();
+        _zoomTimer = null;
+      } else {
+        _zoom.value = _nextZoom;
+      }
+    });
+  }
+
+  Future<void> _confirm() async {
+    if (_confirming) return;
+    final revision = _selection.revision;
+    setState(() => _confirming = true);
+    try {
+      await _selection.capture();
+      if (!mounted) return;
+      if (revision != _selection.revision) {
+        throw StateError('Selection changed');
+      }
+      final point = _point;
+      if (point == null || (widget.forPlanning && !point.hasCoordinates)) {
+        return;
+      }
+      Navigator.pop(context, point);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _locationInfo =
+              'The pin could not be confirmed. Let the map settle and try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
   }
 
   void _cancelLocation() {
@@ -254,6 +301,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
   }
 
   Future<void> _locate() async {
+    _selection.cancel();
     _closeSearch();
     final attempt = ++_locationAttempt;
     setState(() {
@@ -291,7 +339,6 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
         _focus = _point;
         _focusIsCurrentLocation = true;
         _focusRevision++;
-        _moving = false;
         _locationInfo =
             '${fix.approximate ? 'Approximate location. ' : ''}Accuracy about ${fix.accuracy.round()} m. Check the pin before confirming.';
       });
@@ -320,7 +367,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
         !place.hasCoordinates ||
         repository == null ||
         _saving ||
-        _moving) {
+        _confirming) {
       return;
     }
     setState(() => _saving = true);
@@ -349,6 +396,9 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
 
   @override
   void dispose() {
+    _selection.cancel();
+    _zoomTimer?.cancel();
+    _zoom.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _locationAttempt++;
     _search.dispose();
@@ -367,7 +417,7 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
         point.label.trim().isNotEmpty &&
         (!widget.forPlanning || point.hasCoordinates) &&
         (!point.isGoogle || point.hasCoordinates) &&
-        !_moving &&
+        !_confirming &&
         !_locating;
     return PopScope<PlaceIntent>(
       canPop: !_searchOpen,
@@ -444,13 +494,8 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                             );
                           },
                           onMoveStarted: _moveStarted,
-                          onZoomChanged: (zoom) {
-                            if (zoom.isFinite && mounted && zoom != _zoom) {
-                              setState(() => _zoom = zoom);
-                            }
-                          },
-                          onMoveCancelled: () =>
-                              setState(() => _moving = false),
+                          onZoomChanged: _zoomChanged,
+                          onMoveCancelled: _selection.cancel,
                         ),
                       ),
                     ),
@@ -478,36 +523,41 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                               ),
                       ),
                     ),
-                    if (_zoom != null)
-                      Positioned(
-                        right: 16,
-                        bottom: 112,
-                        child: Semantics(
-                          label: 'Map zoom level ${_zoom!.toStringAsFixed(1)}',
-                          excludeSemantics: true,
-                          child: Material(
-                            key: const Key('map-zoom-label'),
-                            color: context.colors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Center(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Text(
-                                      'Z: ${_zoom!.toStringAsFixed(1)}',
-                                      style: context.type.bodySmall,
+                    Positioned(
+                      right: 16,
+                      bottom: 112,
+                      child: ValueListenableBuilder<double?>(
+                        valueListenable: _zoom,
+                        builder: (context, zoom, _) => zoom == null
+                            ? const SizedBox.shrink()
+                            : Semantics(
+                                label:
+                                    'Map zoom level ${zoom.toStringAsFixed(1)}',
+                                excludeSemantics: true,
+                                child: Material(
+                                  key: const Key('map-zoom-label'),
+                                  color: context.colors.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: SizedBox(
+                                    width: 48,
+                                    height: 48,
+                                    child: Center(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4),
+                                          child: Text(
+                                            'Z: ${zoom.toStringAsFixed(1)}',
+                                            style: context.type.bodySmall,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
                       ),
+                    ),
                     if (!_searchOpen &&
                         (_areaCategory != null ||
                             _query.text.trim().length >= 2))
@@ -624,10 +674,12 @@ class _OnlinePinPickerState extends ConsumerState<OnlinePinPicker>
                     children: [
                       Expanded(
                         child: FilledButton(
-                          onPressed: canConfirm
-                              ? () => Navigator.pop(context, point)
-                              : null,
-                          child: const Text('Confirm location'),
+                          onPressed: canConfirm ? _confirm : null,
+                          child: Text(
+                            _confirming
+                                ? 'Confirming location…'
+                                : 'Confirm location',
+                          ),
                         ),
                       ),
                       if (widget.allowSave &&

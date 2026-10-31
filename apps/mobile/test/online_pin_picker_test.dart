@@ -14,6 +14,80 @@ import 'package:wayday/features/maps/data/location_reader.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 
 void main() {
+  testWidgets('confirmation during movement returns the final point', (
+    tester,
+  ) async {
+    PlaceMapRequest? request;
+    PlaceIntent? chosen;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeMapBuilderProvider.overrideWithValue((value) {
+            request = value;
+            return const SizedBox.expand();
+          }),
+        ],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async => chosen = await Navigator.push<PlaceIntent>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const OnlinePinPicker(
+                    initial: PlaceIntent(
+                      label: 'Home',
+                      source: 'user',
+                      latitude: 14.5,
+                      longitude: 121,
+                    ),
+                  ),
+                ),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    request!.onMoveStarted!();
+    await tester.tap(find.text('Confirm location'));
+    await tester.pump();
+    expect(chosen, isNull);
+    expect(find.text('Confirming location…'), findsOneWidget);
+    request!.onSelect!(14.61, 121.05);
+    await tester.pumpAndSettle();
+    expect(chosen!.latitude, 14.61);
+    expect(chosen!.longitude, 121.05);
+    expect(chosen!.label, 'Home');
+  });
+  testWidgets('camera zoom events do not rebuild the picker map', (
+    tester,
+  ) async {
+    PlaceMapRequest? request;
+    var builds = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          placeMapBuilderProvider.overrideWithValue((value) {
+            request = value;
+            builds++;
+            return const SizedBox.expand();
+          }),
+        ],
+        child: const MaterialApp(home: OnlinePinPicker(initial: null)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final before = builds;
+    for (var i = 0; i < 100; i++) {
+      request!.onZoomChanged!(11 + i / 100);
+      await tester.pump(const Duration(milliseconds: 1));
+    }
+    expect(builds, before);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets(
     'provider pin label can be edited and confirmed without moving the pin',
     (tester) async {
@@ -156,7 +230,7 @@ void main() {
       lessThan(tester.getTopLeft(find.byTooltip('Use my location')).dy),
     );
     request!.onZoomChanged!(12.34);
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
     expect(find.text('Z: 12.3'), findsOneWidget);
   });
 
@@ -387,7 +461,7 @@ void main() {
               find.widgetWithText(FilledButton, 'Confirm location'),
             )
             .onPressed,
-        isNull,
+        isNotNull,
       );
       request!.onSelect!(10.4, 123.8);
       await tester.pump();

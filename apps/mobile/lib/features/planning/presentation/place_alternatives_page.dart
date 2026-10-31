@@ -244,11 +244,24 @@ class _PlaceAlternativesPageState extends State<PlaceAlternativesPage> {
                                         comparison(candidate)!,
                                     ].where((s) => s.isNotEmpty).join(' · '),
                                   ),
+                                  if (model.discovery?.metadata(candidate.place)
+                                      case final metadata?)
+                                    if (metadata.address.trim().isNotEmpty &&
+                                        metadata.address.trim().toLowerCase() !=
+                                            metadata.locality
+                                                .trim()
+                                                .toLowerCase())
+                                      Text(metadata.address),
                                   PlaceHours(
                                     model: model,
                                     place: candidate.place,
                                     compact: true,
                                   ),
+                                  if (model.discovery
+                                          ?.metadata(candidate.place)
+                                          ?.ratingSummary
+                                      case final summary?)
+                                    Text(summary),
                                 ],
                               ),
                               trailing:

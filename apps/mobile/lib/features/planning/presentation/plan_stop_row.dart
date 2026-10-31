@@ -115,6 +115,7 @@ class PlanStopRow extends StatelessWidget {
               if (open) ...[
                 if (metadata != null && metadata.address.isNotEmpty)
                   Text(metadata.address),
+                if (metadata?.ratingSummary case final summary?) Text(summary),
                 if (stop != null)
                   Text('Leave ${clock(stop.departure)} · 5 min buffer'),
                 if (task != null && stop != null && task.start > stop.arrival)

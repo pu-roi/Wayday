@@ -36,7 +36,16 @@ class Browser implements RecommendationDiscovery, AlternativeDiscovery {
   @override
   Future<void> preflight(int count) async {}
   @override
-  RecommendationPlace? metadata(PlaceIntent p) => null;
+  RecommendationPlace? metadata(PlaceIntent p) => RecommendationPlace(
+    id: p.savedPlaceId!,
+    name: p.label,
+    latitude: p.latitude!,
+    longitude: p.longitude!,
+    acquiredAt: DateTime.now(),
+    locality: 'Pasig',
+    address:
+        'Ground Floor, Choice Market, Ortigas Avenue Extension, Pasig City',
+  );
   @override
   Future<RecommendationPlace?> hydrate(
     PlaceIntent p, {
@@ -183,7 +192,11 @@ void main() {
         await tester.tap(find.text('Open alternatives'));
         await tester.pumpAndSettle();
         expect(find.textContaining('Errand 1 of 2'), findsOneWidget);
-        expect(find.text('Current place'), findsOneWidget);
+        expect(find.textContaining('Current place'), findsOneWidget);
+        expect(
+          find.textContaining('Ground Floor, Choice Market'),
+          findsWidgets,
+        );
         expect(
           tester.getSize(find.byType(PlaceAlternativesPage)).height,
           lessThanOrEqualTo(844 * .9),

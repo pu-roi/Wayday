@@ -102,7 +102,8 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
     }
   }
 
-  PlaceIntent? get _safeFocus => widget.request.focus?.usesGoogleSdk == true ? null : widget.request.focus;
+  PlaceIntent? get _safeFocus =>
+      widget.request.focus?.usesGoogleSdk == true ? null : widget.request.focus;
   MapLibreMapController? _controller;
   bool _ready = false;
   bool _slow = false;
@@ -113,10 +114,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
   bool _pointerIntent = false, _gestureSelection = false;
   int _cameraRevision = 0;
   LatLng get _initialTarget => _safeFocus?.hasCoordinates == true
-      ? LatLng(
-          _safeFocus!.latitude!,
-          _safeFocus!.longitude!,
-        )
+      ? LatLng(_safeFocus!.latitude!, _safeFocus!.longitude!)
       : _pins.isEmpty
       ? widget.request.philippinesOverview
             ? const LatLng(12.5, 122.5)
@@ -151,8 +149,9 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
     );
   }
 
-  List<MapPin> get _pins =>
-      widget.request.pins.where((p) => p.place.hasCoordinates && !p.place.usesGoogleSdk).toList();
+  List<MapPin> get _pins => widget.request.pins
+      .where((p) => p.place.hasCoordinates && !p.place.usesGoogleSdk)
+      .toList();
 
   @override
   void initState() {
@@ -293,7 +292,10 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
               child: IgnorePointer(
                 ignoring: !widget.request.interactive,
                 child: Listener(
-                  onPointerDown: (_) => _pointerIntent = false,
+                  onPointerDown: (_) {
+                    _pointerIntent = false;
+                    _gestureSelection = false;
+                  },
                   onPointerMove: (_) => _pointerIntent = true,
                   child: MapLibreMap(
                     key: ValueKey(_attempt),
@@ -346,7 +348,10 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
                           _gestureSelection) {
                         _gestureSelection = false;
                         _pointerIntent = false;
-                        final target = _cameraTarget ?? _initialTarget;
+                        final target =
+                            _controller?.cameraPosition?.target ??
+                            _cameraTarget ??
+                            _initialTarget;
                         widget.request.onSelect?.call(
                           target.latitude,
                           target.longitude,
@@ -439,8 +444,7 @@ class _PlaceMapState extends ConsumerState<PlaceMap> {
                 ),
               ),
             if (_pins.any((pin) => pin.place.isGoogle) ||
-                _safeFocus?.isGoogle == true &&
-                    _safeFocus!.hasCoordinates)
+                _safeFocus?.isGoogle == true && _safeFocus!.hasCoordinates)
               const Positioned(
                 left: 4,
                 bottom: 4,
