@@ -1,6 +1,18 @@
 # Plan my day implementation plan
 
-## Business hours guide recommendations — D63 current contract
+## Compact sequential navigation — D64 current contract
+
+The owner approved the navigation repair and then clarified that navigation must show only one active errand and one completion checkbox at a time. This clarification supersedes the proposed simultaneous shared-stop checkbox presentation. Completing and saving the current errand reveals the next one. Errands at the same location remain independent and sequential; guidance advances only when every errand there is saved as complete. Arrival never completes an errand. Final-destination arrival remains separate from the explicit Finish trip action.
+
+Use the existing Google Navigation SDK and theme. Keep a compact toolbar, native guidance/ETA/compass/Recenter/attribution, a Whole trip action and a content-sized current-errand panel. Longer completion/schedule explanations belong in Navigation info; View plan and Back stop guidance without deleting progress. Automatic day/night navigation remains enabled independently of Wayday's light Flutter theme. Modernize the supported terms-dialog colors and Android NormalTheme with the existing Material Components dependency; preserve Google wording, links and acceptance state.
+
+Submit all remaining accepted stops and the final destination once per session, with preserved order and mode. Merge consecutive identical targets without merging task identities or later return visits. Respect the SDK's 25-waypoint bound without truncation. Reserve existing conservative navigation estimates per destination, not per request. Advance the established route without resubmitting all destinations; overview and camera gestures require no provider route request. No Gemini or automatic business discovery is involved.
+
+Create the map before dispatching guidance, set an initial local camera, acquire a navigation location, and explicitly follow it after route readiness. Bound map readiness to ten seconds and each location acquisition to thirty seconds. Separate permission/location problems from route/access/quota failures. Retain actual in-flight work after caller deadlines, reject obsolete callbacks, and prevent overlaps. Keep the map mounted through ordinary updates and preserve manual panning on GPS recovery. Whole trip fits every returned remaining route segment and target instead of relying on the SDK's approximately 45-minute overview framing. Missing geometry is unavailable, never a fabricated straight-line road route. Refined navigation ETAs do not recalculate errand timing or opening-hour feasibility.
+
+Keep accepted itinerary compatibility, local progress, budgets and the disposable recovery floor. No dependency/provider replacement, Cloud settings, schema migration or background-navigation expansion occurs. See [D64 evidence](evidence/compact-navigation-2026-10-31.md) for implementation, tests and separate physical/live qualification.
+
+## Business hours guide recommendations — D63
 
 The owner approved D63 on 2026-10-31. Request main regular/current hours and UTC offset through the existing Places SDK search/details bridge. This supersedes D58's deliberate omission of opening-hours fields. Keep provider hours transient, with field-profile identity, coverage date and retrieval time. Distinguish available, not provided, not yet requested, failed and stale data; old metadata cannot count as a completed hours check. A failed check is not evidence that Google has no hours or that a business is closed.
 
