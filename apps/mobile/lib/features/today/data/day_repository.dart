@@ -20,6 +20,11 @@ class MemoryDayRepository implements DayRepository {
   DayPlan read() => _day;
   @override
   Future<void> save(DayPlan day) async {
+    if (day.revision < _day.revision) return;
+    _day = day;
+  }
+
+  void applyFinishedReset(DayPlan day) {
     _day = day;
   }
 }
@@ -28,7 +33,7 @@ class SqliteDayRepository implements DayRepository {
   SqliteDayRepository._(this._database, this._day);
 
   final WaydayDatabase _database;
-  final SerialWriteQueue _writes = SerialWriteQueue();
+  SerialWriteQueue get _writes => SerialWriteQueue.forOwner(_database);
   DayPlan _day;
 
   static Future<SqliteDayRepository> open(
@@ -118,43 +123,76 @@ class SqliteDayRepository implements DayRepository {
   DayPlan read() => _day;
 
   @override
-  Future<void> save(DayPlan day) => _writes.enqueue(() => _save(day));
+  Future<void> save(DayPlan day) => _writes.enqueue(() async {
+    if (day.revision < _day.revision) return;
+    await _save(day);
+  });
+
+  /// The caller's deletion and Today reset share one transaction and write queue.
+  Future<DayPlan> finishTrip({
+    required int expectedRevision,
+    required bool Function() stillCurrent,
+    required Future<void> Function() removeTrip,
+    required DateTime now,
+  }) => _writes.enqueue(() async {
+    if (_day.revision != expectedRevision || !stillCurrent()) {
+      throw const TodayChangedDuringFinish();
+    }
+    final reset = DayPlan(
+      errands: const [],
+      date: pilotToday(now),
+      revision: expectedRevision + 1,
+    );
+    await _database.transaction(() async {
+      await removeTrip();
+      await _write(reset);
+      if (!stillCurrent()) throw const TodayChangedDuringFinish();
+    });
+    _day = reset;
+    return reset;
+  });
 
   Future<void> _save(DayPlan day) async {
-    await _database.transaction(() async {
-      await _database
-          .into(_database.daySettings)
-          .insertOnConflictUpdate(
-            DaySettingsCompanion.insert(
-              id: const Value(1),
-              fromPlace: day.from,
-              toPlace: day.to,
-              departure: day.departure,
-              deadline: day.deadline,
-              profile: day.profile.name,
-              placeDetails: Value(
-                jsonEncode({
-                  'fromPlace': day.fromPlace.toJson(),
-                  'toPlace': day.toPlace.toJson(),
-                  'date': day.date,
-                  'timeZone': day.timeZone,
-                  'revision': day.revision,
-                }),
-              ),
-            ),
-          );
-      await _database.delete(_database.dayErrands).go();
-      if (day.errands.isNotEmpty) {
-        await _database.batch((batch) {
-          batch.insertAll(_database.dayErrands, [
-            for (var position = 0; position < day.errands.length; position++)
-              _toDayErrand(day.errands[position], position),
-          ]);
-        });
-      }
-    });
+    await _database.transaction(() => _write(day));
     _day = day;
   }
+
+  Future<void> _write(DayPlan day) async {
+    await _database
+        .into(_database.daySettings)
+        .insertOnConflictUpdate(
+          DaySettingsCompanion.insert(
+            id: const Value(1),
+            fromPlace: day.from,
+            toPlace: day.to,
+            departure: day.departure,
+            deadline: day.deadline,
+            profile: day.profile.name,
+            placeDetails: Value(
+              jsonEncode({
+                'fromPlace': day.fromPlace.toJson(),
+                'toPlace': day.toPlace.toJson(),
+                'date': day.date,
+                'timeZone': day.timeZone,
+                'revision': day.revision,
+              }),
+            ),
+          ),
+        );
+    await _database.delete(_database.dayErrands).go();
+    if (day.errands.isNotEmpty) {
+      await _database.batch((batch) {
+        batch.insertAll(_database.dayErrands, [
+          for (var position = 0; position < day.errands.length; position++)
+            _toDayErrand(day.errands[position], position),
+        ]);
+      });
+    }
+  }
+}
+
+class TodayChangedDuringFinish implements Exception {
+  const TodayChangedDuringFinish();
 }
 
 DayErrandsCompanion _toDayErrand(Errand errand, int position) =>

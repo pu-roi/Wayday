@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import '../../../core/data/wayday_database.dart';
+import '../../../core/data/serial_write_queue.dart';
+import '../../today/data/day_repository.dart';
 import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
@@ -191,6 +193,14 @@ class ItineraryStop {
 abstract interface class ItineraryRepository {
   Future<AcceptedItinerary?> read();
   Future<void> save(AcceptedItinerary value);
+  Future<void> updateProgress(AcceptedItinerary value);
+  Future<DayPlan> finish(
+    String runId, {
+    required DayRepository today,
+    required int expectedRevision,
+    required bool Function() stillCurrent,
+    required DateTime now,
+  });
 }
 
 class MemoryItineraryRepository implements ItineraryRepository {
@@ -201,6 +211,37 @@ class MemoryItineraryRepository implements ItineraryRepository {
   Future<void> save(AcceptedItinerary value) async {
     value.validateAssignments();
     this.value = value;
+  }
+
+  @override
+  Future<void> updateProgress(AcceptedItinerary value) async {
+    _checkProgress(this.value, value);
+    this.value = value;
+  }
+
+  @override
+  Future<DayPlan> finish(
+    String runId, {
+    required DayRepository today,
+    required int expectedRevision,
+    required bool Function() stillCurrent,
+    required DateTime now,
+  }) async {
+    if (today is! MemoryDayRepository) {
+      throw StateError('Mismatched trip storage');
+    }
+    _checkFinished(value, runId);
+    if (today.read().revision != expectedRevision || !stillCurrent()) {
+      throw const TodayChangedDuringFinish();
+    }
+    final reset = DayPlan(
+      errands: const [],
+      date: pilotToday(now),
+      revision: expectedRevision + 1,
+    );
+    today.applyFinishedReset(reset);
+    value = null;
+    return reset;
   }
 }
 
@@ -222,7 +263,9 @@ class SqliteItineraryRepository implements ItineraryRepository {
   }
 
   @override
-  Future<void> save(AcceptedItinerary value) => database.transaction(() async {
+  Future<void> save(AcceptedItinerary value) =>
+      SerialWriteQueue.forOwner(database).enqueue(() => _save(value));
+  Future<void> _save(AcceptedItinerary value) => database.transaction(() async {
     value.validateAssignments();
     await database
         .into(database.acceptedItineraries)
@@ -233,4 +276,63 @@ class SqliteItineraryRepository implements ItineraryRepository {
           ),
         );
   });
+  @override
+  Future<void> updateProgress(AcceptedItinerary value) =>
+      SerialWriteQueue.forOwner(database).enqueue(() async {
+        _checkProgress(await read(), value);
+        await _save(value);
+      });
+  @override
+  Future<DayPlan> finish(
+    String runId, {
+    required DayRepository today,
+    required int expectedRevision,
+    required bool Function() stillCurrent,
+    required DateTime now,
+  }) {
+    if (today is! SqliteDayRepository) {
+      throw StateError('Mismatched trip storage');
+    }
+    return today.finishTrip(
+      expectedRevision: expectedRevision,
+      stillCurrent: stillCurrent,
+      now: now,
+      removeTrip: () async {
+        _checkFinished(await read(), runId);
+        await (database.delete(
+          database.acceptedItineraries,
+        )..where((row) => row.id.equals(1))).go();
+      },
+    );
+  }
+}
+
+bool allTripErrandsComplete(AcceptedItinerary value) =>
+    value.stops.expand((s) => s.errandIds).every(value.completed.contains);
+
+void _checkFinished(AcceptedItinerary? value, String runId) {
+  if (value == null || value.runId != runId) {
+    throw const PlanningFailure(
+      'The current trip changed. Open the current trip before finishing.',
+      kind: 'trip_changed',
+    );
+  }
+  if (!allTripErrandsComplete(value)) {
+    throw const PlanningFailure(
+      'Complete the current trip errands before finishing.',
+      kind: 'trip_incomplete',
+    );
+  }
+}
+
+void _checkProgress(AcceptedItinerary? current, AcceptedItinerary next) {
+  if (current == null ||
+      current.runId != next.runId ||
+      !next.completed.containsAll(current.completed)) {
+    throw const PlanningFailure(
+      'This trip changed or has finished. Your newer progress is kept.',
+      kind: 'trip_changed',
+    );
+  }
+  next.validateAssignments();
 }
