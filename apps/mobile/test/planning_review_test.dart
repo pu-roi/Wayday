@@ -160,7 +160,7 @@ void main() {
     expect(find.text(message), findsNothing);
     await tester.tap(find.text('Build recommendations'));
     await tester.pumpAndSettle();
-    expect(find.text('Recommended places'), findsOneWidget);
+    expect(find.text('Your plan'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -182,7 +182,7 @@ void main() {
     expect(find.text(message), findsNothing);
     await tester.tap(find.text('Build recommendations'));
     await tester.pumpAndSettle();
-    expect(find.text('Recommended places'), findsOneWidget);
+    expect(find.text('Your plan'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

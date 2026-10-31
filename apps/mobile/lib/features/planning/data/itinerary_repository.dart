@@ -5,6 +5,7 @@ import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
 import '../domain/clarification.dart';
+import 'reusable_trip_repository.dart' show newTripIdentity;
 
 /// Durable task-owned choices/progress only: no Google response text, ETAs,
 /// road geometry, matrices or copied coordinates bypassing provider retention.
@@ -16,9 +17,11 @@ class AcceptedItinerary {
     Set<String> completed = const {},
     Map<String, String> omitted = const {},
     this.lightPickupConfirmed = false,
+    String? runId,
     Map<String, String> deferred = const {},
     Map<String, Map<String, dynamic>> clarifications = const {},
-  }) : stops = List.unmodifiable(
+  }) : runId = runId ?? newTripIdentity(),
+       stops = List.unmodifiable(
          stops.map(
            (s) => ItineraryStop(s.place, List.unmodifiable(s.errandIds)),
          ),
@@ -34,6 +37,7 @@ class AcceptedItinerary {
   final Map<String, String> omitted, deferred;
   final Map<String, Map<String, dynamic>> clarifications;
   final bool lightPickupConfirmed;
+  final String runId;
   AcceptedItinerary complete(String id) {
     if (!stops.any((s) => s.errandIds.contains(id))) {
       throw const FormatException('Unknown task');
@@ -54,11 +58,13 @@ class AcceptedItinerary {
       deferred: deferred,
       clarifications: clarifications,
       lightPickupConfirmed: lightPickupConfirmed,
+      runId: runId,
     );
   }
 
   Map<String, Object> toJson() => {
     'version': 2,
+    'runId': runId,
     'day': day.toJson(),
     'stops': stops.map((s) => s.toJson()).toList(),
     'acceptedAt': acceptedAt.toUtc().toIso8601String(),
@@ -107,6 +113,7 @@ class AcceptedItinerary {
       deferred: deferred,
       clarifications: clarifications,
       lightPickupConfirmed: json['lightPickupConfirmed'] == true,
+      runId: json['runId'] as String? ?? 'legacy-${json['acceptedAt']}',
     );
     result.validateAssignments();
     return result;

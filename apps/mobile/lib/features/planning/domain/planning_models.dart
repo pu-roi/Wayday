@@ -69,6 +69,26 @@ class ErrandNeed {
     locationIntent: locationIntent ?? this.locationIntent,
   );
   bool get meeting => category == 'meeting';
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'query': query,
+    'category': category,
+    'items': items,
+    'after': after,
+    'durationMinutes': durationMinutes,
+    'question': question,
+    'title': proposedTitle,
+    'optional': optional,
+    'timing': timing,
+    'minute': minute,
+    'specificLocation': requiresSpecificLocation,
+    if (locationIntent != null) 'locationIntent': locationIntent!.name,
+    if (questionKind != null)
+      'clarification': {
+        'kind': questionKind,
+        'required': questionRequired ?? true,
+      },
+  };
 
   static const categories = {
     'grocery',

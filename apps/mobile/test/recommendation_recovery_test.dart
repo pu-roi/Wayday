@@ -9,7 +9,7 @@ import 'package:wayday/features/planning/data/itinerary_repository.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/planning/domain/recommendation.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
-import 'package:wayday/features/planning/presentation/recommendation_recovery.dart';
+import 'package:wayday/features/planning/presentation/recommendation_page.dart';
 import 'package:wayday/features/today/domain/day.dart';
 import 'helpers/planning_fixtures.dart';
 
@@ -67,7 +67,11 @@ void main() {
               debugShowCheckedModeBanner: false,
               theme: buildTheme(),
               home: Scaffold(
-                body: RecommendationRecovery(model: model, onManual: (_) {}),
+                body: RecommendationPage(
+                  model: model,
+                  onChange: (_) {},
+                  onContinue: () {},
+                ),
               ),
             ),
           ),
@@ -97,12 +101,15 @@ void main() {
           });
         }
         await tester.scrollUntilVisible(
-          find.text('Search for a place'),
+          find.byKey(const ValueKey('change-b')),
           150,
           scrollable: find.byType(Scrollable).first,
         );
         await tester.pumpAndSettle();
-        expect(find.text('Search for a place').hitTestable(), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('change-b')).hitTestable(),
+          findsOneWidget,
+        );
         expect(model.candidates['a']!.single.key, 'kept');
         expect(tester.takeException(), isNull);
         final semantics = tester.ensureSemantics();

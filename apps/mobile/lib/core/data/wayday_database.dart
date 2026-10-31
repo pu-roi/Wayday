@@ -106,6 +106,15 @@ class RecommendationDrafts extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('ReusableTripRow')
+class ReusableTrips extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get payload => text()();
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     DaySettings,
@@ -117,6 +126,7 @@ class RecommendationDrafts extends Table {
     ReviewTrips,
     ClarificationSessions,
     RecommendationDrafts,
+    ReusableTrips,
   ],
 )
 class WaydayDatabase extends _$WaydayDatabase {
@@ -124,7 +134,7 @@ class WaydayDatabase extends _$WaydayDatabase {
     : super(executor ?? driftDatabase(name: 'wayday'));
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -141,6 +151,7 @@ class WaydayDatabase extends _$WaydayDatabase {
       if (from < 4) await m.createTable(reviewTrips);
       if (from < 5) await m.createTable(clarificationSessions);
       if (from < 6) await m.createTable(recommendationDrafts);
+      if (from < 7) await m.createTable(reusableTrips);
     },
   );
 }

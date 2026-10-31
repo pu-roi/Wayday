@@ -81,7 +81,7 @@ void main() {
               debugShowCheckedModeBanner: false,
               theme: buildTheme(),
               home: Scaffold(
-                appBar: AppBar(title: const Text('Recommended places')),
+                appBar: AppBar(title: const Text('Your plan')),
                 body: RecommendationPage(
                   model: model,
                   onChange: (e) => changed = e.id,
@@ -96,8 +96,14 @@ void main() {
         expect(find.text('Use name only'), findsNothing);
         // Large text can keep the second row outside ListView's build window.
         // Every viewport must still present the visible recommendation reason.
-        expect(find.text('Your selected location.'), findsWidgets);
-        expect(find.text('Next: see my day').hitTestable(), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('change-a')),
+          150,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Change').hitTestable(), findsWidgets);
+        expect(find.text('Start trip').hitTestable(), findsOneWidget);
         if (Platform.environment['WAYDAY_CAPTURE'] == '1') {
           await tester.runAsync(() async {
             final image = await tester
@@ -114,11 +120,9 @@ void main() {
             image.dispose();
           });
         }
-        await tester.tap(find.text('Grocery').first);
+        await tester.ensureVisible(find.text('Change').first);
         await tester.pumpAndSettle();
-        await tester.ensureVisible(find.text('Change place').first);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Change place').first);
+        await tester.tap(find.text('Change').first);
         expect(changed, 'a');
         await tester.pumpWidget(
           MaterialApp(

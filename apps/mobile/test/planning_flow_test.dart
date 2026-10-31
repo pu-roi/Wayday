@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
+import 'package:wayday/features/planning/data/reusable_trip_repository.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/planning/domain/day_scheduler.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
@@ -191,6 +192,7 @@ void main() {
     'review, calculate, inspect and accept a synthetic day using existing theme',
     (tester) async {
       final roads = Roads(), repo = MemoryItineraryRepository();
+      final library = MemoryReusableTripRepository();
       addTearDown(roads.client.close);
       await tester.pumpWidget(
         ProviderScope(
@@ -201,6 +203,7 @@ void main() {
               (input) async => solveDay(input),
             ),
             itineraryRepositoryProvider.overrideWithValue(repo),
+            reusableTripRepositoryProvider.overrideWithValue(library),
             dayRepositoryProvider.overrideWithValue(
               MemoryDayRepository(initialData: fixture()),
             ),
@@ -218,24 +221,17 @@ void main() {
       await tester.pump();
       await tester.tap(next);
       await tester.pumpAndSettle();
-      expect(find.text('Recommended places'), findsOneWidget);
-      final day = find.text('Next: see my day');
-      await tester.scrollUntilVisible(day, 300);
-      await tester.pump();
-      await tester.ensureVisible(day);
-      await tester.pump();
-      await tester.tap(day);
-      await tester.pumpAndSettle();
-      expect(find.text('Your day'), findsOneWidget);
-      final accept = find.text('Use this plan');
-      await tester.scrollUntilVisible(accept, 300);
-      await tester.pump();
-      await tester.ensureVisible(accept);
-      await tester.pump();
-      await tester.tap(accept);
-      await tester.pumpAndSettle();
       expect(find.text('Your plan'), findsOneWidget);
+      expect(find.text('Next: see my day'), findsNothing);
+      expect(find.text('Save for reuse'), findsOneWidget);
+      await tester.tap(find.text('Start trip'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Your trip'), findsOneWidget);
       expect((await repo.read())!.stops, isNotEmpty);
+      expect(await library.read(), isEmpty);
+      await tester.tap(find.byTooltip('Stop guidance'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
   );

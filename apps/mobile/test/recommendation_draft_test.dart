@@ -126,7 +126,7 @@ void main() {
       expect(await repository.read('today-two', 'route-one'), isNull);
       expect(await repository.read('today-one', 'route-two'), isNull);
       expect(await db.select(db.acceptedItineraries).get(), isEmpty);
-      expect(db.schemaVersion, 6);
+      expect(db.schemaVersion, 7);
     },
   );
   test('corrupt draft positions and unassigned overrides are rejected', () {

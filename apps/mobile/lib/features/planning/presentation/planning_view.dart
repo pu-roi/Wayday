@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/place_picker.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../../errands/presentation/errand_editor.dart';
-import '../../places/presentation/search_attribution.dart';
 import '../../today/domain/day.dart';
 import '../../today/presentation/today_controller.dart';
 import '../data/itinerary_repository.dart';
@@ -21,18 +20,19 @@ import 'understanding_failure_view.dart';
 import 'planning_review.dart';
 import 'review_feedback.dart';
 import 'review_trip_details.dart';
-import 'plan_map.dart';
 import 'saved_plan_view.dart';
 import '../data/recommendation_discovery.dart';
 import '../data/recommendation_draft_repository.dart';
 import 'recommendation_page.dart';
 import 'place_alternatives_page.dart';
-import 'recommendation_recovery.dart';
+import '../data/reusable_trip_repository.dart';
+import 'reusable_trip_controls.dart';
 
 class PlanningView extends ConsumerStatefulWidget {
-  const PlanningView({this.initial, this.history, super.key});
+  const PlanningView({this.initial, this.history, this.reusable, super.key});
   final DayPlan? initial;
   final AcceptedItinerary? history;
+  final ReusableTrip? reusable;
   @override
   ConsumerState<PlanningView> createState() => _PlanningViewState();
 }
@@ -67,7 +67,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       case PreparationStage.recommendations:
         model.review();
       case PreparationStage.result:
-        setState(() => model.stage = PreparationStage.recommendations);
+        model.review();
       case PreparationStage.understanding || PreparationStage.calculating:
         model.cancel();
     }
@@ -78,8 +78,11 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     sourceRevision = ref.read(todayProvider).revision;
-    sourceDay = widget.initial ?? ref.read(todayProvider);
-    if (widget.initial == null && widget.history == null) {
+    sourceDay =
+        widget.reusable?.day ?? widget.initial ?? ref.read(todayProvider);
+    if (widget.initial == null &&
+        widget.history == null &&
+        widget.reusable == null) {
       tripRepository = ref.read(reviewTripRepositoryProvider);
     }
     model = PlanningController(
@@ -104,6 +107,10 @@ class _PlanningViewState extends ConsumerState<PlanningView>
   }
 
   Future<void> startUnderstanding() async {
+    if (widget.reusable != null) {
+      await model.restoreReusable(widget.reusable!);
+      return;
+    }
     try {
       final saved = await tripRepository?.read(sourceDay);
       if (!mounted) return;
@@ -451,16 +458,19 @@ class _PlanningViewState extends ConsumerState<PlanningView>
   );
 
   Future<void> alternative(Errand e) async {
-    final choice = await Navigator.push<AlternativeChoice>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PlaceAlternativesPage(model: model, errandId: e.id),
+    final choice = await showModalBottomSheet<AlternativeChoice>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => SizedBox(
+        height: MediaQuery.sizeOf(context).height * .9,
+        child: PlaceAlternativesPage(model: model, errandId: e.id),
       ),
     );
     if (!mounted || choice == null) return;
     model.selectedErrand = choice.errandId;
-    model.overridePlace(choice.errandId, choice.place);
-    if (await model.saveRecommendationDraft()) await model.calculate();
+    model.replacePlannedPlace(choice.errandId, choice.place);
+    await model.saveRecommendationDraft();
   }
 
   Future<void> manualCandidate(Errand e) async {
@@ -482,8 +492,41 @@ class _PlanningViewState extends ConsumerState<PlanningView>
   Widget recommendations() => RecommendationPage(
     model: model,
     onChange: alternative,
-    onContinue: model.showResult,
+    onContinue: accept,
+    onSave: saveReusable,
+    saving: saving,
+    actionError: localError,
   );
+
+  Future<void> saveReusable() async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => const TripNameDialog(),
+    );
+    if (!mounted || name == null) return;
+    setState(() => saving = true);
+    try {
+      await ref
+          .read(reusableTripRepositoryProvider)
+          .save(model.reusableTrip(name));
+      ref.invalidate(reusableTripsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved in Recurring → Saved trips')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => localError = e is PlanningFailure
+              ? e.message
+              : 'The trip could not be saved. Your choices are kept.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
 
   Future<void> accept() async {
     setState(() {
@@ -500,9 +543,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       ref.invalidate(savedItineraryProvider);
       await Navigator.pushReplacement(
         context,
-        MaterialPageRoute<void>(
-          builder: (_) => SavedPlanView(initial: accepted),
-        ),
+        MaterialPageRoute<void>(builder: (_) => TripView(initial: accepted)),
       );
     } catch (e) {
       if (mounted) {
@@ -517,97 +558,16 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     }
   }
 
-  Widget result() {
-    final plan = model.result!;
-    final lookup = {for (final p in model.points) p.key: p};
-    final places = plan.schedule.stops
-        .map((s) => lookup[s.placeKey]!.place)
-        .toList();
-    return ListView(
-      children: [
-        SizedBox(
-          height: 300,
-          child: PlanMap(
-            places: [model.day.fromPlace, ...places, model.day.toPlace],
-            labels: ['Start', ...places.map(model.displayPlace), 'Destination'],
-            geometry: plan.geometry,
-            selected: selected == null ? null : selected! + 1,
-            onSelect: (i) {
-              if (i > 0 && i <= places.length) setState(() => selected = i - 1);
-            },
-          ),
-        ),
-        notice(
-          '${model.day.date} · ${model.day.profile.label}\nEstimated road travel: ${(plan.schedule.travelSeconds / 60).ceil()} min. Hours and item availability need checking. Includes a 5-minute buffer per visit.',
-        ),
-        if (model.day.profile == TravelProfile.truck)
-          notice(
-            'Light pickup · ordinary driving estimate. Truck restrictions and clearance are not verified.',
-          ),
-        if (plan.fallback)
-          notice(
-            'Google used fallback estimates for part of this route. Traffic information may be limited.',
-          ),
-        for (final warning in plan.warnings) notice(warning),
-        if (plan.schedule.timeLimited)
-          notice(
-            'A feasible plan was found within the calculation limit. Other plans may be better.',
-          ),
-        for (var i = 0; i < plan.schedule.stops.length; i++)
-          ListTile(
-            selected: selected == i,
-            leading: CircleAvatar(radius: 14, child: Text('${i + 1}')),
-            title: Text(model.displayPlace(places[i])),
-            subtitle: Text(
-              'Arrive ${formatMinute((plan.schedule.stops[i].arrival / 60).ceil())} · Leave ${formatMinute((plan.schedule.stops[i].departure / 60).ceil())}\n${plan.schedule.stops[i].tasks.map((t) => '${model.reviewOrder.items.firstWhere((e) => e.id == t.errandId).title}: ${formatMinute((t.start / 60).ceil())}–${formatMinute((t.finish / 60).ceil())}').join('\n')}',
-            ),
-            onTap: () => setState(() => selected = i),
-          ),
-        ListTile(
-          leading: const Icon(Icons.flag_outlined),
-          title: Text(model.day.toPlace.label),
-          subtitle: Text(
-            'Estimated arrival ${formatMinute((plan.schedule.endArrival / 60).ceil())} · Deadline ${formatMinute(model.day.deadline)}',
-          ),
-        ),
-        for (final e in model.deferred.entries)
-          ListTile(
-            leading: const Icon(Icons.pause_circle_outline),
-            title: Text(
-              '${model.reviewOrder.items.firstWhere((x) => x.id == e.key).title} · Left out',
-            ),
-            subtitle: Text(e.value),
-          ),
-        for (final e in plan.schedule.omitted.entries)
-          ListTile(
-            leading: const Icon(Icons.event_busy_outlined),
-            title: Text(
-              '${model.reviewOrder.items.firstWhere((x) => x.id == e.key).title} · Not included',
-            ),
-            subtitle: Text(e.value),
-          ),
-        SearchAttribution(
-          credits: [
-            for (final p in [...places, model.day.fromPlace, model.day.toPlace])
-              ...p.attributions.where((credit) => credit != 'Google Maps'),
-          ],
-        ),
-        if (localError != null) notice(localError!),
-        button(saving ? 'Saving…' : 'Use this plan', saving ? null : accept),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final title = switch (model.stage) {
       PreparationStage.failed ||
       PreparationStage.understanding => 'Plan my day',
       PreparationStage.review => 'Review errands',
-      PreparationStage.discovery => 'Recommended places',
+      PreparationStage.discovery => 'Your plan',
       PreparationStage.calculating => 'Building your day',
-      PreparationStage.recommendations => 'Recommended places',
-      PreparationStage.result => 'Your day',
+      PreparationStage.recommendations => 'Your plan',
+      PreparationStage.result => 'Your plan',
     };
     return PopScope(
       canPop: false,
@@ -623,11 +583,6 @@ class _PlanningViewState extends ConsumerState<PlanningView>
           ),
           title: Text(title),
           actions: [
-            if (model.interpretation != null &&
-                !model.busy &&
-                model.stage != PreparationStage.review &&
-                model.stage != PreparationStage.recommendations)
-              TextButton(onPressed: model.review, child: const Text('Review')),
             TextButton(
               onPressed: () async {
                 if (await model.saveRecommendationDraft() && context.mounted) {
@@ -672,9 +627,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
               ),
             ),
             PreparationStage.review => review,
-            PreparationStage.discovery => RecommendationRecovery(model: model, onManual: manualCandidate),
+            PreparationStage.discovery => recommendations(),
             PreparationStage.recommendations => recommendations(),
-            PreparationStage.result => result(),
+            PreparationStage.result => recommendations(),
           },
         ),
       ),

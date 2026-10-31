@@ -16,6 +16,7 @@ class PlanMap extends StatefulWidget {
     this.selected,
     this.labels,
     this.traffic = false,
+    this.interactive = true,
     super.key,
   });
   final List<PlaceIntent> places;
@@ -24,6 +25,7 @@ class PlanMap extends StatefulWidget {
   final int? selected;
   final List<String>? labels;
   final bool traffic;
+  final bool interactive;
   @override
   State<PlanMap> createState() => _PlanMapState();
 }
@@ -202,9 +204,13 @@ class _PlanMapState extends State<PlanMap> {
       onViewCreated: created,
       initialMapToolbarEnabled: false,
       initialMapColorScheme: nav.MapColorScheme.light,
-      gestureRecognizers: {
-        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-      },
+      gestureRecognizers: widget.interactive
+          ? {
+              Factory<OneSequenceGestureRecognizer>(
+                () => EagerGestureRecognizer(),
+              ),
+            }
+          : const {},
       onMarkerClicked: (id) {
         final i = indices[id];
         if (i != null) widget.onSelect(i);

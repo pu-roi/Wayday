@@ -48,7 +48,9 @@ extension RecommendationPreparation on PlanningController {
     );
     if (!cancelled()) {
       _matrixResponse = response;
-      _matrixAt = DateTime.now();
+      _matrixAt =
+          DateTime.tryParse(response['acquiredAt'] as String? ?? '') ??
+          DateTime.now();
       _matrixTrip = _roadContext;
       _matrixKeys = selected.map((p) => p.key).toList();
       _matrixPlaces = {for (final p in selected) p.key: _coordinateIdentity(p)};
@@ -253,6 +255,11 @@ extension RecommendationPreparation on PlanningController {
   }
 
   Future<void> _buildRecommendations() async {
+    if (proposalReady && _canReuseMatrix(points)) {
+      stage = PreparationStage.recommendations;
+      _emit();
+      return;
+    }
     try {
       applyReview();
     } catch (e) {

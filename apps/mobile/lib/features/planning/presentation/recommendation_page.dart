@@ -1,22 +1,32 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
-import '../../places/presentation/search_attribution.dart';
+import '../../places/domain/place_intent.dart';
 import '../../places/presentation/google_place_attribution.dart';
+import '../../places/presentation/search_attribution.dart';
 import '../../today/domain/day.dart';
+import '../domain/planning_models.dart' show placeKey;
 import 'planning_controller.dart';
 import 'plan_map.dart';
+import 'plan_stop_row.dart';
 
+/// Places, schedule and route are one review surface, including partial recovery.
 class RecommendationPage extends StatefulWidget {
   const RecommendationPage({
     required this.model,
     required this.onChange,
     required this.onContinue,
+    this.onSave,
+    this.saving = false,
+    this.actionError,
     super.key,
   });
   final PlanningController model;
   final ValueChanged<Errand> onChange;
   final VoidCallback onContinue;
+  final VoidCallback? onSave;
+  final bool saving;
+  final String? actionError;
   @override
   State<RecommendationPage> createState() => _RecommendationPageState();
 }
@@ -26,9 +36,8 @@ class _RecommendationPageState extends State<RecommendationPage> {
     initialScrollOffset: widget.model.recommendationScrollOffset,
   );
   Timer? save;
-  bool showMap = true, traffic = false;
-  bool expandCompactMap = false;
-  final rowKeys = <String, GlobalKey>{};
+  bool showMap = true, traffic = false, expandedMap = false;
+  final expanded = <String>{};
   PlanningController get model => widget.model;
   @override
   void initState() {
@@ -52,354 +61,341 @@ class _RecommendationPageState extends State<RecommendationPage> {
     super.dispose();
   }
 
-  void select(String id, {bool reveal = false}) {
+  void select(String id) {
     setState(() => model.selectedErrand = id);
     unawaited(model.saveRecommendationDraft());
-    final target = rowKeys[id]?.currentContext;
-    if (reveal && target != null) {
-      Scrollable.ensureVisible(
-        target,
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 180),
-      );
-    }
   }
 
+  String clock(int seconds) => TimeOfDay(
+    hour: (seconds ~/ 3600) % 24,
+    minute: (seconds ~/ 60) % 60,
+  ).format(context);
   @override
   Widget build(BuildContext context) {
-    final plan = model.result!;
-    final stops = plan.schedule.stops;
-    final places = {for (final p in model.points) p.key: p};
-    final items = {for (final e in model.reviewOrder.items) e.id: e};
-    final selected = stops.indexWhere(
-      (s) => s.tasks.any((t) => t.errandId == model.selectedErrand),
-    );
+    final plan = model.result;
+    final choices = model.displayChoices;
+    final errands = {for (final e in model.activeErrands) e.id: e};
+    final order = plan == null
+        ? errands.keys.toList()
+        : [
+            for (final s in plan.schedule.stops)
+              for (final t in s.tasks) t.errandId,
+            ...errands.keys.where(
+              (id) => !plan.schedule.stops.any(
+                (s) => s.tasks.any((t) => t.errandId == id),
+              ),
+            ),
+          ];
+    final uniquePlaces = <String>{};
+    final located = [
+      for (final id in order)
+        if (choices[id] != null && uniquePlaces.add(placeKey(choices[id]!))) id,
+    ];
+    final ready = model.proposalReady;
+    final busy = model.busy || widget.saving;
+    final failure = model.recommendationFailure;
+    final mayUpdate = !{
+      'testing_budget',
+      'accounting',
+      'access',
+      'configuration',
+      'quota',
+      'unsupported_profile',
+    }.contains(failure?.kind);
+    Widget map({bool interactive = false, VoidCallback? refresh}) {
+      final chosen = choices[model.selectedErrand];
+      final selection = chosen == null
+          ? -1
+          : located.indexWhere(
+              (id) => placeKey(choices[id]!) == placeKey(chosen),
+            );
+      return PlanMap(
+        key: ValueKey(
+          '${plan?.calculatedAt}:${located.map((id) => '${choices[id]!.providerPlaceId}:${choices[id]!.latitude}:${choices[id]!.longitude}').join('|')}:$interactive:$traffic',
+        ),
+        places: [
+          model.day.fromPlace,
+          for (final id in located) choices[id]!,
+          model.day.toPlace,
+        ],
+        labels: [
+          'Start',
+          for (final id in located) model.displayPlace(choices[id]!),
+          'Destination',
+        ],
+        geometry: ready ? plan!.geometry : const [],
+        interactive: interactive,
+        traffic: traffic,
+        selected: selection < 0 ? null : selection + 1,
+        onSelect: (i) {
+          if (i > 0 && i <= located.length) {
+            select(located[i - 1]);
+            refresh?.call();
+          }
+        },
+      );
+    }
+
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact =
-                constraints.maxHeight < 520 ||
-                MediaQuery.textScalerOf(context).scale(14) > 21;
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                controller: scroll,
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${model.day.date} · ${model.day.profile.label}\nLeave ${clock(model.day.departure * 60)}',
+                        style: context.type.bodyMedium,
+                      ),
+                      TextButton(
+                        onPressed: busy ? null : model.review,
+                        child: const Text('Trip details'),
+                      ),
+                    ],
+                  ),
+                  if (ready)
+                    Text(
+                      'Arrive at destination ${clock(plan!.schedule.endArrival)} · ${(plan.schedule.travelSeconds / 60).ceil()} min road travel',
+                    ),
+                  if (busy) ...[
+                    const SizedBox(height: 12),
+                    const LinearProgressIndicator(),
+                    Text(
+                      model.progress,
+                      semanticsLabel: 'Updating plan. ${model.progress}',
+                    ),
+                  ] else if (!ready) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      model.error == null ? 'Update your plan' : 'Plan paused',
+                      style: context.type.titleLarge,
+                    ),
+                    Text(
+                      model.error ??
+                          'Place choices changed. Update the route and schedule before starting.',
+                    ),
+                    const Text(
+                      'Your choices are kept. Route and times are not confirmed.',
+                    ),
+                  ],
+                  if (model.orderChanged)
+                    const Text(
+                      'Stop order updated to fit your selected places.',
+                    ),
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: context.colors.surface,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < order.length; i++) ...[
+                          if (i > 0) const Divider(height: 1),
+                          stopRow(
+                            errands[order[i]]!,
+                            choices[order[i]],
+                            choices[order[i]] == null
+                                ? i
+                                : located.indexWhere(
+                                    (id) =>
+                                        placeKey(choices[id]!) ==
+                                        placeKey(choices[order[i]]!),
+                                  ),
+                            ready,
+                            busy,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
                       Expanded(
                         child: Text(
-                          '${stops.length} ${stops.length == 1 ? 'stop' : 'stops'} · ${(plan.schedule.travelSeconds / 60).ceil()} min travel',
-                          style: context.type.bodyMedium,
+                          'Route preview',
+                          style: context.type.titleMedium,
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: () => setState(() {
-                          if (compact) {
-                            expandCompactMap = !expandCompactMap;
-                          } else {
-                            showMap = !showMap;
-                          }
-                        }),
-                        icon: const Icon(Icons.map_outlined),
-                        label: Text(
-                          showMap && (!compact || expandCompactMap)
-                              ? 'Hide map'
-                              : 'Map',
-                        ),
+                      TextButton(
+                        onPressed: () => setState(() => showMap = !showMap),
+                        child: Text(showMap ? 'Hide map' : 'Map'),
                       ),
                     ],
                   ),
-                ),
-                if (showMap && (!compact || expandCompactMap))
-                  SizedBox(
-                    height: compact
-                        ? 155
-                        : (constraints.maxHeight * .29).clamp(170, 240),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: PlanMap(
-                            key: ValueKey(plan.calculatedAt ?? plan),
-                            places: [
-                              model.day.fromPlace,
-                              for (final s in stops) places[s.placeKey]!.place,
-                              model.day.toPlace,
-                            ],
-                            labels: [
-                              'Start',
-                              for (final s in stops)
-                                model.displayPlace(places[s.placeKey]!.place),
-                              'Destination',
-                            ],
-                            geometry: plan.geometry,
-                            selected: selected < 0 ? null : selected + 1,
-                            traffic: traffic,
-                            onSelect: (i) {
-                              if (i > 0 && i <= stops.length) {
-                                select(
-                                  stops[i - 1].tasks.first.errandId,
-                                  reveal: true,
-                                );
-                              }
-                            },
-                          ),
-                        ),
-                        if (model.roads.traffic(model.day.profile))
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Material(
-                              color: context.colors.surface,
-                              borderRadius: BorderRadius.circular(18),
-                              child: TextButton.icon(
-                                onPressed: () =>
-                                    setState(() => traffic = !traffic),
-                                icon: Icon(
-                                  traffic
-                                      ? Icons.traffic
-                                      : Icons.traffic_outlined,
-                                ),
-                                label: Text(
-                                  traffic ? 'Traffic now: on' : 'Traffic now',
+                  if (showMap && located.isNotEmpty) ...[
+                    SizedBox(
+                      height: MediaQuery.textScalerOf(context).scale(14) > 21
+                          ? 160
+                          : 220,
+                      child: expandedMap ? const SizedBox.shrink() : map(),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.open_in_full),
+                        label: const Text('Expand map'),
+                        onPressed: () async {
+                          setState(() => expandedMap = true);
+                          await WidgetsBinding.instance.endOfFrame;
+                          if (!context.mounted) return;
+                          try {
+                            await showModalBottomSheet<void>(
+                              context: context,
+                              isScrollControlled: true,
+                              useSafeArea: true,
+                              builder: (_) => StatefulBuilder(
+                                builder: (sheetContext, refresh) => SizedBox(
+                                  height:
+                                      MediaQuery.sizeOf(context).height * .8,
+                                  child: map(
+                                    interactive: true,
+                                    refresh: () => refresh(() {}),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          } finally {
+                            if (mounted) setState(() => expandedMap = false);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                  if (model.roads.traffic(model.day.profile))
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Traffic now'),
+                      subtitle: const Text(
+                        'Current traffic layer; scheduled estimates may differ.',
+                      ),
+                      value: traffic,
+                      onChanged: (v) => setState(() => traffic = v),
+                    ),
+                  if (ready) ...[
+                    for (final warning in plan!.warnings) Text(warning),
+                    if (plan.fallback)
+                      const Text(
+                        'Some road estimates have limited traffic information.',
+                      ),
+                    if (plan.schedule.timeLimited)
+                      const Text(
+                        'A feasible plan was found within the calculation limit; other plans may be better.',
+                      ),
+                    Text(
+                      'Final destination: ${model.day.toPlace.label} · Arrive ${clock(plan.schedule.endArrival)} · Home by ${clock(model.day.deadline * 60)}',
+                    ),
+                  ],
+                  if (model.day.profile == TravelProfile.truck)
+                    const Text(
+                      'Light pickup · ordinary driving estimate. Truck restrictions and clearance are not verified.',
+                    ),
+                  const Text(
+                    'Opening hours and availability unconfirmed. Visit estimates include a five-minute buffer after each stop.',
+                  ),
+                  for (final e in model.deferred.entries)
+                    Text(
+                      '${model.reviewInput(model.day.errands.firstWhere((x) => x.id == e.key)).title} · Left out: ${e.value}',
+                    ),
+                  for (final e
+                      in plan?.schedule.omitted.entries ??
+                          <MapEntry<String, String>>[])
+                    Text(
+                      '${errands[e.key]?.title ?? e.key} · Not included: ${e.value}',
+                    ),
+                  if (choices.values.any((p) => p.isGoogle))
+                    GooglePlaceAttribution(
+                      showGoogleMaps: true,
+                      credits: [
+                        for (final p in choices.values)
+                          ...?model.discovery?.metadata(p)?.attributions,
                       ],
                     ),
-                  ),
-                Expanded(
-                  child: ListView(
-                    controller: scroll,
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                    children: [
-                      for (var i = 0; i < stops.length; i++) ...[
-                        for (final task in stops[i].tasks)
-                          Builder(
-                            builder: (context) {
-                              final stop = stops[i],
-                                  e = items[task.errandId]!,
-                                  place = places[stop.placeKey]!.place;
-                              final metadata = model.discovery?.metadata(place);
-                              final before = i == 0
-                                  ? '@start'
-                                  : stops[i - 1].placeKey;
-                              final after = i == stops.length - 1
-                                  ? '@end'
-                                  : stops[i + 1].placeKey;
-                              final legs = plan.legs.where(
-                                (leg) =>
-                                    leg.from == before &&
-                                    leg.to == stop.placeKey,
-                              );
-                              final leg = legs.isEmpty ? null : legs.first;
-                              final detour = model.detourFor(
-                                stop.placeKey,
-                                before,
-                                after,
-                              );
-                              final expanded = e.id == model.selectedErrand;
-                              final category =
-                                  metadata?.types.join(' ') ??
-                                  model.effectiveNeed(e)?.category ??
-                                  '';
-                              final icon =
-                                  category.contains('gym') ||
-                                      category.contains('fitness')
-                                  ? Icons.fitness_center
-                                  : category.contains('cafe') ||
-                                        category.contains('coffee')
-                                  ? Icons.local_cafe_outlined
-                                  : category.contains('laundry')
-                                  ? Icons.local_laundry_service_outlined
-                                  : category.contains('grocery') ||
-                                        category.contains('supermarket')
-                                  ? Icons.shopping_basket_outlined
-                                  : Icons.place_outlined;
-                              return Column(
-                                key: rowKeys.putIfAbsent(e.id, GlobalKey.new),
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    selected: expanded,
-                                    leading: CircleAvatar(
-                                      radius: 14,
-                                      backgroundColor:
-                                          context.colors.secondaryContainer,
-                                      child: Text(
-                                        '${i + 1}',
-                                        style: context.type.labelMedium,
-                                      ),
-                                    ),
-                                    title: Row(
-                                      children: [
-                                        Icon(
-                                          icon,
-                                          size: 16,
-                                          color: context.colors.secondary,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            e.title,
-                                            style: context.type.titleSmall,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          model.displayPlace(place),
-                                          style: context.type.bodyLarge,
-                                        ),
-                                        if (metadata?.locality.isNotEmpty ==
-                                            true)
-                                          Text(metadata!.locality),
-                                        Text(
-                                          leg == null
-                                              ? 'Travel estimate unavailable'
-                                              : '${(leg.seconds / 60).ceil()} min${leg.meters == null ? '' : ' · ${(leg.meters! / 1000).toStringAsFixed(1)} km'} from ${i == 0 ? 'start' : 'stop $i'}',
-                                        ),
-                                        if (places[stop.placeKey]!
-                                            .reason
-                                            .isNotEmpty)
-                                          Text(
-                                            places[stop.placeKey]!.reason,
-                                            style: context.type.bodySmall,
-                                          ),
-                                      ],
-                                    ),
-                                    trailing: Icon(
-                                      expanded
-                                          ? Icons.expand_less
-                                          : Icons.expand_more,
-                                      color: context.colors.secondary,
-                                    ),
-                                    onTap: () => select(e.id),
-                                  ),
-                                  if (expanded)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 42,
-                                        bottom: 8,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          if (metadata?.address.isNotEmpty ==
-                                              true)
-                                            Text(metadata!.address),
-                                          if (metadata?.types.isNotEmpty ==
-                                              true)
-                                            Text(
-                                              metadata!.types.first.replaceAll(
-                                                '_',
-                                                ' ',
-                                              ),
-                                            ),
-                                          if (stop.tasks.length > 1)
-                                            const Text(
-                                              'Shared visit · errands remain separate',
-                                            ),
-                                          if (detour != null)
-                                            Text(
-                                              '${(detour.abs() / 60).ceil()} min ${detour < 0 ? 'less' : 'extra'} travel · approximate',
-                                            ),
-                                          const Text(
-                                            'Opening hours and availability unconfirmed',
-                                          ),
-                                          if (plan.calculatedAt != null)
-                                            Text(
-                                              'Calculated ${TimeOfDay.fromDateTime(plan.calculatedAt!.toLocal()).format(context)}',
-                                            ),
-                                          TextButton(
-                                            onPressed: () => widget.onChange(e),
-                                            child: const Text('Change place'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  Divider(
-                                    height: 1,
-                                    color: context.colors.outlineVariant,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                      ],
-                      if (plan.fallback)
-                        const Text(
-                          'Some road estimates have limited traffic data.',
-                        ),
-                      if (plan.schedule.omitted.isNotEmpty)
-                        Text(
-                          'Not included: ${plan.schedule.omitted.keys.map((id) => items[id]?.title ?? id).join(', ')}',
-                        ),
-                      for (final entry in model.deferred.entries)
-                        Text(
-                          '${items[entry.key]?.title ?? entry.key}: ${entry.value}',
-                        ),
-                      if (places.values.any((p) => p.place.isGoogle))
-                        GooglePlaceAttribution(
-                          showGoogleMaps: false,
-                          credits: [
-                            for (final p in places.values.where(
-                              (p) => p.place.isGoogle,
-                            ))
-                              ...?model.discovery
-                                  ?.metadata(p.place)
-                                  ?.attributions,
-                          ],
-                        ),
-                      SearchAttribution(
-                        credits: [
-                          for (final p in places.values.where(
-                            (p) => !p.place.isGoogle,
-                          ))
-                            ...p.place.attributions,
-                        ],
-                      ),
-                      if (model.recommendationStorageError != null) ...[
-                        Text(model.recommendationStorageError!),
-                        TextButton(
-                          onPressed: () async {
-                            await model.saveRecommendationDraft();
-                            if (mounted) setState(() {});
-                          },
-                          child: const Text('Retry saving choices'),
-                        ),
-                      ],
+                  SearchAttribution(
+                    credits: [
+                      for (final p in choices.values.where((p) => !p.isGoogle))
+                        ...p.attributions,
                     ],
                   ),
-                ),
-                if (places.values.any((p) => p.place.isGoogle))
-                  const GoogleMapsAttributionLabel(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: model.recommendationStorageError == null
-                          ? widget.onContinue
-                          : null,
-                      child: const Text('Next: see my day'),
+                  if (model.recommendationStorageError != null) ...[
+                    Text(model.recommendationStorageError!),
+                    TextButton(
+                      onPressed: model.saveRecommendationDraft,
+                      child: const Text('Retry saving choices'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.actionError != null)
+                    Text(
+                      widget.actionError!,
+                      semanticsLabel: widget.actionError,
+                    ),
+                  FilledButton(
+                    onPressed: busy || model.recommendationStorageError != null
+                        ? null
+                        : ready
+                        ? widget.onContinue
+                        : mayUpdate
+                        ? model.updatePlan
+                        : null,
+                    child: Text(
+                      busy
+                          ? 'Updating…'
+                          : ready
+                          ? 'Start trip'
+                          : 'Update plan',
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                  TextButton(
+                    onPressed: busy || !model.canSaveReusable
+                        ? null
+                        : widget.onSave,
+                    child: const Text('Save for reuse'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget stopRow(
+    Errand e,
+    PlaceIntent? place,
+    int index,
+    bool ready,
+    bool busy,
+  ) => PlanStopRow(
+    model: model,
+    e: e,
+    place: place,
+    index: index,
+    ready: ready,
+    busy: busy,
+    expanded: expanded.contains(e.id),
+    onChange: () => widget.onChange(e),
+    onSelect: () => select(e.id),
+    onExpand: () {
+      select(e.id);
+      setState(() {
+        if (!expanded.add(e.id)) expanded.remove(e.id);
+      });
+    },
+  );
 }

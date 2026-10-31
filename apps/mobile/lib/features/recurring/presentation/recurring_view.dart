@@ -12,6 +12,7 @@ import '../../today/presentation/today_controller.dart';
 import '../domain/errand_group.dart';
 import 'group_editor.dart';
 import 'recurring_controller.dart';
+import '../../planning/presentation/reusable_trip_controls.dart';
 
 class RecurringView extends ConsumerStatefulWidget {
   const RecurringView({super.key});
@@ -134,6 +135,7 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
+              const SavedTripsSection(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 24),
                 child: Text(
