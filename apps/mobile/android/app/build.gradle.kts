@@ -27,8 +27,9 @@ val publicTest = waydayDefines["WAYDAY_PUBLIC_TEST"] == "true"
 if (publicTest) {
     require(publicBuild) { "The isolated public test requires server-backed access." }
     require(providers.gradleProperty("WAYDAY_MAP_TEST").orNull != "true") { "Public verification and private map fixtures must remain separate." }
-    require(providers.gradleProperty("target").orNull.orEmpty().replace('\\', '/').endsWith("lib/main_public_test.dart")) {
-        "The isolated public test must use its connection-check entry point."
+    val testTarget = providers.gradleProperty("target").orNull.orEmpty().replace('\\', '/')
+    require(listOf("lib/main_public_test.dart", "lib/main.dart").any { testTarget == it || testTarget.endsWith("/$it") }) {
+        "The isolated public test requires an explicit connection-check or full-app entry point."
     }
 }
 if (publicBuild) {

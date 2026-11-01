@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Prepare the full application under the separate test identity
+
+- After the connection check passed, the owner requested the full Wayday Test app and reported uninstalling the checker. The Android configuration now accepts the ordinary `lib/main.dart` entry point for the existing `.publictest` package, retaining the distinct launcher name, public gateway transport, permanent release certificate and all private-credential/map-fixture guards. No Flutter feature, database schema or personal-app data was changed.
+- Flutter analysis passed; the complete suite passed 590 tests with one existing skip and zero failures. Gradle configuration checks accept both intended entry points and reject private fallback, mixed map fixtures, an unknown entry point and a private Gemini define. The first cold configuration attempt exceeded the local 180-second runner deadline; Gradle itself subsequently reported success in 4m 53s. A warm-cache rerun with a 600-second deadline passed all six cases without changing the guards.
+- Prepared local signing/build/inspection commands for unpublished version `0.1.0-test.2` / `100002`, with the full APK build awaiting the owner's local signing-password entry. [Distribution](DISTRIBUTION.md#full-app-test-identity-preparation--2026-11-02) records the exact build identity and proposed provider-cost review. No shared funds, credential restrictions, deployment settings or publication flags were changed; a full live rehearsal remains pending separate cost approval.
+
 ### [2026-11-02] Record the separate phone App Check connection result
 
 - The owner confirmed the Wayday Test Firebase certificate, reCAPTCHA package and App Check registration steps. Copied only the inspected `.publictest` APK to the connected Samsung phone's Download folder and verified that the phone copy matched its SHA-256. The original Wayday package metadata was unchanged before transfer; no original-package installation, uninstall, reset or harness was performed.
