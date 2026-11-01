@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -7,11 +8,77 @@ import 'package:wayday/features/planning/data/planning_budget.dart';
 import 'package:wayday/features/planning/data/road_estimates.dart';
 import 'package:wayday/features/planning/domain/planning_models.dart';
 import 'package:wayday/features/places/data/search_adapters.dart';
+import 'package:wayday/features/places/data/combined_place_search.dart';
+import 'package:wayday/features/places/data/search_quota.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 import 'package:wayday/features/places/domain/place_search.dart';
 import 'package:wayday/features/today/domain/day.dart';
 
 void main() {
+  test(
+    'public reverse survives app verification and a six-second gateway response',
+    () async {
+      final proof = Completer<String>();
+      final reply = Completer<http.Response>();
+      final finished = Completer<void>();
+      var requests = 0;
+      final gateway = GatewayClient(
+        baseUrl: 'https://example.org',
+        token: () => proof.future,
+        client: MockClient((_) {
+          requests++;
+          return reply.future;
+        }),
+      );
+      final service = CombinedPlaceSearch([
+        HttpSearchAdapter(
+          MockClient((_) async => throw StateError('No direct fallback')),
+          'geoapify',
+          gateway: gateway,
+        ),
+      ], QuotaLedger(read: () async => null, write: (_) async {}));
+      final phases = <SourcePhase>[];
+      final labels = <String>[];
+      addTearDown(() {
+        if (!proof.isCompleted) {
+          proof.complete('fixture-proof');
+        }
+        if (!reply.isCompleted) {
+          reply.complete(http.Response('{"features":[]}', 200));
+        }
+        service.dispose();
+      });
+      service.reverse(Object(), 14.58, 121.05, (_, state, results) {
+        phases.add(state.phase);
+        labels.addAll(results.map((r) => r.name));
+        if (state.phase == SourcePhase.complete ||
+            state.phase == SourcePhase.unavailable) {
+          if (!finished.isCompleted) {
+            finished.complete();
+          }
+        }
+      });
+      await Future<void>.delayed(const Duration(seconds: 6));
+      expect(phases.last, SourcePhase.loading);
+      expect(requests, 0);
+      proof.complete('fixture-proof');
+      await Future<void>.delayed(Duration.zero);
+      expect(requests, 1);
+      await Future<void>.delayed(const Duration(seconds: 7));
+      expect(phases.last, SourcePhase.loading);
+      reply.complete(
+        http.Response(
+          '{"features":[{"properties":{"country_code":"ph","city":"Fixture locality"}}]}',
+          200,
+        ),
+      );
+      await finished.future.timeout(const Duration(seconds: 2));
+      expect(phases.last, SourcePhase.complete);
+      expect(labels, ['Fixture locality']);
+      expect(requests, 1);
+    },
+  );
+
   test(
     'public search and reverse use the gateway without embedded provider keys',
     () async {

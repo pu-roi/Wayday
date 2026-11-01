@@ -81,6 +81,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
   Timer? _lookupTimer;
   int _lookupRevision = 0;
   bool _finding = false;
+  bool _lookupPending = false;
 
   @override
   void initState() {
@@ -95,6 +96,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
     _lookupTimer = null;
     _placeSearch.cancel(_lookupOwner, only: {'geoapify'});
     _finding = false;
+    _lookupPending = false;
   }
 
   @override
@@ -117,9 +119,16 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
       return;
     }
     final revision = _lookupRevision;
-    setState(() => _finding = true);
+    setState(() {
+      _finding = true;
+      _lookupPending = true;
+    });
     _lookupTimer = Timer(const Duration(seconds: 8), () {
-      if (mounted && revision == _lookupRevision) setState(_cancelLookup);
+      // Keep the eight-second Save wait, without discarding valid public
+      // work that may still be verifying the app or waiting for the gateway.
+      if (mounted && revision == _lookupRevision) {
+        setState(() => _finding = false);
+      }
     });
     _placeSearch.reverse(_lookupOwner, place.latitude!, place.longitude!, (
       _,
@@ -138,6 +147,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
       _lookupTimer?.cancel();
       setState(() {
         _finding = false;
+        _lookupPending = false;
         if (status.phase == SourcePhase.complete && results.isNotEmpty) {
           final result = results.first;
           _placeIntent = PlaceIntent(
@@ -400,7 +410,9 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                     color: context.wayday.link,
                   ),
                   title: Text(_place.isEmpty ? 'Choose a place' : _place),
-                  subtitle: Text(_finding ? 'Finding address…' : 'Open map'),
+                  subtitle: Text(
+                    _lookupPending ? 'Finding address…' : 'Open map',
+                  ),
                   trailing: Icon(
                     Icons.map_outlined,
                     color: context.wayday.link,

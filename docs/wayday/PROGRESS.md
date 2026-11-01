@@ -2,6 +2,13 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Repair address results discarded by public-client deadlines
+
+- The owner reported manually confirmed From/To pins retaining Dropped pin. A read-only Cloud Shell result supplied by the owner showed a successful search request at `2026-11-01T18:21:59.872284Z` with HTTP 200 and 6.082553125-second latency, beyond the client's five-second scheduler deadline. Two additional bounded local checks using public fixtures returned HTTP 200 for Geoapify reverse and LocationIQ autocomplete, without printing keys or using personal coordinates.
+- Public search/reverse requests now use a bounded 75-second scheduler budget that includes the existing verification/transport phases. Private direct requests and Photon retain five seconds. From/To retain late valid labels under existing coordinate/revision guards. Errand Save remains bounded to eight seconds, while an active lookup can still update the open editor. No retries, provider fallback, quota reset or Cloud change was introduced.
+- The new regression failed at the old deadline; endpoint and editor cases separately reproduced dropped late labels. All 25 focused tests then passed; analysis passed and the full suite passed 596 tests with one existing skip and zero failures. A mutation restoring the wrong public-timeout branch was caught by the regression, and the source was restored byte-for-byte. [Focused evidence](evidence/public-distribution-2026-11-01.md#dropped-pin-public-transport-repair--2026-11-02) records the exact limits and proof boundaries.
+- Preparing a same-key production update `0.1.0-rc.2` / `100004`; its signed artifact and physical-phone update/address result remain pending. Preserve the installed candidate and its state; never uninstall it to apply this correction. Public downloads and qualification remain disabled.
+
 ### [2026-11-02] Prepare the actual Wayday release candidate after phone-app removal
 
 - The owner explicitly approved a separate US$2 shared Google allowance and one guided two-errand planning trial, including separate Gemini/infrastructure usage. They reported initial ledger counters `0` / `0`, then confirmed saving only `limitMicros: 2000000` while retaining usage at zero. No independent server accounting transaction has verified that edit yet.

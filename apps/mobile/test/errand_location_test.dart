@@ -16,6 +16,9 @@ import 'package:wayday/features/places/domain/place_search.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 
 class _ReverseAdapter extends SearchAdapter {
+  _ReverseAdapter({this.requestTimeout = const Duration(seconds: 5)});
+  @override
+  final Duration requestTimeout;
   Completer<List<PlaceSearchResult>>? pending;
   @override
   String get id => 'geoapify';
@@ -51,6 +54,85 @@ class _ReverseAdapter extends SearchAdapter {
 }
 
 void main() {
+  testWidgets(
+    'late public errand address remains eligible after Save becomes available',
+    (tester) async {
+      final pending = Completer<List<PlaceSearchResult>>();
+      final adapter = _ReverseAdapter(
+        requestTimeout: const Duration(seconds: 75),
+      )..pending = pending;
+      final search = CombinedPlaceSearch([
+        adapter,
+      ], QuotaLedger(read: () async => null, write: (_) async {}));
+      addTearDown(search.dispose);
+      Errand errand = const Errand(id: 'late', title: 'Pick up');
+      PlaceMapRequest? map;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            combinedPlaceSearchProvider.overrideWithValue(search),
+            placeMapBuilderProvider.overrideWithValue((request) {
+              map = request;
+              return const SizedBox.expand();
+            }),
+          ],
+          child: MaterialApp(
+            theme: buildTheme(),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () async {
+                    final result = await editErrand(context, errand);
+                    if (result is SavedErrand) errand = result.errand;
+                  },
+                  child: const Text('Edit'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open map'));
+      await tester.pumpAndSettle();
+      map!.onSelect!(14.5995, 120.9842);
+      await tester.pump();
+      await tester.tap(find.text('Confirm location'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Save'))
+            .onPressed,
+        isNull,
+      );
+      await tester.pump(const Duration(seconds: 9));
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Save'))
+            .onPressed,
+        isNotNull,
+      );
+      pending.complete([
+        const PlaceSearchResult(
+          name: 'Delayed locality',
+          latitude: 0,
+          longitude: 0,
+          sourceId: 'manual',
+          provider: 'geoapify',
+        ),
+      ]);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('Delayed locality'), findsOneWidget);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(errand.placeIntent.latitude, 14.5995);
+      expect(errand.placeIntent.longitude, 120.9842);
+      expect(errand.place, 'Delayed locality');
+    },
+  );
+
   testWidgets('confirmed current location uses a nearby address in Where', (
     tester,
   ) async {

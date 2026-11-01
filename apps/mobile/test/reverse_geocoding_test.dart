@@ -19,6 +19,114 @@ import 'package:wayday/features/maps/data/location_reader.dart';
 import 'support/fake_location.dart';
 
 void main() {
+  for (final seconds in [5, 75]) {
+    test(
+      'reverse request remains bounded at its $seconds-second transport deadline without retry',
+      () {
+        fakeAsync((clock) {
+          DateTime now() => DateTime.utc(2026, 11, 2).add(clock.elapsed);
+          final pending = Completer<List<PlaceSearchResult>>();
+          final adapter = _Adapter(requestTimeout: Duration(seconds: seconds))
+            ..reversePending = pending;
+          final service = CombinedPlaceSearch(
+            [adapter],
+            QuotaLedger(read: () async => null, write: (_) async {}, now: now),
+            now: now,
+          );
+          final phases = <SourcePhase>[];
+          service.reverse(
+            Object(),
+            14,
+            121,
+            (_, state, _) => phases.add(state.phase),
+          );
+          clock.elapse(Duration.zero);
+          clock.flushMicrotasks();
+          clock.elapse(Duration(seconds: seconds - 1));
+          expect(phases.last, SourcePhase.loading);
+          clock.elapse(const Duration(seconds: 2));
+          clock.flushMicrotasks();
+          expect(phases.last, SourcePhase.unavailable);
+          clock.elapse(const Duration(minutes: 1));
+          expect(adapter.reverseCalls, 1);
+          pending.complete([]);
+          clock.flushMicrotasks();
+          expect(phases.last, SourcePhase.unavailable);
+          service.dispose();
+        });
+      },
+    );
+  }
+
+  for (final start in [true, false]) {
+    testWidgets(
+      'late public ${start ? 'From' : 'To'} address keeps the confirmed coordinates',
+      (tester) async {
+        tester.view.physicalSize = const Size(430, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final now = tester.binding.clock.now;
+        final pending = Completer<List<PlaceSearchResult>>();
+        final adapter = _Adapter(requestTimeout: const Duration(seconds: 75))
+          ..reversePending = pending;
+        final service = CombinedPlaceSearch(
+          [adapter],
+          QuotaLedger(read: () async => null, write: (_) async {}, now: now),
+          now: now,
+        );
+        PlaceMapRequest? map;
+        final container = ProviderContainer(
+          overrides: [
+            combinedPlaceSearchProvider.overrideWithValue(service),
+            mapPlatformSupportedProvider.overrideWithValue(false),
+            locationPlatformProvider.overrideWithValue(FakeLocationPlatform()),
+            placeMapBuilderProvider.overrideWithValue((request) {
+              if (request.onSelect != null) map = request;
+              return const SizedBox.expand();
+            }),
+          ],
+        );
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const WaydayApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final button = find.byKey(Key(start ? 'from-map' : 'to-map'));
+        await tester.ensureVisible(button);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        map!.onSelect!(14.5, 121.5);
+        await tester.pump();
+        await tester.tap(find.text('Confirm location'));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 9));
+        pending.complete([
+          const PlaceSearchResult(
+            name: 'Delayed locality',
+            latitude: 0,
+            longitude: 0,
+            sourceId: 'manual',
+            provider: 'geoapify',
+          ),
+        ]);
+        await tester.pump();
+        await tester.pump();
+        final day = container.read(todayProvider);
+        final place = start ? day.fromPlace : day.toPlace;
+        expect(place.label, 'Delayed locality');
+        expect(place.latitude, 14.5);
+        expect(place.longitude, 121.5);
+        expect(adapter.reverseCalls, 1);
+        await tester.pumpWidget(const SizedBox());
+        container.dispose();
+        service.dispose();
+      },
+    );
+  }
+
   testWidgets(
     'confirmed current location gets a nearby address without changing the fix',
     (tester) async {
@@ -330,6 +438,9 @@ void main() {
 }
 
 class _Adapter extends SearchAdapter {
+  _Adapter({this.requestTimeout = const Duration(seconds: 5)});
+  @override
+  final Duration requestTimeout;
   final pending = Completer<List<PlaceSearchResult>>();
   Completer<List<PlaceSearchResult>>? reversePending;
   int searchCalls = 0, reverseCalls = 0;

@@ -209,6 +209,14 @@ The candidate subsequently built successfully in 325.7 seconds and passed indepe
 
 A read-only GitHub check authenticated as `pu-roi` confirmed Pages enabled and the gateway manual-deployment flag enabled, but `WAYDAY_PUBLIC_RELEASE_ENABLED` absent and the `public-release` environment not yet created. That protected signing/configuration setup remains a separate outstanding step before automated APK publication can run. No GitHub setting or secret was changed by this audit; the local report is `.tools/publication-readiness-2026-11-02.json`.
 
+### Dropped-pin lookup repair during the production trial
+
+The owner reported that manually confirmed From/To points retained **Dropped pin**. Their filtered Cloud Run request log showed HTTP 200 after 6.082553125 seconds, exceeding the client search scheduler's five-second deadline. The endpoint/editor widgets also independently discarded pending reverse lookups after eight seconds. These client deadlines could lose a successful gateway response, including time spent acquiring App Check proof or starting a scale-to-zero service.
+
+Public Geoapify/LocationIQ adapters now declare a 75-second operation budget outside the existing bounded verification/header/body phases (12 + 30 + 30 seconds); direct private adapters and Photon retain five seconds. The shared scheduler still bounds each request, preserves accounting/spacing and never retries automatically. From/To rely on that service deadline and retain editing/revision/cancellation guards. The errand editor enables Save after the existing eight-second wait but keeps an active lookup eligible while the editor remains open; saving or leaving still cancels its subscription. Coordinates and user-owned/Google-selected labels remain protected, and unsuccessful/empty lookups retain the honest pin fallback.
+
+Geoapify remains the approved single provider for manual/device reverse labels. LocationIQ search remains enabled without introducing an automatic reverse fallback. Two bounded direct checks using nonpersonal public fixtures returned HTTP 200 for Geoapify reverse and LocationIQ autocomplete; those checks used local credentials and do not independently verify every deployed secret. [Focused evidence](evidence/public-distribution-2026-11-01.md#dropped-pin-public-transport-repair--2026-11-02) separates the owner-reported Cloud result, mocked regressions and pending corrected phone build. No new paid allocation, server deployment, provider replacement or public-download activation is part of this repair.
+
 ## Release qualification and GitHub setup
 
 Checks always run on PRs and pushes. The website has a separate `WAYDAY_PAGES_ENABLED` flag; select GitHub Actions as its Pages source. Enable required checks for website, API, mobile and native jobs on `main`. Do not bypass the full Flutter suite's existing failures or weaken branch protection.
