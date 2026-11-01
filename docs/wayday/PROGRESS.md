@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Record the separate phone App Check connection result
+
+- The owner confirmed the Wayday Test Firebase certificate, reCAPTCHA package and App Check registration steps. Copied only the inspected `.publictest` APK to the connected Samsung phone's Download folder and verified that the phone copy matched its SHA-256. The original Wayday package metadata was unchanged before transfer; no original-package installation, uninstall, reset or harness was performed.
+- The owner installed the APK manually and reported: "App verification and gateway access passed. Shared Google testing is unavailable. No provider request was made." This exact screen state represents authenticated `/v1/usage/check` returning HTTP 429 `testing_budget` after valid shared-ledger reads. The reported result establishes the separate test identity's connection, not production-package or full-provider qualification. USB disconnection was requested but not independently observed.
+- No provider request, allocation increase or publication flag change was performed. [Focused evidence](evidence/public-distribution-2026-11-01.md#physical-phone-connection-result--2026-11-02) records the evidence boundary; full planning, provider calls, same-key upgrade retention and authoritative deployment-environment cleanup remain outstanding.
+
 ### [2026-11-01] Prepare a separate signed Wayday Test connection check
 
 - The owner approved `dev.wayday.wayday.publictest` after confirming that only the current personal Wayday phone was available. Validated the supplied Firebase test configuration against the existing project without printing its client key.
