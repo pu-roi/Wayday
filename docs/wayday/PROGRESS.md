@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Deploy shared Google usage without the dollar gate
+
+- Final diagnostic-envelope regressions passed eight focused tests, analysis and the full Flutter suite: 598 visible passes, one existing skip, no failures. All required hosted checks passed on final PR #10 head `d167f24`, including release compilation and the disposable-emulator fixture. PR #10 then merged as `ba18b1f`.
+- Revalidated all ten existing Cloud variables, the main-only environment, required reviewer and disabled administrator bypass. Dispatched the reviewed gateway workflow on that merge and approved only that run through its normal reviewer gate. [Run 41344493271](https://github.com/pu-roi/Wayday/actions/runs/41344493271) passed 38 mocked gateway tests and deployed the matching image, same runtime identity, four secret references and reviewed scale settings. Authoritative plaintext environment replacement also removes obsolete malformed entries from the earlier allowlist attempts.
+- Live health returned HTTP 200; usage and Routes requests without App Check returned safe no-store HTTP 401. These checks made no paid provider calls or accounting mutation. The owner was asked to retry Build recommendations from the retained Review errands state using the existing installed app. Actual full-flow/provider/accounting qualification and public downloads remain pending. [Evidence](evidence/public-distribution-2026-11-01.md#reviewed-gateway-deployment-after-dollar-gate-removal) separates deployment from that pending phone result.
+
 ### [2026-11-02] Prepare protected GitHub release signing without publication
 
 - Created the missing `public-release` environment under verified account `pu-roi`; API read-back confirms branch `main` only and administrator bypass disabled. Four public identifiers match inspected candidate `100004`, with a single production Firebase identity rather than the gateway's escaped two-app allowlist.
