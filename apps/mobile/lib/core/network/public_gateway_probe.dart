@@ -29,7 +29,7 @@ class PublicGatewayProbe {
       }
       final body = jsonDecode(response.body);
       if (body is! Map) return GatewayProbeResult.unavailable;
-      if (response.statusCode == 200 && body.isEmpty) {
+      if (response.statusCode == 200 && body['status'] == 'ok') {
         return GatewayProbeResult.verified;
       }
       if (response.statusCode == 429 &&

@@ -105,6 +105,33 @@ void main() {
     expect(await probe.check(), GatewayProbeResult.unavailable);
   });
 
+  test('successful gateway preflight uses the actual status envelope', () async {
+    var calls = 0;
+    final probe = PublicGatewayProbe(
+      GatewayClient(
+        baseUrl: 'https://example.org',
+        token: () async => 'test-proof',
+        client: MockClient((_) async {
+          calls++;
+          return http.Response('{"status":"ok"}', 200);
+        }),
+      ),
+    );
+    expect(await probe.check(), GatewayProbeResult.verified);
+    expect(calls, 1);
+  });
+
+  test('empty successful response does not establish verification', () async {
+    final probe = PublicGatewayProbe(
+      GatewayClient(
+        baseUrl: 'https://example.org',
+        token: () async => 'test-proof',
+        client: MockClient((_) async => http.Response('{}', 200)),
+      ),
+    );
+    expect(await probe.check(), GatewayProbeResult.unavailable);
+  });
+
   test('denied verification never retries', () async {
     var calls = 0;
     final probe = PublicGatewayProbe(
