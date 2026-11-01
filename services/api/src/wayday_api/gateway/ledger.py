@@ -1,4 +1,8 @@
-"""Shared nonpersonal reservations. Missing allocation is never auto-provisioned."""
+"""Shared nonpersonal usage records without a Wayday dollar spending cap.
+
+The operator-created ledger and its history remain required. Legacy limitMicros
+is retained as historical data, never read as a spending allowance or reset.
+"""
 
 from datetime import UTC, datetime
 
@@ -29,12 +33,8 @@ class FirestoreLedger:
             if not account.exists:
                 raise GatewayFailure(503, "accounting_unavailable")
             data = account.to_dict()
-            limit, used = data.get("limitMicros"), data.get("usedMicros")
-            if (
-                type(limit) is not int
-                or type(used) is not int
-                or not 0 <= used <= limit
-            ):
+            used = data.get("usedMicros")
+            if type(used) is not int or used < 0:
                 raise GatewayFailure(503, "accounting_unavailable")
             if previous.exists:
                 existing = previous.to_dict()
@@ -46,8 +46,6 @@ class FirestoreLedger:
                 ):
                     raise GatewayFailure(409, "reservation_conflict")
                 return
-            if used + cost > limit:
-                raise GatewayFailure(429, "testing_budget")
             if check_only:
                 return
             transaction.update(self.document, {"usedMicros": used + cost})

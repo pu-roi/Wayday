@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Remove the owner-rejected shared Google dollar gate
+
+- The owner confirmed update `100004` fixes the address lookup and retains saved data. The subsequent unplugged two-errand planning trial paused at the shared Google allocation gate; this does not prove the former US$2 was spent. The owner explicitly requested removing that dollar cap to test the full flow.
+- The gateway now records nonnegative shared usage without comparing it with historical `limitMicros`. Preflights remain read-only; reservations, replay/conflict checks, restricted refunds, App Check and provider quotas/spacing remain. No ledger, allowance, credential, personal app or database was reset. The installed public app uses the unchanged API, so this policy change needs a server deployment, not another APK.
+- Six new-policy regressions failed before the fix. All 55 API/release checks then passed, with seven existing PostgreSQL integration skips; gateway checks and changed-file lint passed, and the pinned gateway dependency audit found no known vulnerabilities. The first broad local test run hit an inaccessible system pytest temporary directory; rerunning with a new workspace-local temporary directory passed without code/test suppressions. Source review found no new API, credential, IAM, dependency or model boundary change. [Focused evidence](evidence/public-distribution-2026-11-01.md#shared-google-dollar-gate-removal--2026-11-02) distinguishes local verification from pending deployment/phone qualification. Public downloads remain disabled.
+
 ### [2026-11-02] Repair address results discarded by public-client deadlines
 
 - The owner reported manually confirmed From/To pins retaining Dropped pin. A read-only Cloud Shell result supplied by the owner showed a successful search request at `2026-11-01T18:21:59.872284Z` with HTTP 200 and 6.082553125-second latency, beyond the client's five-second scheduler deadline. Two additional bounded local checks using public fixtures returned HTTP 200 for Geoapify reverse and LocationIQ autocomplete, without printing keys or using personal coordinates.
