@@ -229,6 +229,8 @@ The owner subsequently confirmed installing update `100004`, obtaining an addres
 
 ## Release qualification and GitHub setup
 
+Release checks now inspect the actual minified DEX classes and their matching R8 mapping with `tool/distribution/check_navigation_reflection.py`. The pinned Navigation SDK 7.9.0 loader must retain access to its package-private generated registry; a mismatched map, removed class or inaccessible cross-package relationship fails the build/publication. The app's one-class keep rule preserves this reflection site without disabling shrinking or upgrading the SDK. This guard reproduces the failure in inspected production APK `100004`; [crash evidence](evidence/public-distribution-2026-11-01.md#release-navigation-reflection-crash--2026-11-02) records build and phone verification separately.
+
 Checks always run on PRs and pushes. The website has a separate `WAYDAY_PAGES_ENABLED` flag; select GitHub Actions as its Pages source. Enable required checks for website, API, mobile and native jobs on `main`. Do not bypass the full Flutter suite's existing failures or weaken branch protection.
 
 `WAYDAY_PUBLIC_RELEASE_ENABLED` defaults to disabled. Before enabling it, complete `evidence/public-release-qualification.json` with actual evidence for sideloaded App Check, a fresh phone-only provider flow, same-key upgrades, supported device compatibility and shared accounting review. Record the release signing SHA-256 fingerprint, public configuration fingerprint and frozen contract SHA-256. Never mark fixture/emulator output as live qualification.

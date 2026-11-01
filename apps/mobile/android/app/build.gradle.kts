@@ -94,6 +94,7 @@ android {
     }
     buildTypes {
         release {
+            proguardFiles("proguard-rules.pro")
             // No silent debug signing. CI verification uses a disposable test key;
             // public publication requires the separately protected release key.
             signingConfig = signingConfigs.findByName("waydayRelease")

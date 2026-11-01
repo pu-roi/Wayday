@@ -70,6 +70,8 @@ jobs:
           python tool/distribution/release.py defines --fixture --output "$RUNNER_TEMP/public-defines.json"
           cd apps/mobile
           flutter build apk --release --dart-define-from-file="$RUNNER_TEMP/public-defines.json"
+      - name: Verify minified Navigation reflection access
+        run: python tool/distribution/check_navigation_reflection.py --apk apps/mobile/build/app/outputs/flutter-apk/app-release.apk --mapping apps/mobile/build/app/outputs/mapping/release/mapping.txt
       - name: Retain verification APK briefly; never publish it as a user download
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -157,6 +159,8 @@ jobs:
           python -c 'import json,os; p=json.load(open(os.environ["RUNNER_TEMP"]+"/previous.json")); assert p.get("versionCode",0)<int(os.environ["RELEASE_NUMBER"]), "A newer release already exists"'
       - run: flutter pub get --enforce-lockfile && flutter build apk --release --build-name=0.1.0 --build-number="$RELEASE_NUMBER" --dart-define-from-file="$RUNNER_TEMP/public-defines.json"
         working-directory: apps/mobile
+      - name: Verify minified Navigation reflection access before publication
+        run: python tool/distribution/check_navigation_reflection.py --apk apps/mobile/build/app/outputs/flutter-apk/app-release.apk --mapping apps/mobile/build/app/outputs/mapping/release/mapping.txt
       - name: Publish immutable development release
         env:
           GH_TOKEN: ${{ github.token }}
