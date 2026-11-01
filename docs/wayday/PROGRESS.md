@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Prepare protected GitHub release signing without publication
+
+- Created the missing `public-release` environment under verified account `pu-roi`; API read-back confirms branch `main` only and administrator bypass disabled. Four public identifiers match inspected candidate `100004`, with a single production Firebase identity rather than the gateway's escaped two-app allowlist.
+- The owner entered the existing keystore password locally for encrypted GitHub environment-secret setup. Validated the permanent certificate and uploaded the keystore, store/key passwords, alias and permitted SDK/Firebase keys using GitHub public-key encryption. Independent metadata reads confirm all six secret names. The password/token was not printed or saved locally, and the helper exited; no phone, provider, ledger or Cloud service was changed.
+- Public release publication remains disabled and full physical qualification is incomplete. [Distribution](DISTRIBUTION.md#release-qualification-and-github-setup) records the prepared automatic passing-main path; the Cloud deployment environment retains its separate reviewer gate. PR #10 contains the source fixes on the owner's `roi-branch`; hosted checks/deployment remain separately tracked.
+
 ### [2026-11-02] Remove the owner-rejected shared Google dollar gate
 
 - The owner confirmed update `100004` fixes the address lookup and retains saved data. The subsequent unplugged two-errand planning trial paused at the shared Google allocation gate; this does not prove the former US$2 was spent. The owner explicitly requested removing that dollar cap to test the full flow.
