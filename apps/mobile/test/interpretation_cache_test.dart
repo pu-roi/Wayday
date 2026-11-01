@@ -112,15 +112,45 @@ void main() {
   });
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-  test('pre-search-intent location understanding is reused without generation', () async {
-    final body = locationInterpretationRequest(day());
-    disk[body] = {'state': 'completed', 'response': answer(body)};
-    configured = false;
-    final result = await interpreter().interpret(day());
-    expect(result.needs.single.locationIntent, LocationIntent.flexible);
-    expect(result.needs.single.searchIntent, isNull);
-    expect(requests, 0);
-  });
+  test(
+    'pre-search-intent location understanding is reused without generation',
+    () async {
+      final body = locationInterpretationRequest(day());
+      disk[body] = {'state': 'completed', 'response': answer(body)};
+      configured = false;
+      final result = await interpreter().interpret(day());
+      expect(result.needs.single.locationIntent, LocationIntent.flexible);
+      expect(result.needs.single.searchIntent, isNull);
+      expect(requests, 0);
+    },
+  );
+
+  test(
+    'D66 search-intent understanding is reused after transport repair',
+    () async {
+      final body = searchIntentInterpretationRequest(day());
+      disk[body] = {'state': 'completed', 'response': answer(body)};
+      configured = false;
+      expect((await interpreter().saved(day())).needs.single.id, 'a');
+      expect(requests, 0);
+    },
+  );
+
+  for (final state in ['pending', 'failed', 'corrupt', 'recovery']) {
+    test(
+      'D66 $state outcome requires explicit retry after transport repair',
+      () async {
+        disk[searchIntentInterpretationRequest(day())] = {'state': state};
+        await expectLater(
+          interpreter().interpret(day()),
+          throwsA(isA<PlanningFailure>()),
+        );
+        expect(requests, 0);
+        await interpreter().retry(day());
+        expect(requests, 1);
+      },
+    );
+  }
 
   test(
     'more than three changed inputs process without app-imposed caps',
@@ -414,20 +444,29 @@ void main() {
       expect(requests, 0);
     },
   );
-  test('the immediately previous typed interpretation is reused without generation', () async {
-    final body = previousInterpretationRequest(day());
-    disk[body] = {'state': 'completed', 'response': answer(body)};
-    configured = false;
-    final result = await interpreter().interpret(day());
-    expect(result.needs.single.locationIntent, isNull);
-    expect(requests, 0);
-  });
-  for (final state in ['pending', 'failed', 'corrupt', 'recovery']) {
-    test('a $state previous typed result cannot spend after a version change', () async {
-      disk[previousInterpretationRequest(day())] = {'state': state};
-      await expectLater(interpreter().interpret(day()), throwsA(isA<PlanningFailure>()));
+  test(
+    'the immediately previous typed interpretation is reused without generation',
+    () async {
+      final body = previousInterpretationRequest(day());
+      disk[body] = {'state': 'completed', 'response': answer(body)};
+      configured = false;
+      final result = await interpreter().interpret(day());
+      expect(result.needs.single.locationIntent, isNull);
       expect(requests, 0);
-    });
+    },
+  );
+  for (final state in ['pending', 'failed', 'corrupt', 'recovery']) {
+    test(
+      'a $state previous typed result cannot spend after a version change',
+      () async {
+        disk[previousInterpretationRequest(day())] = {'state': state};
+        await expectLater(
+          interpreter().interpret(day()),
+          throwsA(isA<PlanningFailure>()),
+        );
+        expect(requests, 0);
+      },
+    );
   }
   for (final state in ['pending', 'failed']) {
     test(
@@ -437,6 +476,69 @@ void main() {
         await expectLater(
           interpreter().interpret(day()),
           throwsA(isA<PlanningFailure>()),
+        );
+        expect(requests, 0);
+      },
+    );
+  }
+
+  test(
+    'retry reports request rejection and saved lookup preserves its cause',
+    () async {
+      final source = day();
+      final body = interpretationRequest(source);
+      disk[body] = {'state': 'failed', 'failure': 'unavailable'};
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        switch (call.method) {
+          case 'interpretationStatus':
+            return disk[(call.arguments as Map)['body']] ??
+                {'state': 'missing'};
+          case 'geminiStatus':
+            return {'configured': true};
+          case 'interpret':
+            expect((call.arguments as Map)['retry'], isTrue);
+            requests++;
+            disk[body] = {'state': 'failed', 'failure': 'http_400'};
+            throw PlatformException(code: 'http_400');
+        }
+        throw MissingPluginException();
+      });
+      final service = interpreter();
+      for (final action in [
+        service.retry,
+        service.saved,
+        interpreter().interpret,
+      ]) {
+        await expectLater(
+          action(source),
+          throwsA(
+            isA<PlanningFailure>()
+                .having((e) => e.kind, 'kind', 'request_rejected')
+                .having((e) => e.message, 'message', contains('HTTP 400')),
+          ),
+        );
+        expect(requests, 1);
+      }
+    },
+  );
+
+  for (final failure in ['access', 'quota', 'http_404', 'http_503']) {
+    test(
+      'saved $failure keeps a useful explanation without dispatch',
+      () async {
+        disk[interpretationRequest(day())] = {
+          'state': 'failed',
+          'failure': failure,
+        };
+        await expectLater(
+          interpreter().saved(day()),
+          throwsA(
+            isA<PlanningFailure>().having(
+              (e) => e.kind,
+              'kind',
+              isNot('previous_failure'),
+            ),
+          ),
         );
         expect(requests, 0);
       },

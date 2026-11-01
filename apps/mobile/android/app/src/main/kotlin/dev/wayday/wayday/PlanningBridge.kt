@@ -137,7 +137,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                             val recovery = File(activity.noBackupFilesDir, "interpretation-recovery-retry-required")
                             val recoveryMissing = purpose == "interpretation" && saved == null && recovery.exists()
                             if (call.method == "interpretationStatus") {
-                                main.post { if (!disposed) result.success(mapOf("state" to (saved?.state ?: if (recoveryMissing) "recovery" else "missing"), "response" to saved?.response)) }
+                                main.post { if (!disposed) result.success(mapOf("state" to (saved?.state ?: if (recoveryMissing) "recovery" else "missing"), "response" to saved?.response, "failure" to saved?.failure)) }
                                 return@synchronized
                             }
                             if (saved?.state == "completed") {
@@ -177,7 +177,9 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                     main.post { if (!disposed) result.success(data) }
                                 } else {
                                     providerResponseReceived = true
-                                    val kind = when (status) { 401,403 -> "access";429 -> "quota";else -> "unavailable" }
+                                    // Retain only the status, never provider error text, keys or
+                                    // request content. Reopening must not hide a known cause.
+                                    val kind = "http_$status"
                                     requestJournal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = kind))
                                     main.post { if (!disposed) result.error(kind, "Gemini could not interpret these errands", null) }
                                 }

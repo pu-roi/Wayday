@@ -218,7 +218,8 @@ String locationInterpretationRequest(DayPlan day) {
   return result;
 }
 
-String interpretationRequest(DayPlan day) {
+/// Frozen D66 lookup, including its original provider schema.
+String searchIntentInterpretationRequest(DayPlan day) {
   final body =
       jsonDecode(locationInterpretationRequest(day)) as Map<String, dynamic>;
   body['systemInstruction']['parts'][0]['text'] += PlaceSearchIntent.policy;
@@ -227,6 +228,26 @@ String interpretationRequest(DayPlan day) {
         body['generationConfig']['responseSchema']['properties'][key]['items'];
     entry['properties']['searchIntent'] = PlaceSearchIntent.schema;
     entry['required'] = (entry['properties'] as Map).keys.toList();
+  }
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten these notes before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
+}
+
+String interpretationRequest(DayPlan day) {
+  final body =
+      jsonDecode(searchIntentInterpretationRequest(day))
+          as Map<String, dynamic>;
+  body['systemInstruction']['parts'][0]['text'] +=
+      PlaceSearchIntent.transportPolicy;
+  for (final key in ['needs', 'additions']) {
+    body['generationConfig']['responseSchema']['properties'][key]['items']['properties']['searchIntent'] =
+        PlaceSearchIntent.transportSchema;
   }
   final result = jsonEncode(body);
   if (utf8.encode(result).length > 50000) {

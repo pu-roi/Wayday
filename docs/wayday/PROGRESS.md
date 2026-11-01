@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-01] Investigate Gemini retry rejection and repair request handling
+
+- Read-only phone inspection found a generic failed interpretation. Two separately authorized nonpersonal requests reproduced HTTP 400 with the original D66 format and HTTP 200 with a reduced venue-type schema. The latter response exposed inconsistent optional hints; those are now discarded without accepting invalid metadata or discarding independently validated core meaning.
+- Preserved frozen request lookup/retry guards, added durable HTTP failure explanations, and retained the existing model, credential boundary, budgets and phone data. See [the investigation evidence](evidence/gemini-retry-investigation-2026-11-01.md) for implementation, actual checks and limitations. No personal-phone installation or live itinerary rehearsal was performed.
+- Final analysis and ARM64 debug APK build passed. The suite completed with 569 passes, one skip and the same eight baseline failure identities. Offline replay validated the approved public response with invalid optional hints omitted; this does not qualify general model accuracy or physical-phone behavior.
+
 ### [2026-11-01] Improve place information, pin capture and semantic recommendations
 
 - Implemented D66: full addresses in alternatives, transient Google ratings/type/relevance metadata, bounded complementary venue searches and suitability-first whole-trip comparison. Existing interpretations remain reusable through frozen request builders; optional new semantic hints do not trigger regeneration on upgrade.

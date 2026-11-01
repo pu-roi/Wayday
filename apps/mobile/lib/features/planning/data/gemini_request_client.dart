@@ -102,6 +102,10 @@ class GeminiRequestClient {
       }
       final state = status['state'];
       if (state != 'missing' && !retry) {
+        if (state == 'failed') {
+          final failure = _providerFailure(status['failure']);
+          if (failure != null) throw failure;
+        }
         throw PlanningFailure(
           state == 'pending'
               ? 'The previous request may still be processing. Check for its saved answer before retrying.'
@@ -142,13 +146,13 @@ class GeminiRequestClient {
       }
       return GeminiReply(body, raw);
     } on PlatformException catch (e) {
+      final failure = _providerFailure(e.code);
+      if (failure != null) throw failure;
       throw PlanningFailure(switch (e.code) {
         'cache' =>
           'Saved understanding could not be read or saved. No automatic retry was sent.',
         'connection' =>
           'Gemini could not be reached. Check your phone’s internet connection.',
-        'quota' => 'Google has temporarily limited Gemini requests.',
-        'access' => 'Gemini access was denied. Check the device configuration.',
         'configuration' => 'Gemini has not been configured on this device.',
         _ =>
           'Understanding is unavailable. Check for a saved answer before retrying.',
@@ -166,6 +170,45 @@ class GeminiRequestClient {
         kind: 'interrupted',
       );
     }
+  }
+
+  /// Allowlisted diagnostics only. Never display native/provider message text.
+  PlanningFailure? _providerFailure(Object? code) {
+    final status =
+        code is String && RegExp(r'^http_[1-5][0-9]{2}$').hasMatch(code)
+        ? int.parse(code.substring(5))
+        : null;
+    if (code == 'access' || status == 401 || status == 403) {
+      return const PlanningFailure(
+        'Gemini access was denied. Check the device configuration.',
+        kind: 'access',
+      );
+    }
+    if (code == 'quota' || status == 429) {
+      return const PlanningFailure(
+        'Google has temporarily limited Gemini requests.',
+        kind: 'quota',
+      );
+    }
+    if (status == 400 || status == 422) {
+      return PlanningFailure(
+        'Gemini rejected the app’s request (HTTP $status). The request format needs investigation; repeating the same request may fail again.',
+        kind: 'request_rejected',
+      );
+    }
+    if (status == 404) {
+      return const PlanningFailure(
+        'The configured Gemini model or endpoint was not found (HTTP 404). The app configuration needs investigation.',
+        kind: 'model_unavailable',
+      );
+    }
+    if (status != null) {
+      return PlanningFailure(
+        'Gemini returned HTTP $status without a usable answer. Your errands are kept. Retry only when you’re ready.',
+        kind: 'provider_failure',
+      );
+    }
+    return null;
   }
 
   Future<bool> configured() async =>

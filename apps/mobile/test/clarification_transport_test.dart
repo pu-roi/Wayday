@@ -72,6 +72,47 @@ void main() {
     });
   });
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+  test('D66 clarification is reused after transport repair', () async {
+    final resolver = GeminiClarificationResolver(
+      client: GeminiRequestClient(channel: channel),
+    );
+    await resolver.resolve(context, 'Rice');
+    final response = disk.values.single;
+    disk.clear();
+    disk['clarification:${searchIntentClarificationRequest(context, 'Rice', [])}'] =
+        response;
+    generations = 0;
+    expect(
+      (await resolver.resolve(context, 'Rice', savedOnly: true)).resolved,
+      isTrue,
+    );
+    expect(generations, 0);
+  });
+  for (final state in ['pending', 'failed', 'corrupt']) {
+    test(
+      'D66 $state clarification cannot auto-dispatch after transport repair',
+      () async {
+        final previous = searchIntentClarificationRequest(context, 'Rice', []);
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'interpretationStatus') {
+            return (call.arguments as Map)['body'] == previous
+                ? {'state': state}
+                : {'state': 'missing'};
+          }
+          if (call.method == 'interpret') generations++;
+          throw StateError('Unexpected dispatch or configuration check');
+        });
+        final resolver = GeminiClarificationResolver(
+          client: GeminiRequestClient(channel: channel),
+        );
+        await expectLater(
+          resolver.resolve(context, 'Rice'),
+          throwsA(isA<PlanningFailure>()),
+        );
+        expect(generations, 0);
+      },
+    );
+  }
   test(
     'previous location clarification is reused after the semantic schema update',
     () async {

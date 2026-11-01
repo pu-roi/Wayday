@@ -90,6 +90,18 @@ class PlaceSearchIntent {
       acceptableTypes: acceptable,
     );
   }
+
+  /// Hints are optional advice. Reject invalid advice without discarding the
+  /// independently validated query, category, source constraints or questions.
+  static PlaceSearchIntent? optionalFromJson(Object? value) {
+    if (value is! Map<String, dynamic>) return null;
+    try {
+      return PlaceSearchIntent.fromJson(value);
+    } on FormatException {
+      return null;
+    }
+  }
+
   Map<String, dynamic> toJson() => {
     'variants': variants,
     'preferredTypes': preferredTypes,
@@ -113,6 +125,21 @@ class PlaceSearchIntent {
     },
     'required': ['variants', 'preferredTypes', 'acceptableTypes'],
   };
+
+  /// Avoid multiplying a large enum through nested, bounded output arrays.
+  /// The allowlist and all cross-field/length checks remain enforced above.
+  static Map<String, dynamic> get transportSchema {
+    final result = schema;
+    for (final key in ['preferredTypes', 'acceptableTypes']) {
+      (result['properties'][key]['items'] as Map).remove('enum');
+    }
+    return result;
+  }
+
+  static final transportPolicy =
+      ' Place search transport v2: preferredTypes and acceptableTypes must use only these supported venue types: ${supportedTypes.join(', ')}. '
+      'All existing list limits and preferred-types-must-be-acceptable rules still apply. ';
+
   static const policy =
       ' Place search policy v1: return searchIntent for flexible business needs, otherwise null. '
       'Read the whole errand, notes, items and explicit preferences in English, Filipino and Taglish. '

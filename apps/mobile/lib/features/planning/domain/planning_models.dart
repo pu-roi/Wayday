@@ -201,11 +201,7 @@ class ErrandNeed {
       locationIntent: intent == null
           ? null
           : LocationIntent.values.byName(intent as String),
-      searchIntent: json['searchIntent'] == null
-          ? null
-          : PlaceSearchIntent.fromJson(
-              Map<String, dynamic>.from(json['searchIntent'] as Map),
-            ),
+      searchIntent: PlaceSearchIntent.optionalFromJson(json['searchIntent']),
     );
   }
 

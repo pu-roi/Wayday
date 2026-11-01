@@ -23,6 +23,9 @@ class UnderstandingFailureView extends StatelessWidget {
       'connection' => 'Check your internet connection',
       'cache_miss' => 'No saved understanding',
       'configuration' || 'access' => 'Gemini setup needs attention',
+      'request_rejected' => 'Gemini rejected the request',
+      'model_unavailable' => 'Gemini model is unavailable',
+      'provider_failure' => 'Gemini returned an error',
       'recovery' ||
       'interrupted' ||
       'previous_failure' => 'Understanding needs a retry',

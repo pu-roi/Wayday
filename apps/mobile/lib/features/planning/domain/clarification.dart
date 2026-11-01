@@ -195,11 +195,7 @@ class ClarificationResolution {
       locationIntent: location == null
           ? null
           : LocationIntent.values.byName(location as String),
-      searchIntent: j['searchIntent'] == null
-          ? null
-          : PlaceSearchIntent.fromJson(
-              Map<String, dynamic>.from(j['searchIntent'] as Map),
-            ),
+      searchIntent: PlaceSearchIntent.optionalFromJson(j['searchIntent']),
     );
   }
 

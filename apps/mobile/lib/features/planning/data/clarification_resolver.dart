@@ -30,6 +30,7 @@ class GeminiClarificationResolver implements ClarificationResolver {
       clarificationRequest(context, answer, history),
       purpose: 'clarification',
       legacyBodies: [
+        searchIntentClarificationRequest(context, answer, history),
         locationClarificationRequest(context, answer, history),
         legacyClarificationRequest(context, answer, history),
       ],
@@ -180,7 +181,8 @@ String locationClarificationRequest(
   return result;
 }
 
-String clarificationRequest(
+/// Frozen D66 lookup. Failed processing must not retry through a schema change.
+String searchIntentClarificationRequest(
   ClarificationContext context,
   String answer,
   List<String> history,
@@ -192,6 +194,28 @@ String clarificationRequest(
   final schema = body['generationConfig']['responseSchema'];
   schema['properties']['searchIntent'] = PlaceSearchIntent.schema;
   schema['required'] = (schema['properties'] as Map).keys.toList();
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten this answer before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
+}
+
+String clarificationRequest(
+  ClarificationContext context,
+  String answer,
+  List<String> history,
+) {
+  final body =
+      jsonDecode(searchIntentClarificationRequest(context, answer, history))
+          as Map<String, dynamic>;
+  body['systemInstruction']['parts'][0]['text'] +=
+      PlaceSearchIntent.transportPolicy;
+  body['generationConfig']['responseSchema']['properties']['searchIntent'] =
+      PlaceSearchIntent.transportSchema;
   final result = jsonEncode(body);
   if (utf8.encode(result).length > 50000) {
     throw const PlanningFailure(

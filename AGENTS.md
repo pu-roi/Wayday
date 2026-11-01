@@ -6,6 +6,8 @@ The owner approved full addresses in alternatives, isolated four-per-second zoom
 
 ## Current phase
 
+The D66 Gemini retry investigation reproduced HTTP 400 with the original search-intent schema and HTTP 200 with reduced enum nesting. Preserve original D66 interpretation/clarification builders as lookup paths and all explicit retry guards. New transport keeps the venue allowlist in the instruction and strict local hint validation. Omit invalid optional hints without discarding independently validated core meaning; do not use or fabricate invalid metadata. Keep durable HTTP failure explanations without raw provider error text. See [the focused evidence](docs/wayday/evidence/gemini-retry-investigation-2026-11-01.md); two nonpersonal requests do not establish physical-phone or general model readiness, and the personal installation remains unchanged by that investigation.
+
 The D66 implementation also follows the owner's subsequent request for explicit open/closed status in Details and alternatives. Use fresh current hours for Open now/Closed now, label weekly fallback Usually, and keep calculated visit compatibility separate. Refresh the displayed clock locally without isOpen or provider requests; missing/failed/stale hours are unknown, not closed.
 
 The Android Flutter shell, Today, and Recurring are implemented. Local Drift/SQLite storage for Today and Recurring was implemented and verified on Android on 2026-10-27; the browser preview remains in memory. Use one light Cornflower theme without appearance controls, compact errand lists, focused editing, and numeric time entry. Repeat settings are metadata, not an automatic scheduler. Do not repeatedly ask for authorization already present in the conversation.

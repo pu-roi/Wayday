@@ -1,5 +1,9 @@
 # Plan my day implementation plan
 
+## Gemini retry repair — D66 continuation
+
+The owner-reported retry failure was reproduced with a nonpersonal request: the original D66 format returned HTTP 400; a reduced venue-type schema returned HTTP 200. New requests send the type allowlist in the instruction and retain local type/list validation. Preserve the original D66 interpretation and clarification builders as historical lookup paths, including explicit retry guards. Invalid optional search hints are omitted while core meaning remains strictly validated. Known HTTP failures retain a useful explanation after reopening. See [the focused investigation](evidence/gemini-retry-investigation-2026-11-01.md) for the two separately authorized requests, parser replay and remaining physical-phone qualification. Building this repair does not update the personal installation or authorize automatic replacement of failed understanding.
+
 ## Place information, map interaction and recommendation quality — D66
 
 The owner approved full addresses in Choose a place, stable revisioned map confirmation, empty-form date defaults and intent-aware quality, in that order. Preserve the theme, alternatives pager/append/cap behavior and provider boundaries. Display existing addresses without lookups. Isolate throttled zoom updates from picker-wide state and capture final idle coordinates with a three-second confirmation deadline.
