@@ -1,5 +1,13 @@
 # Technology stack and dependency inventory
 
+## Public development delivery — D67
+
+The static marketing website uses Vite 8.3.5, TypeScript 7.0.2, Lenis 1.3.27, GSAP 3.15.0 and Playwright 1.64.1. It reuses Figtree with its OFL notice and the owner's original supplied logo. GSAP uses its standard licence, not MIT; the website README records notices. No licence is assigned to original project work.
+
+The independent FastAPI gateway entry point uses HTTPX 0.28.1, Firebase Admin 7.7.0 and Google Cloud Firestore 2.34.1, with its dependency closure pinned in `requirements-gateway.lock`. Android adds Firebase BoM 35.1.0 and its Preview reCAPTCHA App Check provider. Existing map/navigation providers and Flutter 3.47.8 remain unchanged. The Preview provider's own mobile SDK lifecycle requires attention before release.
+
+[Distribution](DISTRIBUTION.md) records hosting, conditional allowances, costs, IAM and qualification gates. No Cloud/billing/public-deployment change occurs merely by preparing these files. [D67 evidence](evidence/public-distribution-2026-11-01.md) records actual checks.
+
 ## D66 integration continuation
 
 The existing pinned Places SDK now requests RATING and USER_RATING_COUNT with the D63 hours fields and passes PRIMARY_TYPE plus result ordinal through its transient bridge snapshot. This introduces no dependency/provider/model change. Keep conservative US$0.035 search and US$0.020 details accounting until charged-SKU reconciliation, with the same allocations, restrictions and disposable recovery floor. Written reviews, Atmosphere fields and a new grounding service are not adopted. The existing MapLibre renderer/composition remains; D66 changes Flutter camera/confirmation state and zoom rebuild behavior rather than switching map technology.

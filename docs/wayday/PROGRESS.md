@@ -2,6 +2,26 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-01] Verify distribution setup and repair publication test blockers
+
+- Recorded owner-supplied Cloud/Firebase/GitHub setup evidence in [Distribution](DISTRIBUTION.md), including dedicated identities, secret references, federation and the zero-valued accounting document. Distinguished console screenshots and command output from live attestation/provider qualification.
+- Reproduced all eight existing failures in the affected picker/profile/Today/map tests. Updated stale UI interactions and supplied isolated storage/search/map fixtures; retained behavior assertions and made no production picker changes or additional skips.
+- The corrected four test files passed 50 tests; the full Flutter suite passed 584 with one pre-existing skip and zero failures. Flutter analysis, 30 mocked gateway/release-tool cases, three website release-validation tests and both workflow lint checks passed. Guarded disposable native recovery and clarification-cache checks passed without provider requests. The clarification run required recovery from an emulator low-memory kill before test execution; [distribution evidence](evidence/public-distribution-2026-11-01.md) records the failed attempt, successful bounded-memory retry and physical-phone limits.
+- Public release qualification remains false. No gateway deployment, paid provider request or personal-phone installation was performed by these checks.
+
+### [2026-11-01] Rebuild the marketing website with coordinated scroll scenes
+
+- Replaced the website's layout, styles and motion after the owner approved the fresh reference-led plan. Presented the complete opening preview before adding the lower scenes. Retained the original branding, accurate product content, release boundary and GitHub Pages support.
+- Added substantial reversible phone/note motion, distinct feature reveals, layered steps, rotating reuse, stable installation content and responsive/reduced-motion/no-JavaScript fallbacks.
+- Production build, three release unit tests, fourteen browser tests and npm audit passed. Automated WCAG A/AA scans at desktop/phone/638 px reported zero violations; rendered captures and motion were inspected. [Website evidence](evidence/website-rebuild-2026-11-01.md) records the details and physical-device limits. Public downloads and deployment remain disabled.
+
+### [2026-11-01] Prepare public development distribution — D67
+
+- Implemented the supplied single-page marketing brief, original logo/Figtree assets, Lenis/GSAP, accessible navigation, typed release states and GitHub Pages project-subpath support in `apps/website/`.
+- Added the separate FastAPI gateway, server-owned provider contracts, App Check verification, bounded operations, shared nonpersonal accounting and Android public transport without replacing the historical catalog or private debug journals.
+- Prepared protected signing, pinned GitHub Actions checks/publication, manual gated Cloud Run deployment and actual release-qualification requirements. No Cloud resource, billing setting, actual release key, public APK or personal installation was changed.
+- [Distribution setup](DISTRIBUTION.md) records configuration, cost review and release gates; [focused evidence](evidence/public-distribution-2026-11-01.md) records actual test/build results and the unchanged eight baseline Flutter failures. Public/live/physical readiness remains unqualified.
+
 ### [2026-11-01] Investigate Gemini retry rejection and repair request handling
 
 - Read-only phone inspection found a generic failed interpretation. Two separately authorized nonpersonal requests reproduced HTTP 400 with the original D66 format and HTTP 200 with a reduced venue-type schema. The latter response exposed inconsistent optional hints; those are now discarded without accepting invalid metadata or discarding independently validated core meaning.

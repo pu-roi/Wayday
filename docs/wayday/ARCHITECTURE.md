@@ -1,5 +1,11 @@
 # Planned architecture
 
+## Public distribution boundary — D67
+
+GitHub Pages serves the static marketing website; GitHub Releases hosts qualified APKs. The dedicated `wayday_api.gateway.app:app` entry point exposes bounded provider operations without importing/deploying the historical catalog or its database. Public Android builds use server secrets and App Check for Gemini/REST operations; Places/Navigation remain native. The scheduler, personal repositories and native interpretation journals stay on the phone. Firestore holds only shared nonpersonal accounting.
+
+The gateway envelope does not alter canonical interpretation bodies or journal identity. Preserve pending/completed records, legacy lookup, saved-only checks, source validation and explicit retry. Public accounting does not read/refill private allowances. [Distribution](DISTRIBUTION.md) owns configuration and [D67 evidence](evidence/public-distribution-2026-11-01.md) records verification. Earlier private-only/backend-pending sections remain historical context.
+
 ## D66 place suitability and date-default continuation
 
 Optional PlaceSearchIntent data belongs to validated interpretation/clarification meaning and may travel in existing user-owned template JSON. Provider primary type, result ordinal, ratings, count, addresses and hours belong to transient recommendation snapshots. A pure suitability policy feeds both browsing and initial discovery, while the existing worker receives per-errand/per-place suitability and tempered quality values alongside the road matrix. One corridor/two-anchor acquisition bounds and independent accounting remain unchanged. Prior request builders remain compatible lookup identities; new schema versions do not automatically generate on existing or interrupted input.

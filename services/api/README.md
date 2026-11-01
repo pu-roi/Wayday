@@ -1,5 +1,9 @@
 # Wayday local place service
 
+## Public provider gateway — D67
+
+The new Cloud Run entry point is `wayday_api.gateway.app:app`; use `Dockerfile.gateway` and `requirements-gateway.lock`. It is independent of the historical bounded catalog below and requires no catalog database. [Distribution](../../docs/wayday/DISTRIBUTION.md) documents the contract, app verification, secrets, shared accounting and live qualification gates. Do not expose the local pilot endpoints as a side effect of gateway deployment. The remainder of this README describes that preserved historical pilot.
+
 M2 provides real name/landmark/address suggestions without interpreting errands. Personal notes and task lists are never sent to this API. No planning, routing, authentication or sharing endpoints exist yet.
 
 This service has been brought into the reconciliation workspace for review. It is not yet connected to the mobile app. File-mode place search needs Python but no Docker; the supplied PostGIS setup uses Docker.

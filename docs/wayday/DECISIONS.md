@@ -1,5 +1,17 @@
 # Foundation decision log
 
+## D67 — Public development website, managed access and gated delivery (2026-11-01)
+
+The owner selected publicly accessible Android development downloads, initially expected to reach two to five testers. Installation must be enough: no invitation, account sign-in, API key, ADB provisioning or reachable laptop. Use one repository, the complete supplied marketing brief in `apps/website/`, GitHub Pages, APKs on GitHub Releases and GitHub Actions. The full website supersedes the earlier minimal download-page description; product capabilities and qualification limits remain honest.
+
+Prepare a dedicated Cloud Run gateway entry point within the existing FastAPI project without deploying its historical catalog. Proxy approved Gemini, Routes and other-source operations using server secrets and App Check's Preview Android reCAPTCHA provider. Keep Places/Navigation native and scheduling/personal state local. Public builds reject private provider defines, require dedicated release signing and never use the private debug Gemini credential. Preserve canonical native journals, lookup compatibility, saved-only checks and explicit retries; D55 still prohibits Gemini attempt allowances.
+
+Shared nonpersonal Firestore accounting prevents copying funded Google allowances across installations. Public funds default to absent/zero and need separate review. Preserve private US$8 and disposable US$2/recovery-floor records. Reservations and scale limits are not account-wide bill caps. No user accounts, task synchronization, analytics or location-history service is added.
+
+Live Cloud deployment, billing activation and additional funds are not authorized by preparing source/configuration. Keep publication disabled until protected configuration and actual qualification exist. Preserve all required checks and the personal-phone protections. [Distribution](DISTRIBUTION.md) owns setup and [D67 evidence](evidence/public-distribution-2026-11-01.md) records implemented versus verified behavior.
+
+The owner subsequently rejected the website's small scroll movements, requested a fresh design, supplied Pyzhevsky and Spyker as references and delegated the redesign choices. After reviewing a new plan, the owner explicitly approved implementation. The [focused redesign brief](../../apps/website/README.md#redesign-plan--reference-led-scroll-storytelling) replaces the earlier restrained-motion direction with larger scale, rotation, reveals and coordinated scroll scenes while preserving Wayday branding, accessibility and product/distribution truth. The rebuilt page and opening checkpoint are browser-verified; [website evidence](evidence/website-rebuild-2026-11-01.md) records the checks and physical-device limits. This does not reopen Android or gateway work.
+
 ## D66 — Clear place information, safe pin confirmation and semantic suitability (2026-11-01)
 
 The owner approved full formatted addresses in alternatives, isolated throttled zoom updates, stable confirmation that captures the final idle center, and automatic date defaults only for empty/default forms. Explicit plan dates, entered forms, current trips and legacy unknown date history remain protected. The additive dateSelected field uses existing JSON; review/draft source identity excludes it. There is no schema migration or automatic date movement for existing plans.
