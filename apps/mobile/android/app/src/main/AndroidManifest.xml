@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
-        android:label="Wayday"
+        android:label="${waydayAppLabel}"
         android:name="${applicationName}"
         android:icon="@drawable/wayday_icon">
         <!-- Local build configuration; the value is never committed in source. -->

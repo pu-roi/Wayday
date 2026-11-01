@@ -23,6 +23,14 @@ val waydayDefines = providers.gradleProperty("dart-defines")
     .toMap()
 val googleMapsAndroidApiKey = waydayDefines["GOOGLE_MAPS_ANDROID_API_KEY"].orEmpty()
 val publicBuild = waydayDefines["WAYDAY_PUBLIC_BUILD"] == "true"
+val publicTest = waydayDefines["WAYDAY_PUBLIC_TEST"] == "true"
+if (publicTest) {
+    require(publicBuild) { "The isolated public test requires server-backed access." }
+    require(providers.gradleProperty("WAYDAY_MAP_TEST").orNull != "true") { "Public verification and private map fixtures must remain separate." }
+    require(providers.gradleProperty("target").orNull.orEmpty().replace('\\', '/').endsWith("lib/main_public_test.dart")) {
+        "The isolated public test must use its connection-check entry point."
+    }
+}
 if (publicBuild) {
     require(listOf("GEMINI_API_KEY", "GOOGLE_ROUTES_API_KEY", "GEOAPIFY_API_KEY", "LOCATIONIQ_API_KEY").none { !waydayDefines[it].isNullOrBlank() }) {
         "Public builds must not contain private provider build defines."
@@ -48,6 +56,8 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "dev.wayday.wayday"
+        if (publicTest) applicationIdSuffix = ".publictest"
+        manifestPlaceholders["waydayAppLabel"] = if (publicTest) "Wayday Test" else "Wayday"
         buildConfigField("boolean", "WAYDAY_PUBLIC_BUILD", publicBuild.toString())
         for (key in listOf("WAYDAY_GATEWAY_URL", "WAYDAY_FIREBASE_APP_ID", "WAYDAY_FIREBASE_API_KEY", "WAYDAY_FIREBASE_PROJECT_ID", "WAYDAY_RECAPTCHA_SITE_KEY")) {
             buildConfigField("String", key, buildString(waydayDefines[key].orEmpty()))

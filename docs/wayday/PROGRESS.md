@@ -2,6 +2,19 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-01] Prepare a separate signed Wayday Test connection check
+
+- The owner approved `dev.wayday.wayday.publictest` after confirming that only the current personal Wayday phone was available. Validated the supplied Firebase test configuration against the existing project without printing its client key.
+- Added an explicitly selected connection-check entry point, distinct launcher/package identity and one read-only authenticated preflight. Six mocked tests cover request scope, safe failures, explicit start and overlapping-tap prevention; full analysis passed, and the complete suite passed 590 tests with one existing skip. No test dispatches paid provider work.
+- Built and independently inspected the permanent-key-signed universal test APK, including its package/version, Android SDK range, signature, live gateway and absence of four configured private credentials. It remains uninstalled and unpublished. [Distribution evidence](evidence/public-distribution-2026-11-01.md#separate-test-identity-and-signed-connection-check) distinguishes build success, helper failures, allowlist formatting work and outstanding live App Check registration/qualification.
+
+### [2026-11-01] Publish the website and deploy the reviewed gateway
+
+- PR #9 merged into `main`; website, API, mobile and native checks passed. Published [the website](https://pu-roi.github.io/Wayday/) through the existing Pages workflow and confirmed its coming-soon download state in a browser.
+- After the owner's explicit first-deployment approval, verified all ten Cloud environment values and the protected `main` deployment gate using authenticated account `pu-roi`. Enabled manual gateway deployment, approved its normal reviewer gate and completed [run 41318669437](https://github.com/pu-roi/Wayday/actions/runs/41318669437), including 27 mocked tests, federation authentication, image publication and Cloud Run deployment with the reviewed configuration.
+- The live health endpoint returned configured/HTTP 200. All eight protected POST operations rejected missing App Check proof with HTTP 401; interpretation also rejected a malformed token. Saved the verified gateway URL as a repository variable for future public builds. [Distribution evidence](evidence/public-distribution-2026-11-01.md#first-live-website-and-gateway-deployment) records the exact scope and remaining qualification.
+- No paid provider requests, public APK publication, allocation changes or personal-phone actions were performed. Valid sideloaded App Check, live provider/accounting behavior, fresh installation and signed upgrade retention remain unqualified; the qualification record remains false.
+
 ### [2026-11-01] Verify distribution setup and repair publication test blockers
 
 - Recorded owner-supplied Cloud/Firebase/GitHub setup evidence in [Distribution](DISTRIBUTION.md), including dedicated identities, secret references, federation and the zero-valued accounting document. Distinguished console screenshots and command output from live attestation/provider qualification.
