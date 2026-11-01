@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FBFBF8" />
+    <meta
+      name="description"
+      content="Meet Wayday, an Android errand planner for everyday life in Philippine cities. Bring your errands, places and estimated schedule into one plan."
+    />
+    <meta
+      property="og:title"
+      content="Wayday — Your errands. A clearer way through the day."
+    />
+    <meta
+      property="og:description"
+      content="Bring your errands into one plan. An Android app, currently in development."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" type="image/png" href="%BASE_URL%assets/wayday-logo.png" />
+    <title>Wayday — A clearer way through the day</title>
+  </head>
+  <body>
+    <svg class="icon-definitions" aria-hidden="true">
+      <defs>
+        <symbol id="arrow" viewBox="0 0 24 24">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </symbol>
+        <symbol id="check" viewBox="0 0 24 24">
+          <path d="m5 12 4 4L19 6" />
+        </symbol>
+        <symbol id="pin" viewBox="0 0 24 24">
+          <path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z" />
+          <circle cx="12" cy="10" r="2" />
+        </symbol>
+        <symbol id="menu" viewBox="0 0 24 24">
+          <path d="M4 8h16M4 16h16" />
+        </symbol>
+      </defs>
+    </svg>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Wayday home"
+        ><img
+          src="%BASE_URL%assets/wayday-logo.png"
+          width="56"
+          height="56"
+          alt=""
+        /><span>Wayday.</span></a
+      >
+      <button
+        class="menu-toggle"
+        aria-expanded="false"
+        aria-controls="main-nav"
+      >
+        Menu <svg class="icon" aria-hidden="true"><use href="#menu" /></svg>
+      </button>
+      <nav id="main-nav" aria-label="Main navigation">
+        <a href="#features">Features</a><a href="#how-it-works">How it works</a
+        ><a href="#requirements">Requirements</a><a href="#faq">FAQ</a
+        ><a class="button button-small" href="#download"
+          >Download app
+          <svg class="icon" aria-hidden="true"><use href="#arrow" /></svg
+        ></a>
+      </nav>
+    </header>
+    <noscript
+      ><style>
+        .menu-toggle {
+          display: none;
+        }
+        .site-header {
+          flex-wrap: wrap;
+        }
+        .site-header nav {
+          display: flex;
+          position: static;
+          flex-wrap: wrap;
+          width: 100%;
+          padding: 8px 0;
+          border: 0;
+        }
+      </style></noscript
+    >
+    <main id="main">
+      <section id="top" class="hero" aria-labelledby="hero-title">
+        <div class="hero-stage">
+          <div class="hero-copy">
+            <h1 id="hero-title">
+              <span class="title-mask"><span>Your errands.</span></span
+              ><span class="title-mask"><span>A clearer</span></span
+              ><span class="title-mask"
+                ><span class="blue-text">way through.</span></span
+              >
+            </h1>
+            <p class="hero-description">
+              A head full of errands?<br />
+              Bring them into one plan. Make room for your day.
+            </p>
+            <div class="hero-actions">
+              <a href="#download" class="button"
+                >Download app
+                <svg class="icon" aria-hidden="true">
+                  <use href="#arrow" /></svg></a
+              ><a href="#how-it-works" class="text-link">See how it works</a>
+            </div>
+            <p class="development-status">
+              <span class="status-dot" aria-hidden="true"></span>Android ·
+              Currently in development
+            </p>
+          </div>
+          <div
+            class="hero-visual"
+            role="img"
+            aria-label="Illustrative Wayday interface with sample errands, not an interactive app"
+          >
+            <div class="scene-disc" aria-hidden="true"></div>
+            <svg
+              class="scene-path"
+              viewBox="0 0 640 640"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M60 200C60 50 560 50 560 240S80 360 80 470s450 170 490-50"
+              />
+              <circle cx="60" cy="200" r="7" />
+              <circle cx="570" cy="420" r="7" />
+            </svg>
+            <div class="phone-arrival">
+              <div class="phone-motion">
+                <div class="phone">
+                  <div class="phone-top">
+                    <span>9:41</span
+                    ><span class="phone-camera" aria-hidden="true"></span
+                    ><span>Wayday</span>
+                  </div>
+                  <div class="phone-body">
+                    <p class="phone-greeting">A little more day.</p>
+                    <h2>Today, together.</h2>
+                    <div class="phone-endpoint">
+                      <span class="dot"></span
+                      ><span>From <strong>Your starting point</strong></span>
+                    </div>
+                    <div class="phone-errand">
+                      <span>1</span>
+                      <div>
+                        <strong>Pick up groceries</strong
+                        ><small>Keep the little details</small>
+                      </div>
+                    </div>
+                    <div class="phone-errand">
+                      <span>2</span>
+                      <div>
+                        <strong>Collect my prescription</strong
+                        ><small>One less thing to remember</small>
+                      </div>
+                    </div>
+                    <div class="phone-errand">
+                      <span>3</span>
+                      <div>
+                        <strong>Meet a friend</strong
+                        ><small>Confirm the place and time</small>
+                      </div>
+                    </div>
+                    <div class="phone-endpoint">
+                      <span class="dot dot-end"></span
+                      ><span>To <strong>Where your day ends</strong></span>
+                    </div>
+                    <div class="phone-plan">
+                      Plan my day
+                      <svg class="icon" aria-hidden="true">
+                        <use href="#arrow" />
+                      </svg>
+                    </div>
+                    <div class="phone-tabs">
+                      <strong>Today</strong><span>Recurring</span
+                      ><span>Profile</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="errand-slip slip-one">
+              <svg class="icon" aria-hidden="true"><use href="#check" /></svg>
+              <div>
+                Pick up groceries<small>Remember the shopping list.</small>
+              </div>
+            </div>
+            <div class="errand-slip slip-two">
+              <svg class="icon" aria-hidden="true"><use href="#pin" /></svg>
+              <div>
+                Meet a friend<small>Somewhere that works for you.</small>
+              </div>
+            </div>
+            <div class="errand-slip slip-three">
+              <span class="slip-number">3</span>
+              <div>
+                Collect my prescription<small
+                  >Keep the important details.</small
+                >
+              </div>
+            </div>
+            <p class="illustration-caption">
+              Illustrative interface · Sample errands
+            </p>
+          </div>
+          <div class="hero-resolution" aria-hidden="true">
+            <span>Less scattered.</span><strong>More together.</strong>
+          </div>
+          <div class="hero-bottom">
+            <span>For everyday life in Philippine cities.</span
+            ><a href="#features"
+              >Scroll to bring it together
+              <svg class="icon" aria-hidden="true"><use href="#arrow" /></svg
+            ></a>
+          </div>
+        </div>
+      </section>
+      <section id="features" class="features" aria-labelledby="features-title">
+        <div class="section-shell">
+          <div class="section-heading">
+            <h2 id="features-title">
+              A little less<br />
+              <span>all over the place.</span>
+            </h2>
+            <p>
+              Shopping. Pickups. Appointments.<br />
+              Wayday helps the pieces fit, with you in control.
+            </p>
+          </div>
+          <div class="feature-lead">
+            <div class="note-scene">
+              <div class="note-shadow" aria-hidden="true"></div>
+              <div class="detail-preview">
+                <span class="note-label">Your errand, in your words</span>
+                <p>
+                  “Bili ng groceries,<br />
+                  then pick up<br />
+                  my prescription.”
+                </p>
+                <div class="note-rule"></div>
+                <span>Understand. Review. Make it yours.</span
+                ><small>Illustrative input · No live AI request</small>
+              </div>
+            </div>
+            <div class="feature-copy">
+              <h3>
+                Your words.<br />
+                The details<br />
+                that matter.
+              </h3>
+              <p>
+                Add errands in English, Filipino or Taglish. Review AI-assisted
+                suggestions, answer necessary questions and edit the details
+                before moving on.
+              </p>
+              <p>
+                Keep notes, priorities, visit durations, appointments, deadlines
+                and dependencies together.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="feature-rows section-shell">
+          <article class="place-chapter">
+            <div class="feature-copy">
+              <h3>
+                A place that fits.<br />
+                <span>A choice that's yours.</span>
+              </h3>
+              <p>
+                Review suitable-place recommendations, compare alternatives or
+                confirm a specific location. A suggestion is never a stock or
+                appointment guarantee.
+              </p>
+            </div>
+            <div
+              class="choice-scene"
+              role="img"
+              aria-label="Illustration of choosing between place options, with no real provider results"
+            >
+              <div class="choice-orbit" aria-hidden="true">
+                <svg viewBox="0 0 240 240">
+                  <circle cx="120" cy="120" r="104" />
+                  <path d="M120 16a104 104 0 0 1 104 104" />
+                </svg>
+              </div>
+              <div class="choice-label choice-first">A recommendation</div>
+              <div class="choice-label choice-second">Another option</div>
+              <div class="choice-label choice-selected">
+                <svg class="icon" aria-hidden="true"><use href="#check" /></svg
+                >Your confirmed choice
+              </div>
+              <small>Illustrative choices · No business results</small>
+            </div>
+          </article>
+          <article class="plan-chapter">
+            <div
+              class="plan-visual"
+              role="img"
+              aria-label="Illustrative planning sequence, with no calculated route or travel times"
+            >
+              <div class="plan-heading">Your day, considered.</div>
+              <div class="plan-line">
+                <span>1</span><strong>Start with the essentials</strong>
+              </div>
+              <div class="plan-line">
+                <span>2</span><strong>Keep room for what matters</strong>
+              </div>
+              <div class="plan-line">
+                <span>3</span><strong>Review before you go</strong>
+              </div>
+              <small>Concept illustration · Not a calculated itinerary</small>
+            </div>
+            <div class="feature-copy">
+              <h3>
+                See your day.<br />
+                <span>Then make it yours.</span>
+              </h3>
+              <p>
+                Review stop order, road-based travel estimates and your
+                schedule. Available business hours inform the plan; unknown
+                information stays clearly unknown.
+              </p>
+              <p>
+                Change a place, start embedded navigation and mark each errand
+                complete yourself. Arrival alone does not check off a task.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+      <section
+        id="how-it-works"
+        class="how-section"
+        aria-labelledby="how-title"
+      >
+        <div class="section-shell">
+          <div class="section-heading">
+            <h2 id="how-title">
+              From “I need to…”<br />
+              <span>to out the door.</span>
+            </h2>
+            <p>Four steps. Your final say.</p>
+          </div>
+          <ol class="steps">
+            <li>
+              <span class="step-number">01</span>
+              <div>
+                <h3>Put it all down.</h3>
+                <p>
+                  Add your errands and the notes, locations or times that
+                  matter.
+                </p>
+              </div>
+              <svg
+                class="step-art"
+                viewBox="0 0 160 160"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="36"
+                  y="20"
+                  width="96"
+                  height="116"
+                  rx="8"
+                  transform="rotate(10 80 80)"
+                />
+                <path d="M57 58h50M57 80h50M57 102h32" />
+              </svg>
+            </li>
+            <li>
+              <span class="step-number">02</span>
+              <div>
+                <h3>Make the meaning clear.</h3>
+                <p>
+                  Review Wayday’s understanding and answer necessary questions.
+                </p>
+              </div>
+              <svg
+                class="step-art"
+                viewBox="0 0 160 160"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path d="M30 35h100v70H70l-28 25v-25H30Z" />
+                <path d="m58 70 15 15 30-32" />
+              </svg>
+            </li>
+            <li>
+              <span class="step-number">03</span>
+              <div>
+                <h3>Find your fit.</h3>
+                <p>
+                  Review recommended places and the estimated plan. Change what
+                  you need.
+                </p>
+              </div>
+              <svg
+                class="step-art"
+                viewBox="0 0 160 160"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M120 65c0 30-40 66-40 66S40 95 40 65a40 40 0 1 1 80 0Z"
+                />
+                <circle cx="80" cy="65" r="13" />
+              </svg>
+            </li>
+            <li>
+              <span class="step-number">04</span>
+              <div>
+                <h3>One errand at a time.</h3>
+                <p>Start your trip and mark each task complete as you go.</p>
+              </div>
+              <svg
+                class="step-art"
+                viewBox="0 0 160 160"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle cx="80" cy="80" r="55" />
+                <path d="m48 80 23 23 44-48" />
+              </svg>
+            </li>
+          </ol>
+        </div>
+      </section>
+      <section class="reuse-row section-shell" aria-labelledby="reuse-title">
+        <div class="reuse-art" aria-hidden="true">
+          <svg class="reuse-wheel" viewBox="0 0 300 300" fill="none">
+            <path
+              d="M246 113A104 104 0 0 0 57 84M57 84l-3-49M57 84l48-7M54 187a104 104 0 0 0 189 29M243 216l3 49M243 216l-48 7"
+            />
+          </svg>
+          <div class="reuse-note reuse-note-one">Your familiar errands</div>
+          <div class="reuse-note reuse-note-two">Ready for another day</div>
+        </div>
+        <div class="feature-copy">
+          <h2 id="reuse-title">
+            Some days<br />
+            have a rhythm.
+          </h2>
+          <p>
+            Bring back recurring lists, saved places and reusable trips. Keep
+            your task progress locally on your phone.
+          </p>
+          <p>
+            Repeat settings help you organize; they do not automatically
+            schedule errands.
+          </p>
+          <a href="#privacy" class="text-link"
+            >What stays on my phone?
+            <svg class="icon" aria-hidden="true"><use href="#arrow" /></svg
+          ></a>
+        </div>
+      </section>
+      <section
+        id="requirements"
+        class="section-shell requirements"
+        aria-labelledby="requirements-title"
+      >
+        <div>
+          <h2 id="requirements-title">
+            Your phone.<br />
+            Your plans.<br />
+            <span>Ready when you are.</span>
+          </h2>
+          <p id="availability-summary">
+            Wayday is being developed for Android. Public downloads are being
+            prepared; release-confirmed device compatibility will accompany the
+            first download.
+          </p>
+        </div>
+        <dl class="requirements-list">
+          <div>
+            <dt>Android first</dt>
+            <dd>
+              iPhone and iOS support are not currently available. No launch date
+              has been set.
+            </dd>
+          </div>
+          <div>
+            <dt>An internet connection</dt>
+            <dd>
+              Online interpretation, discovery, fresh route estimates and
+              navigation depend on internet and provider availability.
+            </dd>
+          </div>
+          <div>
+            <dt>Location, when relevant</dt>
+            <dd>
+              Location permission supports current-location and navigation
+              features. Manual location selection remains available for
+              planning.
+            </dd>
+          </div>
+          <div>
+            <dt>Honest estimates</dt>
+            <dd>
+              Travel and opening-hour information can change. Vehicle modes have
+              different support; Wayday does not guarantee clearance-safe
+              routing.
+            </dd>
+          </div>
+        </dl>
+      </section>
+      <section
+        id="download"
+        class="download-section"
+        aria-labelledby="download-title"
+      >
+        <div class="section-shell download-grid">
+          <div>
+            <h2 id="download-title">
+              A clearer day<br />
+              starts here.
+            </h2>
+            <p id="download-intro">
+              Get Wayday on your Android phone when public testing opens.
+            </p>
+            <p class="download-status" role="status">
+              Public testing is being prepared.
+            </p>
+            <div id="release-panel">
+              <span class="button unavailable" aria-disabled="true"
+                >Download coming soon</span
+              >
+            </div>
+            <noscript
+              ><p>
+                Public downloads are not yet enabled on this page.
+                <a href="https://github.com/pu-roi/Wayday/releases"
+                  >View release information</a
+                >.
+              </p></noscript
+            >
+            <p class="download-device-note">
+              APK files install on Android devices. Visiting from a computer?
+              Open this page on your Android phone when a download is available.
+            </p>
+          </div>
+          <div class="install-guide">
+            <h3>How installation will work</h3>
+            <ol>
+              <li>Download the APK from the official link here.</li>
+              <li>Open the downloaded file on your Android phone.</li>
+              <li>
+                If Android asks, allow installation from that browser or file
+                source.
+              </li>
+              <li>Confirm installation and open Wayday.</li>
+            </ol>
+            <p>
+              Wording varies by device. You do not need to disable Play Protect
+              or bypass device restrictions.
+            </p>
+            <p>
+              Updates will appear here. You approve each installation; do not
+              uninstall as part of a normal update.
+            </p>
+          </div>
+        </div>
+      </section>
+      <section
+        id="faq"
+        class="section-shell faq-section"
+        aria-labelledby="faq-title"
+      >
+        <div class="section-heading">
+          <h2 id="faq-title">
+            A few things<br />
+            <span>before you head out.</span>
+          </h2>
+          <p>Clear answers for an app that’s still taking shape.</p>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Can I download Wayday now?</summary>
+            <p>
+              Public testing is being prepared. The download button will become
+              available when an Android release has passed qualification. Wayday
+              is not currently offered through Google Play.
+            </p>
+          </details>
+          <details>
+            <summary>Can I try it in my browser?</summary>
+            <p>
+              This is Wayday’s information and download website. The application
+              runs on Android; there is no interactive browser demo here.
+            </p>
+          </details>
+          <details>
+            <summary>Does it work without internet?</summary>
+            <p>
+              Locally saved tasks and progress remain on your phone. New
+              interpretation, place discovery, fresh route estimates and
+              navigation need internet. Local storage does not mean complete
+              offline planning.
+            </p>
+          </details>
+          <details>
+            <summary>Does Wayday decide everything for me?</summary>
+            <p>
+              No. You review interpretations, confirm necessary details and can
+              change recommended places. You mark tasks complete yourself.
+              Estimates do not guarantee travel times, opening hours, inventory
+              or appointment availability.
+            </p>
+          </details>
+          <details>
+            <summary>What does “recurring” mean?</summary>
+            <p>
+              Recurring lists and reusable trips help you bring familiar errands
+              into a new day. Repeat settings do not automatically schedule
+              errands. Reminders and live sharing are not currently available.
+            </p>
+          </details>
+          <details>
+            <summary>How do I update the app?</summary>
+            <p>
+              Download the newer official APK and approve the update on Android.
+              Keep the existing app installed so a compatible update can
+              preserve your local data. We do not silently install updates.
+            </p>
+          </details>
+        </div>
+      </section>
+      <section
+        id="privacy"
+        class="section-shell privacy-section"
+        aria-labelledby="privacy-title"
+      >
+        <h2 id="privacy-title">
+          Personal plans.<br />
+          Clear boundaries.
+        </h2>
+        <div>
+          <p>
+            Your errands, saved lists and trip progress are stored locally in
+            the Android app. Relevant text and locations are sent to online
+            providers when a feature needs them; we do not claim that every
+            piece of data always stays on your device.
+          </p>
+          <p>
+            This website has no accounts or app-provider requests and adds no
+            analytics. GitHub Pages, which hosts it, may process visitor
+            information under GitHub’s privacy statement. Android’s permission
+            controls remain yours.
+          </p>
+          <a
+            href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+            class="text-link"
+            >GitHub privacy statement <span aria-hidden="true">↗</span></a
+          >
+        </div>
+      </section>
+      <section class="closing">
+        <div class="section-shell">
+          <p>
+            Less holding it all in your head.<br />
+            <span>More getting on with your day.</span>
+          </p>
+          <a class="button" href="#download"
+            >Meet your next errand day
+            <svg class="icon" aria-hidden="true"><use href="#arrow" /></svg
+          ></a>
+          <div class="closing-word" aria-hidden="true">Wayday.</div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer section-shell">
+      <a class="brand" href="#top"
+        ><img
+          src="%BASE_URL%assets/wayday-logo.png"
+          width="50"
+          height="50"
+          alt=""
+        /><span>Wayday.</span></a
+      ><span>An Android app, in development.</span>
+      <div>
+        <a href="#privacy">Privacy</a><a href="#requirements">Limitations</a
+        ><a href="https://github.com/pu-roi/Wayday/releases">Releases</a
+        ><a href="https://github.com/pu-roi/Wayday/issues">Feedback</a>
+      </div>
+    </footer>
+    <a class="back-to-top" href="#top" aria-label="Back to top" hidden
+      ><svg class="icon" aria-hidden="true"><use href="#arrow" /></svg
+    ></a>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

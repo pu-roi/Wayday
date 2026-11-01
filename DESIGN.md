@@ -13,6 +13,16 @@ colors:
   text-muted-light: "#5A6C7B"
   outline-light: "#DEE7ED"
   field-light: "#F0F5F8"
+  website-canvas: "#fbfbf8"
+  website-ink: "#102d44"
+  website-blue: "#285c86"
+  website-muted: "#526779"
+  website-line: "#d4dfe6"
+  website-pale: "#e5f0f9"
+  website-cornflower: "#6aa6da"
+  website-white: "#ffffff"
+  website-dark-support: "#bfd0dd"
+  website-hero-surface: "#edf3f5"
 typography:
   headline: { fontFamily: Figtree, fontSize: "32px", fontWeight: 600, lineHeight: 1.25, letterSpacing: "-1px" }
   title: { fontFamily: Figtree, fontSize: "21px", fontWeight: 600, lineHeight: 1.27, letterSpacing: "-0.35px" }
@@ -23,11 +33,22 @@ typography:
   detail: { fontFamily: Figtree, fontSize: "12px", fontWeight: 400, lineHeight: 1.33, letterSpacing: "0.4px" }
   label: { fontFamily: Figtree, fontSize: "14px", fontWeight: 600, lineHeight: 1.43, letterSpacing: "0.1px" }
   button: { fontFamily: Figtree, fontSize: "16px", fontWeight: 600 }
+  website-display: { fontFamily: "Figtree, Arial, sans-serif", fontSize: "clamp(60px, 6.6vw, 96px)", fontWeight: 650, lineHeight: 0.99, letterSpacing: "-0.04em" }
+  website-headline: { fontFamily: "Figtree, Arial, sans-serif", fontSize: "clamp(42px, 5vw, 72px)", fontWeight: 550, lineHeight: 1.06, letterSpacing: "-0.035em" }
+  website-title: { fontFamily: "Figtree, Arial, sans-serif", fontSize: "clamp(34px, 3.7vw, 52px)", fontWeight: 550, lineHeight: 1.08, letterSpacing: "-0.035em" }
+  website-body: { fontFamily: "Figtree, Arial, sans-serif", fontSize: "16px", fontWeight: 400, lineHeight: 1.65 }
+  website-button: { fontFamily: "Figtree, Arial, sans-serif", fontSize: "16px", fontWeight: 600 }
+  website-nav: { fontFamily: "Figtree, Arial, sans-serif", fontSize: "14px", fontWeight: 550 }
 rounded:
   field: "14px"
   button: "18px"
   card: "24px"
   sheet: "28px"
+  website-panel: "12px"
+  website-step: "16px"
+  website-phone: "40px"
+  website-menu: "10px"
+  website-circle: "50%"
 spacing:
   tight: "2px"
   related: "4px"
@@ -40,6 +61,14 @@ spacing:
   section: "24px"
   section-large: "28px"
   spacious: "32px"
+  website-small: "12px"
+  website-related: "16px"
+  website-regular: "24px"
+  website-stack-gap: "28px"
+  website-composition-gap: "40px"
+  website-panel-inset: "64px"
+  website-chapter-compact: "90px"
+  website-chapter-wide: "120px"
 components:
   button-primary: { backgroundColor: "{colors.cornflower}", textColor: "{colors.action-ink}", typography: "{typography.button}", rounded: "{rounded.button}", height: "56px" }
   button-text: { textColor: "{colors.link-blue}", typography: "{typography.label}", height: "48px" }
@@ -52,6 +81,14 @@ components:
   time-field: { backgroundColor: "{colors.field-light}", textColor: "{colors.text-light}", typography: "{typography.headline}", rounded: "{rounded.field}", padding: "16px" }
   regional-map: { backgroundColor: "{colors.field-light}", rounded: "{rounded.card}" }
   feedback: { backgroundColor: "{colors.selected-blue}", textColor: "{colors.link-blue}", typography: "{typography.body}", rounded: "{rounded.button}" }
+  website-button-primary: { backgroundColor: "{colors.website-ink}", textColor: "{colors.website-white}", typography: "{typography.website-button}", rounded: "{rounded.website-panel}", padding: "16px 24px" }
+  website-button-small: { backgroundColor: "{colors.website-ink}", textColor: "{colors.website-white}", rounded: "{rounded.website-panel}", padding: "10px 18px" }
+  website-text-link: { textColor: "{colors.website-blue}" }
+  website-errand-slip: { backgroundColor: "{colors.website-white}", textColor: "{colors.website-ink}", rounded: "{rounded.website-panel}", padding: "17px 20px", width: "250px" }
+  website-step: { backgroundColor: "{colors.website-canvas}", textColor: "{colors.website-ink}", rounded: "{rounded.website-step}", padding: "64px" }
+  website-phone: { backgroundColor: "{colors.website-canvas}", textColor: "{colors.website-ink}", rounded: "{rounded.website-phone}" }
+  website-menu: { backgroundColor: "{colors.website-canvas}", textColor: "{colors.website-ink}", rounded: "{rounded.website-menu}", padding: "10px 14px" }
+  website-faq: { textColor: "{colors.website-ink}" }
 ---
 
 # Design System: Wayday mobile
@@ -366,3 +403,73 @@ Place a compact Current trip surface below Today's date and above its editor, wi
 Back/View plan preserves progress. Finish trip, available after all assigned errands are done in the summary and navigation's final-destination state, opens Finish trip and clear Today? with Cancel and Finish and clear Today. Explain that all Today errands, locations and trip settings reset, including work added or left out of the trip; reusable trips, recurring lists and saved places remain. Use a scrollable accessible dialog for long/large text. Clear the recovery section and return to Today only after storage commits. Failed cleanup shows Retry finishing trip; changed Today requires a renewed confirmation. Finishing is distinct from stopping guidance or Save for reuse.
 
 The Finish trip action uses a full-width outlined button with the shared 56-unit minimum height and flag icon, including its retry/processing states. The owner requested a visible button boundary because the former text-only action was easy to miss. Keep the confirmation and cleanup behavior unchanged.
+
+## Website extension — implemented 2026-11-01
+
+This extension records the static marketing website in [apps/website](apps/website/README.md). All `website-*` frontmatter entries belong to this surface; existing unprefixed tokens and the preceding mobile design remain unchanged. Website CSS pixels and responsive clamps do not replace Flutter logical sizes. [README.md](README.md#product-requirements) remains the product authority.
+
+### Overview
+
+**Creative North Star: "Errands coming together"**
+
+The website gives everyday errands a large, editorial expression: loose notes converge on a phone, then alternate light and navy chapters make understanding, choices, an estimated plan and familiar routines tangible. The original route-W PNG, bundled Figtree and Cornflower connect it to Wayday while the larger typography and expressive motion belong to the marketing surface.
+
+The website presents a reviewable day under the user's control. Its product diagrams are labelled illustrations with sample errands, not screenshots, real business results, calculated routes or an interactive browser app. Requirements, release status, installation guidance, FAQ and privacy remain readable content after their headings enter.
+
+**Key Characteristics:**
+
+- Large editorial headlines with a dominant phone and scattered errand notes.
+- Warm off-white, navy chapters, Cornflower emphasis and pale-blue staging.
+- Reversible, scroll-driven scale, rotation, convergence and reveals.
+- Four layered steps and a turning reuse motif, with ordinary-flow fallbacks.
+- Stable practical content, native FAQ disclosures and an honest unavailable download state.
+
+### Colors
+
+The namespaced palette follows the website's own CSS properties. `website-ink` is both text on light surfaces and the navy feature-chapter background; `website-blue` is the readable link, focus and download-chapter color. Cornflower emphasizes headings and illustrated actions. Canvas and white carry the page, panels and notes; pale blue carries the steps/reuse/closing surfaces. `website-muted` supports light-surface copy; `website-dark-support` supports copy on navy. The quiet line divides practical content, and the cool hero surface sets the opening apart. These website supporting colors intentionally differ from the mobile supporting tokens.
+
+### Typography
+
+One locally bundled variable Figtree font (weights 300–900, Arial/sans-serif fallback, swap display) carries the entire surface. The desktop display, chapter headline, feature title, body, action and navigation roles are in frontmatter. Headings use balanced wrapping and tight tracking; paragraphs generally use a 1.65 line height. Hero support is larger (18 px, 1.55 line height); feature text caps at 440 px and FAQ answers at 740 px.
+
+Responsive type is authored rather than uniformly scaled. At 960 px and below, the opening becomes a stacked composition with a `clamp(46px, 7.5vw, 70px)` headline and 1.01 line height. At 420 px and below the headline is 47 px. Feature titles become `clamp(34px, 6.8vw, 44px)` below 700 px, with a 36 px narrow feature-heading override. Small illustrative UI text belongs only inside labelled diagrams; it is not the site body scale.
+
+### Layout
+
+The main shell caps at 1240 px with 56 px side margins; responsive side margins become 40 px below 1100 px, 32 px below 960 px and 20 px below 420 px. The sticky header is 80 px tall, reducing to 76 px below 960 px. Its labelled Menu control replaces the desktop links at that breakpoint; open navigation is a vertical panel below the header. Essential anchors also work without JavaScript.
+
+The opening uses two columns within a 1600 px stage and stacks below 960 px, including at the reviewed 638 px width. Later feature, reuse and practical-content pairs stack below 700 px. Alternating visual/copy order, full-width color changes, generous chapter padding and fine dividers create rhythm. Step panels start with number/copy/art columns, becoming number/copy with the art beneath below 700 px. This is a marketing composition, separate from the mobile app's 560-unit content column.
+
+With motion enabled, the hero occupies `calc(200svh - var(--header-height))`; its sticky stage occupies `calc(100svh - var(--header-height))`, subject to authored minimum heights. This adds a bounded scroll interval rather than controlling wheel or touch progress. At heights of 650 px or less the hero returns to ordinary flow. Reduced motion removes sticky opening/step staging and spatial choreography. Base HTML remains readable when JavaScript is unavailable; touch scrolling stays native.
+
+### Elevation & Depth
+
+Broad flat color fields establish the chapter hierarchy. Soft shadows distinguish the illustrated phone (`16px 30px 45px -24px #102d4450`), floating notes (`0 16px 38px -20px #102d4450`) and Back to top control (`0 8px 16px #102d4420`). They are illustration/control depth, not a replacement for the mobile app's flat shared surfaces. The Cornflower sheet behind the note illustration is a separately rotated material plane, not a general card-shadow rule.
+
+### Shapes
+
+Website panels, notes and actions share the namespaced panel radius; steps have a slightly wider radius, and the phone has its own enclosing silhouette with an 8 px navy border. Circular number marks, an oval hero field, a choice orbit and a reuse arrow provide diagram geometry. The supplied logo remains unchanged. Slightly rotated illustration layers are specific to these compositions and do not rotate reading text or practical controls throughout the page.
+
+### Components
+
+- **Actions and navigation:** navy filled anchors with white labels, 56 px minimum height, 16-by-24 px vertical/horizontal padding and a 28 px icon gap. Hover changes to readable blue and lifts 2 px over 0.2 seconds. The header variant uses 46 px minimum height and 10-by-18 px padding; compact hero actions use 48 px minimum height. Text links retain a 48 px minimum height. Focus is a visible 3 px blue outline with 6 px offset; download-chapter links use white focus. The menu and footer links have at least 44 px targets; Back to top is a 48 px circle.
+- **Opening phone and notes:** the desktop phone enclosure is 310 by 540 px, reducing to 285 by 520, 250 by 456 and 235 by 438 at the authored breakpoints. Its inner scene starts at -18 degrees and 0.8 scale. The arrival wrapper separately enters from 100 px below at 0.65 scale over one second. Scroll straightens the inner phone to 0 degrees and 1.15 scale; compact scenes move it up 24 px, while wide scenes move it left by 18% of viewport width. Three notes travel horizontally by 115/-105/90 px in compact layouts or 200/-230/180 px in wide layouts, with vertical convergence, before fading into the phone. Reverse scrolling reverses this sequence. The illustration caption remains explicit.
+- **Feature diagrams:** the editable-note illustration broadly reveals from 160 px below at 0.72 scale and -14 degrees to its authored 4-degree tilt. Alternatives enter laterally from alternating directions and retain a distinct confirmed choice. The concept-plan panel grows and reveals from below. None of these diagrams supplies live AI, business or route data.
+- **Four steps:** numbered panels use Canvas, pale blue, Cornflower and navy in order. At a minimum width of 360 px and height of 700 px, motion-enabled panels stick at header plus 32/48/64/80 px. Their entrances move up 120 px and straighten from alternating 5-degree tilts. Reduced motion and short viewports keep the sequence in ordinary flow.
+- **Reuse and close:** the reuse wheel turns from -60 to 120 degrees across its section while notes slide in from either side. The closing wordmark rises, straightens and grows. These are scroll-linked compositions, not continuous decorative loops. Lenis and GSAP share one ticker; media/lifecycle cleanup removes the enhancement when appropriate.
+- **Release and FAQ:** the blue release chapter presents the unavailable action as a non-link with `aria-disabled="true"` and a development status. Validated build-time release metadata may replace it with an APK anchor and disclosed details only after qualification. Native `details`/`summary` elements provide FAQs. Installation instructions, limitations, privacy and footer links settle into ordinary reading flow.
+
+### Do's and Don'ts
+
+**The Website Illustration Rule.** Keep product diagrams visibly labelled and separate from real application screenshots, provider results and computed itineraries.
+
+**The Website Motion Fallback Rule.** Every chapter remains understandable in ordinary document flow; reduced motion removes spatial choreography, sticky stacking and smooth anchor travel.
+
+**The Website Release Honesty Rule.** Preserve the unavailable download state until qualified release metadata passes the existing validation boundary.
+
+- **Do** retain the original route-W logo, local Figtree, namespaced palette and distinct light/navy chapter rhythm.
+- **Do** preserve readable content, keyboard focus, native disclosures, natural scrolling and explicit Android/development status.
+- **Don't** apply marketing display sizes, illustration shadows or scroll choreography to the mobile app's compact operating interface.
+- **Don't** imply stock, appointments, route accuracy, complete offline planning or physical-phone readiness through illustrative diagrams.
+
+Sources: [website styles](apps/website/src/style.css), [responsive behavior](apps/website/src/responsive.css), [motion scenes](apps/website/src/motion.ts), [lifecycle and navigation](apps/website/src/main.ts) and [page markup](apps/website/index.html). [Rebuild evidence](docs/wayday/evidence/website-rebuild-2026-11-01.md) records release tests, browser checks, production build and accessibility scans separately from application/provider/device qualification. Reviewed full-page captures use reduced motion to expose all content; they do not establish the animated sequence or device performance. Public downloads remain disabled.
