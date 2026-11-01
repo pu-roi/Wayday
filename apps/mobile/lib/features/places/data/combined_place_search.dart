@@ -271,7 +271,7 @@ class CombinedPlaceSearch {
       job.dispatched = true;
       final results =
           await (job.execute?.call() ?? r.adapter.search(job.request)).timeout(
-            const Duration(seconds: 5),
+            r.adapter.requestTimeout,
           );
       final expires = now().add(
         results.isEmpty

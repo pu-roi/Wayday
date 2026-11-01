@@ -46,6 +46,7 @@ jobs:
             GOOGLE_CLOUD_PROJECT=${{ env.PROJECT }}
             WAYDAY_FIREBASE_APP_IDS=${{ vars.WAYDAY_FIREBASE_APP_ID }}
             WAYDAY_PUBLIC_LEDGER_DOCUMENT=${{ vars.WAYDAY_PUBLIC_LEDGER_DOCUMENT }}
+          env_vars_update_strategy: overwrite
           secrets: |
             GEMINI_API_KEY=${{ vars.WAYDAY_GEMINI_SECRET_VERSION }}
             GOOGLE_ROUTES_SERVER_API_KEY=${{ vars.WAYDAY_ROUTES_SECRET_VERSION }}

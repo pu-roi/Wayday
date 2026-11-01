@@ -10,6 +10,7 @@ abstract class SearchAdapter {
   String get endpoint;
   bool get enabled;
   bool get categories => true;
+  Duration get requestTimeout => const Duration(seconds: 5);
   Future<List<PlaceSearchResult>> search(PlaceSearchRequest request);
   Future<List<PlaceSearchResult>> reverse(
     double latitude,
@@ -42,6 +43,12 @@ class HttpSearchAdapter extends SearchAdapter {
   bool get enabled => id == 'photon' || apiKey.isNotEmpty || gateway != null;
   @override
   bool get categories => id != 'photon';
+  // Public requests include bounded app verification and two transport phases
+  // (12 + 30 + 30 seconds). Keep the scheduler outside that existing budget.
+  @override
+  Duration get requestTimeout => gateway != null && id != 'photon'
+      ? const Duration(seconds: 75)
+      : super.requestTimeout;
   @override
   Future<List<PlaceSearchResult>> reverse(
     double latitude,

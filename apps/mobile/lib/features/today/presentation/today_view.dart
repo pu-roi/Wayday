@@ -45,7 +45,6 @@ class _TodayViewState extends ConsumerState<TodayView>
   late final CombinedPlaceSearch _placeSearch;
   final _fromLookup = Object(), _toLookup = Object();
   final _finding = <bool>{};
-  final _lookupTimers = <bool, Timer>{};
   int _fromRevision = 0, _toRevision = 0;
   Timer? _midnight;
   bool _composerDraft = false;
@@ -144,7 +143,6 @@ class _TodayViewState extends ConsumerState<TodayView>
   }
 
   void _cancelLookup(bool start) {
-    _lookupTimers.remove(start)?.cancel();
     if (start) {
       _fromRevision++;
     } else {
@@ -183,11 +181,8 @@ class _TodayViewState extends ConsumerState<TodayView>
     }
     final revision = start ? _fromRevision : _toRevision;
     setState(() => _finding.add(start));
-    _lookupTimers[start] = Timer(const Duration(seconds: 8), () {
-      if (mounted && revision == (start ? _fromRevision : _toRevision)) {
-        setState(() => _cancelLookup(start));
-      }
-    });
+    // The shared service owns the bounded request deadline, including public
+    // verification. These labels do not block editing or confirming a pin.
     _placeSearch.reverse(
       start ? _fromLookup : _toLookup,
       place.latitude!,
@@ -206,7 +201,6 @@ class _TodayViewState extends ConsumerState<TodayView>
             status.phase == SourcePhase.loading) {
           return;
         }
-        _lookupTimers.remove(start)?.cancel();
         setState(() => _finding.remove(start));
         if (status.phase != SourcePhase.complete || results.isEmpty) return;
         final result = results.first;
