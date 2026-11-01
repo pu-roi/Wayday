@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Publish the first signed public APK and website download
+
+- After the owner-approved phone/accounting qualification, PR #12 passed and merged as `c5d8875`. Enabled the public-release flag after verifying the protected main-only environment, production identifiers and unchanged signing-secret metadata. [Main run 41349292023](https://github.com/pu-roi/Wayday/actions/runs/41349292023) passed all four checks, permanently signed APK publication and Pages deployment. Checks include 598 Flutter tests with one existing skip, 14 browser cases and the compiled Navigation access guard.
+- Published [development release 102001](https://github.com/pu-roi/Wayday/releases/tag/dev-102001), version `0.1.0+102001`, with the APK, checksum and qualified manifest. An anonymous download independently passed checksum, permanent-certificate, package/version/non-debuggable, public-configuration, private-credential and actual DEX access inspection. The live [download page](https://pu-roi.github.io/Wayday/#download) serves the matching release configuration; its same-origin assets and project subpath passed HTTP checks.
+- Final browser visual/runtime reinspection and a screenshot were unavailable because local browser use became disabled; the hosted browser suite passed before deployment. No phone installation, provider request, accounting reset or further Cloud deployment was performed. Future passing `main` pushes automatically publish higher-version signed APKs and update Pages; users approve Android installation/updates and should retain their existing installation. [Delivery evidence](evidence/public-distribution-2026-11-01.md#first-public-apk-and-download-publication--2026-11-02) records the artifact and verification boundaries.
+
 ### [2026-11-02] Qualify the corrected public development preview
 
 - The owner confirmed update `100005` keeps the plan/map open, preserves saved items and completes the full flow including its final step, then explicitly requested deployment. Read-only installed-APK hashing matches the inspected signed candidate; Android exit metadata shows no new exception after its 04:31:20 Manila update. No app-state/data mutation was used for verification.
