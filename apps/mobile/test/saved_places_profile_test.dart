@@ -1,4 +1,5 @@
 import 'package:wayday/features/places/data/google_pin_cache.dart';
+import 'package:wayday/features/places/data/google_search.dart';
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -105,7 +106,15 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [localRepositoriesProvider.overrideWithValue(local)],
+        overrides: [
+          localRepositoriesProvider.overrideWithValue(local),
+          searchSourceChoiceProvider.overrideWithValue(
+            SearchSourceChoice()..choose(SearchSource.others),
+          ),
+          placeMapBuilderProvider.overrideWithValue(
+            (_) => const SizedBox.expand(),
+          ),
+        ],
         child: MaterialApp(
           theme: buildTheme(),
           home: const PlacePicker(title: 'Starting point', initial: ''),
@@ -116,6 +125,7 @@ void main() {
     await tester.tap(find.byKey(const Key('place-name')));
     await tester.pumpAndSettle();
     expect(find.text('New home'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('saved-one')));
     await tester.tap(find.text('New home'));
     await tester.pumpAndSettle();
     expect(
