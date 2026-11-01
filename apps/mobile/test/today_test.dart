@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/wayday_app.dart';
 import 'package:wayday/features/today/domain/day.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
+import 'package:wayday/features/places/data/combined_place_search.dart';
+import 'package:wayday/features/places/data/search_quota.dart';
 import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'package:wayday/features/recurring/presentation/recurring_controller.dart';
 import 'package:wayday/core/widgets/feedback.dart';
@@ -39,6 +41,12 @@ Future<ProviderContainer> launch(
   final container = ProviderContainer(
     overrides: [
       mapPlatformSupportedProvider.overrideWithValue(false),
+      combinedPlaceSearchProvider.overrideWithValue(
+        CombinedPlaceSearch(
+          [],
+          QuotaLedger(read: () async => null, write: (_) async {}),
+        ),
+      ),
       dayRepositoryProvider.overrideWithValue(
         MemoryDayRepository(initialData: withFixtures ? fixtureDay() : null),
       ),
@@ -83,6 +91,24 @@ Future<void> reveal(WidgetTester tester, Finder finder) async {
     160,
     scrollable: find.byType(Scrollable).first,
   );
+  await tester.pumpAndSettle();
+}
+
+Future<void> useNameOnly(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Other sources'));
+  await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(
+    find.text('Use name only'),
+    150,
+    scrollable: find
+        .descendant(
+          of: find.byKey(const Key('place-search-results')),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.tap(find.text('Use name only'));
   await tester.pumpAndSettle();
 }
 
@@ -140,7 +166,8 @@ void main() {
         find.byKey(const Key('place-name')),
         'Unsaved label',
       );
-      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Close search'));
       await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -151,8 +178,7 @@ void main() {
         find.byKey(const Key('place-name')),
         'Library entrance',
       );
-      await tester.tap(find.text('Use name only'));
-      await tester.pumpAndSettle();
+      await useNameOnly(tester);
       await tester.tap(find.text('Confirm location'));
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).from, 'Library entrance');
@@ -440,8 +466,7 @@ void main() {
         find.byKey(const Key('place-name')),
         'Campus entrance',
       );
-      await tester.tap(find.text('Use name only'));
-      await tester.pumpAndSettle();
+      await useNameOnly(tester);
       await tester.tap(find.text('Confirm location'));
       await tester.pumpAndSettle();
       expect(container.read(todayProvider).from, 'Campus entrance');
@@ -453,8 +478,7 @@ void main() {
         find.byKey(const Key('place-name')),
         'University hall',
       );
-      await tester.tap(find.text('Use name only'));
-      await tester.pumpAndSettle();
+      await useNameOnly(tester);
       await tester.tap(find.text('Confirm location'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Save'));
@@ -719,20 +743,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(recurringProvider).length, 2);
   });
-  testWidgets('planning opens the Gemini flow and preserves Today on cancellation', (
-    tester,
-  ) async {
-    await launch(tester, withFixtures: true);
-    await tester.tap(find.text('Plan my day'));
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Check saved understanding'),
-      findsOneWidget,
-    );
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-    expect(find.text('Get documents from the registrar'), findsOneWidget);
-  });
+  testWidgets(
+    'planning opens the Gemini flow and preserves Today on cancellation',
+    (tester) async {
+      await launch(tester, withFixtures: true);
+      await tester.tap(find.text('Plan my day'));
+      await tester.pumpAndSettle();
+      expect(find.text('Check saved understanding'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.text('Get documents from the registrar'), findsOneWidget);
+    },
+  );
   testWidgets(
     'profile navigation shows local profile without sample identity',
     (tester) async {

@@ -1,0 +1,13 @@
+{
+  "qualified": false,
+  "appCheckVerified": false,
+  "freshInstallVerified": false,
+  "upgradeVerified": false,
+  "providerFlowVerified": false,
+  "accountingReviewed": false,
+  "signingSha256": "",
+  "configFingerprint": "",
+  "contractSha256": "",
+  "compatibility": "",
+  "evidence": ""
+}

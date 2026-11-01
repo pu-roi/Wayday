@@ -1,5 +1,13 @@
 # Wayday agent instructions
 
+## Public development distribution — D67
+
+The owner approved the full single-page marketing website in `apps/website/`, GitHub Pages, GitHub Releases APK downloads, gated automatic publication after passing `main` checks, and a dedicated Cloud Run provider gateway within `services/api/`. Follow [distribution setup](docs/wayday/DISTRIBUTION.md) and its evidence. The website uses the supplied original logo, Lenis/GSAP and reduced motion; it is not a browser app/demo.
+
+Public builds use server-backed private credentials and App Check's Preview Android reCAPTCHA provider; retain restricted native Places/Navigation SDK access. Preserve private debug credentials, journals, exact-context reuse and explicit retries. Public release signing cannot replace the owner's debug-signed installation; never uninstall/reset that app during verification. Public shared accounting is initially unfunded and separate from private/disposable allocations. D55's absence of Gemini attempt caps remains unchanged.
+
+Prepare exact Cloud/IAM/secret-reference/cost changes for review before first live deployment. Do not activate billing or infer extra funds. Keep publication flags and APK downloads disabled until actual sideloaded App Check, fresh-install/provider, upgrade and accounting qualification exist. Mocks, builds and disposable fixtures are not physical-phone readiness. Do not skip existing failures to enable publication.
+
 ## Place information, picker performance and suitability — D66
 
 The owner approved full addresses in alternatives, isolated four-per-second zoom UI, revisioned final-idle confirmation with a three-second deadline, and automatic Manila date defaults only for empty/default forms without explicit date/drafts/editors/current trips. Preserve entered and legacy dates; Clear/Finish reset dateSelected in existing JSON. Do not replace the map provider or remove attribution/consent. New optional PlaceSearchIntent hints improve semantic retrieval without phrase rules or automatic regeneration; retain previous request builders and journal guards. Use complementary variants within one corridor/two anchors, transient primary type/rating/count and shared suitability before existing shortlists. Preserve fixed choices/brands/hours; rank optional completion, suitability, road seconds, tempered ratings, stops and arrival. Ratings are secondary evidence, not stock/popularity guarantees. Keep budgets, provider boundaries, disposable accounting recovery and personal-phone safeguards. See D66 evidence; mocked/native/build checks do not establish physical-device performance or live model generalization.

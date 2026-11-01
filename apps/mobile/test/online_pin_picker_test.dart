@@ -1,5 +1,6 @@
 import 'package:wayday/features/places/data/google_search.dart';
 import 'package:wayday/features/places/data/google_pin_cache.dart';
+import 'package:wayday/features/places/data/saved_place_repository.dart';
 import 'dart:async';
 import 'support/fake_location.dart';
 import 'package:flutter/material.dart';
@@ -363,6 +364,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          savedPlaceRepositoryProvider.overrideWithValue(
+            MemorySavedPlaceRepository(),
+          ),
           searchSourceChoiceProvider.overrideWithValue(
             SearchSourceChoice()..choose(SearchSource.others),
           ),

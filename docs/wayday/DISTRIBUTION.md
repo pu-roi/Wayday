@@ -1,0 +1,172 @@
+# Development distribution and public provider access
+
+The owner approved a public, Android-first development download with no invitation, account sign-in, personal API-key entry, ADB provisioning or reachable laptop. Expected initial use is two to five testers; access is nevertheless public. Implementation prepares the website, gateway, Android transport and automation. It does not establish live provider or physical-device readiness.
+
+## Responsibilities
+
+| Component | Source and deployment |
+| --- | --- |
+| Marketing website | `apps/website/`, static Vite/TypeScript, GitHub Pages at the repository project subpath |
+| Downloaded app | Signed universal APK on GitHub Releases; Android executes the app |
+| Automation | `.github/workflows/quality.yml`: checks on PRs/pushes, gated publication on passing `main` pushes |
+| Cloud gateway | `services/api/src/wayday_api/gateway/`, dedicated Cloud Run entry point |
+| Personal state and scheduling | Existing Android repositories, native journals and worker scheduler |
+
+The gateway entry point is `wayday_api.gateway.app:app`. It does not import the historical pilot's app factory or require its catalog, PostgreSQL, PostGIS or downloaded geographic data. The container runs as a non-root user and disables HTTP access logs. Provider error text, full requests, errands, queries and coordinates are not logged or durably cached by the gateway.
+
+Website work follows the owner's full marketing brief: original logo, Figtree/blue visual identity, single-page anchored product story, Lenis/GSAP motion, reduced motion, accessible mobile navigation, Back to Top, honest requirements and installation instructions. It contains no browser demo or live app-provider calls. Approved marketing screenshots remain an optional later asset; the current interface preview is explicitly illustrative.
+
+## Gateway interface, version 1
+
+All POST operations require `X-Firebase-AppCheck`. The backend verifies the signature, project, expiry and allowlisted Firebase Android app identity with the Admin SDK. Requests without valid proof fail before any provider dispatch. There is no shared static bearer secret in the APK and no app sign-in flow.
+
+| Endpoint | Request and behavior |
+| --- | --- |
+| `GET /health` | Configuration check without provider calls. Reports `configured`, not proof of live API access or full readiness. |
+| `POST /v1/interpretations` | `{purpose, contractVersion, request}`. Purpose is `interpretation` or `clarification`; version is `d66-v1`. The request's fixed instructions/settings/schema must match the checked-in contracts exactly. Only bounded user content varies. |
+| `POST /v1/routes/computeRoutes` | `{request, fieldMask}`; fixed coordinate-only Routes shape and allowlisted field masks. |
+| `POST /v1/routes/computeRouteMatrix` | Same envelope; at most 10 origins and 10 destinations per dispatched block. |
+| `POST /v1/search/geoapify` | `{path, parameters}`; approved autocomplete, bounded category and reverse operations. Server adds credentials and Philippine scope. |
+| `POST /v1/search/locationiq` | Same envelope; approved autocomplete, nearby and reverse operations. |
+| `POST /v1/usage/check` | `{requestId, sku, units}`; shared Google allocation preflight without reservation. |
+| `POST /v1/usage/reserve` | Same envelope; reserve permitted Places/native navigation units before dispatch. Prices are server-owned. |
+| `POST /v1/usage/release` | `{requestId}`; idempotent cancellation of an SDK reservation that the caller has not dispatched. Server-dispatched Routes cannot be refunded through this endpoint. |
+
+Requests are capped at 60 KB, with the existing 50 KB Gemini body and output limits retained. Provider hosts, model, tools policy, configuration, field masks and prices are not client-selectable. Gemini remains `gemini-3.1-flash-lite`, bounded output with no tools. The server makes no automatic provider retry and follows no provider redirect. All responses use `Cache-Control: no-store`.
+
+Safe errors are `{error: {code}}`: access/configuration/accounting failures, validation failures, known provider HTTP status, provider timeout/unavailability, or response validation failure. Raw upstream bodies never become error messages. Android retains its journal/cache guards, validates returned meaning locally and preserves source revision checks.
+
+The checked-in `contracts.json` is the frozen `d66-v1` fixed contract. `gateway_contract_test.dart` compares it with the actual Dart builders. Before the first public release it can be deliberately exported with `WAYDAY_EXPORT_CONTRACTS=1`. After release, never replace a published contract in place: add a new explicit contract version while retaining support for released clients. A provider transport change must not alter the canonical native journal input or turn a failed/pending legacy request into automatic generation.
+
+## App verification and public Android configuration
+
+The Android implementation uses Firebase App Check's reCAPTCHA Enterprise provider, initialized lazily for requested public operations. It uses score-based app verification without a visible challenge or user account. The provider is in Preview and its mobile SDK has its own update/deprecation schedule; real sideloaded-release qualification is required. Do not substitute a production debug token if qualification fails. See [Android setup](https://firebase.google.com/docs/app-check/android/recaptcha-enterprise-provider) and [backend token verification](https://firebase.google.com/docs/app-check/custom-resource-backend).
+
+The gateway uses the same owner-managed provider projects. Users do not supply keys. Private provider credentials stay server-side. Google Places and Navigation remain native SDKs and retain their permitted, extractable Android SDK key with package/certificate/API restrictions. Public Firebase configuration identifiers and the reCAPTCHA site key are also not private provider credentials.
+
+`tool/distribution/release.py defines` creates an allowlisted public build-defines file from environment variables. It never reads `.env.local`. Required fields are `WAYDAY_GATEWAY_URL`, `GOOGLE_MAPS_ANDROID_API_KEY`, `WAYDAY_FIREBASE_APP_ID`, `WAYDAY_FIREBASE_API_KEY`, `WAYDAY_FIREBASE_PROJECT_ID` and `WAYDAY_RECAPTCHA_SITE_KEY`; it sets `WAYDAY_PUBLIC_BUILD=true`. Public Gradle builds reject Gemini, Routes, Geoapify and LocationIQ private build defines. Release builds cannot silently use debug signing or the private Gemini path.
+
+The existing local `flutter.ps1` wrapper is for private builds and adds private search defines. Use the distribution helper and standard Flutter command for public builds instead. For a credential-free release compilation check on Windows, run `tool/distribution/check-release.ps1`; it uses a disposable two-day signing key, blank public service configuration, no provider calls, and removes the temporary key afterward. Its output is verification-only and must not be offered to users.
+
+The public application ID remains `dev.wayday.wayday`. A newly release-signed APK cannot replace the owner's existing debug-signed installation. Do not uninstall, reset, re-sign or install over that personal app during this work. Any owner-data migration is a separate operation. Routine native fixtures remain on the guarded disposable `.maptest` emulator only.
+
+## Shared accounting and spending
+
+Public Google reservations use a Firestore document selected by `WAYDAY_PUBLIC_LEDGER_DOCUMENT`, such as `accounting/public-preview`. It holds only integer cost counters, service labels, timestamps, random reservation IDs and bounded search-start history. It stores no tasks, user accounts, queries, coordinates, provider responses or device-location history.
+
+An operator must explicitly create and review this document before public paid testing. Its required fields are `limitMicros` and `usedMicros` (integer USD millionths); missing/corrupt allocation fails closed. Start unfunded with both zero until a separate public allocation is approved. Runtime code never creates, resets, replenishes or copies an allowance. Ordinary deployments must preserve the document and reservation records. Do not copy the private US$8 allowance or the disposable US$2 allocation; preserve the latter's US$0.782 recovery floor for future disposable live work.
+
+Routes costs are derived and reserved by the server immediately before its request. Public clients therefore do not charge Routes twice. Native Places/navigation still reserve through the shared service before their SDK calls. Non-dispatched native cancellation can release its own reservation; failures after dispatch remain accounted. Search-provider spacing, minute and rolling-day controls are additionally shared server-side. Existing client spacing, reuse, provider boundaries and attribution remain.
+
+D55 remains in force: Gemini has no app-imposed daily/monthly/finite allocation. It retains exact-context reuse and explicit retry after uncertain or failed processing. Do not introduce a Gemini attempt allowance through this gateway.
+
+These are conservative application reservations, not authoritative provider billing or an account-wide spending cap. Other apps/projects and native SDK use can affect billing. An interrupted response does not establish whether an upstream call was billed. Existing Cloud quotas and billing controls remain independent and are not changed automatically.
+
+## Exact Cloud setup to review before deployment
+
+The deployment workflow is disabled unless `WAYDAY_GATEWAY_DEPLOY_ENABLED=true`, and runs only by manual dispatch on `main` through the `public-cloud` environment. Configure its approval protection before enabling it. This work does not activate billing or execute these setup changes.
+
+Review and supply the following in the existing Wayday Cloud project:
+
+1. Cloud Run, Artifact Registry, Secret Manager, Firebase App Check, reCAPTCHA Enterprise and Firestore service availability. Do not move or recreate an existing database or create a new billing account. If Firestore is absent, its creation/location is part of this review.
+2. An Artifact Registry Docker repository named `wayday` in `asia-southeast1`. CI builds the dedicated Dockerfile on GitHub's runner, avoiding an implicit Cloud Build setup.
+3. A dedicated runtime service account: Secret Manager accessor on the four required secrets and the minimum Firestore data access needed for its counter document. It needs no access to the historical catalog or personal task storage.
+4. A separate deployment identity with Cloud Run deployment access, Artifact Registry write access on that repository and permission to use only the runtime service account. Avoid Owner/Editor grants.
+5. Workload Identity Federation restricted to this repository's numeric identity and `refs/heads/main`. The verified repository ID is `1420180985`, owner ID `155794759`; do not trust a repository name alone or authorize pull-request identities. Do not download a service-account private key into GitHub.
+6. Four reviewed Secret Manager version references: `GEMINI_API_KEY`, a separate `GOOGLE_ROUTES_SERVER_API_KEY`, `GEOAPIFY_API_KEY`, and `LOCATIONIQ_API_KEY`. Do not remove restrictions from the existing Android Routes key to make it work on the server. The new server credential must retain appropriate API restrictions.
+7. Register the release Android package and signing identity for Firebase/App Check, its Android reCAPTCHA key, and the Google SDK key. Preserve existing private/test identities and restrictions.
+8. An explicitly reviewed shared public accounting document and allocation. No balance is inferred from trial credit, the private phone or disposable testing.
+
+The prepared Cloud Run service is `wayday-gateway`, region `asia-southeast1`, 1 vCPU, 512 MiB, request-based CPU billing, minimum zero instances, maximum one instance, concurrency four and a 60-second request deadline. Its HTTP endpoint permits incoming requests so phones can reach it, but paid operations always require valid application-layer App Check proof. Maximum instances and budget alerts do not guarantee a hard bill cap.
+
+Cost review must include Cloud Run execution/networking, Artifact Registry storage, Secret Manager access, Firestore reads/writes, App Check/reCAPTCHA assessments and existing Gemini/Maps usage. Free allowances are conditional and shared where applicable. Two to five users do not establish zero cost. References: [Cloud Run pricing](https://cloud.google.com/run/pricing), [App Check pricing and refresh frequency](https://firebase.google.com/docs/app-check/android/recaptcha-enterprise-provider#pricing), [reCAPTCHA billing](https://docs.cloud.google.com/recaptcha/docs/billing-information).
+
+Repository variables for this workflow: `WAYDAY_GOOGLE_CLOUD_PROJECT`, `WAYDAY_RUNTIME_SERVICE_ACCOUNT`, `WAYDAY_DEPLOY_SERVICE_ACCOUNT`, `WAYDAY_WORKLOAD_IDENTITY_PROVIDER`, `WAYDAY_FIREBASE_APP_ID`, `WAYDAY_PUBLIC_LEDGER_DOCUMENT`, and four `WAYDAY_*_SECRET_VERSION` references for Gemini, Routes, Geoapify and LocationIQ. These are identifiers/references, not secret contents.
+
+## Owner setup and proposed Cloud resources — 2026-11-01
+
+The settings below are proposed except where owner-supplied setup evidence is explicitly recorded. They do not establish release qualification. The owner's Firebase settings screenshot confirms project ID `wayday-513016` and project number `793890374960`. The downloaded Android configuration was checked locally and identifies package `dev.wayday.wayday` and Firebase app ID `1:793890374960:android:71923e4f8600629cf974f5`. The billing screenshot shows a paid account in this project's context. Existing credentials include Android-restricted `Maps Platform API Key` and `Wayday Routes Pilot`; retain their restrictions and existing identities.
+
+The owner's Cloud Shell output records successful enabling of the seven missing prerequisite APIs: Cloud Run, Artifact Registry, Secret Manager, Firestore, IAM, IAM Credentials and Security Token Service. Subsequent successful inventory commands returned no Cloud Run services, Artifact Registry repositories, Firestore databases, Secret Manager secrets or workload identity pools; only the existing Compute and Firebase Admin SDK service accounts were listed. The owner then supplied successful creation output for the `wayday` Docker repository in `asia-southeast1` with vulnerability scanning disabled, and the two service accounts `wayday-gateway@wayday-513016.iam.gserviceaccount.com` and `wayday-deploy@wayday-513016.iam.gserviceaccount.com`. This evidence is owner-supplied CLI output, not an independent live inventory or deployment check. No gateway deployment or provider request is evidenced by these steps.
+
+The owner reports completing the Android reCAPTCHA Enterprise registration with outside-Play distribution enabled. Firebase settings show the release certificate SHA-1 `DC:3F:4E:C9:3F:7C:BF:C5:60:51:0F:76:A9:4C:DD:87:53:04:7E:41` and SHA-256 `8B:02:32:DD:12:85:3D:9B:D3:5B:19:8F:A9:C1:D3:65:6E:14:BA:E1:ED:0B:50:ED:EF:3F:A9:FA:D3:55:41:51`. The owner was instructed to add the release package/SHA-1 pair to the SDK key while retaining existing entries; that save has not been independently inspected. Certificate registration is not evidence of working SDK access or successful App Check attestation. No private key, password or API-key value belongs in this document.
+
+Further owner-supplied setup evidence records creation of all four named secrets and per-secret `roles/secretmanager.secretAccessor` bindings for the runtime identity. The Routes secret screenshot shows enabled version 1; the owner separately confirms enabled version 1 for Gemini, Geoapify and LocationIQ. The owner elected to retain the Routes credential after sharing it in chat; the value is not recorded here. No provider call has qualified these credentials. Firestore creation output confirms Standard/Native `(default)` in `asia-southeast1`, pessimistic concurrency, deletion protection enabled and point-in-time recovery disabled. A later Data screenshot confirms the saved `accounting/public-preview` document displays both `limitMicros: 0` and `usedMicros: 0`; the earlier editor exposes the `int64` selection, but the saved values' wire types have not been read independently. The Rules screenshot displays the expected deny-all client rules without a pending Publish control; direct client rejection has not been exercised.
+
+The owner's IAM command outputs confirm the runtime's database-conditioned `roles/datastore.user` binding and the deployment identity's repository-scoped `roles/artifactregistry.writer`, runtime-account-scoped `roles/iam.serviceAccountUser`, and project-scoped `roles/run.admin` bindings. Output also confirms global pool `wayday-github`, OIDC provider `github` created using the instructed numeric repository/owner and main-branch condition, and the repository-specific `roles/iam.workloadIdentityUser` binding on the deployment account. A read-only GitHub connector lookup independently reconfirmed repository `pu-roi/Wayday` ID `1420180985`, owner ID `155794759`, and default branch `main` before preparing the provider command. Token exchange remains untested. No existing Compute/Firebase identities were removed or changed by these instructed bindings.
+
+The owner created GitHub environment `public-cloud`. Its protection screenshot shows reviewer `pu-roi`, self-review prevention unchecked, and only branch `main` allowed. After that screenshot showed administrator bypass still checked, the owner explicitly confirmed disabling it and saving. That final saved checkbox state has not been independently read. The variables screenshot contains all ten expected names, with the visible project/app/ledger/secret-reference values matching this document; the service-account and provider values are truncated. Full stored values still need read-only verification before dispatch. There is no evidence that deployment or publication flags were enabled.
+
+Before applying the following proposal, inventory existing resources with the selected project and reuse compatible resources. A disabled API or unsuccessful list request does not establish that a resource is absent. Stop on a conflicting resource name, existing database location or unexpected IAM policy rather than overwriting it.
+
+| Proposed resource | Exact configuration |
+| --- | --- |
+| Cloud Run | `wayday-gateway`, `asia-southeast1`, image `asia-southeast1-docker.pkg.dev/wayday-513016/wayday/gateway:<commit SHA>`; 1 vCPU, 512 MiB, request-based billing, minimum 0, maximum 1, concurrency 4, request timeout 60 seconds. First deployment remains a separate reviewed action. |
+| Artifact Registry | Docker repository `wayday` in `asia-southeast1`; GitHub builds the image. Do not enable Cloud Build or Artifact Analysis scanning as part of this setup. Image retention/cleanup needs review before repeated deployment; retain rollback images. |
+| Runtime identity | `wayday-gateway@wayday-513016.iam.gserviceaccount.com` |
+| Deployment identity | `wayday-deploy@wayday-513016.iam.gserviceaccount.com`; no downloaded service-account key. |
+| Secret Manager | Four automatically replicated secrets named `wayday-gemini-api-key`, `wayday-routes-server-api-key`, `wayday-geoapify-api-key`, and `wayday-locationiq-api-key`; one reviewed version each initially. Enter values through a local secure prompt or the console, never a command argument, chat, source file or CI log. |
+| Routes credential | A separate server key named `Wayday Gateway Routes`, restricted to Routes API. It stays in Secret Manager. Preserve the Android restriction on `Wayday Routes Pilot`. Cloud Run's default outbound IP is not fixed; do not invent an IP restriction or add paid static egress without review. |
+| Firestore | If absent, Standard edition in Native mode, database `(default)`, region `asia-southeast1`. The current gateway uses the default database. An existing default database requires compatibility and access review; do not move or recreate it. Deny mobile/web client access for a new dedicated database. |
+| Accounting | Document `accounting/public-preview`, integer `limitMicros: 0` and `usedMicros: 0`. Create only after confirming absence; never reset an existing ledger. No public paid testing allocation is approved by this proposal. |
+| GitHub federation | Global pool `wayday-github`, OIDC provider `github`, issuer `https://token.actions.githubusercontent.com`; restrict to repository ID `1420180985`, owner ID `155794759`, and `refs/heads/main`. Reconfirm numeric GitHub identity before applying. |
+
+Enable only missing prerequisite APIs: `run.googleapis.com`, `artifactregistry.googleapis.com`, `secretmanager.googleapis.com`, `firestore.googleapis.com`, `iam.googleapis.com`, `iamcredentials.googleapis.com`, `sts.googleapis.com`, `cloudresourcemanager.googleapis.com`, and `serviceusage.googleapis.com`. Firebase App Check (`firebaseappcheck.googleapis.com`) and reCAPTCHA Enterprise (`recaptchaenterprise.googleapis.com`) must also be available for the registration already performed. Preserve existing provider API settings; no billing-account change is proposed.
+
+### Proposed IAM bindings
+
+| Principal | Binding and scope |
+| --- | --- |
+| Runtime identity | `roles/secretmanager.secretAccessor` separately on the four named secrets. No project-wide secret access. |
+| Runtime identity | `roles/datastore.user` with a database condition for `projects/wayday-513016/databases/(default)`. This permits data access throughout that database, not only one document. The gateway uses the selected ledger path; IAM does not provide document-level isolation. Review before sharing an existing database containing unrelated data. |
+| Deployment identity | `roles/artifactregistry.writer` on repository `wayday` only. |
+| Deployment identity | `roles/iam.serviceAccountUser` on the runtime identity only. |
+| Deployment identity | `roles/run.admin` at project scope for the prepared workflow's first service creation and `--allow-unauthenticated` policy update. This can administer all Cloud Run resources in the project; it is not a project Owner/Editor grant. Review narrowing the service permissions after bootstrap. |
+| Restricted GitHub identity | `roles/iam.workloadIdentityUser` on the deployment identity, with the provider condition below. No federation permission on the runtime identity. |
+| Cloud Run service agent | Retain Google's managed service-agent binding used for image retrieval; do not assign this role to the runtime or deployment identities. |
+| Public HTTP callers | At first deployment, `roles/run.invoker` for `allUsers` on `wayday-gateway` only. Application-layer App Check remains mandatory for every POST operation. The public health endpoint makes no provider request. |
+
+Map `google.subject=assertion.sub`, `attribute.repository_id=assertion.repository_id`, and `attribute.repository_owner_id=assertion.repository_owner_id`. Require the provider condition `assertion.repository_id == '1420180985' && assertion.repository_owner_id == '155794759' && assertion.ref == 'refs/heads/main'`. Bind only `principalSet://iam.googleapis.com/projects/793890374960/locations/global/workloadIdentityPools/wayday-github/attribute.repository_id/1420180985` to the deployment identity. The prepared workflow also requires the protected `public-cloud` GitHub environment.
+
+References: [Cloud Run roles](https://docs.cloud.google.com/run/docs/reference/iam/roles), [public Cloud Run access](https://docs.cloud.google.com/run/docs/authenticating/public), [Firestore IAM](https://firebase.google.com/docs/firestore/security/iam), and [GitHub federation](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines).
+
+### Proposed GitHub configuration
+
+| Variable | Value after resource creation is verified |
+| --- | --- |
+| `WAYDAY_GOOGLE_CLOUD_PROJECT` | `wayday-513016` |
+| `WAYDAY_RUNTIME_SERVICE_ACCOUNT` | `wayday-gateway@wayday-513016.iam.gserviceaccount.com` |
+| `WAYDAY_DEPLOY_SERVICE_ACCOUNT` | `wayday-deploy@wayday-513016.iam.gserviceaccount.com` |
+| `WAYDAY_WORKLOAD_IDENTITY_PROVIDER` | `projects/793890374960/locations/global/workloadIdentityPools/wayday-github/providers/github` |
+| `WAYDAY_FIREBASE_APP_ID` | `1:793890374960:android:71923e4f8600629cf974f5` |
+| `WAYDAY_PUBLIC_LEDGER_DOCUMENT` | `accounting/public-preview` |
+| `WAYDAY_GEMINI_SECRET_VERSION` | `wayday-gemini-api-key:1`, if version 1 is the reviewed version |
+| `WAYDAY_ROUTES_SECRET_VERSION` | `wayday-routes-server-api-key:1`, if version 1 is the reviewed version |
+| `WAYDAY_GEOAPIFY_SECRET_VERSION` | `wayday-geoapify-api-key:1`, if version 1 is the reviewed version |
+| `WAYDAY_LOCATIONIQ_SECRET_VERSION` | `wayday-locationiq-api-key:1`, if version 1 is the reviewed version |
+
+Verify actual secret version numbers rather than assuming `1` on reused secrets. Keep `WAYDAY_GATEWAY_DEPLOY_ENABLED`, `WAYDAY_PUBLIC_RELEASE_ENABLED`, and `WAYDAY_PAGES_ENABLED` absent or `false` during preparation. A gateway URL is available only after a separately reviewed deployment. Public release environment secrets, signing backup and actual-device qualification remain required.
+
+### Operating-cost review
+
+Request-based billing and minimum zero instances avoid a continuously provisioned server, but startup, shutdown, request execution and networking can be billable. Artifact Registry storage, Secret Manager versions/access, Firestore operations/storage, reCAPTCHA assessments and provider calls have separate prices and conditional free allowances. Shared billing-account allowances may already be used elsewhere; neither the displayed billing forecast nor a budget alert is a cap. See [Cloud Run billing settings](https://docs.cloud.google.com/run/docs/configuring/billing-settings), [Artifact Registry pricing](https://cloud.google.com/artifact-registry/pricing), [Secret Manager pricing](https://cloud.google.com/secret-manager/pricing), [Firestore pricing](https://firebase.google.com/docs/firestore/pricing), and [App Check pricing](https://firebase.google.com/docs/app-check/android/recaptcha-enterprise-provider#pricing).
+
+No monthly spending amount, alert threshold or paid public test allocation is inferred from approval of the source implementation. The zero-valued ledger constrains covered Google reservations; it does not cap infrastructure, Gemini or all account charges. D55 continues to prohibit restoring app-imposed Gemini attempt caps. Review operating exposure and the first live deployment before enabling the gateway flag. Keep public APK publication disabled until actual sideloaded-release App Check, provider, upgrade and accounting qualification passes and existing CI failures are resolved.
+
+## Release qualification and GitHub setup
+
+Checks always run on PRs and pushes. The website has a separate `WAYDAY_PAGES_ENABLED` flag; select GitHub Actions as its Pages source. Enable required checks for website, API, mobile and native jobs on `main`. Do not bypass the full Flutter suite's existing failures or weaken branch protection.
+
+`WAYDAY_PUBLIC_RELEASE_ENABLED` defaults to disabled. Before enabling it, complete `evidence/public-release-qualification.json` with actual evidence for sideloaded App Check, a fresh phone-only provider flow, same-key upgrades, supported device compatibility and shared accounting review. Record the release signing SHA-256 fingerprint, public configuration fingerprint and frozen contract SHA-256. Never mark fixture/emulator output as live qualification.
+
+Store the release keystore as protected `WAYDAY_RELEASE_STORE_BASE64`, with `WAYDAY_RELEASE_STORE_PASSWORD`, `WAYDAY_RELEASE_KEY_ALIAS` and `WAYDAY_RELEASE_KEY_PASSWORD` secrets in the `public-release` environment. Store the intended SDK/Firebase API key values as its `GOOGLE_MAPS_ANDROID_API_KEY` and `WAYDAY_FIREBASE_API_KEY` secrets. Public service identifiers are repository/environment variables. Keep an offline backup of the actual release signing key; losing it prevents ordinary direct-APK updates. No actual release signing key is generated by this implementation.
+
+The Android version code is `100000 + workflow_run_number * 100 + run_attempt`; attempts must remain below 100 and Android's version-code ceiling is checked. Preserve the workflow sequence across renames or migration; never reset it below published versions. Each release uses a unique `dev-<versionCode>` tag and includes `wayday.apk`, its SHA-256 file and `wayday-release.json`. Existing tags/assets are never overwritten. APK publication is serialized and rejects a version older than an existing qualified release.
+
+The website resolves the highest qualified manifest from recent repository releases at build time, including prereleases. It does not rely on GitHub's stable-only latest-release shortcut. Fetch failures fail deployment instead of wiping the previous download. Website deployment also rejects an obsolete `main` checkout. Publishing failures leave the previously deployed site and download intact. Users approve APK updates themselves; never instruct them to uninstall normally.
+
+For first live review, show the exact project, resource/IAM changes, secret references, allocation, signing identity and qualification evidence before enabling the flags. No secrets should be pasted into a chat or committed to source. Cloud rollback selects a prior gateway image/revision that remains compatible with released v1 clients. Android recovery publishes a corrected higher-version APK; do not instruct users to downgrade databases or uninstall.
+
+## Verification
+
+The [distribution implementation evidence](evidence/public-distribution-2026-11-01.md) records checks actually run and remaining gates. Local website commands are in its README. Gateway checks use mocked providers and transaction callbacks; real Firestore/App Check/Cloud Run behavior requires separate qualification. Builds do not demonstrate physical-phone navigation, API authorization, App Check scores, actual billing or all-device compatibility.

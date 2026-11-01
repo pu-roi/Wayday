@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../domain/place_search.dart';
 import '../domain/search_terms.dart';
+import '../../../core/network/gateway_client.dart';
 
 abstract class SearchAdapter {
   String get id;
@@ -17,20 +18,28 @@ abstract class SearchAdapter {
 }
 
 class HttpSearchAdapter extends SearchAdapter {
-  HttpSearchAdapter(this.client, this.id, {this.apiKey = '', String? endpoint})
-    : endpoint =
-          endpoint ??
-          switch (id) {
-            'geoapify' => 'https://api.geoapify.com',
-            'locationiq' => 'https://api.locationiq.com/v1',
-            _ => 'https://photon.komoot.io/api/',
-          };
+  HttpSearchAdapter(
+    this.client,
+    this.id, {
+    this.apiKey = '',
+    String? endpoint,
+    GatewayClient? gateway,
+  }) : gateway =
+           gateway ?? (GatewayClient.enabled ? GatewayClient.shared : null),
+       endpoint =
+           endpoint ??
+           switch (id) {
+             'geoapify' => 'https://api.geoapify.com',
+             'locationiq' => 'https://api.locationiq.com/v1',
+             _ => 'https://photon.komoot.io/api/',
+           };
   final http.Client client;
   @override
   final String id, endpoint;
   final String apiKey;
+  final GatewayClient? gateway;
   @override
-  bool get enabled => id == 'photon' || apiKey.isNotEmpty;
+  bool get enabled => id == 'photon' || apiKey.isNotEmpty || gateway != null;
   @override
   bool get categories => id != 'photon';
   @override
@@ -53,11 +62,17 @@ class HttpSearchAdapter extends SearchAdapter {
       if (!abort.isCompleted) abort.complete();
     });
     try {
-      final response = await http.Response.fromStream(
-        await client.send(
-          http.AbortableRequest('GET', uri, abortTrigger: abort.future),
-        ),
-      ).timeout(const Duration(seconds: 5));
+      final response = gateway != null
+          ? await gateway!.post('/v1/search/$id', {
+              'path': '/v1/geocode/reverse',
+              'parameters': Map<String, String>.from(uri.queryParameters)
+                ..remove('apiKey'),
+            })
+          : await http.Response.fromStream(
+              await client.send(
+                http.AbortableRequest('GET', uri, abortTrigger: abort.future),
+              ),
+            ).timeout(const Duration(seconds: 5));
       if (response.statusCode == 401 || response.statusCode == 403) {
         throw const SearchFailure(SearchFailureKind.access);
       }
@@ -230,11 +245,20 @@ class HttpSearchAdapter extends SearchAdapter {
       final uri = base.replace(
         queryParameters: {...base.queryParameters, ...parameters},
       );
-      response = await http.Response.fromStream(
-        await client.send(
-          http.AbortableRequest('GET', uri, abortTrigger: abort.future),
-        ),
-      ).timeout(const Duration(seconds: 5));
+      response = gateway != null && id != 'photon'
+          ? await gateway!.post('/v1/search/$id', {
+              'path': id == 'geoapify'
+                  ? base.path
+                  : base.path.replaceFirst('/v1', ''),
+              'parameters': Map<String, String>.from(parameters)
+                ..remove('apiKey')
+                ..remove('key'),
+            })
+          : await http.Response.fromStream(
+              await client.send(
+                http.AbortableRequest('GET', uri, abortTrigger: abort.future),
+              ),
+            ).timeout(const Duration(seconds: 5));
     } catch (_) {
       throw const SearchFailure(SearchFailureKind.temporary);
     } finally {

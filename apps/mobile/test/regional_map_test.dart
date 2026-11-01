@@ -11,6 +11,9 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/maps/data/regional_map_repository.dart';
 import 'package:wayday/features/maps/presentation/regional_map.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
+import 'package:wayday/features/places/data/google_search.dart';
+import 'package:wayday/features/places/data/combined_place_search.dart';
+import 'package:wayday/features/places/data/search_quota.dart';
 
 class TestMapBundle extends CachingAssetBundle {
   TestMapBundle(this.files);
@@ -182,6 +185,15 @@ void main() {
             placeMapBuilderProvider.overrideWithValue(
               (_) => const Text('Online map unavailable'),
             ),
+            searchSourceChoiceProvider.overrideWithValue(
+              SearchSourceChoice()..choose(SearchSource.others),
+            ),
+            combinedPlaceSearchProvider.overrideWithValue(
+              CombinedPlaceSearch(
+                [],
+                QuotaLedger(read: () async => null, write: (_) async {}),
+              ),
+            ),
             regionalMapPackageProvider.overrideWith(
               (ref) => RegionalMapRepository(
                 bundle: TestMapBundle({}),
@@ -229,7 +241,8 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       await tester.enterText(find.byKey(const Key('place-name')), 'Changed');
-      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Close search'));
       await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -246,7 +259,17 @@ void main() {
         find.byKey(const Key('place-name')),
         'Manual place',
       );
-      await tester.ensureVisible(find.text('Use name only'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Use name only'),
+        150,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const Key('place-search-results')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       await tester.tap(find.text('Use name only'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Confirm location'));
@@ -340,6 +363,16 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Map credits and licenses'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Test region'),
+        150,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).last,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       expect(find.text('Test region'), findsOneWidget);
       expect(find.text('Source 2026-10-26'), findsOneWidget);
       expect(find.textContaining('Noto-OFL.txt'), findsOneWidget);
@@ -370,6 +403,18 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Map credits and licenses'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(
+          'Offline map credits and licenses are unavailable on this device.',
+        ),
+        150,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).last,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       expect(
         find.text(
           'Offline map credits and licenses are unavailable on this device.',
@@ -405,8 +450,19 @@ void main() {
       expect(find.text('Map unavailable'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
+        ProviderScope(
+          overrides: [
+            placeMapBuilderProvider.overrideWithValue(
+              (_) => const SizedBox.expand(),
+            ),
+            combinedPlaceSearchProvider.overrideWithValue(
+              CombinedPlaceSearch(
+                [],
+                QuotaLedger(read: () async => null, write: (_) async {}),
+              ),
+            ),
+          ],
+          child: const MaterialApp(
             home: PlacePicker(title: 'From', initial: 'Original'),
           ),
         ),
@@ -416,9 +472,10 @@ void main() {
         find.byKey(const Key('place-name')),
         'Still editable',
       );
+      await tester.pumpAndSettle();
       expect(find.text('Still editable'), findsOneWidget);
       expect(tester.takeException(), isNull);
-      await tester.pageBack();
+      await tester.tap(find.byTooltip('Close search'));
       await tester.pumpAndSettle();
     },
   );

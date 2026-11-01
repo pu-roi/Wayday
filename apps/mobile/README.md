@@ -1,5 +1,9 @@
 # Wayday mobile
 
+## Public development builds — D67
+
+[Distribution](../../docs/wayday/DISTRIBUTION.md) owns the public gateway, release signing, public build-defines allowlist, workflows and qualification. Public builds retain local scheduling/journals while private-credential operations use the gateway. The private debug setup below remains supported. Do not use its search-defines wrapper for public releases, copy private allowances onto testers, or install a release-signed APK over the owner's debug app. Compilation does not qualify live App Check, providers or physical devices; public downloads and deployment remain gated.
+
 Android-first Flutter app with Today and Recurring. It uses one light Cornflower theme, compact errand lists, focused editing, and Riverpod controllers. Android stores personal data in a local Drift/SQLite database. Earlier Today and Recurring persistence was verified across force-stop and relaunch on the API 37 x86_64 emulator on 2026-10-27. Isolated emulator checks during reconciliation exercised app startup, adding an errand, the regional renderer and online map pin selection. Physical-device coverage and an Android upgrade from Rudy's database remain unverified. The browser preview remains in memory.
 
 ## Run
