@@ -11,6 +11,10 @@ dependencies = ["fastapi==0.143.3", "uvicorn==0.54.0", "psycopg[binary]==3.3.6",
 [project.optional-dependencies]
 import = ["osmium==4.3.1"]
 test = ["pytest==9.1.1", "httpx==0.28.1"]
+gateway = ["httpx==0.28.1", "firebase-admin==7.7.0", "google-cloud-firestore==2.34.1"]
+
+[tool.setuptools.package-data]
+"wayday_api.gateway" = ["contracts.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
