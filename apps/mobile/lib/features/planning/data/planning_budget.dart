@@ -4,22 +4,102 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/planning_models.dart';
 import 'planning_budget_storage.dart';
+import '../../../core/network/gateway_client.dart';
+import 'dart:math';
 
 final googleTestingBudgetProvider = Provider(
-  (ref) => PlanningBudget(
-    allocation: () async {
-      if (!kDebugMode) return 0;
-      final app = await const MethodChannel(
-        'wayday/planning',
-      ).invokeMapMethod<String, String>('identity');
-      return switch (app?['package']) {
-        'dev.wayday.wayday' => 8000000,
-        'dev.wayday.wayday.maptest' => 2000000,
-        _ => 0,
-      };
-    },
-  ),
+  (ref) => GatewayClient.enabled
+      ? PublicPlanningBudget()
+      : PlanningBudget(
+          allocation: () async {
+            if (!kDebugMode) return 0;
+            final app = await const MethodChannel(
+              'wayday/planning',
+            ).invokeMapMethod<String, String>('identity');
+            return switch (app?['package']) {
+              'dev.wayday.wayday' => 8000000,
+              'dev.wayday.wayday.maptest' => 2000000,
+              _ => 0,
+            };
+          },
+        ),
 );
+
+/// Public installs share server reservations; private-phone ledgers are untouched.
+class PublicPlanningBudget extends PlanningBudget {
+  PublicPlanningBudget({GatewayClient? gateway})
+    : gateway = gateway ?? GatewayClient.shared;
+  final GatewayClient gateway;
+  final _reservations = <String, List<String>>{};
+  final _random = Random.secure();
+  String _uuid() {
+    final b = List<int>.generate(16, (_) => _random.nextInt(256));
+    b[6] = (b[6] & 15) | 64;
+    b[8] = (b[8] & 63) | 128;
+    final h = b.map((v) => v.toRadixString(16).padLeft(2, '0')).join();
+    return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
+  }
+
+  @override
+  Future<void> google(
+    String sku,
+    int units,
+    int unitMicros, {
+    bool checkOnly = false,
+    bool release = false,
+  }) async {
+    // Actual REST dispatch is charged atomically by the gateway, not twice here.
+    if ((sku.startsWith('routes_') || sku.startsWith('matrix_')) &&
+        !checkOnly) {
+      return;
+    }
+    final key = '$sku:$units:$unitMicros';
+    final held = _reservations[key];
+    final requestId = release
+        ? (held?.isNotEmpty == true ? held!.last : null)
+        : _uuid();
+    if (requestId == null) {
+      throw const PlanningFailure(
+        'The shared reservation could not be recovered.',
+        kind: 'accounting',
+      );
+    }
+    try {
+      final response = await gateway.post(
+        '/v1/usage/${release
+            ? 'release'
+            : checkOnly
+            ? 'check'
+            : 'reserve'}',
+        {
+          'requestId': requestId,
+          if (!release) ...{'sku': sku, 'units': units},
+        },
+      );
+      if (response.statusCode != 200) {
+        throw PlanningFailure(
+          response.statusCode == 429
+              ? 'The shared Google testing allocation is unavailable. Your choices are kept.'
+              : 'Shared testing accounting is unavailable. Your choices are kept.',
+          kind: response.statusCode == 429 ? 'testing_budget' : 'accounting',
+        );
+      }
+      if (release) {
+        held!.removeLast();
+      } else if (!checkOnly) {
+        // Only the immediately pending native reservation may be cancelled.
+        _reservations[key] = [requestId];
+      }
+    } on PlanningFailure {
+      rethrow;
+    } catch (_) {
+      throw const PlanningFailure(
+        'Shared testing accounting could not be reached. Your choices are kept.',
+        kind: 'accounting',
+      );
+    }
+  }
+}
 
 /// Counts units, not just HTTP starts. Failed dispatched requests remain consumed.
 class PlanningBudget {

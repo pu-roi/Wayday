@@ -7,6 +7,7 @@ import '../domain/planning_models.dart';
 import '../domain/day_scheduler.dart';
 import 'planning_budget.dart';
 import '../domain/recommendation.dart';
+import '../../../core/network/gateway_client.dart';
 
 class PlanningRoads {
   PlanningRoads(
@@ -14,11 +15,15 @@ class PlanningRoads {
     this.budget, {
     this.apiKey = const String.fromEnvironment('GOOGLE_ROUTES_API_KEY'),
     this.requestTimeout = const Duration(seconds: 12),
+    GatewayClient? gateway,
     Future<Map<String, String>> Function()? identity,
-  }) : identity = identity ?? _identity;
+  }) : identity = identity ?? _identity,
+       gateway =
+           gateway ?? (GatewayClient.enabled ? GatewayClient.shared : null);
   final http.Client client;
   final PlanningBudget budget;
   final String apiKey;
+  final GatewayClient? gateway;
   final Future<Map<String, String>> Function() identity;
   final _pairs =
       <String, ({DateTime at, int? seconds, int? meters, bool fallback})>{};
@@ -117,6 +122,7 @@ class PlanningRoads {
   ).add(Duration(seconds: seconds));
 
   Future<Map<String, String>> headers() async {
+    if (gateway != null) return {'Content-Type': 'application/json'};
     if (apiKey.isEmpty) {
       throw const PlanningFailure(
         'Routes is not configured in this build.',
@@ -264,16 +270,21 @@ class PlanningRoads {
         units,
         rate,
       );
-      final response = await client.post(
-        Uri.https(
-          'routes.googleapis.com',
-          operation == 'computeRouteMatrix'
-              ? '/distanceMatrix/v2:computeRouteMatrix'
-              : '/directions/v2:computeRoutes',
-        ),
-        headers: {...auth, 'X-Goog-FieldMask': fields},
-        body: jsonEncode(data),
-      );
+      final response = gateway != null
+          ? await gateway!.post('/v1/routes/$operation', {
+              'request': data,
+              'fieldMask': fields,
+            })
+          : await client.post(
+              Uri.https(
+                'routes.googleapis.com',
+                operation == 'computeRouteMatrix'
+                    ? '/distanceMatrix/v2:computeRouteMatrix'
+                    : '/directions/v2:computeRoutes',
+              ),
+              headers: {...auth, 'X-Goog-FieldMask': fields},
+              body: jsonEncode(data),
+            );
       if (response.statusCode == 429) {
         throw PlanningFailure(
           'Google routing quota is exhausted. Your draft is kept.',

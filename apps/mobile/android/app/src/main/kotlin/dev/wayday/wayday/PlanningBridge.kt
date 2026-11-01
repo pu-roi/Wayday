@@ -110,8 +110,8 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                         var providerResponseReceived = false
                         try {
                             if (call.method == "geminiStatus") {
-                                val key = credential()
-                                main.post { if (!disposed) result.success(mapOf("configured" to !key.isNullOrEmpty(), "model" to "gemini-3.1-flash-lite")) }
+                                val configured = if (BuildConfig.WAYDAY_PUBLIC_BUILD) GatewayAccess.configured() else !credential().isNullOrEmpty()
+                                main.post { if (!disposed) result.success(mapOf("configured" to configured, "model" to "gemini-3.1-flash-lite")) }
                                 return@synchronized
                             }
                             val args = call.arguments as? Map<*, *> ?: throw IllegalArgumentException()
@@ -149,23 +149,33 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                 main.post { if (!disposed) result.error(code, "An explicit retry is required", null) }
                                 return@synchronized
                             }
-                            val key = credential()
-                            if (key.isNullOrEmpty()) {
+                            val publicGateway = BuildConfig.WAYDAY_PUBLIC_BUILD
+                            val key = if (publicGateway) null else credential()
+                            if ((publicGateway && !GatewayAccess.configured()) || (!publicGateway && key.isNullOrEmpty())) {
                                 main.post { if (!disposed) result.error("configuration", "Gemini is not configured on this device", null) }
                                 return@synchronized
                             }
+                            val token = if (publicGateway) try { GatewayAccess.token(activity) } catch (_: Exception) {
+                                main.post { if (!disposed) result.error("access", "App verification is unavailable", null) }
+                                return@synchronized
+                            } else null
                             // Fail closed if durable pending state or accounting cannot be saved.
                             requestJournal.put(InterpretationJournal.Entry(cacheKey, "pending"), recoverCorrupt = retry)
                             attemptKey = cacheKey
-                            val connection = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent").openConnection() as HttpURLConnection
+                            val address = if (publicGateway) GatewayAccess.endpoint("/v1/interpretations") else "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
+                            val connection = URL(address).openConnection() as HttpURLConnection
                             try {
+                                connection.instanceFollowRedirects = false
                                 connection.requestMethod = "POST"
                                 connection.connectTimeout = 10000
                                 connection.readTimeout = 20000
                                 connection.setRequestProperty("Content-Type", "application/json")
-                                connection.setRequestProperty("x-goog-api-key", key)
+                                if (publicGateway) connection.setRequestProperty("X-Firebase-AppCheck", token)
+                                else connection.setRequestProperty("x-goog-api-key", key)
                                 connection.doOutput = true
-                                connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                                val transmitted = if (publicGateway) JSONObject().put("purpose", purpose)
+                                    .put("contractVersion", "d66-v1").put("request", JSONObject(body)).toString() else body
+                                connection.outputStream.use { it.write(transmitted.toByteArray(Charsets.UTF_8)) }
                                 val status = connection.responseCode
                                 if (status == 200) {
                                     // Bounded read: never accumulate an unbounded provider response.
@@ -241,6 +251,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
         return generator.generateKey()
     }
     private fun credential(): String? {
+        if (BuildConfig.WAYDAY_PUBLIC_BUILD) return null
         val encrypted = File(activity.noBackupFilesDir, "gemini-credential.json")
         val provision = File(activity.filesDir, "wayday-private-gemini.json")
         val debug = activity.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

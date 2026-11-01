@@ -14,18 +14,30 @@ plugins {
 
 // Flutter supplies the same ignored configuration file for CLI and Android Studio.
 // Decode only the Android SDK credential here. Never log dart-defines or keys.
-val googleMapsAndroidApiKey = providers.gradleProperty("dart-defines")
+val waydayDefines = providers.gradleProperty("dart-defines")
     .orNull.orEmpty().split(",")
     .mapNotNull { encoded ->
         runCatching { String(Base64.getDecoder().decode(encoded), Charsets.UTF_8) }.getOrNull()
     }
-    .lastOrNull { it.startsWith("GOOGLE_MAPS_ANDROID_API_KEY=") }
-    ?.substringAfter("=").orEmpty()
+    .mapNotNull { value -> value.indexOf('=').takeIf { it > 0 }?.let { value.substring(0, it) to value.substring(it + 1) } }
+    .toMap()
+val googleMapsAndroidApiKey = waydayDefines["GOOGLE_MAPS_ANDROID_API_KEY"].orEmpty()
+val publicBuild = waydayDefines["WAYDAY_PUBLIC_BUILD"] == "true"
+if (publicBuild) {
+    require(listOf("GEMINI_API_KEY", "GOOGLE_ROUTES_API_KEY", "GEOAPIFY_API_KEY", "LOCATIONIQ_API_KEY").none { !waydayDefines[it].isNullOrBlank() }) {
+        "Public builds must not contain private provider build defines."
+    }
+}
+if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+    require(publicBuild) { "Release builds require WAYDAY_PUBLIC_BUILD=true and server-backed provider access." }
+}
+fun buildString(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r") + "\""
 
 android {
     namespace = "dev.wayday.wayday"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+    buildFeatures { buildConfig = true }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -36,6 +48,10 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "dev.wayday.wayday"
+        buildConfigField("boolean", "WAYDAY_PUBLIC_BUILD", publicBuild.toString())
+        for (key in listOf("WAYDAY_GATEWAY_URL", "WAYDAY_FIREBASE_APP_ID", "WAYDAY_FIREBASE_API_KEY", "WAYDAY_FIREBASE_PROJECT_ID", "WAYDAY_RECAPTCHA_SITE_KEY")) {
+            buildConfigField("String", key, buildString(waydayDefines[key].orEmpty()))
+        }
         manifestPlaceholders["waydayGoogleMapsApiKey"] = googleMapsAndroidApiKey
         // Flutter integration tests uninstall their target by default. Isolate
         // the memory-only map harness from the owner's installed personal data.
@@ -55,11 +71,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (System.getenv("WAYDAY_RELEASE_STORE_FILE") != null) {
+            create("waydayRelease") {
+                storeFile = file(System.getenv("WAYDAY_RELEASE_STORE_FILE"))
+                storePassword = System.getenv("WAYDAY_RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("WAYDAY_RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("WAYDAY_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // No silent debug signing. CI verification uses a disposable test key;
+            // public publication requires the separately protected release key.
+            signingConfig = signingConfigs.findByName("waydayRelease")
         }
     }
 }
@@ -98,6 +124,8 @@ configurations.configureEach {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
+    implementation("com.google.firebase:firebase-appcheck-recaptcha")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
     // Match google_navigation_flutter 0.11.2: native Places bridge also imports LatLng.
     implementation("com.google.android.libraries.navigation:navigation:7.9.0")
