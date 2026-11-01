@@ -2,6 +2,12 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Qualify the corrected public development preview
+
+- The owner confirmed update `100005` keeps the plan/map open, preserves saved items and completes the full flow including its final step, then explicitly requested deployment. Read-only installed-APK hashing matches the inspected signed candidate; Android exit metadata shows no new exception after its 04:31:20 Manila update. No app-state/data mutation was used for verification.
+- The owner read shared `usedMicros: 2945000` without changing any field. This is US$2.945 of conservative application usage estimates beyond the former cap, not a provider billing statement. Existing counters/reservations remain intact.
+- Recorded development-preview qualification using initial fresh production bootstrap, same-key updates and final corrected full-flow evidence. Fingerprints bind the permanent certificate, production public settings and frozen gateway contract. Compatibility is limited to the tested Galaxy A54/Android 16 plus declared build support; no all-device/all-mode claim or independently repeated fresh reset of `100005` is made. [Launch evidence](evidence/public-distribution-2026-11-01.md#first-public-release-qualification--2026-11-02) records the exact scope. Hosted publication and final downloadable-artifact/site verification remain pending.
+
 ### [2026-11-02] Identify the production Navigation reflection crash
 
 - Retrieved package-scoped Android exit/crash metadata after the owner reconnected the phone. The 04:03:03 Manila crash is an uncaught Navigation SDK `IllegalAccessException`, not the older background low-memory exits. Its R8 map identity exactly matches inspected APK `100004`.

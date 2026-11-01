@@ -1,13 +1,13 @@
 {
-  "qualified": false,
-  "appCheckVerified": false,
-  "freshInstallVerified": false,
-  "upgradeVerified": false,
-  "providerFlowVerified": false,
-  "accountingReviewed": false,
-  "signingSha256": "",
-  "configFingerprint": "",
-  "contractSha256": "",
-  "compatibility": "",
-  "evidence": ""
+  "qualified": true,
+  "appCheckVerified": true,
+  "freshInstallVerified": true,
+  "upgradeVerified": true,
+  "providerFlowVerified": true,
+  "accountingReviewed": true,
+  "signingSha256": "8b0232dd12853d9bd35b198fa9c1d3656e14bae1ed0b50edef3fa9fad3554151",
+  "configFingerprint": "9e8c8774c229cab3b4e044834df0c75cfc2cf0b7b2c2591da349c9d06569b119",
+  "contractSha256": "a89318ee6de468bfe46b99e4b6eebe1a19f23bfb8f450c0f4e8a87f64e7154aa",
+  "compatibility": "Android 7.0+ (API 24); ARMv7, ARM64 and x86_64. Development preview physically checked on Samsung Galaxy A54 with Android 16; other devices and all travel modes are not independently qualified.",
+  "evidence": "docs/wayday/evidence/public-distribution-2026-11-01.md#first-public-release-qualification--2026-11-02"
 }
