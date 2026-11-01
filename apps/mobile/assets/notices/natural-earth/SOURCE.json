@@ -1,0 +1,12 @@
+{
+  "source": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/f1890d9f152c896d250a77557a5751a93d494776/geojson/ne_10m_admin_0_countries.geojson",
+  "release": "v5.1.2",
+  "commit": "f1890d9f152c896d250a77557a5751a93d494776",
+  "source_sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+  "license": "public domain",
+  "feature": "PHL",
+  "polygons": 97,
+  "vertices": 7406,
+  "generated_bytes": 166846,
+  "limitations": "Cartographic land mask, not legal/marine boundaries. Islands, coastal reclamation and shoreline precision may be incomplete. Unconfirmed points fail closed."
+}

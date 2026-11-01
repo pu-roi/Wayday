@@ -1,0 +1,1533 @@
+{
+  "date": "2026-10-28T13:35:45.205207Z",
+  "method": "Fixed public-place sample; returned candidates are not field-verified. No dashboard access. Count reflects qualification runner calls only.",
+  "requests": 31,
+  "results": [
+    {
+      "query": "Taft Avenue Manila",
+      "provider": "geoapify",
+      "milliseconds": 1529,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Taft Avenue",
+          "address": "Manila, 1004 Metro Manila, Philippines",
+          "source": "geoapify/51ece4c237833f5e405949db53cd07232d40f00102f901ac31a13700000000c0020492030b54616674204176656e7565",
+          "latitude": 14.5684189,
+          "longitude": 120.9923839
+        },
+        {
+          "name": "Taft Avenue",
+          "address": "Manila, 1000 Metro Manila, Philippines",
+          "source": "geoapify/513d66fbebf03e5e40597813d78c672b2d40f00102f901e85de84200000000c0020492030b54616674204176656e7565",
+          "latitude": 14.5847744,
+          "longitude": 120.9834547
+        },
+        {
+          "name": "Taft Avenue",
+          "address": "Manila, 1002 Metro Manila, Philippines",
+          "source": "geoapify/51a6a77e94c73e5e4059a4ab74779d2d2d40f00102f90154b4a42400000000c0020492030b54616674204176656e7565",
+          "latitude": 14.589092,
+          "longitude": 120.9809314
+        }
+      ]
+    },
+    {
+      "query": "Taft Avenue Manila",
+      "provider": "locationiq",
+      "milliseconds": 428,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "De La Salle University Manila",
+          "address": "2401, Taft Avenue, Barangay 726, Malate, Manila, Capital District, Metro Manila, 1004, Philippines",
+          "source": "osm/relation/11126048",
+          "latitude": 14.564944,
+          "longitude": 120.9930992
+        },
+        {
+          "name": "Taft Avenue",
+          "address": "Padre Zamora Street, Barangay 97, Zone 14, Pasay, Southern Manila District, Metro Manila, 1303, Philippines",
+          "source": "osm/way/222628889",
+          "latitude": 14.5375565,
+          "longitude": 121.0013065
+        },
+        {
+          "name": "Manila Science High School",
+          "address": "Taft Avenue, Barangay 670, Ermita, Manila, Capital District, Metro Manila, 1000, Philippines",
+          "source": "osm/way/28788573",
+          "latitude": 14.5806674,
+          "longitude": 120.9862939
+        },
+        {
+          "name": "Taft Avenue",
+          "address": "Ermita, Manila, Capital District, Metro Manila, 1000, Philippines",
+          "source": "osm/way/704746736",
+          "latitude": 14.5841993,
+          "longitude": 120.9836066
+        },
+        {
+          "name": "Taft Avenue",
+          "address": "Barangay 729, Malate, Manila, Capital District, Metro Manila, 1004, Philippines",
+          "source": "osm/way/769206233",
+          "latitude": 14.5625498,
+          "longitude": 120.9952368
+        }
+      ]
+    },
+    {
+      "query": "Taft Avenue Manila",
+      "provider": "photon",
+      "status": "access"
+    },
+    {
+      "query": "SM Megamall",
+      "provider": "geoapify",
+      "milliseconds": 718,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "SM Megamall",
+          "address": "EDSA, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/517c8c03f9a3435e4059bc1a457b612b2d40f00101f901c965780000000000c0020192030b534d204d6567616d616c6c",
+          "latitude": 14.5847281,
+          "longitude": 121.0568831
+        },
+        {
+          "name": "SM Megamall Bridgeway",
+          "address": "Doña Julia Vargas Avenue, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/519519259ea2435e4059238cfa7f302b2d40f00102f901d14d2b0800000000c00201920315534d204d6567616d616c6c20427269646765776179",
+          "latitude": 14.5843544,
+          "longitude": 121.0568004
+        },
+        {
+          "name": "SM Megamall Building C",
+          "address": "EDSA, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/515dc0cb0c9b435e40591b892bc2a82b2d40f00102f9015c8c8e0700000000c00201920316534d204d6567616d616c6c204275696c64696e672043",
+          "latitude": 14.5852719,
+          "longitude": 121.0563385
+        },
+        {
+          "name": "SM Megamall Building A",
+          "address": "Ortigas, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/51d4cb947ba6435e405913f5dd08e62b2d40f00102f901d24d2b0800000000c00201920316534d204d6567616d616c6c204275696c64696e672041",
+          "latitude": 14.5857394,
+          "longitude": 121.0570363
+        },
+        {
+          "name": "SM Megamall MRF",
+          "address": "EDSA, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/515177afa4a6435e40594d2f3196e92b2d40f00103f9018195f8c101000000c0020192030f534d204d6567616d616c6c204d5246",
+          "latitude": 14.5857665,
+          "longitude": 121.0570461
+        },
+        {
+          "name": "SM Megamall Building D",
+          "address": "EDSA, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/51233ec10f98435e40592b5904b5ce2a2d40f00101f90162de340000000000c00201920316534d204d6567616d616c6c204275696c64696e672044",
+          "latitude": 14.5836083,
+          "longitude": 121.0561561
+        },
+        {
+          "name": "SM Megamall Building B",
+          "address": "Doña Julia Vargas Avenue, Mandaluyong, 1605 Metro Manila, Philippines",
+          "source": "geoapify/5151888043a8435e40591a4927b7922a2d40f00102f901dc0ec30700000000c00201920316534d204d6567616d616c6c204275696c64696e672042",
+          "latitude": 14.5831506,
+          "longitude": 121.057145
+        },
+        {
+          "name": "SM Megamall Bingo",
+          "address": "EDSA, Mandaluyong, 1555 Metro Manila, Philippines",
+          "source": "geoapify/5118f840e1a2435e4059ce14dff53e2a2d40f00103f901eb13f21c01000000c00201920311534d204d6567616d616c6c2042696e676f",
+          "latitude": 14.5825116,
+          "longitude": 121.0568164
+        }
+      ]
+    },
+    {
+      "query": "SM Megamall",
+      "provider": "locationiq",
+      "milliseconds": 266,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "SM Megamall",
+          "address": "EDSA, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1555, Philippines",
+          "source": "osm/relation/7890377",
+          "latitude": 14.5847281,
+          "longitude": 121.0568831
+        },
+        {
+          "name": "SM Megamall Building B",
+          "address": "Doña Julia Vargas Avenue, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1605, Philippines",
+          "source": "osm/way/130223836",
+          "latitude": 14.5831506,
+          "longitude": 121.057145
+        },
+        {
+          "name": "SM Megamall",
+          "address": "EDSA, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1555, Philippines",
+          "source": "osm/node/7475236609",
+          "latitude": 14.5848294,
+          "longitude": 121.0554984
+        },
+        {
+          "name": "SM Megamall Bridgeway",
+          "address": "Doña Julia Vargas Avenue, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1555, Philippines",
+          "source": "osm/way/137055697",
+          "latitude": 14.5843544,
+          "longitude": 121.0568004
+        },
+        {
+          "name": "SM Megamall MRF",
+          "address": "EDSA, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1555, Philippines",
+          "source": "osm/node/7549261185",
+          "latitude": 14.5857665,
+          "longitude": 121.0570461
+        },
+        {
+          "name": "SM Megamall Transport Terminal",
+          "address": "Saint Francis Street, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1605, Philippines",
+          "source": "osm/way/569154362",
+          "latitude": 14.5824302,
+          "longitude": 121.0577941
+        },
+        {
+          "name": "SM Megamall Building C",
+          "address": "EDSA, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1555, Philippines",
+          "source": "osm/way/126782556",
+          "latitude": 14.5852719,
+          "longitude": 121.0563385
+        },
+        {
+          "name": "SM Megamall Bingo",
+          "address": "EDSA, Wack-Wack Greenhills, Mandaluyong, Eastern Manila District, Metro Manila, 1555, Philippines",
+          "source": "osm/node/4780594155",
+          "latitude": 14.5825116,
+          "longitude": 121.0568164
+        }
+      ]
+    },
+    {
+      "query": "Jollibee Cubao",
+      "provider": "geoapify",
+      "milliseconds": 898,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Jollibee",
+          "address": "P. A. Bernardo Avenue, Quezon City, 1111 Metro Manila, Philippines",
+          "source": "geoapify/51c3f92f6b3d435e4059a0a46549253d2d40f00103f901f6aeb64400000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6194251,
+          "longitude": 121.0506237
+        },
+        {
+          "name": "Jollibee",
+          "address": "EDSA, Quezon City, 1109 Metro Manila, Philippines",
+          "source": "geoapify/5142d13c8045435e405988b59d5b8d3d2d40f00103f901236dc42900000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6202191,
+          "longitude": 121.051117
+        },
+        {
+          "name": "Jollibee",
+          "address": "General Araneta Avenue, Quezon City, 1109 Metro Manila, Philippines",
+          "source": "geoapify/513fb4458861435e4059b6508df2273d2d40f00103f901d6130e3900000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6194454,
+          "longitude": 121.0528279
+        },
+        {
+          "name": "Jollibee",
+          "address": "EDSA, Quezon City, 1102 Metro Manila, Philippines",
+          "source": "geoapify/51d46938c027435e40597033cb54773f2d40f00103f901cc11342203000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6239573,
+          "longitude": 121.0493012
+        },
+        {
+          "name": "Jollibee",
+          "address": "Aurora Boulevard, Quezon City, 1109 Metro Manila, Philippines",
+          "source": "geoapify/51bd299b2878435e4059a480fe8c1c3f2d40f00103f901fa394af900000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6232647,
+          "longitude": 121.0542089
+        },
+        {
+          "name": "Jollibee",
+          "address": "General MacArthur Avenue, Quezon City, 1109 Metro Manila, Philippines",
+          "source": "geoapify/51e5e2b9089d435e4059cd08cac8b43d2d40f00103f901b8130e3900000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6205199,
+          "longitude": 121.0564596
+        },
+        {
+          "name": "Jollibee",
+          "address": "P. Tuazon Boulevard, Quezon City, 1109 Metro Manila, Philippines",
+          "source": "geoapify/514b0a87399c435e40593ae1ca7e823c2d40f00103f90118d0695702000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6181831,
+          "longitude": 121.0564102
+        },
+        {
+          "name": "Jollibee",
+          "address": "13th Avenue, Quezon City, 1109 Metro Manila, Philippines",
+          "source": "geoapify/517e62ae56b7435e405961bbc50d093d2d40f00102f901119f374200000000c002019203084a6f6c6c69626565",
+          "latitude": 14.6192097,
+          "longitude": 121.0580651
+        }
+      ]
+    },
+    {
+      "query": "Jollibee Cubao",
+      "provider": "locationiq",
+      "milliseconds": 312,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Jollibee",
+          "address": "EDSA, E. Rodriguez Sr., Cubao, Quezon City, Eastern Manila District, Metro Manila, 1102, Philippines",
+          "source": "osm/node/13458739660",
+          "latitude": 14.6239573,
+          "longitude": 121.0493012
+        },
+        {
+          "name": "Jollibee",
+          "address": "Aurora Boulevard, Socorro, Cubao, Quezon City, Eastern Manila District, Metro Manila, 1109, Philippines",
+          "source": "osm/node/4182391290",
+          "latitude": 14.6232647,
+          "longitude": 121.0542089
+        },
+        {
+          "name": "Jollibee",
+          "address": "General Araneta Avenue, Araneta City, Cubao, Quezon City, Eastern Manila District, Metro Manila, 1109, Philippines",
+          "source": "osm/node/957223894",
+          "latitude": 14.6194454,
+          "longitude": 121.0528279
+        },
+        {
+          "name": "Jollibee",
+          "address": "13th Avenue, Socorro, Cubao, Quezon City, Eastern Manila District, Metro Manila, 1109, Philippines",
+          "source": "osm/way/1110941457",
+          "latitude": 14.6192097,
+          "longitude": 121.0580651
+        },
+        {
+          "name": "Jollibee",
+          "address": "EDSA, Socorro, Cubao, Quezon City, Eastern Manila District, Metro Manila, 1109, Philippines",
+          "source": "osm/node/700738851",
+          "latitude": 14.6202191,
+          "longitude": 121.051117
+        },
+        {
+          "name": "Jollibee",
+          "address": "P. Tuazon Boulevard, Socorro, Cubao, Quezon City, Eastern Manila District, Metro Manila, 1109, Philippines",
+          "source": "osm/node/10056486936",
+          "latitude": 14.6181831,
+          "longitude": 121.0564102
+        },
+        {
+          "name": "Jollibee",
+          "address": "General MacArthur Avenue, Araneta City, Cubao, Quezon City, Eastern Manila District, Metro Manila, 1109, Philippines",
+          "source": "osm/node/957223864",
+          "latitude": 14.6205199,
+          "longitude": 121.0564596
+        }
+      ]
+    },
+    {
+      "query": "Carbon Public Market Cebu",
+      "provider": "geoapify",
+      "milliseconds": 1432,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Carbon Main Public Market",
+          "address": "M.C. Briones Street, Cebu City, 6000 CB, Philippines",
+          "source": "geoapify/5164181cca75f95e4059eb6525f785952440f00102f901f2037d5000000000c00201920319436172626f6e204d61696e205075626c6963204d61726b6574e203226f70656e7374726565746d61703a76656e75653a7761792f31333530333730323930",
+          "latitude": 10.2920377,
+          "longitude": 123.8978143
+        },
+        {
+          "name": "Carbon Interim Public Market",
+          "address": "M.C. Briones Street, Cebu City, 6000 Central Visayas, Philippines",
+          "source": "geoapify/5190b28f5f89f95e405943eed8be36952440f00102f901d3c4021400000000c0020192031c436172626f6e20496e746572696d205075626c6963204d61726b6574",
+          "latitude": 10.2914333,
+          "longitude": 123.8990096
+        },
+        {
+          "name": "Carbon Interim Public Market",
+          "address": "M.C. Briones Street, City of Cebu, 6000 CB, Philippines",
+          "source": "geoapify/519c18929389f95e4059eb8cef8b4b952440f00102f901d3c4021400000000c0020192031c436172626f6e20496e746572696d205075626c6963204d61726b6574e203216f70656e7374726565746d61703a76656e75653a7761792f333335373235373739",
+          "latitude": 10.291592,
+          "longitude": 123.899022
+        },
+        {
+          "name": "Carbon Unit 1 Public Market",
+          "address": "City of Cebu, 6000 CB, Philippines",
+          "source": "geoapify/51e0ba624678f95e4059aa29c93a1c952440f00102f90142c3021400000000c0020192031b436172626f6e20556e69742031205075626c6963204d61726b6574e203216f70656e7374726565746d61703a76656e75653a7761792f333335373235333738",
+          "latitude": 10.291231,
+          "longitude": 123.897966
+        },
+        {
+          "name": "Carbon Unit 3 Public Market",
+          "address": "City of Cebu, 6000 CB, Philippines",
+          "source": "geoapify/5141b62c5f97f95e4059c9586dfe5f952440f00102f9014f0b660e00000000c0020192031b436172626f6e20556e69742033205075626c6963204d61726b6574e203216f70656e7374726565746d61703a76656e75653a7761792f323431353638353931",
+          "latitude": 10.291748,
+          "longitude": 123.899864
+        }
+      ]
+    },
+    {
+      "query": "Carbon Public Market Cebu",
+      "provider": "locationiq",
+      "milliseconds": 254,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Carbon Main Public Market",
+          "address": "M.C. Briones Street, Ermita, Duljo Fatima, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/1350370290",
+          "latitude": 10.2919908,
+          "longitude": 123.8979392
+        },
+        {
+          "name": "Carbon Interim Public Market",
+          "address": "M.C. Briones Street, Ermita, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/335725779",
+          "latitude": 10.2914333,
+          "longitude": 123.8990096
+        },
+        {
+          "name": "Carbon Unit 1 Public Market",
+          "address": "M.L. Quezon Boulevard, Ermita, Duljo Fatima, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/335725378",
+          "latitude": 10.2912501,
+          "longitude": 123.8980227
+        },
+        {
+          "name": "Carbon Unit 3 Public Market",
+          "address": "F. Gonzales Street, Ermita, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/241568591",
+          "latitude": 10.2917157,
+          "longitude": 123.8998404
+        },
+        {
+          "name": "Bogo Public Market",
+          "address": "P. Ortega Street, Gairan, Bogo, Cebu, 6010, Philippines",
+          "source": "osm/way/397399034",
+          "latitude": 11.0562694,
+          "longitude": 124.0127346
+        }
+      ]
+    },
+    {
+      "query": "Osmena Boulevard Cebu",
+      "provider": "geoapify",
+      "milliseconds": 815,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Osmeña Boulevard",
+          "address": "Cebu City, 6000 Central Visayas, Philippines",
+          "source": "geoapify/514da665ff17f95e405957b9abb24aa02440f00102f9012ea8ea0400000000c002049203114f736d65c3b16120426f756c6576617264",
+          "latitude": 10.3130699,
+          "longitude": 123.8920897
+        }
+      ]
+    },
+    {
+      "query": "Osmena Boulevard Cebu",
+      "provider": "locationiq",
+      "milliseconds": 312,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Basilica Minore del Santo Niño de Cebu",
+          "address": "Osmeña Boulevard, San Roque, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/relation/18267945",
+          "latitude": 10.2943421,
+          "longitude": 123.9021033
+        },
+        {
+          "name": "Basilica Minore del Santo Niño de Cebu Pilgrim Center",
+          "address": "Osmeña Boulevard, San Roque, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/node/10757993558",
+          "latitude": 10.2939971,
+          "longitude": 123.902712
+        },
+        {
+          "name": "Cebu Normal University",
+          "address": "Osmeña Boulevard, Sambag I, Calamba, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/155927183",
+          "latitude": 10.3016486,
+          "longitude": 123.8967853
+        },
+        {
+          "name": "Cebu City Sports Complex",
+          "address": "Osmeña Boulevard, Sambag I, Calamba, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/612342638",
+          "latitude": 10.3005413,
+          "longitude": 123.8952603
+        },
+        {
+          "name": "Osmeña Boulevard",
+          "address": "Santa Cruz, Calamba, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/1474483122",
+          "latitude": 10.3068158,
+          "longitude": 123.8942794
+        },
+        {
+          "name": "Cebu Doctors' University Hospital",
+          "address": "Osmeña Boulevard, Santa Cruz, Camputhaw, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/relation/12661604",
+          "latitude": 10.3144626,
+          "longitude": 123.8919345
+        }
+      ]
+    },
+    {
+      "query": "Metro Supermarket Colon Cebu",
+      "provider": "geoapify",
+      "milliseconds": 2912,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Colonel A. Cabreros Street",
+          "address": "Cebu City, 6000 Central Visayas, Philippines",
+          "source": "geoapify/5165564a2aaef75e40598befd5d86f932440f00102f901ae2de40500000000c0020492031a436f6c6f6e656c20412e204361627265726f7320537472656574",
+          "latitude": 10.2879627,
+          "longitude": 123.8700052
+        },
+        {
+          "name": "Colon Street",
+          "address": "Cebu City, 6000 Central Visayas, Philippines",
+          "source": "geoapify/5194cf3ccad2f95e4059e412471e88982440f00102f9019a93962400000000c0020492030c436f6c6f6e20537472656574",
+          "latitude": 10.2979135,
+          "longitude": 123.9034906
+        },
+        {
+          "name": "Colon",
+          "address": "Naga, Cebu, Philippines",
+          "source": "geoapify/513aebae47bcf05e4059a86d686f95702440f00103f9010440f25e01000000c00205920305436f6c6f6e",
+          "latitude": 10.2198901,
+          "longitude": 123.7614917
+        }
+      ]
+    },
+    {
+      "query": "Metro Supermarket Colon Cebu",
+      "provider": "locationiq",
+      "milliseconds": 457,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Metro Supermarket",
+          "address": "R. Arcenas Street, Santa Ana, Tisa, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/539902014",
+          "latitude": 10.3096838,
+          "longitude": 123.8745598
+        },
+        {
+          "name": "Metro Supermarket",
+          "address": "Cebu North Road, Cogon East, Carmen, Cebu, 6005, Philippines",
+          "source": "osm/way/397897993",
+          "latitude": 10.5922088,
+          "longitude": 124.0177018
+        },
+        {
+          "name": "Metro Supermarket",
+          "address": "V. Padriga Street, Cebu I.T. Park, Kasambagan, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/node/7273839444",
+          "latitude": 10.3301785,
+          "longitude": 123.9072908
+        },
+        {
+          "name": "Metro Supermarket",
+          "address": "Osmeña Boulevard, Kalubihan, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/node/8696673058",
+          "latitude": 10.2961116,
+          "longitude": 123.8984053
+        },
+        {
+          "name": "Metro Supermarket",
+          "address": "S. A. Lauron Avenue, Pagutlan, Tayud, Liloan, 5th District, Cebu, 6002, Philippines",
+          "source": "osm/way/628918008",
+          "latitude": 10.3739629,
+          "longitude": 123.9885964
+        },
+        {
+          "name": "Metro Gaisano Supermarket",
+          "address": "Bohol Avenue, Cebu Business Park, Luz, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/node/8103161517",
+          "latitude": 10.3173947,
+          "longitude": 123.9037965
+        },
+        {
+          "name": "Metro Supermarket Taxi Bay",
+          "address": "Luzon Avenue, Cebu Business Park, Luz, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/node/1684734401",
+          "latitude": 10.3173369,
+          "longitude": 123.9037388
+        },
+        {
+          "name": "Colonnade Supermarket",
+          "address": "Colon Street, Kalubihan, Cebu City, Central Visayas, 6000, Philippines",
+          "source": "osm/way/231977418",
+          "latitude": 10.2969292,
+          "longitude": 123.9001185
+        }
+      ]
+    },
+    {
+      "query": "Larsian Cebu",
+      "provider": "geoapify",
+      "milliseconds": 869,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Larsian",
+          "address": "San Vicente Street, Bogo, 6010 CB, Philippines",
+          "source": "geoapify/51748f11f527005f4059fe09d39c611b2640f00103f9019d2fe04302000000c002019203074c61727369616ee203236f70656e7374726565746d61703a76656e75653a6e6f64652f39373238373030333137",
+          "latitude": 11.0534791,
+          "longitude": 124.0024388
+        }
+      ]
+    },
+    {
+      "query": "Larsian Cebu",
+      "provider": "locationiq",
+      "milliseconds": 319,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Larsian",
+          "address": "San Vicente Street, San Vicente, Cogon, Bogo, Cebu, 6010, Philippines",
+          "source": "osm/node/9728700317",
+          "latitude": 11.0534791,
+          "longitude": 124.0024388
+        }
+      ]
+    },
+    {
+      "query": "Bankerohan Public Market Davao",
+      "provider": "geoapify",
+      "milliseconds": 902,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Bankerohan Public Market",
+          "address": "Don Isidro Marfori Road, Davao City, 8000 DR, Philippines",
+          "source": "geoapify/511f300f9972665f40593044f3a55c461c40f00102f901686d0c1e00000000c0020192031842616e6b65726f68616e205075626c6963204d61726b6574e203216f70656e7374726565746d61703a76656e75653a7761792f353034313330393230",
+          "latitude": 7.0687128,
+          "longitude": 125.6007445
+        }
+      ]
+    },
+    {
+      "query": "Bankerohan Public Market Davao",
+      "provider": "locationiq",
+      "milliseconds": 258,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Bankerohan Public Market",
+          "address": "Don Isidro Marfori Road, Purok 1, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/504130920",
+          "latitude": 7.0687128,
+          "longitude": 125.6007445
+        }
+      ]
+    },
+    {
+      "query": "San Pedro Street Davao",
+      "provider": "geoapify",
+      "milliseconds": 4043,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "San Pedro Street",
+          "address": "Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/512c346b84d9665f4059788b76cbc4431c40f00102f9019c31261b00000000c0020492031053616e20506564726f20537472656574",
+          "latitude": 7.0661804,
+          "longitude": 125.6070262
+        },
+        {
+          "name": "San Pedro Cathedral",
+          "address": "San Pedro Street, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51522635b401675f405971218fe046421c40f00102f901a837e90600000000c0020192031353616e20506564726f2043617468656472616c",
+          "latitude": 7.0647235,
+          "longitude": 125.609479
+        }
+      ]
+    },
+    {
+      "query": "San Pedro Street Davao",
+      "provider": "locationiq",
+      "milliseconds": 331,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "San Pedro Street",
+          "address": "Skyline 1, Catalunan Grande, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/37360570",
+          "latitude": 7.0780497,
+          "longitude": 125.5488583
+        },
+        {
+          "name": "San Pedro Street",
+          "address": "Barangay 3-A, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/455487900",
+          "latitude": 7.0661804,
+          "longitude": 125.6070262
+        },
+        {
+          "name": "San Pedro Cathedral",
+          "address": "San Pedro Street, Barangay 38-D, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/115947432",
+          "latitude": 7.0647235,
+          "longitude": 125.609479
+        },
+        {
+          "name": "San Pedro Calungsod Street",
+          "address": "Villa Mercedita, Dumoy, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/1069595628",
+          "latitude": 7.0328406,
+          "longitude": 125.5276428
+        },
+        {
+          "name": "University of the Immaculate Conception",
+          "address": "Father Selga Street, Purok 1, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/29019388",
+          "latitude": 7.0699665,
+          "longitude": 125.5999681
+        }
+      ]
+    },
+    {
+      "query": "Gaisano Mall Davao",
+      "provider": "geoapify",
+      "milliseconds": 801,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Gaisano Mall",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51ff452b523c675f4059a59762580f511c40f00103f901f95234ca02000000c0020192030c47616973616e6f204d616c6c",
+          "latitude": 7.0791601,
+          "longitude": 125.6130567
+        },
+        {
+          "name": "Gaisano Mall Substation",
+          "address": "De Guzman Street, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/519d45949b4d675f405994b256fec6501c40f00102f9015749240200000000c0020192031747616973616e6f204d616c6c2053756273746174696f6e",
+          "latitude": 7.0788841,
+          "longitude": 125.6141118
+        },
+        {
+          "name": "Mang Inasal",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51b94f8e0244675f405906c545a45c501c40f00103f901a17f69ab01000000c0020192030b4d616e6720496e6173616c",
+          "latitude": 7.0784784,
+          "longitude": 125.613526
+        },
+        {
+          "name": "Calda Pizza",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51fcff386142675f40594f74023f4f501c40f00103f901624f694a00000000c0020192030b43616c64612050697a7a61",
+          "latitude": 7.0784273,
+          "longitude": 125.6134265
+        },
+        {
+          "name": "Pizza Hut",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/510208c49041675f405946cabb8f48501c40f00103f901ffb8711800000000c0020192030950697a7a6120487574",
+          "latitude": 7.0784018,
+          "longitude": 125.6133768
+        },
+        {
+          "name": "Chicco Di Cafe",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/510e2c47c840675f4059d2a8c0c936501c40f00103f901b3b6380d01000000c0020192030e43686963636f2044692043616665",
+          "latitude": 7.078334,
+          "longitude": 125.613329
+        },
+        {
+          "name": "KFC",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/5162e5869540675f4059905f895121501c40f00103f9017c7c1c1600000000c002019203034b4643",
+          "latitude": 7.0782521,
+          "longitude": 125.6133169
+        },
+        {
+          "name": "Gaisano Mall of Davao",
+          "address": "J. P. Laurel Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/5191dcf52d4e675f4059196547f47c4f1c40f00102f9010091e40100000000c0020192031547616973616e6f204d616c6c206f6620446176616f",
+          "latitude": 7.0776251,
+          "longitude": 125.6141467
+        }
+      ]
+    },
+    {
+      "query": "Gaisano Mall Davao",
+      "provider": "locationiq",
+      "milliseconds": 309,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Gaisano Mall of Davao",
+          "address": "J. P. Laurel Avenue, Bajada, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/31756544",
+          "latitude": 7.0776251,
+          "longitude": 125.6141467
+        },
+        {
+          "name": "Gaisano Mall",
+          "address": "J. P. Laurel Avenue, Barangay 13-B, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/node/11982361337",
+          "latitude": 7.0791601,
+          "longitude": 125.6130567
+        },
+        {
+          "name": "Gaisano Mall Substation",
+          "address": "De Guzman Street, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/35932503",
+          "latitude": 7.0788841,
+          "longitude": 125.6141118
+        },
+        {
+          "name": "Gaisano Mall of Toril",
+          "address": "MacArthur Highway, Salsa Village, Lizada, Davao City, Davao Region, 8025, Philippines",
+          "source": "osm/way/845223151",
+          "latitude": 7.0164362,
+          "longitude": 125.493796
+        },
+        {
+          "name": "Gaisano Mall of Digos",
+          "address": "Quezon Avenue, Conte, Zone 1, Digos, Davao del Sur, 8002, Philippines",
+          "source": "osm/way/391378376",
+          "latitude": 6.7591379,
+          "longitude": 125.3463099
+        },
+        {
+          "name": "Gaisano Mall of Tagum",
+          "address": "Briz District, Magugpo East, Tagum, Davao del Norte, 8100, Philippines",
+          "source": "osm/way/175449960",
+          "latitude": 7.4492929,
+          "longitude": 125.8119786
+        },
+        {
+          "name": "Gaisano Grand Ilustre",
+          "address": "Ilustre Street, Barangay 3-A, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/148568701",
+          "latitude": 7.0691757,
+          "longitude": 125.6063476
+        },
+        {
+          "name": "Pizza Hut",
+          "address": "J. P. Laurel Avenue, Bajada, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/node/410106111",
+          "latitude": 7.0784018,
+          "longitude": 125.6133768
+        }
+      ]
+    },
+    {
+      "query": "Jollibee Davao",
+      "provider": "geoapify",
+      "milliseconds": 1401,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Jollibee",
+          "address": "MacArthur Highway, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/5131804b5b37635f405946764aac313d1c40f00102f90183d2731200000000c002019203084a6f6c6c69626565",
+          "latitude": 7.0597598,
+          "longitude": 125.5502537
+        },
+        {
+          "name": "Jollibee",
+          "address": "Davao-Agusan National Highway, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51b354281c8b695f405921c610a562701c40f00102f9015fa7d62200000000c002019203084a6f6c6c69626565",
+          "latitude": 7.1097513,
+          "longitude": 125.6491156
+        },
+        {
+          "name": "Jollibee",
+          "address": "Barcelona Street, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/5192a52089a8675f4059e563778192821c40f00102f9014b1db31500000000c002019203084a6f6c6c69626565",
+          "latitude": 7.127512,
+          "longitude": 125.6196616
+        },
+        {
+          "name": "Jollibee",
+          "address": "MacArthur Highway, Davao City, 8023 Davao Region, Philippines",
+          "source": "geoapify/5192f3b4b2b3625f40593095230967341c40f00102f901e29e233e00000000c002019203084a6f6c6c69626565",
+          "latitude": 7.0511743,
+          "longitude": 125.5422179
+        },
+        {
+          "name": "Jollibee",
+          "address": "Cabantian Bypass Road, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/514963b48e2a695f4059e0de90a1be881c40f00102f901352a473700000000c002019203084a6f6c6c69626565",
+          "latitude": 7.1335397,
+          "longitude": 125.6432225
+        },
+        {
+          "name": "Jollibee",
+          "address": "Quimpo Boulevard, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51355200d674655f40596fede98fd5321c40f00102f901b8af135300000000c002019203084a6f6c6c69626565",
+          "latitude": 7.0496428,
+          "longitude": 125.5852561
+        },
+        {
+          "name": "Jollibee",
+          "address": "Carlos P. Garcia Highway, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/51ad29da66f4675f405935a26aaadd751c40f00102f9017e6f1f3900000000c002019203084a6f6c6c69626565",
+          "latitude": 7.1151034,
+          "longitude": 125.6242921
+        },
+        {
+          "name": "Jollibee",
+          "address": "Don Julian Rodriguez Sr. Avenue, Davao City, 8000 Davao Region, Philippines",
+          "source": "geoapify/511615713a49655f405977514f7a3a521c40f00102f901f131061d00000000c002019203084a6f6c6c69626565",
+          "latitude": 7.0803012,
+          "longitude": 125.5825945
+        }
+      ]
+    },
+    {
+      "query": "Jollibee Davao",
+      "provider": "locationiq",
+      "milliseconds": 262,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Jollibee",
+          "address": "Quimpo Boulevard, Times Beach, 76-A Bucana, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/node/441029563",
+          "latitude": 7.0501698,
+          "longitude": 125.5872808
+        },
+        {
+          "name": "Jollibee",
+          "address": "J. P. Laurel Avenue, Barangay 18-B, Poblacion, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/406210881",
+          "latitude": 7.0844146,
+          "longitude": 125.6123157
+        },
+        {
+          "name": "Jollibee",
+          "address": "Davao-Bukidnon Road, Purok 20, Santo Niño, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/678545163",
+          "latitude": 7.0804989,
+          "longitude": 125.5125157
+        },
+        {
+          "name": "Jollibee",
+          "address": "MacArthur Highway, Vietnam, Talomo, Davao City, Davao Region, 8023, Philippines",
+          "source": "osm/way/1042521826",
+          "latitude": 7.0511743,
+          "longitude": 125.5422179
+        },
+        {
+          "name": "Jollibee",
+          "address": "Lapu Lapu, Agdao Proper, Agdao, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/node/319682964",
+          "latitude": 7.0823511,
+          "longitude": 125.6231678
+        },
+        {
+          "name": "Jollibee",
+          "address": "Davao-Agusan National Highway, Alingit, Tibungco, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/1008879410",
+          "latitude": 7.196555,
+          "longitude": 125.6471508
+        },
+        {
+          "name": "Jollibee",
+          "address": "MacArthur Highway, Bangkal, Talomo, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/309580419",
+          "latitude": 7.0596329,
+          "longitude": 125.5503958
+        },
+        {
+          "name": "Jollibee",
+          "address": "Quimpo Boulevard, 76-A Bucana, Davao City, Davao Region, 8000, Philippines",
+          "source": "osm/way/1393799096",
+          "latitude": 7.0496537,
+          "longitude": 125.5851922
+        }
+      ]
+    },
+    {
+      "query": "Pasig Mega Market",
+      "provider": "geoapify",
+      "milliseconds": 2736,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Pasig Mega City Parking Plaza",
+          "address": "Caruncho Avenue, Pasig, 1601 Metro Manila, Philippines",
+          "source": "geoapify/5169249ddc4a455e405922ad8ca1f71d2d40f00102f901493cf30100000000c0020192031d5061736967204d6567612043697479205061726b696e6720506c617a61",
+          "latitude": 14.5585299,
+          "longitude": 121.0826942
+        },
+        {
+          "name": "Pasig City Public Market",
+          "address": "San Agustin Avenue, Pasig, 1602 Metro Manila, Philippines",
+          "source": "geoapify/5163a131ee61455e40595e8c37e8011e2d40f00102f901693cf30100000000c0020192031850617369672043697479205075626c6963204d61726b6574",
+          "latitude": 14.5586083,
+          "longitude": 121.0841022
+        },
+        {
+          "name": "Pasig City Public Market",
+          "address": "Caruncho Avenue, Pasig, 1601 Metro Manila, Philippines",
+          "source": "geoapify/518fa850dd5c455e405997ac8a70931d2d40f00103f901bc075e4a03000000c0020192031850617369672043697479205075626c6963204d61726b6574",
+          "latitude": 14.5577655,
+          "longitude": 121.083793
+        },
+        {
+          "name": "Pasig Palengke",
+          "address": "San Agustin Avenue, Pasig, 1602 Metro Manila, Philippines",
+          "source": "geoapify/51e5f21fd26f455e4059136ae10dc41d2d40f00103f901a3e8f0ae01000000c0020192030e50617369672050616c656e676b65",
+          "latitude": 14.5581364,
+          "longitude": 121.08495
+        },
+        {
+          "name": "Market Avenue",
+          "address": "M. Suarez Avenue, Pasig, 1606 Metro Manila, Philippines",
+          "source": "geoapify/5191d442c964455e4059705e9cf86a1f2d40f00103f901591359f901000000c0020192030d4d61726b6574204176656e7565",
+          "latitude": 14.561363,
+          "longitude": 121.0842765
+        },
+        {
+          "name": "Pasig - Market Market! UV Express Terminal",
+          "address": "Urbano Velasco Avenue, Pasig, 1602 Metro Manila, Philippines",
+          "source": "geoapify/5115b7c0d485455e40592408fc862e1d2d40f00103f901a49d727601000000c0020192032a5061736967202d204d61726b6574204d61726b6574212055562045787072657373205465726d696e616c",
+          "latitude": 14.5569956,
+          "longitude": 121.0862934
+        },
+        {
+          "name": "Old Pasig Public Market",
+          "address": "A. Mabini Street, Pasig, 1606 Metro Manila, Philippines",
+          "source": "geoapify/5178f6f0c0db445e405993f5e51604202d40f00103f90155eb330f00000000c002019203174f6c64205061736967205075626c6963204d61726b6574",
+          "latitude": 14.5625312,
+          "longitude": 121.0759127
+        },
+        {
+          "name": "Boundary Market",
+          "address": "Elisco Road, Pasig, 1601 Metro Manila, Philippines",
+          "source": "geoapify/51c6d4a76620455e40598f6104430c1a2d40f00103f90158c6878301000000c0020192030f426f756e64617279204d61726b6574",
+          "latitude": 14.5508748,
+          "longitude": 121.0801026
+        }
+      ]
+    },
+    {
+      "query": "Pasig Mega Market",
+      "provider": "locationiq",
+      "milliseconds": 566,
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Pasig Mega City Parking Plaza",
+          "address": "Caruncho Avenue, Divine Mercy Compound, Pasig First District, Pasig, Eastern Manila District, Metro Manila, 1601, Philippines",
+          "source": "osm/way/32717897",
+          "latitude": 14.5585299,
+          "longitude": 121.0826942
+        },
+        {
+          "name": "Pasig City Mega Dialysis Center",
+          "address": "Westbank Road, San Andres, Cainta, Rizal, 1900, Philippines",
+          "source": "osm/way/1225142261",
+          "latitude": 14.5719304,
+          "longitude": 121.1006122
+        },
+        {
+          "name": "City & Land Mega Plaza",
+          "address": "2223, ADB Avenue, San Antonio, Pasig First District, Pasig, Eastern Manila District, Metro Manila, 1553, Philippines",
+          "source": "osm/way/27788084",
+          "latitude": 14.5892405,
+          "longitude": 121.0605994
+        },
+        {
+          "name": "Old Pasig Public Market",
+          "address": "A. Mabini Street, Kapasigan, Pasig First District, Pasig, Eastern Manila District, Metro Manila, 1606, Philippines",
+          "source": "osm/node/255060821",
+          "latitude": 14.5625312,
+          "longitude": 121.0759127
+        },
+        {
+          "name": "Pasig - Market Market! UV Express Terminal",
+          "address": "Urbano Velasco Avenue, Jasmin, Pasig Second District, Pasig, Eastern Manila District, Metro Manila, 1602, Philippines",
+          "source": "osm/node/6282190244",
+          "latitude": 14.5569956,
+          "longitude": 121.0862934
+        },
+        {
+          "name": "Pasig City Public Market",
+          "address": "M. Suarez Avenue, Divine Mercy Compound, Pasig First District, Pasig, Eastern Manila District, Metro Manila, 1601, Philippines",
+          "source": "osm/way/32717929",
+          "latitude": 14.5586083,
+          "longitude": 121.0841022
+        },
+        {
+          "name": "Ultra Mega Market",
+          "address": "MacArthur Highway, Panginay, Balagtas, Bulacan, 3016, Philippines",
+          "source": "osm/way/85380088",
+          "latitude": 14.8207015,
+          "longitude": 120.902653
+        },
+        {
+          "name": "Guihulngan Mega Market",
+          "address": "S. Villegas Street, Poblacion, Guihulngan, Negros Oriental, 6214, Philippines",
+          "source": "osm/way/402110335",
+          "latitude": 10.1192335,
+          "longitude": 123.2709873
+        }
+      ]
+    },
+    {
+      "query": "marketplace",
+      "area": "14.559,121.082",
+      "provider": "geoapify",
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Pasig City Public Market",
+          "source": "osm/way/32717929"
+        },
+        {
+          "name": "Lumang Palengke",
+          "source": "osm/node/255060821"
+        },
+        {
+          "name": "M. Almeda Street",
+          "source": "osm/way/91908216"
+        },
+        {
+          "name": "Bagong Ilog Talipapa",
+          "source": "osm/node/8755319924"
+        },
+        {
+          "name": "Bagong Ilog Talipapa",
+          "source": "osm/node/6501837977"
+        },
+        {
+          "name": "Buting Flea Market",
+          "source": "osm/relation/12401130"
+        },
+        {
+          "name": "Star Market",
+          "source": "osm/way/261634086"
+        },
+        {
+          "name": "A. Mabini Street",
+          "source": "osm/way/339108194"
+        },
+        {
+          "name": "A. Mabini Street",
+          "source": "osm/node/12972808379"
+        },
+        {
+          "name": "Pateros Market",
+          "source": "osm/way/132987425"
+        },
+        {
+          "name": "Comembo Market 2",
+          "source": "osm/way/28996098"
+        },
+        {
+          "name": "Comembo Market",
+          "source": "osm/way/281573934"
+        },
+        {
+          "name": "Palingon market",
+          "source": "osm/way/434584730"
+        },
+        {
+          "name": "Talipapa",
+          "source": "osm/node/3464922237"
+        },
+        {
+          "name": "Block 18",
+          "source": "osm/node/7409657887"
+        },
+        {
+          "name": "Rublou Market Place",
+          "source": "osm/way/232308729"
+        },
+        {
+          "name": "Gift Market",
+          "source": "osm/node/13867225769"
+        },
+        {
+          "name": "Fashion Market",
+          "source": "osm/node/13867225768"
+        },
+        {
+          "name": "Godofredo Lontoc",
+          "source": "osm/node/6166580736"
+        },
+        {
+          "name": "Fiesta Market!",
+          "source": "osm/way/205968611"
+        }
+      ]
+    },
+    {
+      "query": "marketplace",
+      "area": "14.559,121.082",
+      "provider": "locationiq",
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Pasig City Public Market",
+          "source": "osm/way/32717929"
+        },
+        {
+          "name": "Old Pasig Public Market",
+          "source": "osm/node/255060821"
+        },
+        {
+          "name": "Bagong Ilog Talipapa",
+          "source": "osm/node/8755319924"
+        },
+        {
+          "name": "Bagong Ilog Talipapa",
+          "source": "osm/node/6501837977"
+        },
+        {
+          "name": "Buting Flea Market",
+          "source": "osm/relation/12401130"
+        },
+        {
+          "name": "Star Market",
+          "source": "osm/way/261634086"
+        },
+        {
+          "name": "Pateros Market",
+          "source": "osm/way/132987425"
+        },
+        {
+          "name": "Comembo Market 2",
+          "source": "osm/way/28996098"
+        },
+        {
+          "name": "Comembo Market",
+          "source": "osm/way/281573934"
+        },
+        {
+          "name": "Palingon market",
+          "source": "osm/way/434584730"
+        },
+        {
+          "name": "Talipapa",
+          "source": "osm/node/3464922237"
+        },
+        {
+          "name": "Rublou Market Place",
+          "source": "osm/way/232308729"
+        },
+        {
+          "name": "Fiesta Market!",
+          "source": "osm/way/205968611"
+        },
+        {
+          "name": "Palengke ng Barangay Rizal",
+          "source": "osm/node/5413419969"
+        },
+        {
+          "name": "Palengke ng Staffhouse",
+          "source": "osm/node/5413426803"
+        },
+        {
+          "name": "Cembo Talipapa",
+          "source": "osm/relation/17571942"
+        },
+        {
+          "name": "Ensogo Philippines",
+          "source": "osm/node/2198981414"
+        },
+        {
+          "name": "Rosario Public Market",
+          "source": "osm/node/6541304628"
+        },
+        {
+          "name": "Pioneer Street Market",
+          "source": "osm/node/4726867952"
+        },
+        {
+          "name": "Wet & Dry Market",
+          "source": "osm/node/13446494524"
+        }
+      ]
+    },
+    {
+      "query": "marketplace",
+      "area": "10.292,123.898",
+      "provider": "geoapify",
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Carbon Unit 1 Public Market",
+          "source": "osm/way/335725378"
+        },
+        {
+          "name": "Carbon Interim Public Market",
+          "source": "osm/way/335725779"
+        },
+        {
+          "name": "Carbon Unit 3 Public Market",
+          "source": "osm/way/241568591"
+        },
+        {
+          "name": "Pasil Fish Market",
+          "source": "osm/way/609537243"
+        },
+        {
+          "name": "Cebu City Fish Market",
+          "source": "osm/way/420187149"
+        },
+        {
+          "name": "Tabo-an Public Market",
+          "source": "osm/relation/12658509"
+        },
+        {
+          "name": "Tiburcio Padilla Public Market",
+          "source": "osm/way/1119902685"
+        },
+        {
+          "name": "F. Ramos Public Market",
+          "source": "osm/way/282040498"
+        },
+        {
+          "name": "Hipodromo Public Market",
+          "source": "osm/way/1172321959"
+        },
+        {
+          "name": "Hipodromo Access Road",
+          "source": "osm/node/10892465897"
+        },
+        {
+          "name": "Tabada Public Market",
+          "source": "osm/node/5846393438"
+        },
+        {
+          "name": "Banawa Public Market",
+          "source": "osm/way/207704673"
+        },
+        {
+          "name": "Punta Princesa Public Market",
+          "source": "osm/node/7409755885"
+        },
+        {
+          "name": "Tres Borces Padres Street",
+          "source": "osm/way/1284550290"
+        },
+        {
+          "name": "Public Market Barangay Luz",
+          "source": "osm/node/11817509751"
+        },
+        {
+          "name": "Salinas Drive Extension",
+          "source": "osm/node/2126257880"
+        },
+        {
+          "name": "Lahug Market",
+          "source": "osm/node/3182113257"
+        },
+        {
+          "name": "Pardo Public Market",
+          "source": "osm/way/308237871"
+        }
+      ]
+    },
+    {
+      "query": "marketplace",
+      "area": "10.292,123.898",
+      "provider": "locationiq",
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Carbon Unit 1 Public Market",
+          "source": "osm/way/335725378"
+        },
+        {
+          "name": "Carbon Interim Public Market",
+          "source": "osm/way/335725779"
+        },
+        {
+          "name": "Carbon Unit 3 Public Market",
+          "source": "osm/way/241568591"
+        },
+        {
+          "name": "Pasil Fish Market",
+          "source": "osm/way/609537243"
+        },
+        {
+          "name": "Cebu City Fish Market",
+          "source": "osm/way/420187149"
+        },
+        {
+          "name": "Tabo-an Public Market",
+          "source": "osm/relation/12658509"
+        },
+        {
+          "name": "Tiburcio Padilla Public Market",
+          "source": "osm/way/1119902685"
+        },
+        {
+          "name": "F. Ramos Public Market",
+          "source": "osm/way/282040498"
+        },
+        {
+          "name": "Hipodromo Public Market",
+          "source": "osm/way/1172321959"
+        },
+        {
+          "name": "Tabada Public Market",
+          "source": "osm/node/5846393438"
+        },
+        {
+          "name": "Banawa Public Market",
+          "source": "osm/way/207704673"
+        },
+        {
+          "name": "Punta Princesa Public Market",
+          "source": "osm/node/7409755885"
+        },
+        {
+          "name": "Public Market Barangay Luz",
+          "source": "osm/node/11817509751"
+        },
+        {
+          "name": "Lahug Market",
+          "source": "osm/node/3182113257"
+        },
+        {
+          "name": "Pardo Public Market",
+          "source": "osm/way/308237871"
+        }
+      ]
+    },
+    {
+      "query": "marketplace",
+      "area": "7.066,125.602",
+      "provider": "geoapify",
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Metro Mercado",
+          "source": "osm/node/410146547"
+        },
+        {
+          "name": "Fruits Stalls",
+          "source": "osm/way/36958299"
+        },
+        {
+          "name": "Bankerohan Public Market",
+          "source": "osm/way/504130920"
+        },
+        {
+          "name": "Organic Farmer's Market",
+          "source": "osm/node/9900715221"
+        },
+        {
+          "name": "Roxas Night Market",
+          "source": "osm/way/504508082"
+        },
+        {
+          "name": "Mabini Public Market",
+          "source": "osm/way/1046090454"
+        },
+        {
+          "name": "M. L. Quezon Boulevard",
+          "source": "osm/way/587358525"
+        },
+        {
+          "name": "Magsaysay Fruit Vendors Association",
+          "source": "osm/way/587691807"
+        },
+        {
+          "name": "Bajada Divisoria Night Market",
+          "source": "osm/way/505956157"
+        },
+        {
+          "name": "Agdao Public Market",
+          "source": "osm/way/28995122"
+        },
+        {
+          "name": "Matina Public Market",
+          "source": "osm/way/37582946"
+        },
+        {
+          "name": "Congressman I. Veloso Road",
+          "source": "osm/way/311361258"
+        },
+        {
+          "name": "Shanghai Market",
+          "source": "osm/way/364064653"
+        },
+        {
+          "name": "Buhangin Public Market",
+          "source": "osm/way/140128508"
+        }
+      ]
+    },
+    {
+      "query": "marketplace",
+      "area": "7.066,125.602",
+      "provider": "locationiq",
+      "status": "ok",
+      "candidates": [
+        {
+          "name": "Metro Mercado",
+          "source": "osm/node/410146547"
+        },
+        {
+          "name": "Fruits Stalls",
+          "source": "osm/way/36958299"
+        },
+        {
+          "name": "Bankerohan Public Market",
+          "source": "osm/way/504130920"
+        },
+        {
+          "name": "Organic Farmer's Market",
+          "source": "osm/node/9900715221"
+        },
+        {
+          "name": "Roxas Night Market",
+          "source": "osm/way/504508082"
+        },
+        {
+          "name": "Mabini Public Market",
+          "source": "osm/way/1046090454"
+        },
+        {
+          "name": "Magsaysay Fruit Vendors Association",
+          "source": "osm/way/587691807"
+        },
+        {
+          "name": "Bajada Divisoria Night Market",
+          "source": "osm/way/505956157"
+        },
+        {
+          "name": "Agdao Public Market",
+          "source": "osm/way/28995122"
+        },
+        {
+          "name": "Matina Public Market",
+          "source": "osm/way/37582946"
+        },
+        {
+          "name": "Shanghai Market",
+          "source": "osm/way/364064653"
+        },
+        {
+          "name": "Buhangin Public Market",
+          "source": "osm/way/140128508"
+        }
+      ]
+    }
+  ],
+  "diagnostic_requests": 1,
+  "total_requests_including_diagnostics": 32,
+  "diagnostic_note": "One additional Geoapify response-shape inspection confirmed autocomplete omits raw OSM IDs. No credential or request URL retained."
+}

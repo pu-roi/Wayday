@@ -1,0 +1,43 @@
+{
+  "checked_at_utc": "2026-10-28T17:50:32.001089Z",
+  "sample": "SM Megamall to Shangri-La Plaza, Mandaluyong",
+  "scope": "DRIVE with TRAFFIC_AWARE; no polyline or navigation request",
+  "passed": true,
+  "requests_started": 4,
+  "route_requests_started": 3,
+  "matrix_elements_requested": 1,
+  "checks": [
+    {
+      "check": "route_correct_identity",
+      "operation": "computeRoutes",
+      "passed": true,
+      "http_status": 200,
+      "reason": "usable_route",
+      "milliseconds": 409
+    },
+    {
+      "check": "route_wrong_package",
+      "operation": "computeRoutes",
+      "passed": true,
+      "http_status": 403,
+      "reason": "API_KEY_ANDROID_APP_BLOCKED",
+      "milliseconds": 50
+    },
+    {
+      "check": "route_wrong_certificate",
+      "operation": "computeRoutes",
+      "passed": true,
+      "http_status": 403,
+      "reason": "API_KEY_ANDROID_APP_BLOCKED",
+      "milliseconds": 43
+    },
+    {
+      "check": "matrix_correct_identity",
+      "operation": "computeRouteMatrix",
+      "passed": true,
+      "http_status": 200,
+      "reason": "usable_route",
+      "milliseconds": 63
+    }
+  ]
+}

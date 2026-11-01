@@ -16,6 +16,11 @@ if (Test-Path -LiteralPath $localFlutter) {
     $flutterExecutable = (Get-Command flutter -ErrorAction Stop).Source
 }
 
+if ($FlutterArguments.Count -gt 0 -and $FlutterArguments[0] -in @('run', 'build', 'drive')) {
+    $searchConfiguration = & (Join-Path $PSScriptRoot 'configure-search.ps1')
+    $FlutterArguments += '--dart-define-from-file=' + $searchConfiguration
+}
+
 Push-Location (Join-Path $PSScriptRoot '..')
 try {
     & $flutterExecutable --suppress-analytics @FlutterArguments

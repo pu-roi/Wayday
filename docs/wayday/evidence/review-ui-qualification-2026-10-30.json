@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-30",
+  "decision": "D49",
+  "scope": "Compact interpretation review UI",
+  "analyze": "passed",
+  "flutterSuite": {
+    "passed": 237,
+    "skipped": 1,
+    "knownBaselineFailures": 8,
+    "newFailures": 0
+  },
+  "newReviewTests": 8,
+  "renders": [
+    {
+      "size": [
+        390,
+        844
+      ],
+      "textScale": 1
+    },
+    {
+      "size": [
+        320,
+        740
+      ],
+      "textScale": 2
+    },
+    {
+      "size": [
+        768,
+        1024
+      ],
+      "textScale": 1
+    }
+  ],
+  "renderSource": "Synthetic Flutter fixtures with bundled Figtree and Material icons",
+  "android": {
+    "device": "Samsung SM-A546E",
+    "package": "dev.wayday.wayday",
+    "install": "adb install -r succeeded",
+    "launch": "succeeded",
+    "savedTodayErrands": 4,
+    "allErrandColumnsPreserved": true,
+    "sqliteIntegrity": "ok",
+    "geminiAttemptsRemainingBefore": 8,
+    "geminiAttemptsRemainingAfter": 8,
+    "liveGeminiCalls": 0
+  },
+  "limitations": [
+    "Eight existing map/profile/Today-picker test failures remain",
+    "Native TalkBack and predictive Back were not tested",
+    "No complete live trip rehearsal performed",
+    "Existing Impeccable design.json sidecar is stale"
+  ]
+}

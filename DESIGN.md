@@ -56,6 +56,18 @@ components:
 
 # Design System: Wayday mobile
 
+## Place information and stable map confirmation — D66
+
+Choose a place keeps its content-sized sheet and fixed errand pager. Use actual business name, current-place/locality line, wrapping formatted address, trip-day hours and available travel comparison; suppress equal locality/address lines. Available Google rating/count is secondary text in alternatives and Details, without expanding compact main rows or adding rating cutoffs. Missing addresses/ratings are not invented and displaying rows does not fetch data.
+
+Details and alternatives show a labelled Open now/Closed now indicator when fresh current hours support it; weekly fallback says Usually open/closed now. Pair wording with an icon and existing link/attention colors. Keep current status separate from planned-visit compatibility and future trip-day windows. Closed-at-visit and closes-before-completion warnings require an actually calculated visit. Missing, failed, stale and pin-only hours must not turn into a Closed label. Minute-boundary refresh is local and makes no provider request.
+
+Keep the manual center pin and visible Confirm location action. Ordinary panning must not flash its disabled appearance after a valid candidate exists. Confirmation briefly processes while waiting for final idle coordinates, times out after three seconds, and asks for confirmation again after a superseding selection. Invalid/no selection and conflicting operations retain honest disabled/error states. Zoom readout changes are isolated from the picker layout and throttled; native map identity stays stable. Preserve labels, attribution, saved places, current-location consent, keyboard behavior and provider provenance.
+
+Today's displayed date remains the plan date. Only empty/default forms without a chosen date, draft/editor or accepted trip follow Manila startup/resume/midnight. Clear and Finish restore the current default date. Do not silently move a populated plan or legacy date.
+
+The latest focused review repair preserves existing layout, labels, Edit errand and Choose actual location. Required unanswered questions use a question-bubble icon, Needs your answer and semantic dark amber #7A4500; optional questions retain normal colors and Optional. Stored, resolved answers use a normal-color check-circle. Processing, unresolved results, failed saving and rules awaiting approval must remain distinguishable. Clearing a saved answer withdraws its resolution and restores its unanswered treatment after the user's edit; a nonempty draft does not apply a new answer. Let Wayday recommend saves an explicit choice directly, without inserting a generated sentence. Trip details retains its wording and disclosure behavior with a normal-blue route icon. See [the current planning contract](docs/wayday/PLANNING.md#current-trip-recovery-and-finishing--d65-current-contract). The subsequent D60 repair removes separate location-recheck and assessment recovery controls; users answer the existing question instead. Recommendation recovery retains real choices, identifies an unfinished trip, uses failure-specific actions and keeps manual search secondary. A service rejection must not be described as no matching businesses. Long recovery actions stack beneath text on narrow/enlarged layouts.
+
 ## Overview
 
 Product context for design tools is maintained in [the README product requirements](README.md#product-requirements), including the product schema marker and platform/stack context. Supply README.md explicitly when a tool needs product context. See [the documentation index](README.md) for the remaining project documents.
@@ -144,7 +156,7 @@ Fields, primary actions, enclosing groups, and sheet tops use the frontmatter ra
 
 ### Buttons
 
-FilledButton is the Cornflower anchor with dark content, zero authored elevation, and the frontmatter minimum height and radius. Text and icon buttons use readable blue or supporting-text roles. Preserve native pressed, hovered, focused, and disabled states. Today disables **Plan my day** when empty; the enabled action opens an explanation that route calculations are still to come.
+FilledButton is the Cornflower anchor with dark content and zero authored elevation. Filled and outlined actions share a 56-unit minimum height, 18-unit radius, Figtree 16 semibold label and 20-by-12 horizontal/vertical padding. Outlined labels use readable blue. Stacked primary/secondary actions share available width and page insets; longer labels and larger text may increase height rather than clip. Compact text/toolbar actions retain 48-unit targets. Preserve native pressed, hovered, focused and disabled states. Today disables **Plan my day** when empty; enabled entry starts cache-first understanding directly.
 
 ### Cards / Containers
 
@@ -154,9 +166,13 @@ The shared white outlined surface groups related content in Today, Recurring, an
 
 Fields have a quiet fill, no resting stroke, and a readable-blue focus stroke (1.5 units). Floating labels use readable blue when focused, supporting text when resting, and the generated error role for errors. The errand title accepts one to three lines. Quick add reveals one field and **Done adding**; submit adds an Anytime errand, clears the field, and keeps its state and keyboard focus for another entry. The composer follows the growing list to remain visible. Tapping a row opens the shared draft editor. Save validates and commits; system Back discards the draft. Delete and clear actions expose Undo where implemented.
 
+### Errand details
+
+The focused editor keeps the errand name, Notes, Where, a compact When summary, and If there’s time visible. When opens the shared single-choice sheet, followed by numeric time entry when needed; a separate clock row displays and edits the selected time. A state-preserving More details disclosure uses an inline header and subtle divider, followed by expanded visit-duration and prerequisite controls. Its summary identifies entered details and unavailable prerequisite references; its chevron rotates with the disclosure and honors reduced motion. After expansion, the editor scrolls the last control into view when necessary; a manual drag cancels a pending automatic adjustment. Dependency selection excludes the current errand and prevents new cycles. These choices are saved as local input; automatic planning is not implemented.
+
 ### Errand notes
 
-The focused editor contains a labeled **Notes (optional)** multiline field with a four-line minimum that grows with its content. It uses the shared field treatment and scrollable form. Notes are plain text, can be cleared, and save with the errand draft. Recurring copies carry notes independently into Today; neither later edit rewrites the other. Notes persist with Today and Recurring on Android; the browser preview remains in memory. Interactive shopping checklists are not implemented.
+The focused editor contains a labeled **Notes (optional)** multiline field directly after the errand name, with a four-line minimum that grows with its content. It uses the shared field treatment and scrollable form. Notes are plain text, can be cleared, and save with the errand draft. Recurring copies carry notes independently into Today; neither later edit rewrites the other. Notes persist with Today and Recurring on Android; the browser preview remains in memory. Interactive shopping checklists are not implemented.
 
 ### List motion and disclosure
 
@@ -184,7 +200,7 @@ Today shows an online map directly below trip settings, extending to the edges o
 
 ### Selection controls
 
-[Shared selection controls](apps/mobile/lib/core/widgets/selection_controls.dart) use the existing Cornflower theme. The four timing choices and four repeat frequencies appear as labeled radio rows. Group labels use the section type role with an 8-unit gap; rows use 12-unit horizontal padding, a 14-unit corner radius, a minimum 48-unit height, and wrapping labels. Selection combines a checked radio, pale-blue container, and readable-blue content. State is not conveyed by color alone. Radio groups support Tab, arrow keys, and Space through Material's shared group semantics.
+[Shared selection controls](apps/mobile/lib/core/widgets/selection_controls.dart) use the existing Cornflower theme. The four timing choices appear in a selection sheet, while repeat frequencies appear as labeled radio rows. Group labels use the section type role with an 8-unit gap; rows use 12-unit horizontal padding, a 14-unit corner radius, a minimum 48-unit height, and wrapping labels. Selection combines a checked radio, pale-blue container, and readable-blue content. State is not conveyed by color alone. Radio groups support Tab, arrow keys, and Space through Material's shared group semantics.
 
 Weekday entry opens the same scrollable single-choice sheet with a visible title, current selection, and seven weekday rows. Sheet headings use the title role, with a 16-unit gap before choices and actions. The sheet retains the 24-unit content inset and safe-area handling. Choices stay pending until **Done**; **Cancel**, Back, a swipe, or tapping outside discard them. Text drafts remain intact, the sheet opens without a text keyboard, and dismissal returns focus to the invoking day control. Remove animations makes its entry and exit transitions immediate.
 
@@ -226,3 +242,127 @@ The sidecar's self-contained HTML/CSS snippets translate native shapes and group
 - **Don't** present illustrative map geometry as geographic data, search results, or a calculated route.
 - **Don't** imply unverified persistence for a new feature or claim that repeat metadata schedules automatic additions. Today/Recurring restart persistence is verified on Android.
 - **Don't** treat native screenshots as verification of TalkBack, predictive Back, or performance.
+
+
+## Shared place search (2026-10-29)
+
+Today endpoint rows and the errand editor's Where section keep their location labels compact. Do not show a provider-credit line in either section; the owner requested credits in Settings. Clear resets errands, both endpoints and trip settings; the current date remains selected, and Undo restores the previous plan.
+
+Google and Other sources share the original picker controls and Figtree/Cornflower vocabulary. Keep the title, Close search, and rounded pale query field fixed above the content. The source choices are compact text actions; the active source uses stronger weight and an underline, without a filled selection block. The active origin, Near me / Use my location, and Search this area stay in the search content. Saved-place rows, ambiguous suggestions and failure/retry controls are shared between source groups. The Places heading and automatic-correction explanation and original-text action are omitted to make more room for results. The search interpreter still applies its aliases and corrections while retaining the typed text.
+
+Keep the same controls while typing. Do not replace them with a Search options menu or remove the fallback actions when the keyboard appears. Use name only remains a full icon/title/subtitle row, followed by the separate Back to map action. Other sources uses lazy, scrolling white result rows with Google-like title/address typography, padding and dividers. A neutral chevron selects the row; straight-line distance labels and provider credits remain visible. Google uses content-sized controls above its native list and full fallback rows below; on constrained viewports the controls and fallback regions scroll, reserving a 180-unit native results viewport on normal panels and 45 percent on panels of 400 units or less. Their height limits are ceilings, not reserved blank space.
+
+Google retains standard native cards, their order, attribution and required controls. Position the SDK's Google Maps attribution at the bottom of the native results component, above Wayday's name-only/map fallback region; do not replace or hide it. Supported theme overrides use regular-weight sixteen-unit place names, fourteen-unit muted addresses, Figtree, flat white surfaces, quiet outlines and Cornflower actions. The Google SDK retains its own card structure and external Maps control, so the rows are visually similar rather than identical; no Google results or distance labels are manufactured. The native CardView style explicitly uses a white background, including in Android system dark mode. Font resources still come from the existing licensed bundled asset.
+
+The native host keeps its key and tree position through IME, text-scale, status and layout changes. These changes must not rebind a search request. Source switching preserves the query, origin and draft; selecting a record still leads to Your label and Confirm location. Verification and remaining device limitations are recorded in Progress.
+
+Within an open picker, switching sources restores each group's loaded results, status, frozen updates and scroll position immediately. Google remains mounted while hidden, with native focus/accessibility excluded, rather than rebuilding its fragment. Results remain until search closes; switching does not refresh them after a timer. A compact refresh icon beside the source choices has the tooltip and accessibility label **Refresh results**. It deliberately refreshes the selected source group, respects quotas and keeps existing rows visible while loading. Failed searches retain their explicit Retry search action. Query, category and explicit origin changes start a new results context. Keyboard visibility does not end the session.
+
+
+## Plan my day preparation and itinerary — D47
+
+Use the same Flutter theme, Figtree text, compact rows and focused editors as Today. Preparation opens loading directly, then Review errands with explicit model proposals and conditional actual-location correction (D48–D49). Place discovery retains standard visible Google UI Kit components and explicit Other sources. Never replace native Google cards with invented branch names or remove their attribution. Recommendations offer a change-place action; Your day combines a Google route map with numbered arrival/service/departure rows and separate optional omissions. Required information and updated traffic validation gate acceptance.
+
+Back moves to the preceding preparation state while retaining the draft; Close returns to Today. Returning through constraint review invalidates route estimates before acceptance. Calendar selection and existing numeric time sheets resolve past departures explicitly. Use native map interaction only to select/recenter a stop, with a readable timeline fallback and attribution outside overlays. Saved itinerary progress uses explicit independent checkboxes; arrival alone does not complete errands. The trip screen embeds guidance and exposes Stop/Back without deleting progress. Reduced motion and text scaling follow the existing theme and shared controls; no new decorative motion or color system is introduced.
+
+The current Impeccable brief includes a dated correction for its historical sample/memory/illustrative-map assumptions. No active Impeccable tool execution is claimed. Physical-device large-text/TalkBack and live navigation checks remain distinct from fixture rendering.
+
+
+## Direct preparation entry — D48
+
+The owner removed the introductory Plan my day page. Tapping the existing primary action immediately shows the existing loading treatment while saved understanding is checked or Gemini processes current input. No preliminary Continue action or artificial delay is added. A matching completed result proceeds to Review errands. Back/Close during understanding exits to Today while bounded in-flight work can finish and save its answer. Back from Review exits to Today, and re-entry restores matching interpretation rather than showing the removed introduction.
+
+On actual failure, show a concise explanation, Check saved understanding and an explicitly labelled Retry Gemini (uses a request) action. Existing completed answers are reused even on retry; pending/failed outcomes require explicit retry before dispatch. Keep proposal approval explicit and preserve the existing app theme, scrollable content, touch targets and source-data cancellation semantics. D49 replaces ambiguous per-errand checkboxes with named suggestion actions.
+
+
+## Compact interpretation review — D49
+
+Review errands has one short explanation, an expandable Trip details summary, and a single outlined group of compact numbered errands. Each errand shows its existing timing, visit length and optional status. Tap the row to reveal notes, interpreted search/items, existing prerequisites and Edit errand. Show only applicable differences between the user’s draft and the effective model proposal, using readable Current and Suggested values. Use suggestion explicitly selects those differences; Keep current declines or reverses selection. Neither action completes an errand or sends a model request. Selection remains reversible after returning from discovery.
+
+Do not repeat unchanged/protected timing, priority or duration as suggestions, expose internal timing enum names, or place a Review action on the Review errands page itself. Other preparation stages retain the existing return-to-review action. Missing private locations and unanswered questions remain visible outside collapsed details. Extra errands expose their proposed details and explicit Add/Remove actions. Truck’s distinct light-pickup confirmation remains required. Trip details initially expand when endpoint correction or light-pickup confirmation is needed.
+
+Next: find suitable places stays anchored below the scrolling review content, capped with the same 560-unit content column. Errors appear directly above it in a bounded scrollable live region. Expansion respects Remove animations; long labels and enlarged text wrap. The updated review was rendered with the bundled Figtree and Material icons at 390 × 844, 320 × 740 with 2× text, and 768 × 1024. These are synthetic Flutter captures; they do not establish native TalkBack or live-service behavior. Impeccable context and its distill/craft guidance were used for this focused refinement; historical no-tool statements above describe earlier work.
+
+### Discoverable trip editing — D56
+
+Use the review list's existing typography throughout this section: 14-unit `bodyMedium` for the section heading, field labels and field values, semibold only for the heading; 12-unit `bodySmall` for the trip summary and supporting hints. Edit/Hide retains the shared 14-unit action style. Do not enlarge field values to `bodyLarge` or shrink their persistent labels to `bodySmall`. Place the pencil beside the value so long labels can use the field's full content width and the two time controls remain aligned.
+
+Review's Trip details uses the shared outlined white surface and a readable-blue Edit label with a disclosure chevron. Expanded details show labeled, pale filled date, departure, finish-time, From and To controls. Every entire field opens its existing editor; a trailing pencil communicates editing without relying on color alone. The date includes its year, and location values remain separate from their persistent From/To labels. Missing coordinates retain Choose a map location; confirmed points do not repeat Location ready.
+
+Departure and finish time share a row when the inner width is at least 320 units and scaled 14-unit text is no larger than 17; otherwise they stack. Enlarged text also removes the header's redundant Edit/Hide word while keeping the disclosure icon and native expansion semantics. Values wrap without ellipses, fields have at least 64-unit height, and Material ink/focus states and labeled button semantics remain available. The component listens to the expansion controller so restored disclosure state and its header agree. Existing picker, cancellation, validation, persistence and light-pickup confirmation behavior is retained. Verification is recorded separately in Progress.
+
+
+### Location questions and recommendation cues — D50
+
+A generic model-generated location question does not replace current place state. Existing usable points remain selected. Unattached business/activity rows show Place recommendations next and continue to discovery. Missing private meeting points expose Choose actual location; expired selected references also require confirmation. Shared domain policy controls both visible questions and Next validation, including existing cached answers. Mixed or non-location clarification questions remain explicit. No additional model request is made merely to apply this correction.
+
+
+### Validation feedback after editing — D51
+
+Preparation errors describe the input that was checked. Saving a new date/time or changing the preparation model clears the old local warning; cancelling an edit leaves it visible. The next forward action validates current values again. Do not leave a past-departure message under a corrected future departure or automatically rewrite the user’s trip date.
+
+
+### Immediate order preview and departure recovery — D52
+
+Choosing or declining an ordering suggestion immediately updates the numbered review rows using the same projection as forward validation. Keep the baseline for reversal and preserve explicit user fields. A genuinely expired departure expands trip details initially and displays its exact date/time with Change date and Change departure. Next is disabled while it is past or dependency rules are invalid. Keep feedback scrollable within a bounded region at enlarged text sizes; the primary action remains anchored. Refresh clock-dependent feedback on resume without provider work.
+
+Confirmed review date/time edits are retained locally for the matching Today source, independently of Today and the accepted itinerary. Close/reopen restores them; cancellation does not save. Storage failures remain visible with Retry saving trip settings. Replanning keeps its own supplied context. There is no silent movement of appointments, automatic date rollover or extra Gemini generation for this restoration.
+
+### Review field recovery — D53
+
+Use the existing review feedback area for actionable conflicts, naming the errand and offering its editor. Keep Next visible but disabled while a deterministic blocking issue remains. Preserve compact rows and bound/scroll long feedback at large text. Do not introduce another confirmation page or automatic appointment changes. Review editing exposes supported field changes; source-errand removal remains in Today.
+
+### Understanding recovery — D55
+
+Use one short state heading and relevant explanation. Distinguish a missing answer, interrupted processing, connectivity, configuration and a Google provider quota. Check saved understanding is a full-width read-only action, paired with an equally wide Retry Gemini action. Explain the possible request cost once beneath the controls. Do not show obsolete local attempt-count limits.
+
+## Clarification answer sheets — D57
+
+A question opens a focused modal sheet, not the errand editor. Reuse the 560-unit content bound, existing sheet shape, Figtree roles and shared action metrics. Show the errand title, one question, an English/Filipino/Taglish answer field and Use answer. Keep text concise; use context-specific quick actions. Processing shows Understanding your answer, prevents duplicate submission and permits Close. Keyboard insets and scrolling keep actions reachable at narrow widths and enlarged text; disable discretionary sheet transitions under reduced motion.
+
+A successfully saved answer becomes a compact editable summary beneath its errand. Keep the visible 15-minute estimate and estimate label unchanged. Optional preferences never block the next step. Proposed rules stay in expanded details with explicit approval. Unknown essential points expose the existing picker and Plan the other errands. Deferral previews affected tasks, keeps reasons visible and provides Include in this plan; an empty active plan explains that an errand must be included. Drafts stay separate from applied results, and saved-result checks/save retries do not spend generation requests.
+
+
+## Route-aware recommendations — D58
+
+After Review errands, Build recommendations automatically discovers flexible places and compares the whole trip. Replace the discovery search form with Recommended places: one shared Google map, a compact trip summary, numbered rows and an anchored Next: see my day action. Keep the existing 560-unit content bound, Cornflower/Figtree theme and shared action metrics. Monochrome category icons supplement numbered stop identity. Rows show errand, actual provider name, available locality, incoming travel time/distance and one concise recommendation reason. Selecting a row or marker synchronizes the same stop; expanding reveals full address, available category, approximate extra travel, unknown availability, calculation time and Change place. Shared visits retain individual errands.
+
+The map can collapse, particularly at short heights and enlarged text. Keep a visible Map action and readable list fallback. Google attribution remains visible when the map is collapsed, and provider credits retain their links/emphasis. Traffic now is a separate map control for supported motorized modes, not a claim about future traffic. Panning, zooming, selecting a marker and scrolling never search or recalculate. A and B identify endpoints; numbered stop markers match list numbering.
+
+Change place opens an alternatives page with Previous/Next errand controls, preserved selections, approximate comparisons where road data exists and a separate Search for a place action. Manual selection uses Choose place, saved places and Choose on map in the existing picker. Planning requires a map location and omits Use name only; other picker contexts retain their existing role. Back returns through the prior view without discarding choices. Close saves matching draft choices; a storage failure stays explicit. Phone location is an explicit foreground action and does not replace the planned start until Confirm location.
+
+Use transient Places SDK names/addresses for recommendation presentation, separately from durable user errand labels and provider IDs. Never invent a place name, landmark, distance or road estimate. Source/context-bound drafts restore navigation and choices after restart while estimates are rebuilt. Check narrow screens, long Filipino/Taglish content, keyboard insets, text scaling, focus, semantics and reduced motion. Synthetic captures and the isolated Android fixture run do not establish live coverage or physical-phone/TalkBack readiness.
+
+## Combined trip review — D61
+
+Your plan combines a compact trip summary, numbered errand/place rows with visible Change, arrival/visit/incoming travel information, one route preview and important notices. Details disclose address, departure, waiting, buffer, reasons and calculation age. Multi-edit state replaces Start trip with Update plan; unavailable data never looks current. Recovery retains all editing controls. Alternatives are a supporting sheet with secondary manual search. The inline map yields vertical scrolling and an expanded interactive map retains attribution. Preserve Canvas/Cornflower, Figtree, theme target sizes, reduced motion and enlarged-text reflow. Start trip opens navigation; Save for reuse creates a separately named Recurring entry.
+
+## Clearer alternatives and route updates — D62
+
+D62 supersedes D61's manual Update plan interaction and the redundant trip-summary/Trip details block on Your plan. Keep Trip details on Review errands. Replacements save and automatically refresh roads and timing after a 500 ms debounce. Your plan stays visible with Updating route, enabled Change controls and disabled Start trip. Move changed markers immediately, hide outdated route/times, and replace geometry/order/schedule together. Failed updates retain edits with Retry route update; never display stale estimates as confirmed.
+
+The alternatives sheet fits short content and has a maximum of 90% of usable height. The heading, Close and Errand 3 of 3 · Groceries pager stay visible; results and actions scroll. Retain Previous/Next arrows and per-errand scroll/list state. Mark Current place with a checkmark and selection semantics. Show actual business/locality and available approximate comparisons. Where unavailable, explain once above the list that route/schedule update after selection.
+
+After the rows, Show more suggestions appends up to three unique choices. Choose a specific place is a separate outlined action with the explanation: Search by name or address, use a saved place, or choose on the map. Put attribution after these controls. Avoid a nested Scaffold, forced 90% sheet height or a bottom-anchored action separated by empty space. Keep 48-unit controls, wrapping, keyboard/safe-area handling and reduced motion. Cancelled manual selection returns to the same sheet; dismissal returns to the underlying plan. Loading/error/exhaustion states retain selectable rows and distinguish failed searches from no additional suggestions.
+
+## Business hours in disclosed places — D63
+
+Preserve compact Your plan rows. Display reported trip-day hours only inside Details and Choose a place. Details offers Weekly hours, retrieval date/time attributed to Google Maps, and expected visit compatibility only when a fresh route actually validates that stop. Checked means Wayday retrieved the data, not that the business confirmed it at that moment. Alternatives show the date's hours; retain the recalculation explanation for branches without candidate-specific timing. Main plan feedback identifies blocking closing conflicts and keeps Change available.
+
+Distinguish Hours not provided by Google Maps, Business hours could not be checked, Business hours need refreshing, and hours unavailable for this trip date. Failed/stale checks offer an explicit retry. A dropped pin without a Google business ID states that business hours are unavailable for that pin. Keep unknown hours visible as unknown; never label them closed. Retain an unsuitable current selection with its hours rather than silently removing it. Future regular-week fallback says Usual hours and discloses special-date uncertainty. Remove the blanket opening-hours warning and keep the five-minute buffer explanation separate. Hours do not prove stock, membership access, order readiness or appointment capacity. Preserve wrapping, existing typography/actions, provider attribution, nested Back and enlarged-text scrolling.
+
+## Compact sequential guidance — D64
+
+Your trip gives the map the remaining viewport and keeps a compact current-errand panel below. The owner clarified that only one active errand and one checkbox may be shown, including at shared stops. Use Mark this errand when done, the current task title and its checkbox. Save before revealing the next task; completing one of several errands at a location does not advance guidance prematurely. Do not repeat the place label or permanently display the explanatory paragraph. Final destination and Finish trip appear after all remaining errands are completed.
+
+Keep native Google maneuver instructions, ETA/distance, compass, Recenter and attribution unobscured. Whole trip is a toolbar text action, changing to a labelled/tooled route icon on narrow or enlarged-text toolbars. It fits the remaining road geometry and waypoints; Recenter restores location following. The options menu contains View plan and Navigation info. Back stops guidance and returns to saved progress. The information sheet explains manual completion and the distinction between live navigation travel estimates and the errand schedule. Keep normal 48-unit targets, wrapping and bounded scrolling for long task labels. The map stays stable through state changes; GPS recovery does not repeatedly reset manual panning.
+
+Wayday's panel remains in the light Canvas/Cornflower theme; navigation uses automatic day/night lighting. Modernize the activity NormalTheme with existing Material Components and apply supported SDK dialog colors. Preserve Google's terms content, links and acceptance. No custom imitation of Google navigation controls or terms is introduced. Synthetic UI captures and mocked Android interaction are separate from actual GPS, native camera/route rendering and physical TalkBack qualification.
+
+## Current-trip recovery and Finish — D65
+
+Place a compact Current trip surface below Today's date and above its editor, with the shared route icon, progress such as 1 of 3 errands completed, and Resume trip. Resume opens the existing current-trip summary. Remove the bottom View saved plan shortcut. A fully checked errand list is not a finished journey; retain recovery until Finish is confirmed. No automatic reusable entry or completed-history section appears. Keep the Cornflower/Canvas/Figtree system, compact spacing, 48-unit actions and wrapping at enlarged text.
+
+Back/View plan preserves progress. Finish trip, available after all assigned errands are done in the summary and navigation's final-destination state, opens Finish trip and clear Today? with Cancel and Finish and clear Today. Explain that all Today errands, locations and trip settings reset, including work added or left out of the trip; reusable trips, recurring lists and saved places remain. Use a scrollable accessible dialog for long/large text. Clear the recovery section and return to Today only after storage commits. Failed cleanup shows Retry finishing trip; changed Today requires a renewed confirmation. Finishing is distinct from stopping guidance or Save for reuse.
+
+The Finish trip action uses a full-width outlined button with the shared 56-unit minimum height and flag icon, including its retry/processing states. The owner requested a visible button boundary because the former text-only action was easy to miss. Keep the confirmation and cleanup behavior unchanged.

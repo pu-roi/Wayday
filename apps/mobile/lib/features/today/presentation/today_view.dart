@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,9 +11,17 @@ import '../../../core/widgets/section_surface.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
-import '../../review/presentation/day_review_view.dart';
+import '../../planning/presentation/planning_view.dart';
+import '../../planning/presentation/current_trip_section.dart';
+import '../../planning/presentation/saved_plan_view.dart'
+    show savedItineraryProvider;
+import '../../planning/presentation/finish_trip.dart';
 import '../../maps/presentation/place_map.dart';
 import '../../maps/presentation/regional_map.dart';
+import '../../places/data/google_pin_cache.dart';
+import '../../places/data/combined_place_search.dart';
+import '../../places/domain/place_search.dart';
+import '../../places/domain/place_intent.dart';
 import '../domain/day.dart';
 import 'today_controller.dart';
 
@@ -30,27 +39,235 @@ class TodayView extends ConsumerStatefulWidget {
   ConsumerState<TodayView> createState() => _TodayViewState();
 }
 
-class _TodayViewState extends ConsumerState<TodayView> {
+class _TodayViewState extends ConsumerState<TodayView>
+    with WidgetsBindingObserver {
+  late final GooglePinCache _googlePins;
+  late final CombinedPlaceSearch _placeSearch;
+  final _fromLookup = Object(), _toLookup = Object();
+  final _finding = <bool>{};
+  final _lookupTimers = <bool, Timer>{};
+  int _fromRevision = 0, _toRevision = 0;
+  Timer? _midnight;
+  bool _composerDraft = false;
+  int _editors = 0;
+  Future<T> _editor<T>(Future<T> Function() open) async {
+    _editors++;
+    try {
+      return await open();
+    } finally {
+      _editors--;
+      if (mounted) unawaited(_refreshDate());
+    }
+  }
+
+  Future<void> _refreshDate() async {
+    if (!mounted ||
+        _composerDraft ||
+        _editors > 0 ||
+        ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
+    final day = ref.read(todayProvider);
+    if (!day.canDefaultDate) return;
+    try {
+      final trip = await ref.read(savedItineraryProvider.future);
+      if (!mounted ||
+          trip != null ||
+          _composerDraft ||
+          _editors > 0 ||
+          ref.read(todayProvider).revision != day.revision ||
+          ModalRoute.of(context)?.isCurrent == false) {
+        return;
+      }
+      ref
+          .read(todayProvider.notifier)
+          .refreshDefaultDate(ref.read(todayClockProvider)());
+    } catch (_) {
+      // Recovery could not be checked: preserve the existing plan date.
+    }
+  }
+
+  void _watchDate() {
+    _midnight?.cancel();
+    final now = ref.read(todayClockProvider)().toUtc();
+    final manila = now.add(const Duration(hours: 8));
+    final next = DateTime.utc(
+      manila.year,
+      manila.month,
+      manila.day + 1,
+    ).subtract(const Duration(hours: 8));
+    _midnight = Timer(
+      next.difference(now) + const Duration(milliseconds: 100),
+      () {
+        if (!mounted) return;
+        unawaited(_refreshDate());
+        _watchDate();
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _watchDate();
+    _placeSearch = ref.read(combinedPlaceSearchProvider);
+    _googlePins = ref.read(googlePinCacheProvider)..addListener(_pinsChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_refreshDate());
+      final controller = ref.read(todayProvider.notifier);
+      final previous = controller.recoveredOrder;
+      controller.recoveredOrder = null;
+      if (previous != null) {
+        showFeedback(
+          context,
+          'Order updated to match your After rules.',
+          onUndo: () => controller.restore(previous, reconcile: false),
+        );
+      }
+    });
+  }
+
+  void _pinsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _midnight?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _cancelLookup(true);
+    _cancelLookup(false);
+    _googlePins.removeListener(_pinsChanged);
+    super.dispose();
+  }
+
+  void _cancelLookup(bool start) {
+    _lookupTimers.remove(start)?.cancel();
+    if (start) {
+      _fromRevision++;
+    } else {
+      _toRevision++;
+    }
+    _placeSearch.cancel(start ? _fromLookup : _toLookup, only: {'geoapify'});
+    _finding.remove(start);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _watchDate();
+      unawaited(_refreshDate());
+    }
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      _midnight?.cancel();
+      setState(() {
+        _cancelLookup(true);
+        _cancelLookup(false);
+      });
+    }
+  }
+
+  void _resolvePin(bool start, PlaceIntent place) {
+    final unnamedManual =
+        place.source == 'manual' && place.label == 'Dropped pin';
+    final unnamedDevice =
+        place.source == 'device' && place.label == 'Current location';
+    if ((!unnamedManual && !unnamedDevice) ||
+        !place.hasCoordinates ||
+        place.isGoogle) {
+      return;
+    }
+    final revision = start ? _fromRevision : _toRevision;
+    setState(() => _finding.add(start));
+    _lookupTimers[start] = Timer(const Duration(seconds: 8), () {
+      if (mounted && revision == (start ? _fromRevision : _toRevision)) {
+        setState(() => _cancelLookup(start));
+      }
+    });
+    _placeSearch.reverse(
+      start ? _fromLookup : _toLookup,
+      place.latitude!,
+      place.longitude!,
+      (_, status, results) {
+        if (!mounted || revision != (start ? _fromRevision : _toRevision)) {
+          return;
+        }
+        final day = ref.read(todayProvider);
+        final current = start ? day.fromPlace : day.toPlace;
+        if (!identical(current, place)) {
+          setState(() => _finding.remove(start));
+          return;
+        }
+        if (status.phase == SourcePhase.waiting ||
+            status.phase == SourcePhase.loading) {
+          return;
+        }
+        _lookupTimers.remove(start)?.cancel();
+        setState(() => _finding.remove(start));
+        if (status.phase != SourcePhase.complete || results.isEmpty) return;
+        final result = results.first;
+        ref
+            .read(todayProvider.notifier)
+            .setEndpoint(
+              start: start,
+              value: PlaceIntent(
+                kind: PlaceKind.specific,
+                label: result.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+                source: place.source,
+                provider: result.provider,
+                retrievedAt: result.retrievedAt?.toIso8601String(),
+                attributions: result.attributions,
+              ),
+            );
+      },
+    );
+  }
+
   bool _expanded = true;
   bool _showAll = false;
   void _clear() {
     final previous = ref.read(todayProvider);
     final controller = ref.read(todayProvider.notifier);
+    setState(() {
+      _cancelLookup(true);
+      _cancelLookup(false);
+    });
     controller.clear();
     showFeedback(
       context,
-      'Errands cleared.',
+      'Today cleared.',
       onUndo: () => controller.restore(previous),
     );
   }
 
   Future<void> _edit(Errand errand) async {
-    final result = await editErrand(context, errand);
+    final result = await editErrand(
+      context,
+      errand,
+      errands: ref.read(todayProvider).errands,
+    );
     if (!mounted) return;
+    unawaited(_refreshDate());
     final controller = ref.read(todayProvider.notifier);
     switch (result) {
       case SavedErrand(:final errand):
+        final previous = ref.read(todayProvider);
         controller.update(errand);
+        final current = ref.read(todayProvider);
+        if (previous.errands.map((e) => e.id).join('|') !=
+            current.errands.map((e) => e.id).join('|')) {
+          showFeedback(
+            context,
+            'Order updated to match your After rules.',
+            onUndo: () => controller.restore(previous),
+          );
+        }
       case RemovedErrand():
         final previous = ref.read(todayProvider);
         controller.remove(errand.id);
@@ -65,24 +282,30 @@ class _TodayViewState extends ConsumerState<TodayView> {
   }
 
   Future<void> _place(bool start) async {
+    setState(() => _cancelLookup(start));
     final day = ref.read(todayProvider);
-    final value = await choosePlace(
-      context,
-      title: start ? 'Starting point' : 'Final destination',
-      initial: start ? day.from : day.to,
-      initialPlace: start ? day.fromPlace : day.toPlace,
+    final value = await _editor(
+      () => choosePlace(
+        context,
+        title: start ? 'Starting point' : 'Final destination',
+        initial: start ? day.from : day.to,
+        initialPlace: start ? day.fromPlace : day.toPlace,
+      ),
     );
     if (value != null && mounted) {
       ref.read(todayProvider.notifier).setEndpoint(start: start, value: value);
+      _resolvePin(start, value);
     }
   }
 
   Future<void> _time(bool start) async {
     final day = ref.read(todayProvider);
-    final value = await chooseTime(
-      context,
-      title: start ? 'Leave at' : 'Home by',
-      initialMinute: start ? day.departure : day.deadline,
+    final value = await _editor(
+      () => chooseTime(
+        context,
+        title: start ? 'Leave at' : 'Home by',
+        initialMinute: start ? day.departure : day.deadline,
+      ),
     );
     if (value == null || !mounted) return;
     if ((start && value >= day.deadline) ||
@@ -102,53 +325,56 @@ class _TodayViewState extends ConsumerState<TodayView> {
         );
   }
 
-  void _travel() => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'How are you getting around?',
-                style: context.type.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              for (final profile in TravelProfile.values)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(profileIcon(profile)),
-                  title: Text(profile.label),
-                  subtitle: switch (profile) {
-                    TravelProfile.sedan => const Text('Low ground clearance'),
-                    TravelProfile.truck => const Text('High ground clearance'),
-                    _ => null,
-                  },
-                  trailing: ref.read(todayProvider).profile == profile
-                      ? Icon(Icons.check_rounded, color: context.wayday.link)
-                      : null,
-                  onTap: () {
-                    ref.read(todayProvider.notifier).setProfile(profile);
-                    Navigator.pop(sheetContext);
-                  },
+  void _travel() => _editor(
+    () => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How are you getting around?',
+                  style: context.type.titleLarge,
                 ),
-            ],
+                const SizedBox(height: 16),
+                for (final profile in TravelProfile.values)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(profileIcon(profile)),
+                    title: Text(profile.label),
+                    subtitle: switch (profile) {
+                      TravelProfile.sedan => const Text('Low ground clearance'),
+                      TravelProfile.truck => const Text(
+                        'High ground clearance',
+                      ),
+                      _ => null,
+                    },
+                    trailing: ref.read(todayProvider).profile == profile
+                        ? Icon(Icons.check_rounded, color: context.wayday.link)
+                        : null,
+                    onTap: () {
+                      ref.read(todayProvider.notifier).setProfile(profile);
+                      Navigator.pop(sheetContext);
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     ),
   );
   Future<void> _planning() async {
-    final saved = await Navigator.of(
+    await Navigator.of(
       context,
       rootNavigator: true,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const DayReviewView()));
-    if (saved == true && mounted) showFeedback(context, 'Manual order saved.');
+    ).push<void>(MaterialPageRoute(builder: (_) => const PlanningView()));
   }
 
   @override
@@ -159,218 +385,243 @@ class _TodayViewState extends ConsumerState<TodayView> {
         toolbarHeight: 64,
         title: Text('Today', style: context.type.headlineLarge),
         actions: [
-          if (day.errands.isNotEmpty)
+          if (day.errands.isNotEmpty ||
+              day.from.isNotEmpty ||
+              day.to.isNotEmpty ||
+              day.departure != 510 ||
+              day.deadline != 1080 ||
+              day.profile != TravelProfile.motor ||
+              day.dateSelected)
             TextButton.icon(
               key: const Key('clear-errands'),
-              onPressed: _clear,
+              onPressed: ref.watch(tripFinishProvider) ? null : _clear,
               icon: const Icon(Icons.clear_all_rounded),
               label: const Text('Clear'),
             ),
           const SizedBox(width: 8),
         ],
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    key: const Key('trip-date'),
-                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                    label: Text(
-                      MaterialLocalizations.of(
-                        context,
-                      ).formatFullDate(DateTime.parse(day.date)),
+      body: AbsorbPointer(
+        absorbing: ref.watch(tripFinishProvider),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const Key('trip-date'),
+                      icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                      label: Text(
+                        MaterialLocalizations.of(
+                          context,
+                        ).formatFullDate(DateTime.parse(day.date)),
+                      ),
+                      onPressed: () async {
+                        final date = await _editor(
+                          () => showDatePicker(
+                            context: context,
+                            initialDate: DateTime.parse(day.date),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          ),
+                        );
+                        if (date != null && mounted) {
+                          ref.read(todayProvider.notifier).setDate(date);
+                        }
+                      },
                     ),
-                    onPressed: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.parse(day.date),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                      if (date != null && mounted) {
-                        ref.read(todayProvider.notifier).setDate(date);
-                      }
-                    },
                   ),
                 ),
-              ),
-              SectionSurface(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    EndpointRow(
-                      start: true,
-                      value: day.from,
-                      onTap: () => _place(true),
-                    ),
-                    const Divider(indent: 20, endIndent: 20),
-                    InkWell(
-                      onTap: () => setState(() => _expanded = !_expanded),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.format_list_bulleted_rounded,
-                              size: 20,
-                              color: context.wayday.link,
-                            ),
-                            const SizedBox(width: 14),
-                            Text('Errands', style: context.type.titleMedium),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${day.errands.length}',
-                              style: context.type.bodyMedium?.copyWith(
-                                color: context.colors.onSurfaceVariant,
+                const CurrentTripSection(),
+                SectionSurface(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      EndpointRow(
+                        start: true,
+                        value: day.from,
+                        finding: _finding.contains(true),
+                        onTap: () => _place(true),
+                      ),
+                      const Divider(indent: 20, endIndent: 20),
+                      InkWell(
+                        onTap: () => setState(() => _expanded = !_expanded),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.format_list_bulleted_rounded,
+                                size: 20,
+                                color: context.wayday.link,
                               ),
-                            ),
-                            const Spacer(),
-                            SizedBox(
-                              height: 48,
-                              width: 48,
-                              child: AnimatedRotation(
-                                turns: _expanded ? .5 : 0,
-                                duration: WaydayMotion.duration(context),
-                                curve: WaydayMotion.curve,
-                                child: Icon(
-                                  Icons.keyboard_arrow_down_rounded,
+                              const SizedBox(width: 14),
+                              Text('Errands', style: context.type.titleMedium),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${day.errands.length}',
+                                style: context.type.bodyMedium?.copyWith(
                                   color: context.colors.onSurfaceVariant,
                                 ),
                               ),
+                              const Spacer(),
+                              SizedBox(
+                                height: 48,
+                                width: 48,
+                                child: AnimatedRotation(
+                                  turns: _expanded ? .5 : 0,
+                                  duration: WaydayMotion.duration(context),
+                                  curve: WaydayMotion.curve,
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: context.colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SmoothDisclosure(
+                        key: const Key('today-errands-disclosure'),
+                        expanded: _expanded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SmoothDisclosure(
+                              expanded: day.errands.isEmpty,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  8,
+                                  24,
+                                  16,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'What’s on your way today?',
+                                      style: context.type.titleMedium,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Add an errand. The details can wait.',
+                                      style: context.type.bodyMedium?.copyWith(
+                                        color: context.colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            AnimatedErrandList(
+                              items: day.errands
+                                  .take(_showAll ? day.errands.length : 5)
+                                  .toList(),
+                              onEdit: _edit,
+                            ),
+                            SmoothDisclosure(
+                              expanded: day.errands.length > 5,
+                              child: TextButton(
+                                onPressed: () =>
+                                    setState(() => _showAll = !_showAll),
+                                child: Text(
+                                  _showAll
+                                      ? 'Show fewer'
+                                      : 'Show all ${day.errands.length} errands',
+                                ),
+                              ),
+                            ),
+                            ErrandComposer(
+                              key: const Key('today-composer'),
+                              onDraftChanged: (value) {
+                                _composerDraft = value;
+                                if (!value) unawaited(_refreshDate());
+                              },
+                              onAdd: (value) {
+                                ref.read(todayProvider.notifier).add(value);
+                                setState(() => _showAll = true);
+                              },
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    SmoothDisclosure(
-                      key: const Key('today-errands-disclosure'),
-                      expanded: _expanded,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SmoothDisclosure(
-                            expanded: day.errands.isEmpty,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'What’s on your way today?',
-                                    style: context.type.titleMedium,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Add an errand. The details can wait.',
-                                    style: context.type.bodyMedium?.copyWith(
-                                      color: context.colors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          AnimatedErrandList(
-                            items: day.errands
-                                .take(_showAll ? day.errands.length : 5)
-                                .toList(),
-                            onEdit: _edit,
-                          ),
-                          SmoothDisclosure(
-                            expanded: day.errands.length > 5,
-                            child: TextButton(
-                              onPressed: () =>
-                                  setState(() => _showAll = !_showAll),
-                              child: Text(
-                                _showAll
-                                    ? 'Show fewer'
-                                    : 'Show all ${day.errands.length} errands',
-                              ),
-                            ),
-                          ),
-                          ErrandComposer(
-                            key: const Key('today-composer'),
-                            onAdd: (value) {
-                              ref.read(todayProvider.notifier).add(value);
-                              setState(() => _showAll = true);
-                            },
-                          ),
-                        ],
+                      const Divider(indent: 20, endIndent: 20),
+                      EndpointRow(
+                        start: false,
+                        value: day.to,
+                        finding: _finding.contains(false),
+                        onTap: () => _place(false),
                       ),
-                    ),
-                    const Divider(indent: 20, endIndent: 20),
-                    EndpointRow(
-                      start: false,
-                      value: day.to,
-                      onTap: () => _place(false),
-                    ),
-                    const Divider(),
-                    TripSettings(
-                      day: day,
-                      onLeave: () => _time(true),
-                      onDeadline: () => _time(false),
-                      onTravel: _travel,
-                    ),
-                    SizedBox(
-                      height: 220,
-                      child: ref.watch(mapPlatformSupportedProvider)
-                          ? ref.watch(placeMapBuilderProvider)(
-                              PlaceMapRequest(
-                                philippinesOverview: true,
-                                iconOnlyAttribution: true,
-                                pins: [
-                                  if (day.fromPlace.hasCoordinates)
-                                    MapPin('A', day.fromPlace),
-                                  for (var i = 0; i < day.errands.length; i++)
-                                    if (day
-                                        .errands[i]
-                                        .placeIntent
-                                        .hasCoordinates)
-                                      MapPin(
-                                        '${i + 1}',
-                                        day.errands[i].placeIntent,
-                                      ),
-                                  if (day.toPlace.hasCoordinates)
-                                    MapPin('Z', day.toPlace),
-                                ],
+                      const Divider(),
+                      TripSettings(
+                        day: day,
+                        onLeave: () => _time(true),
+                        onDeadline: () => _time(false),
+                        onTravel: _travel,
+                      ),
+                      SizedBox(
+                        height: 220,
+                        child: ref.watch(mapPlatformSupportedProvider)
+                            ? ref.watch(placeMapBuilderProvider)(
+                                PlaceMapRequest(
+                                  philippinesOverview: true,
+                                  iconOnlyAttribution: true,
+                                  interactive: false,
+                                  compactMarkers: true,
+                                  pins: [
+                                    if (day.fromPlace.hasCoordinates)
+                                      MapPin('A', day.fromPlace),
+                                    for (var i = 0; i < day.errands.length; i++)
+                                      if (day
+                                          .errands[i]
+                                          .placeIntent
+                                          .hasCoordinates)
+                                        MapPin(
+                                          '${i + 1}',
+                                          day.errands[i].placeIntent,
+                                        ),
+                                    if (day.toPlace.hasCoordinates)
+                                      MapPin('Z', day.toPlace),
+                                  ],
+                                ),
+                              )
+                            : const Center(
+                                child: Text(
+                                  'Map preview is available on Android.',
+                                ),
                               ),
-                            )
-                          : const Center(
-                              child: Text(
-                                'Map preview is available on Android.',
-                              ),
-                            ),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => context.go('/recurring'),
-                  icon: const Icon(Icons.playlist_add_rounded, size: 20),
-                  label: const Text('Add from a recurring list'),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => context.go('/recurring'),
+                    icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                    label: const Text('Add from a recurring list'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                kIsWeb
-                    ? 'Browser preview · Changes last for this session.'
-                    : 'Saved on this device.',
-                style: context.type.bodySmall?.copyWith(
-                  color: context.colors.onSurfaceVariant,
+                const SizedBox(height: 8),
+                Text(
+                  kIsWeb
+                      ? 'Browser preview · Changes last for this session.'
+                      : 'Saved on this device.',
+                  style: context.type.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -385,7 +636,10 @@ class _TodayViewState extends ConsumerState<TodayView> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: day.errands.isEmpty ? null : _planning,
+                  onPressed:
+                      day.errands.isEmpty || ref.watch(tripFinishProvider)
+                      ? null
+                      : _planning,
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -409,11 +663,13 @@ class EndpointRow extends StatelessWidget {
     required this.start,
     required this.value,
     required this.onTap,
+    this.finding = false,
     super.key,
   });
   final bool start;
   final String value;
   final VoidCallback onTap;
+  final bool finding;
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
@@ -446,6 +702,7 @@ class EndpointRow extends StatelessWidget {
                       : value,
                   style: context.type.titleMedium,
                 ),
+                if (finding) const Text('Finding address…'),
               ],
             ),
           ),

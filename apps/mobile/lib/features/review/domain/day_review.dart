@@ -1,9 +1,11 @@
 import '../../places/domain/place_intent.dart';
 import '../../today/domain/day.dart';
+import '../../errands/domain/errand_order.dart';
 
 /// Manual review operates on structured errands, independently of interpretation.
 class DayReview {
-  DayReview(DayPlan source) : baseRevision = source.revision, day = source;
+  DayReview(DayPlan source) : baseRevision = source.revision,
+    day = source.copyWith(errands: ErrandOrder.reconcile(source.errands).items);
   final int baseRevision;
   DayPlan day;
 
@@ -43,9 +45,9 @@ class DayReview {
   }
 
   void replace(Errand errand) => day = day.copyWith(
-    errands: [
+    errands: ErrandOrder.reconcile([
       for (final item in day.errands) item.id == errand.id ? errand : item,
-    ],
+    ]).items,
   );
 
   void setPlace({required bool start, required PlaceIntent place}) =>

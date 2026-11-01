@@ -1,0 +1,1302 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import '../../../core/data/local_repositories.dart';
+import '../../errands/domain/errand_order.dart';
+import '../../places/data/google_pin_cache.dart';
+import '../../places/domain/place_intent.dart';
+import '../../today/domain/day.dart';
+import '../data/gemini_interpreter.dart';
+import '../data/clarification_repository.dart';
+import '../data/clarification_resolver.dart';
+import '../data/location_intent_resolver.dart';
+import '../domain/location_assessment.dart';
+import '../domain/clarification.dart';
+import 'clarification_coordinator.dart';
+import '../data/itinerary_repository.dart';
+import '../data/review_trip_repository.dart';
+import '../data/planning_budget.dart';
+import '../data/road_estimates.dart';
+import '../domain/day_scheduler.dart';
+import '../domain/planning_models.dart';
+import '../domain/errand_location_review.dart';
+import '../domain/trip_departure.dart';
+import '../domain/planning_input_checks.dart';
+import '../domain/recommendation.dart';
+import '../domain/place_suitability.dart';
+import '../data/recommendation_draft_repository.dart';
+import '../data/reusable_trip_repository.dart';
+
+part 'recommendation_preparation.dart';
+part 'location_understanding.dart';
+part 'alternative_browsing.dart';
+part 'route_refresh.dart';
+part 'planning_hours.dart';
+
+final planningBudgetProvider = googleTestingBudgetProvider;
+final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
+  final local = ref.watch(localRepositoriesProvider);
+  return local == null
+      ? MemoryReviewTripRepository()
+      : SqliteReviewTripRepository(local.database);
+});
+final clarificationRepositoryProvider = Provider<ClarificationRepository>((
+  ref,
+) {
+  final local = ref.watch(localRepositoriesProvider);
+  return local == null
+      ? MemoryClarificationRepository()
+      : SqliteClarificationRepository(local.database);
+});
+final clarificationResolverProvider = Provider<ClarificationResolver>(
+  (ref) => GeminiClarificationResolver(),
+);
+final locationIntentResolverProvider = Provider<LocationIntentResolver>(
+  (ref) => GeminiLocationIntentResolver(),
+);
+
+typedef PlanningSolver =
+    Future<Map<String, dynamic>> Function(Map<String, dynamic> input);
+Future<Map<String, dynamic>> solveInWorker(Map<String, dynamic> input) =>
+    compute(solveDay, input);
+final planningSolverProvider = Provider<PlanningSolver>((ref) => solveInWorker);
+final itineraryRepositoryProvider = Provider<ItineraryRepository>((ref) {
+  final local = ref.watch(localRepositoriesProvider);
+  return local == null
+      ? MemoryItineraryRepository()
+      : SqliteItineraryRepository(
+          local.database,
+          ref.read(googlePinCacheProvider).lease,
+        );
+});
+final interpreterProvider = Provider<ErrandInterpreter>(
+  (ref) => GeminiInterpreter(),
+);
+final planningRoadsProvider = Provider((ref) {
+  final client = http.Client();
+  ref.onDispose(client.close);
+  return PlanningRoads(client, ref.read(planningBudgetProvider));
+});
+
+enum PreparationStage {
+  failed,
+  understanding,
+  review,
+  discovery,
+  calculating,
+  recommendations,
+  result,
+}
+
+class PlanningController extends ChangeNotifier {
+  PlanningController(
+    this.day,
+    this.interpreter,
+    this.roads,
+    this.repository, {
+    this.solver = solveInWorker,
+    this.preparationTimeout = const Duration(seconds: 10),
+    this.draftSaveTimeout = const Duration(seconds: 10),
+    this.routeDebounce = const Duration(milliseconds: 500),
+    ClarificationRepository? clarificationRepository,
+    ClarificationResolver? clarificationResolver,
+    LocationIntentResolver? locationResolver,
+    this.resolveGooglePin,
+    this.discovery,
+    RecommendationDraftRepository? drafts,
+  }) : draftRepository = drafts ?? MemoryRecommendationDraftRepository(),
+       _draftSource = reviewTripSourceKey(day) {
+    _reviewItems.addEntries(day.errands.map((e) => MapEntry(e.id, e)));
+    _sourcePlaces.addAll({
+      for (final e in day.errands)
+        e.id: clarificationHash(e.placeIntent.toJson()),
+    });
+    _originalIds.addAll(_reviewItems.keys);
+    clarifications = ClarificationCoordinator(
+      clarificationRepository ?? MemoryClarificationRepository(),
+      clarificationResolver ?? GeminiClarificationResolver(),
+      locationResolver: locationResolver,
+    );
+    clarifications.addListener(_clarificationChanged);
+  }
+  late final ClarificationCoordinator clarifications;
+  Map<String, String> _answerEffects = {};
+  final _reviewItems = <String, Errand>{};
+  final _originalIds = <String>{};
+  final _sourcePlaces = <String, String>{};
+  final GooglePinResolver? resolveGooglePin;
+  final RecommendationDiscovery? discovery;
+  final RecommendationDraftRepository draftRepository;
+  final String _draftSource;
+  final _proposalChoices = <String, PlaceIntent>{};
+  final Duration preparationTimeout, draftSaveTimeout, routeDebounce;
+  final _alternativeBrowses = <String, AlternativeBrowseState>{};
+  final _alternativeSearches =
+      <
+        String,
+        ({String identity, String? polyline, List<PlaceIntent> anchors})
+      >{};
+  String? _discoveryPolyline;
+  final _draftSaveFlights = <String, Future<void>>{};
+  Timer? _routeRefreshTimer;
+  DateTime? _refreshNotBefore;
+  String? _latestDraftSaveKey;
+  Future<void>? _routeRefreshFlight;
+  int _selectionRevision = 0, _savedSelectionRevision = -1;
+  bool _refreshRequested = false, keepPlanVisible = false;
+  RouteRefreshState routeRefreshState = RouteRefreshState.idle;
+  bool get recommendationSavePending => _draftSaveFlights.isNotEmpty;
+  String? selectedErrand, recommendationStorageError;
+  double recommendationScrollOffset = 0;
+  bool orderChanged = false;
+  List<String>? _previousStopOrder;
+  bool get canSaveReusable =>
+      !interpretationStale &&
+      interpretation != null &&
+      displayChoices.isNotEmpty &&
+      activeErrands.every(
+        (e) =>
+            (!questionBlocks(e)) &&
+            (e.optional || displayChoices.containsKey(e.id)),
+      );
+  final reusedAnswers = <String, Map<String, String>>{};
+  ReusableTrip reusableTrip(String name) {
+    if (interpretationStale || interpretation == null) {
+      throw const PlanningFailure(
+        'Review the changed errand meaning before saving this trip.',
+        kind: 'stale',
+      );
+    }
+    final choices = displayChoices;
+    final tasks = activeErrands
+        .where((e) => choices.containsKey(e.id))
+        .toList();
+    if (tasks.isEmpty ||
+        tasks.any(questionBlocks) ||
+        activeErrands.any((e) => !e.optional && !choices.containsKey(e.id))) {
+      throw const PlanningFailure(
+        'Resolve the required errands and choose their places before saving.',
+      );
+    }
+    return ReusableTrip(
+      id: newTripIdentity(),
+      name: name.trim(),
+      day: day.copyWith(errands: tasks),
+      choices: choices,
+      meaning: [
+        for (final e in tasks)
+          ErrandNeed(
+            id: e.id,
+            query: effectiveNeed(e)!.query,
+            category: effectiveNeed(e)!.category,
+            items: effectiveNeed(e)!.items,
+            after: e.afterErrandIds,
+            durationMinutes: e.durationMinutes,
+            locationIntent:
+                effectiveNeed(e)!.locationIntent == LocationIntent.flexible
+                ? LocationIntent.flexible
+                : LocationIntent.specific,
+          ),
+      ],
+      answers: {
+        for (final e in tasks)
+          if (answerFor(e)?.applied == true)
+            e.id: {
+              'answer': answerFor(e)!.answer,
+              'summary': answerFor(e)!.resolution!.summary,
+            }
+          else if (reusedAnswers.containsKey(e.id))
+            e.id: reusedAnswers[e.id]!,
+      },
+      lightPickupConfirmed: lightPickupConfirmed,
+    );
+  }
+
+  Future<void> restoreReusable(ReusableTrip trip) async {
+    final epoch = ++_epoch;
+    interpretation = Interpretation(trip.meaning);
+    interpretationStale = false;
+    lightPickupConfirmed = trip.lightPickupConfirmed;
+    needs
+      ..clear()
+      ..addEntries(trip.meaning.map((n) => MapEntry(n.id, n)));
+    reusedAnswers
+      ..clear()
+      ..addAll(trip.answers);
+    candidates.clear();
+    overrides.clear();
+    for (final e in day.errands) {
+      final place = trip.choices[e.id]!;
+      candidates[e.id] = [
+        PlanCandidate(
+          key: placeKey(place),
+          place: place,
+          errandIds: {e.id},
+          reason: 'Your saved place.',
+        ),
+      ];
+      overrides[e.id] = placeKey(place);
+    }
+    stage = PreparationStage.calculating;
+    progress = 'Refreshing your saved places…';
+    _emit();
+    try {
+      await clarifications.bind(clarificationSourceKey(day));
+      for (final place in [
+        day.fromPlace,
+        ...trip.choices.values,
+        day.toPlace,
+      ]) {
+        if (_closed || epoch != _epoch) return;
+        if (place.isGoogle) {
+          if (discovery == null) {
+            throw const PlanningFailure(
+              'Google place refresh is unavailable.',
+              kind: 'configuration',
+            );
+          }
+          await discovery!.hydrate(
+            place,
+            cancelled: () => _closed || epoch != _epoch,
+          );
+        }
+      }
+      if (_closed || epoch != _epoch) return;
+      await calculate();
+    } catch (e) {
+      if (_closed || epoch != _epoch) return;
+      recommendationFailure = e is PlanningFailure
+          ? e
+          : const PlanningFailure(
+              'Saved places could not be refreshed. Your choices are kept.',
+            );
+      error = recommendationFailure!.message;
+      stage = PreparationStage.discovery;
+      _emit();
+    }
+  }
+
+  Map<String, PlaceIntent> get displayChoices => {
+    for (final e in activeErrands)
+      if (candidates[e.id]?.isNotEmpty == true)
+        e.id: candidates[e.id]!
+            .firstWhere(
+              (p) =>
+                  p.key ==
+                  (overrides[e.id] ??
+                      (_proposalChoices[e.id] == null
+                          ? null
+                          : placeKey(_proposalChoices[e.id]!))),
+              orElse: () => candidates[e.id]!.first,
+            )
+            .place,
+  };
+  bool get proposalReady =>
+      result != null &&
+      !interpretationStale &&
+      day.profile != TravelProfile.bike &&
+      (day.profile != TravelProfile.truck || lightPickupConfirmed) &&
+      (_matrixAt == null ||
+          DateTime.now().difference(_matrixAt!) < const Duration(minutes: 5)) &&
+      (_calculationSignature == null ||
+          _calculationSignature == _routeInputSignature) &&
+      (result!.calculatedAt == null ||
+          DateTime.now().difference(result!.calculatedAt!) <
+              const Duration(minutes: 5)) &&
+      !tripDepartureHasPassed(day);
+  void replacePlannedPlace(String id, PlaceIntent place) {
+    final current = displayChoices[id];
+    if (current != null &&
+        placeKey(current) == placeKey(place) &&
+        current.latitude == place.latitude &&
+        current.longitude == place.longitude) {
+      return;
+    }
+    if (result != null) {
+      _previousStopOrder = result!.schedule.stops
+          .expand((stop) => stop.tasks.map((task) => task.errandId))
+          .toList();
+    }
+    for (final entry in displayChoices.entries) {
+      if (entry.key != id) overrides[entry.key] = placeKey(entry.value);
+    }
+    final errand = activeErrands.firstWhere((e) => e.id == id);
+    overridePlace(
+      id,
+      place.isGoogle
+          ? place.withLabel(errand.title, labelSource: 'user')
+          : place,
+    );
+    recommendationFailure = null;
+    error = null;
+  }
+
+  Future<void> updatePlan() async {
+    if (busy) return;
+    if (unresolved.isNotEmpty) {
+      await buildRecommendations();
+      return;
+    }
+    final previous = _previousStopOrder;
+    if (!await saveRecommendationDraft()) return;
+    await calculate();
+    final current = result?.schedule.stops
+        .expand((s) => s.tasks.map((t) => t.errandId))
+        .toList();
+    orderChanged =
+        current != null &&
+        previous != null &&
+        previous.join('|') != current.join('|');
+    if (current != null) _previousStopOrder = null;
+    _emit();
+  }
+
+  List<List<int?>>? recommendationMatrix;
+  List<String> recommendationKeys = [];
+  Map<String, dynamic>? _matrixResponse;
+  Map<String, String> _matrixPlaces = {};
+  List<String> _matrixKeys = [];
+  String? _matrixTrip, _calculationSignature;
+  DateTime? _matrixAt;
+  bool _recommendationDraftRestored = false;
+  bool _recommendationDraftChanged = false;
+
+  /// The user's draft, before selected suggestions are applied for calculation.
+  Errand reviewInput(Errand errand) {
+    if (_reviewItems.containsKey(errand.id)) return _reviewItems[errand.id]!;
+    final extra = interpretation?.additions
+        .where((n) => n.id == errand.id)
+        .firstOrNull;
+    return extra?.apply(Errand(id: errand.id, title: extra.proposedTitle!)) ??
+        errand;
+  }
+
+  DayPlan get manualReviewDay =>
+      day.copyWith(errands: _reviewItems.values.toList());
+
+  /// Preview selected proposals independently of date/location validation.
+  /// The same projection is committed by applyReview; the baseline stays intact.
+  Errand _baseReview(Errand e) =>
+      approved.contains(e.id) ? needs[e.id]!.apply(e) : e;
+  ClarificationContext _originalQuestionContext(Errand e) =>
+      ClarificationContext.create(_baseReview(reviewInput(e)), needs[e.id]!, [
+        for (final x in _reviewItems.values)
+          if (_originalIds.contains(x.id) || additions.contains(x.id))
+            _baseReview(x),
+        for (final n in interpretation?.additions ?? <ErrandNeed>[])
+          if (additions.contains(n.id) && !_reviewItems.containsKey(n.id))
+            n.apply(Errand(id: n.id, title: n.proposedTitle!)),
+      ]);
+  ClarificationContext questionContext(Errand e) {
+    final original = _originalQuestionContext(e), n = needs[e.id]!;
+    if (original.question.isNotEmpty) return original;
+    if (e.placeIntent.hasCoordinates ||
+        hasSpecificSource(e) ||
+        n.locationIntent == LocationIntent.specific) {
+      return original;
+    }
+    return ClarificationContext({
+      ...original.facts,
+      'question':
+          'Do you have a specific place in mind, or should Wayday suggest one?',
+      'kind': 'location',
+    });
+  }
+
+  ClarificationRecord? answerFor(Errand e) =>
+      needs[e.id] == null ? null : clarifications.record(questionContext(e));
+  ErrandNeed? effectiveNeed(Errand e) {
+    var n = needs[e.id];
+    if (n == null) return null;
+    final r = answerFor(e),
+        assessment = clarifications.locationAssessment(locationContext(e));
+    if (assessment?.applied == true) {
+      n = n.copyWith(
+        locationIntent: assessment!.result!.intent,
+        requiresSpecificLocation:
+            assessment.result!.intent == LocationIntent.specific,
+        query: assessment.result!.query,
+        category: assessment.result!.category,
+      );
+    }
+    if (r?.applied == true) {
+      var refined = r!.resolution!.refine(n);
+      // A legacy structured flexibility choice already granted recommendations.
+      // Reuse that saved decision, without matching the user's answer wording.
+      if (n.locationIntent == null &&
+          r.context.facts['locationIntent'] == null &&
+          r.context.facts['fixedPlace'] == false &&
+          r.resolution!.outcome == 'flexible' &&
+          r.resolution!.kind == 'preference' &&
+          !hasSpecificSource(e)) {
+        refined = refined.copyWith(locationIntent: LocationIntent.flexible);
+      }
+      n = refined;
+    }
+    final preference = reviewInput(e).placeIntent;
+    if (preference.kind == PlaceKind.search &&
+        (preference.label.trim().isNotEmpty ||
+            preference.brand?.trim().isNotEmpty == true)) {
+      return n.copyWith(
+        query: [
+          if (preference.brand?.isNotEmpty == true) preference.brand!,
+          preference.label,
+        ].join(' ').trim(),
+      );
+    }
+    return n;
+  }
+
+  bool questionResolved(Errand e) {
+    final record = answerFor(e);
+    final kind = record?.resolution?.kind ?? needs[e.id]?.questionKind;
+    if (kind == 'location') {
+      if (e.placeIntent.hasCoordinates) return true;
+      if (record?.applied == true) {
+        return !needsLocationUnderstanding(e, effectiveNeed(e));
+      }
+      return false;
+    }
+    return record?.applied == true;
+  }
+
+  String? questionFor(Errand e) {
+    final need = effectiveNeed(e), record = answerFor(e);
+    if (record?.status == 'unresolved') return record?.resolution?.followUp;
+    final q = outstandingQuestion(need, clarified: questionResolved(e));
+    final nonLocation = needs[e.id]?.questionKind != 'location';
+    if (q != null && nonLocation && !durationOnlyQuestion(q)) return q;
+    final location = locationIntentQuestion(e, need);
+    if (location != null) {
+      final assessment = clarifications.locationAssessment(locationContext(e));
+      return assessment?.applied == true &&
+              assessment?.result?.intent == LocationIntent.unclear
+          ? assessment!.result!.question
+          : location;
+    }
+    return null;
+  }
+
+  bool questionBlocks(Errand e) {
+    final n = effectiveNeed(e), r = answerFor(e);
+    if (n?.questionRequired != false &&
+        r?.applied == true &&
+        r!.proposesRules &&
+        !r.rulesApproved &&
+        {'timing', 'dependency'}.contains(n?.questionKind)) {
+      return true;
+    }
+    return needsLocationUnderstanding(e, n) ||
+        (questionFor(e) != null && n?.questionRequired != false);
+  }
+
+  Map<String, String> get deferred => {
+    for (final e in clarifications.deferred(day.date).entries)
+      if (_originalIds.contains(e.key) || additions.contains(e.key))
+        e.key: e.value,
+  };
+  ErrandOrder get reviewOrder => ErrandOrder.reconcile([
+    for (final e in _reviewItems.values)
+      if (_originalIds.contains(e.id) || additions.contains(e.id))
+        _applyAnswerRules(_baseReview(e)),
+    for (final n in interpretation?.additions ?? <ErrandNeed>[])
+      if (additions.contains(n.id) && !_reviewItems.containsKey(n.id))
+        _applyAnswerRules(
+          n.apply(Errand(id: n.id, title: n.proposedTitle!, place: '')),
+        ),
+  ]);
+  Errand _applyAnswerRules(Errand e) {
+    final r = answerFor(e);
+    return r?.applied == true && r!.proposesRules && r.rulesApproved
+        ? r.resolution!.applyRules(e)
+        : e;
+  }
+
+  List<Errand> get reviewErrands => reviewOrder.items;
+  List<Errand> get activeErrands =>
+      reviewOrder.items.where((e) => !deferred.containsKey(e.id)).toList();
+  List<PlanningInputIssue> get inputIssues => activeErrands.isEmpty
+      ? [
+          const PlanningInputIssue(
+            PlanningInputField.input,
+            'Include at least one errand to plan this day.',
+            kind: 'no_active_errands',
+          ),
+        ]
+      : planningInputChecks(day, activeErrands);
+  void _clarificationChanged() {
+    final effects = <String, String>{
+      for (final e in reviewErrands)
+        e.id: clarificationHash({
+          'answer': answerFor(e)?.applied == true
+              ? answerFor(e)!.resolution!.toJson()
+              : null,
+          'rules': answerFor(e)?.rulesApproved ?? false,
+          'deferred': deferred[e.id],
+          'location':
+              clarifications.locationAssessment(locationContext(e))?.applied ==
+                  true
+              ? clarifications
+                    .locationAssessment(locationContext(e))!
+                    .result!
+                    .toJson()
+              : null,
+        }),
+    };
+    var changed = false;
+    for (final id in {..._answerEffects.keys, ...effects.keys}) {
+      if (_answerEffects[id] != effects[id]) {
+        if (!overrides.containsKey(id)) {
+          candidates.remove(id);
+          discoveryResults.remove(id);
+        }
+        result = null;
+        changed = true;
+      }
+    }
+    if (changed &&
+        {
+          PreparationStage.calculating,
+          PreparationStage.recommendations,
+          PreparationStage.result,
+          PreparationStage.discovery,
+        }.contains(stage)) {
+      _epoch++;
+      stage = PreparationStage.review;
+    }
+    if (changed) error = null;
+    _answerEffects = effects;
+    _emit();
+  }
+
+  DayPlan day;
+  final ErrandInterpreter interpreter;
+  final PlanningRoads roads;
+  final ItineraryRepository repository;
+  final PlanningSolver solver;
+  PreparationStage stage = PreparationStage.understanding;
+  Interpretation? interpretation;
+  bool interpretationStale = false;
+  final needs = <String, ErrandNeed>{};
+  final candidates = <String, List<PlanCandidate>>{};
+  final discoveryResults = <String, DiscoveryResult>{};
+  PlanningFailure? recommendationFailure;
+  String? failedRecommendationErrand;
+  RecommendationOperation? recommendationOperation;
+  Future<void>? _recommendationFlight;
+  final overrides = <String, String>{};
+  final approved = <String>{};
+  final additions = <String>{};
+  RefinedPlan? result;
+  String? error;
+  PlanningFailure? understandingFailure;
+  bool lightPickupConfirmed = false;
+  String progress = '';
+  int _epoch = 0;
+  bool _closed = false;
+  void _emit() {
+    if (!_closed) notifyListeners();
+  }
+
+  void cancel() {
+    _stopRouteRefresh();
+    _alternativeBrowses.clear();
+    _alternativeSearches.clear();
+    _discoveryPolyline = null;
+    _epoch++;
+    roads.invalidate();
+    _matrixAt = null;
+    result = null;
+    if (stage != PreparationStage.discovery) {
+      stage = interpretation == null
+          ? PreparationStage.failed
+          : PreparationStage.review;
+    }
+    _emit();
+  }
+
+  bool get busy =>
+      stage == PreparationStage.understanding ||
+      stage == PreparationStage.calculating;
+  @override
+  void dispose() {
+    _stopRouteRefresh();
+    _closed = true;
+    clarifications.removeListener(_clarificationChanged);
+    clarifications.dispose();
+    _epoch++;
+    super.dispose();
+  }
+
+  Future<void> understand({bool retry = false, bool savedOnly = false}) async {
+    final epoch = ++_epoch;
+    error = null;
+    understandingFailure = null;
+    stage = PreparationStage.understanding;
+    _emit();
+    try {
+      final fields = errandFieldChecks(day.errands);
+      if (fields.isNotEmpty) {
+        throw PlanningFailure(fields.first.message, kind: fields.first.kind);
+      }
+      final graphIssue = ErrandOrder.reconcile(day.errands).issue;
+      if (graphIssue != null) {
+        throw PlanningFailure(graphIssue, kind: 'invalid_input');
+      }
+      if (interpretationStale) day = day.copyWith(errands: reviewOrder.items);
+      _sourcePlaces
+        ..clear()
+        ..addAll({
+          for (final e in day.errands)
+            e.id: clarificationHash(e.placeIntent.toJson()),
+        });
+      await clarifications.bind(clarificationSourceKey(day));
+      final service = interpreter;
+      if (savedOnly && service is! SavedErrandInterpreter) {
+        throw const PlanningFailure(
+          'Saved understanding is unavailable.',
+          kind: 'cache_miss',
+        );
+      }
+      final value = await (savedOnly
+          ? (service as SavedErrandInterpreter).saved(day)
+          : retry && service is ConfirmedRetryInterpreter
+          ? service.retry(day)
+          : service.interpret(day));
+      if (_closed || epoch != _epoch) return;
+      interpretation = value;
+      interpretationStale = false;
+      _reviewItems
+        ..clear()
+        ..addEntries(day.errands.map((e) => MapEntry(e.id, e)));
+      _originalIds
+        ..clear()
+        ..addAll(_reviewItems.keys);
+      approved.clear();
+      additions.clear();
+      candidates.clear();
+      overrides.clear();
+      result = null;
+      needs
+        ..clear()
+        ..addEntries(
+          [...value.needs, ...value.additions].map((e) => MapEntry(e.id, e)),
+        );
+      await _restorePlaces();
+      stage = PreparationStage.review;
+      await clarifications.resumeSaved(
+        reviewErrands.where((e) => needs[e.id] != null).map(questionContext),
+      );
+    } catch (e) {
+      if (_closed || epoch != _epoch) return;
+      understandingFailure = e is PlanningFailure ? e : null;
+      error = e is PlanningFailure
+          ? e.message
+          : 'Understanding is unavailable. Your text is kept; try again.';
+      stage = PreparationStage.failed;
+    }
+    _emit();
+  }
+
+  Errand _withSavedPlace(Errand e) {
+    final choice = clarifications.session.places[e.id];
+    if (choice == null ||
+        choice['source'] != _sourcePlaces[e.id] ||
+        choice['text'] !=
+            clarificationHash({'title': e.title, 'notes': e.notes})) {
+      return e;
+    }
+    final place = PlaceIntent.fromJson(
+      Map<String, dynamic>.from(choice['place'] as Map),
+      resolveGooglePin: resolveGooglePin,
+    );
+    return e.copyWith(
+      place: place.label,
+      placeIntent: place,
+      confirmedFields: {...e.confirmedFields, 'place'},
+    );
+  }
+
+  Future<void> _restorePlaces() async {
+    try {
+      for (final e in _reviewItems.values.toList()) {
+        _reviewItems[e.id] = _withSavedPlace(e);
+      }
+      day = day.copyWith(
+        errands: [for (final e in day.errands) _reviewItems[e.id] ?? e],
+      );
+    } catch (_) {
+      clarifications.storageError =
+          'A saved location choice could not be restored. Choose it again.';
+    }
+  }
+
+  void addAddition(ErrandNeed need) {
+    final e = need.apply(Errand(id: need.id, title: need.proposedTitle!));
+    _sourcePlaces.putIfAbsent(
+      e.id,
+      () => clarificationHash(e.placeIntent.toJson()),
+    );
+    additions.add(e.id);
+    try {
+      _reviewItems[e.id] = _withSavedPlace(e);
+    } catch (_) {
+      clarifications.storageError =
+          'A saved location choice could not be restored. Choose it again.';
+    }
+    _emit();
+  }
+
+  Future<void> confirmPlace(Errand e, PlaceIntent place) async {
+    final original = reviewInput(e);
+    _sourcePlaces.putIfAbsent(
+      e.id,
+      () => clarificationHash(original.placeIntent.toJson()),
+    );
+    edit(
+      original.copyWith(
+        place: place.label,
+        placeIntent: place,
+        confirmedFields: {...original.confirmedFields, 'place'},
+      ),
+    );
+    final previous =
+        clarifications.session.places[e.id]?['revision'] as int? ?? 0;
+    final now = DateTime.now().microsecondsSinceEpoch;
+    clarifications.session.places[e.id] = {
+      'source': _sourcePlaces[e.id],
+      'text': clarificationHash({'title': e.title, 'notes': e.notes}),
+      'place': place.toJson(),
+      'revision': now > previous ? now : previous + 1,
+    };
+    try {
+      await clarifications.retrySave();
+    } catch (_) {}
+  }
+
+  Future<void> restoreHistoryAnswers(AcceptedItinerary? history) async {
+    if (history == null) return;
+    final session = clarifications.session;
+    for (final payload in history.clarifications.values) {
+      final r = ClarificationRecord.fromJson(payload);
+      if (_reviewItems.containsKey(r.context.id)) {
+        session.records.putIfAbsent(r.context.key, () => r);
+      }
+    }
+    if (history.day.date == day.date &&
+        !session.deferrals.containsKey(day.date)) {
+      session.deferrals[day.date] = {
+        for (final e in history.deferred.entries)
+          if (_reviewItems.containsKey(e.key)) e.key: e.value,
+      };
+      session.deferralRevisions[day.date] =
+          DateTime.now().microsecondsSinceEpoch;
+    }
+    try {
+      await clarifications.retrySave();
+    } catch (_) {}
+    _emit();
+  }
+
+  void edit(Errand value) {
+    _epoch++;
+    if (busy) stage = PreparationStage.review;
+    final previous = reviewInput(value);
+    if (previous.title != value.title || previous.notes != value.notes) {
+      interpretationStale = true;
+    }
+    _reviewItems[value.id] = value;
+    day = day.copyWith(
+      errands: ErrandOrder.reconcile([
+        for (final e in day.errands) e.id == value.id ? value : e,
+      ]).items,
+    );
+    candidates.remove(value.id);
+    discoveryResults.remove(value.id);
+    overrides.remove(value.id);
+    result = null;
+    _emit();
+  }
+
+  void removeAddition(String id) {
+    additions.remove(id);
+    approved.remove(id);
+    _reviewItems.remove(id);
+    day = day.copyWith(errands: day.errands.where((e) => e.id != id).toList());
+    candidates.remove(id);
+    overrides.remove(id);
+    result = null;
+    _emit();
+  }
+
+  void setEndpoint(bool start, PlaceIntent place) {
+    _epoch++;
+    _recommendationDraftChanged = true;
+    if (busy) stage = PreparationStage.review;
+    day = start
+        ? day.copyWith(from: place.label, fromPlace: place)
+        : day.copyWith(to: place.label, toPlace: place);
+    candidates.removeWhere(
+      (id, _) =>
+          !overrides.containsKey(id) &&
+          day.errands.any((e) => e.id == id && !e.placeIntent.hasCoordinates),
+    );
+    result = null;
+    _emit();
+  }
+
+  void applyReview() {
+    if (interpretationStale) {
+      throw const PlanningFailure(
+        'Titles or notes changed. Read the updated notes with Gemini before finding places.',
+      );
+    }
+    if (day.profile == TravelProfile.bike) {
+      throw const PlanningFailure(
+        'Bicycle routing and guidance have not been qualified for the Philippines.',
+        kind: 'unsupported_profile',
+      );
+    }
+    if (day.profile == TravelProfile.truck && !lightPickupConfirmed) {
+      throw const PlanningFailure(
+        'Identify a compatible light pickup before using ordinary driving estimates.',
+        kind: 'unsupported_profile',
+      );
+    }
+    final proposed = interpretation;
+    if (proposed == null) {
+      throw const PlanningFailure('Understand your errands first.');
+    }
+    for (final n in proposed.additions) {
+      if (additions.contains(n.id)) needs[n.id] = n;
+    }
+    final order = reviewOrder;
+    if (order.issue != null) {
+      throw PlanningFailure(order.issue!, kind: 'invalid_input');
+    }
+    final reviewedDay = day.copyWith(errands: activeErrands);
+    final issues = inputIssues;
+    if (issues.isNotEmpty) {
+      throw PlanningFailure(issues.first.message, kind: issues.first.kind);
+    }
+    if (tripDepartureHasPassed(day)) {
+      throw const PlanningFailure(
+        'The departure is in the past. Choose a new date and departure time.',
+        kind: 'invalid_input',
+      );
+    }
+    if (!day.fromPlace.hasCoordinates || !day.toPlace.hasCoordinates) {
+      throw const PlanningFailure(
+        'Choose a map location for both From and To.',
+        kind: 'missing_location',
+      );
+    }
+    for (final e in reviewedDay.errands) {
+      final need = effectiveNeed(e)!;
+      final question = questionFor(e);
+      if (questionBlocks(e)) {
+        throw PlanningFailure(
+          question == null
+              ? 'Review the proposed rules for “${e.title}” before continuing.'
+              : 'Please resolve “${e.title}”: $question',
+          kind: 'clarification',
+        );
+      }
+      if (needsActualLocation(e, need)) {
+        throw PlanningFailure(
+          'Choose the actual location for “${e.title}”.',
+          kind: 'missing_location',
+        );
+      }
+      if (e.placeIntent.hasCoordinates && !overrides.containsKey(e.id)) {
+        final place = e.placeIntent;
+        candidates[e.id] = [
+          PlanCandidate(
+            key: placeKey(place),
+            place: place,
+            errandIds: {e.id},
+            reason: 'Your selected location.',
+          ),
+        ];
+      }
+    }
+    day = day.copyWith(errands: order.items);
+    result = null;
+    candidates.removeWhere((id, _) => !activeErrands.any((e) => e.id == id));
+    error = null;
+    stage = PreparationStage.discovery;
+    _emit();
+  }
+
+  List<Errand> get unresolved =>
+      activeErrands.where((e) => !candidates.containsKey(e.id)).toList();
+  int get candidateLimit => day.errands.isEmpty
+      ? 1
+      : (12 ~/ activeErrands.length.clamp(1, 12)).clamp(1, 3);
+  void found(String id, List<PlanCandidate> values) {
+    candidates[id] = values.take(candidateLimit).toList();
+    _emit();
+  }
+
+  void overridePlace(String id, PlaceIntent place) {
+    final key = placeKey(place);
+    final previous = candidates[id] ?? <PlanCandidate>[];
+    candidates[id] = [
+      PlanCandidate(
+        key: key,
+        place: place,
+        errandIds: {id},
+        reason: 'Your selected alternative.',
+      ),
+      ...previous.where((p) => p.key != key),
+    ].take(candidateLimit).toList();
+    overrides[id] = key;
+    result = null;
+    stage = PreparationStage.discovery;
+    _emit();
+  }
+
+  void chooseAlternative(String id, String key) {
+    overrides[id] = key;
+    result = null;
+    stage = PreparationStage.discovery;
+    _emit();
+  }
+
+  List<PlanCandidate> get points {
+    final merged = <String, PlanCandidate>{};
+    for (final entries in candidates.entries.where(
+      (entry) => activeErrands.any((e) => e.id == entry.key),
+    )) {
+      for (final candidate in entries.value) {
+        if (overrides[entries.key] != null &&
+            overrides[entries.key] != candidate.key) {
+          continue;
+        }
+        final old = merged[candidate.key];
+        merged[candidate.key] = PlanCandidate(
+          key: candidate.key,
+          place: candidate.place,
+          errandIds: {...?old?.errandIds, entries.key},
+          reason: candidate.reason,
+        );
+      }
+    }
+    return [
+      PlanCandidate(key: '@start', place: day.fromPlace, errandIds: {}),
+      ...merged.values,
+      PlanCandidate(key: '@end', place: day.toPlace, errandIds: {}),
+    ];
+  }
+
+  int _candidateSuitability(Errand errand, PlanCandidate candidate) {
+    final metadata = discovery?.metadata(candidate.place);
+    final need = effectiveNeed(errand);
+    return metadata == null || need == null
+        ? 2
+        : placeSuitability(need, metadata);
+  }
+
+  Future<void> calculate() async {
+    if (proposalReady &&
+        _calculationSignature == _routeInputSignature &&
+        _canReuseMatrix(points) &&
+        !tripDepartureHasPassed(day)) {
+      stage = PreparationStage.recommendations;
+      _emit();
+      return;
+    }
+    final epoch = ++_epoch;
+    result = null;
+    error = null;
+    stage = PreparationStage.calculating;
+    progress = 'Checking road travel times…';
+    _emit();
+    try {
+      if (day.profile == TravelProfile.bike ||
+          day.profile == TravelProfile.truck && !lightPickupConfirmed) {
+        throw const PlanningFailure(
+          'This travel profile needs qualification or compatible light-pickup confirmation. Review trip details.',
+          kind: 'unsupported_profile',
+        );
+      }
+      // Guard the current calculation input as well as the review projection.
+      // Direct source replacement must not hide a new clock/graph conflict.
+      final currentTasks = day.errands
+          .where((e) => !deferred.containsKey(e.id))
+          .toList();
+      final currentGraph = ErrandOrder.reconcile(currentTasks).issue;
+      if (currentGraph != null) {
+        throw PlanningFailure(currentGraph, kind: 'invalid_input');
+      }
+      final currentIssues = planningInputChecks(day, currentTasks);
+      if (currentIssues.isNotEmpty) {
+        throw PlanningFailure(
+          currentIssues.first.message,
+          kind: currentIssues.first.kind,
+        );
+      }
+
+      final graphIssue = ErrandOrder.reconcile(activeErrands).issue;
+      if (graphIssue != null) {
+        throw PlanningFailure(graphIssue, kind: 'invalid_input');
+      }
+      final issues = inputIssues;
+      if (issues.isNotEmpty) {
+        throw PlanningFailure(issues.first.message, kind: issues.first.kind);
+      }
+      if (tripDepartureHasPassed(day)) {
+        throw const PlanningFailure(
+          'The departure is in the past. Choose a new date and departure time.',
+          kind: 'invalid_input',
+        );
+      }
+      final selected = points;
+      await prepareHours(selected, () => _closed || epoch != _epoch);
+      if (_closed || epoch != _epoch) return;
+      checkHoursOptions(selected);
+      if (activeErrands.any(
+        (e) => questionBlocks(e) || needsActualLocation(e, effectiveNeed(e)),
+      )) {
+        throw const PlanningFailure(
+          'Resolve the missing location understanding or confirm its actual place before calculating.',
+          kind: 'missing_location',
+        );
+      }
+      if (selected.any((p) => !p.place.hasCoordinates)) {
+        throw const PlanningFailure(
+          'A selected location has expired. Return to review and refresh its actual location.',
+          kind: 'missing_location',
+        );
+      }
+      if (selected.any(
+        (p) => {
+          'CLOSED_PERMANENTLY',
+          'CLOSED_TEMPORARILY',
+        }.contains(discovery?.metadata(p.place)?.status),
+      )) {
+        throw const PlanningFailure(
+          'A selected business is reported closed. Review its actual location or defer that errand.',
+          kind: 'needs_clarification',
+        );
+      }
+      recommendationOperation = RecommendationOperation.matrix;
+      final openingWindows = businessWindows(selected);
+      final matrix = await _matrixFor(
+        selected,
+        () => _closed || epoch != _epoch,
+      );
+      if (_closed || epoch != _epoch) return;
+      recommendationMatrix = (matrix['matrix'] as List)
+          .map((r) => (r as List).cast<int?>())
+          .toList();
+      recommendationKeys = selected.map((p) => p.key).toList();
+      progress = 'Comparing places and stop order…';
+      _emit();
+      final input = <String, dynamic>{
+        'errands': activeErrands.map((e) => e.toJson()).toList(),
+        'keys': selected.map((p) => p.key).toList(),
+        'matrix': matrix['matrix'],
+        'departure': day.departure * 60,
+        'deadline': day.deadline * 60,
+        'start': '@start',
+        'end': '@end',
+        'hours': openingWindows,
+        'allowOpeningWait': false,
+        'preferences': {
+          for (final e in activeErrands)
+            e.id: {
+              for (final p in selected.where((p) => p.errandIds.contains(e.id)))
+                p.key: {
+                  'suitability':
+                      overrides.containsKey(e.id) ||
+                          e.placeIntent.hasCoordinates
+                      ? 2
+                      : _candidateSuitability(e, p),
+                  'quality': discovery?.metadata(p.place)?.quality ?? 3.5,
+                },
+            },
+        },
+        'options': {
+          for (final e in activeErrands)
+            e.id: selected
+                .where((p) => p.errandIds.contains(e.id))
+                .map((p) => p.key)
+                .toList(),
+        },
+      };
+      final solved = await solver(input);
+      if (_closed || epoch != _epoch) return;
+      if (solved['error'] != null) {
+        throw PlanningFailure(
+          solved['message'] as String,
+          kind: solved['error'] as String,
+        );
+      }
+      final schedule = DaySchedule.fromJson(
+        solved['schedule'] as Map<String, dynamic>,
+      );
+      if (schedule.stops.isEmpty) {
+        throw const PlanningFailure(
+          'No errands fit this plan. Adjust the trip window or include another errand.',
+        );
+      }
+      progress = 'Checking the selected route at each departure…';
+      _emit();
+      recommendationOperation = RecommendationOperation.refinement;
+      final refined = await roads.refine(
+        day.copyWith(errands: activeErrands),
+        schedule,
+        selected,
+        cancelled: () => _closed || epoch != _epoch,
+      );
+      if (_closed || epoch != _epoch) return;
+      final conflict = hoursConflict(refined.schedule, openingWindows);
+      if (conflict != null) {
+        throw PlanningFailure(conflict, kind: 'business_hours');
+      }
+      result = RefinedPlan(
+        refined.schedule,
+        refined.geometry,
+        refined.fallback || matrix['fallback'] == true,
+        warnings: refined.warnings,
+        legs: refined.legs,
+        calculatedAt: DateTime.now(),
+      );
+      stage = PreparationStage.recommendations;
+      _calculationSignature = _routeInputSignature;
+      final lookup = {for (final p in selected) p.key: p.place};
+      _proposalChoices.clear();
+      for (final stop in result!.schedule.stops) {
+        for (final task in stop.tasks) {
+          _proposalChoices[task.errandId] = lookup[stop.placeKey]!;
+        }
+      }
+      _emit();
+      await saveRecommendationDraft();
+    } catch (e) {
+      if (_closed || epoch != _epoch) return;
+      recommendationFailure = e is PlanningFailure
+          ? e
+          : const PlanningFailure(
+              'Planning is unavailable. Your choices are kept.',
+            );
+      error = e is PlanningFailure
+          ? e.message
+          : 'Planning is unavailable. Your errands and previous plan are kept.';
+      stage = PreparationStage.discovery;
+    }
+    _emit();
+  }
+
+  void showResult() {
+    stage = PreparationStage.result;
+    _emit();
+  }
+
+  void review() {
+    _stopRouteRefresh();
+    _epoch++;
+    stage = PreparationStage.review;
+    error = null;
+    _emit();
+  }
+
+  Future<AcceptedItinerary> accept(
+    int currentRevision,
+    int sourceRevision, {
+    AcceptedItinerary? history,
+  }) async {
+    if (recommendationSavePending || recommendationStorageError != null) {
+      throw const PlanningFailure(
+        'Your place choices still need saving before starting.',
+        kind: 'accounting',
+      );
+    }
+    final route = result;
+    if (route != null &&
+        (!proposalReady ||
+            (_calculationSignature != null &&
+                    _calculationSignature != _routeInputSignature ||
+                route.calculatedAt != null &&
+                    DateTime.now().difference(route.calculatedAt!) >
+                        const Duration(minutes: 5) ||
+                tripDepartureHasPassed(day)))) {
+      throw const PlanningFailure(
+        'These road estimates need updating. Return to review and recalculate.',
+        kind: 'needs_recalculation',
+      );
+    }
+    if (currentRevision != sourceRevision || route == null) {
+      throw const PlanningFailure(
+        'Today changed. Close this draft and plan again with your latest errands.',
+        kind: 'stale',
+      );
+    }
+    final lookup = {for (final p in points) p.key: p.place};
+    if (points.any((p) => !p.place.hasCoordinates)) {
+      throw const PlanningFailure(
+        'A temporary location expired. Refresh it and recalculate.',
+      );
+    }
+    var value = AcceptedItinerary(
+      day: day.copyWith(errands: reviewOrder.items),
+      deferred: deferred,
+      clarifications: {
+        for (final e in reviewErrands)
+          if (answerFor(e)?.applied == true) e.id: answerFor(e)!.toJson(),
+      },
+      acceptedAt: DateTime.now(),
+      stops: route.schedule.stops
+          .map(
+            (s) => ItineraryStop(
+              lookup[s.placeKey]!,
+              s.tasks.map((t) => t.errandId).toList(),
+            ),
+          )
+          .toList(),
+      omitted: route.schedule.omitted,
+      lightPickupConfirmed: lightPickupConfirmed,
+    );
+    if (history != null) {
+      final done = history.completed;
+      final originals = {for (final e in history.day.errands) e.id: e};
+      if (day.errands.any((e) => done.contains(e.id))) {
+        throw const PlanningFailure(
+          'An interpreted task conflicts with completed history. Review the added errands.',
+        );
+      }
+      value = AcceptedItinerary(
+        runId: history.runId,
+        day: day.copyWith(
+          errands: [
+            ...history.day.errands.where((e) => done.contains(e.id)),
+            for (final e in value.day.errands)
+              e.copyWith(
+                afterErrandIds: {
+                  ...e.afterErrandIds,
+                  ...?originals[e.id]?.afterErrandIds.where(done.contains),
+                }.toList(),
+              ),
+          ],
+        ),
+        stops: [
+          for (final s in history.stops)
+            if (s.errandIds.any(done.contains))
+              ItineraryStop(s.place, s.errandIds.where(done.contains).toList()),
+          ...value.stops,
+        ],
+        acceptedAt: value.acceptedAt,
+        completed: done,
+        omitted: value.omitted,
+        deferred: value.deferred,
+        clarifications: {...history.clarifications, ...value.clarifications},
+        lightPickupConfirmed: lightPickupConfirmed,
+      );
+    }
+    value.validateAssignments();
+    await repository.save(value);
+    return value;
+  }
+}

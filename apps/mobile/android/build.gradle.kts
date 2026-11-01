@@ -17,6 +17,15 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    // Navigation 0.11.2 pins android-35, while Flutter's current lifecycle
+    // adapter publishes minCompileSdk 36. Keep the dependency source untouched.
+    if (project.name == "google_navigation_flutter") {
+        afterEvaluate {
+            extensions.configure<com.android.build.api.dsl.LibraryExtension> {
+                compileSdk = maxOf(36, compileSdk ?: 0)
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

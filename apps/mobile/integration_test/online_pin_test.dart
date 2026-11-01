@@ -7,9 +7,64 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/maps/presentation/online_pin_picker.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
+import 'package:wayday/features/places/data/google_pin_cache.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  testWidgets('cache updates do not reframe a picker after focusing a place', (
+    tester,
+  ) async {
+    MapLibreMap.useHybridComposition = true;
+    final cache = GooglePinCache(read: () async => null, write: (_) async {});
+    final focus = ValueNotifier<PlaceIntent?>(null);
+    double? latitude, longitude, zoom;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [googlePinCacheProvider.overrideWithValue(cache)],
+        child: MaterialApp(
+          theme: buildTheme(),
+          home: Scaffold(
+            body: ValueListenableBuilder<PlaceIntent?>(
+              valueListenable: focus,
+              builder: (context, place, _) => PlaceMap(
+                request: PlaceMapRequest(
+                  centerPicker: true,
+                  philippinesOverview: true,
+                  focus: place,
+                  focusRevision: place == null ? 0 : 1,
+                  onViewportChanged: (lat, lon, value) {
+                    latitude = lat;
+                    longitude = lon;
+                    zoom = value;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final deadline = DateTime.now().add(const Duration(seconds: 45));
+    while (find.text('Loading map…').evaluate().isNotEmpty &&
+        DateTime.now().isBefore(deadline)) {
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+    expect(find.text('Loading map…'), findsNothing);
+    focus.value = const PlaceIntent(
+      label: 'Selected place',
+      latitude: 14.5995,
+      longitude: 120.9842,
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await tester.runAsync(() => cache.purge());
+    await tester.pump(const Duration(seconds: 3));
+    expect(latitude, closeTo(14.5995, .01));
+    expect(longitude, closeTo(120.9842, .01));
+    expect(zoom, closeTo(16, .2));
+    await tester.pumpWidget(const SizedBox());
+    focus.dispose();
+    cache.dispose();
+  });
   testWidgets('online map loads Cebu and returns a confirmed pin', (
     tester,
   ) async {

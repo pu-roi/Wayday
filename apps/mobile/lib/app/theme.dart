@@ -10,6 +10,7 @@ class WaydayColors extends ThemeExtension<WaydayColors> {
   final Color mist;
   final Color accent;
   final Color link;
+  Color get attention => const Color(0xFF7A4500);
   static const canvas = Color(0xFFFBFBF8);
   static const cornflower = Color(0xFF6AA6DA);
   static const referenceMist = Color(0xFFDBE3E9);
@@ -53,6 +54,16 @@ ThemeData buildTheme() {
     colorScheme: scheme,
     fontFamily: 'Figtree',
     brightness: Brightness.light,
+  );
+  const actionSize = Size(48, 56);
+  const actionPadding = EdgeInsets.symmetric(horizontal: 20, vertical: 12);
+  final actionShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18),
+  );
+  const actionText = TextStyle(
+    fontFamily: 'Figtree',
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
   );
   return base.copyWith(
     scaffoldBackgroundColor: WaydayColors.canvas,
@@ -115,20 +126,27 @@ ThemeData buildTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size(48, 56),
+        minimumSize: actionSize,
+        padding: actionPadding,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        textStyle: const TextStyle(
-          fontFamily: 'Figtree',
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: actionShape,
+        textStyle: actionText,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: actionSize,
+        padding: actionPadding,
+        shape: actionShape,
+        textStyle: actionText,
+        foregroundColor: scheme.secondary,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: scheme.secondary,
         minimumSize: const Size(48, 48),
+        shape: actionShape,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(

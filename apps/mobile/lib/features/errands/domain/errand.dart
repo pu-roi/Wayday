@@ -130,7 +130,10 @@ class Errand {
     'afterErrandIds': afterErrandIds,
   };
 
-  factory Errand.fromJson(Map<String, dynamic> json) {
+  factory Errand.fromJson(
+    Map<String, dynamic> json, {
+    GooglePinResolver? resolveGooglePin,
+  }) {
     final duration = json['durationMinutes'] as int? ?? 15;
     final timing = TimingRule.values.byName(json['timing'] as String);
     final minute = json['minute'] as int?;
@@ -153,7 +156,10 @@ class Errand {
       sourceItemId: json['sourceItemId'] as String?,
       placeIntent: json['placeIntent'] == null
           ? PlaceIntent(label: json['place'] as String? ?? '')
-          : PlaceIntent.fromJson(json['placeIntent'] as Map<String, dynamic>),
+          : PlaceIntent.fromJson(
+              json['placeIntent'] as Map<String, dynamic>,
+              resolveGooglePin: resolveGooglePin,
+            ),
       durationMinutes: duration,
       durationConfirmed: json['durationConfirmed'] as bool? ?? false,
       confirmedFields: Set.unmodifiable(

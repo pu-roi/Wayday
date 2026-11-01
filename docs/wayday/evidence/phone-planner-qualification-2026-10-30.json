@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-30",
+  "scope": "private Android Plan my day pilot",
+  "analysis": "no issues",
+  "unit_tests": {
+    "passed": 219,
+    "skipped_live_probe": 1,
+    "baseline_failures": 8
+  },
+  "live_gemini": {
+    "passed": true,
+    "generation_requests": 1,
+    "unchanged_input_reused": true,
+    "private_task_input": false
+  },
+  "emulator_fixture": {
+    "passed": true,
+    "paid_allowance_exhaustion_guard": true,
+    "worker_tasks": 12,
+    "search_budget_ms": 150,
+    "elapsed_ms": 245,
+    "time_limited": true
+  },
+  "physical_fixture": {
+    "device": "Samsung SM-A546E",
+    "passed": true,
+    "worker_tasks": 12,
+    "search_budget_ms": 150,
+    "elapsed_ms": 169,
+    "time_limited": true
+  },
+  "physical_google_compatibility": {
+    "passed": true,
+    "visible_place_bindings": 1,
+    "candidate_metadata_eligible": true,
+    "native_map_marker": true,
+    "guidance_destinations": 0
+  },
+  "public_routes_adapter_probe": {
+    "host": "development computer",
+    "passed_modes": [
+      "WALK",
+      "TWO_WHEELER",
+      "DRIVE"
+    ],
+    "matrix_elements": 12,
+    "route_legs": 3,
+    "retries": 0,
+    "private_gps": false
+  },
+  "personal_phone_migration": {
+    "from_schema": 2,
+    "to_schema": 3,
+    "today_errands_before": 4,
+    "today_errands_after": 4,
+    "compared_task_fields_preserved": true,
+    "integrity": "ok"
+  },
+  "paid_allowance": {
+    "total_allocated_attempts": 10,
+    "isolated_attempts_used": 1,
+    "phone_remaining": 9,
+    "per_installation_rolling_day_cap": 3,
+    "approximate_reserve_usd_per_attempt": 0.025,
+    "account_wide_billing_cap": false
+  },
+  "credentials": {
+    "gemini_in_apk": false,
+    "native_encrypted_private_import": true,
+    "local_env_ignored": true
+  },
+  "not_yet_verified": [
+    "actual-road embedded turn-by-turn guidance",
+    "complete unplugged personal itinerary rehearsal",
+    "account-wide remaining service capacity",
+    "physical TalkBack and large-text traversal"
+  ],
+  "unavailable_in_pilot": [
+    "bicycle routing and guidance",
+    "heavy/restricted truck routing"
+  ]
+}

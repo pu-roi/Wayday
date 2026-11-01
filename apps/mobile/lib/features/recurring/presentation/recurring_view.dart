@@ -12,6 +12,7 @@ import '../../today/presentation/today_controller.dart';
 import '../domain/errand_group.dart';
 import 'group_editor.dart';
 import 'recurring_controller.dart';
+import '../../planning/presentation/reusable_trip_controls.dart';
 
 class RecurringView extends ConsumerStatefulWidget {
   const RecurringView({super.key});
@@ -21,6 +22,24 @@ class RecurringView extends ConsumerStatefulWidget {
 
 class _RecurringViewState extends ConsumerState<RecurringView> {
   final _collapsed = <String>{};
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final controller = ref.read(recurringProvider.notifier);
+      final previous = controller.recoveredOrder;
+      controller.recoveredOrder = null;
+      if (previous != null) {
+        showFeedback(
+          context,
+          'Order updated to match your After rules.',
+          onUndo: () => controller.restore(previous, reconcile: false),
+        );
+      }
+    });
+  }
+
   void _edit(BuildContext context, ErrandGroup group, {bool isNew = false}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     Navigator.of(context, rootNavigator: true).push<void>(
@@ -37,7 +56,7 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
     Errand item,
   ) async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    final result = await editErrand(context, item);
+    final result = await editErrand(context, item, errands: group.items);
     if (!context.mounted) return;
     final controller = ref.read(recurringProvider.notifier);
     switch (result) {
@@ -116,6 +135,7 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
+              const SavedTripsSection(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 24),
                 child: Text(

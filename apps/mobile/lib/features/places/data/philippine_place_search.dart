@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/place_search.dart';
+export '../domain/place_search.dart' show PlaceSearchResult;
 
 final philippinePlaceSearchProvider = Provider<PhilippinePlaceSearch>((ref) {
   final client = http.Client();
@@ -15,22 +17,6 @@ final philippinePlaceSearchProvider = Provider<PhilippinePlaceSearch>((ref) {
 
 class PlaceSearchUnavailable implements Exception {
   const PlaceSearchUnavailable();
-}
-
-class PlaceSearchResult {
-  const PlaceSearchResult({
-    required this.name,
-    required this.latitude,
-    required this.longitude,
-    required this.sourceId,
-    this.address,
-  });
-
-  final String name;
-  final double latitude;
-  final double longitude;
-  final String sourceId;
-  final String? address;
 }
 
 /// Photon-compatible forward search. The public demo is for limited testing.

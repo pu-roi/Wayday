@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Wayday has an Android shell, Today, Recurring, and verified local SQLite persistence. Stage 1 adds empty startup and consistent selection controls while preserving stored data; maps remain placeholders. The owner authorized M2-01 through M2-04 on 2026-10-27. Planning and Progress record acceptance and the actual Android targets. See [Product](../../README.md#product-requirements) for current and target behavior and the [mobile README](../../apps/mobile/README.md) for runnable commands.
+Wayday has an Android shell, Today, Recurring, local SQLite persistence, online maps, and a direct-client multi-provider search presentation pilot. Current work follows the owner's explicit instructions. Search pilot configuration and runnable checks live in the [mobile README](../../apps/mobile/README.md#search-pilot-configuration); completed evidence and limitations live in [Progress](PROGRESS.md).
 
 Follow the owner's latest explicit task instructions for current scope and sequence. Use [the documentation index](../../README.md) to find each project authority. The root README owns the project overview, documentation index, product requirements, and design-tool metadata. Supporting project documents live in `docs/wayday/`; `AGENTS.md` and `DESIGN.md` also remain at the root. [Progress](PROGRESS.md) records completed work and verification evidence. Link to the relevant product and technical authorities instead of duplicating their contents.
 

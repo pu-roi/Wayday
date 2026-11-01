@@ -2285,6 +2285,1235 @@ class SavedPlacesCompanion extends UpdateCompanion<SavedPlace> {
   }
 }
 
+class $AcceptedItinerariesTable extends AcceptedItineraries
+    with TableInfo<$AcceptedItinerariesTable, AcceptedItineraryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AcceptedItinerariesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'accepted_itineraries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AcceptedItineraryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AcceptedItineraryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AcceptedItineraryRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $AcceptedItinerariesTable createAlias(String alias) {
+    return $AcceptedItinerariesTable(attachedDatabase, alias);
+  }
+}
+
+class AcceptedItineraryRow extends DataClass
+    implements Insertable<AcceptedItineraryRow> {
+  final int id;
+  final String payload;
+  const AcceptedItineraryRow({required this.id, required this.payload});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  AcceptedItinerariesCompanion toCompanion(bool nullToAbsent) {
+    return AcceptedItinerariesCompanion(id: Value(id), payload: Value(payload));
+  }
+
+  factory AcceptedItineraryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AcceptedItineraryRow(
+      id: serializer.fromJson<int>(json['id']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  AcceptedItineraryRow copyWith({int? id, String? payload}) =>
+      AcceptedItineraryRow(id: id ?? this.id, payload: payload ?? this.payload);
+  AcceptedItineraryRow copyWithCompanion(AcceptedItinerariesCompanion data) {
+    return AcceptedItineraryRow(
+      id: data.id.present ? data.id.value : this.id,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AcceptedItineraryRow(')
+          ..write('id: $id, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AcceptedItineraryRow &&
+          other.id == this.id &&
+          other.payload == this.payload);
+}
+
+class AcceptedItinerariesCompanion
+    extends UpdateCompanion<AcceptedItineraryRow> {
+  final Value<int> id;
+  final Value<String> payload;
+  const AcceptedItinerariesCompanion({
+    this.id = const Value.absent(),
+    this.payload = const Value.absent(),
+  });
+  AcceptedItinerariesCompanion.insert({
+    this.id = const Value.absent(),
+    required String payload,
+  }) : payload = Value(payload);
+  static Insertable<AcceptedItineraryRow> custom({
+    Expression<int>? id,
+    Expression<String>? payload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (payload != null) 'payload': payload,
+    });
+  }
+
+  AcceptedItinerariesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? payload,
+  }) {
+    return AcceptedItinerariesCompanion(
+      id: id ?? this.id,
+      payload: payload ?? this.payload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AcceptedItinerariesCompanion(')
+          ..write('id: $id, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReviewTripsTable extends ReviewTrips
+    with TableInfo<$ReviewTripsTable, ReviewTripRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReviewTripsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, sourceKey, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'review_trips';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReviewTripRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReviewTripRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReviewTripRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $ReviewTripsTable createAlias(String alias) {
+    return $ReviewTripsTable(attachedDatabase, alias);
+  }
+}
+
+class ReviewTripRow extends DataClass implements Insertable<ReviewTripRow> {
+  final int id;
+  final String sourceKey;
+  final String payload;
+  const ReviewTripRow({
+    required this.id,
+    required this.sourceKey,
+    required this.payload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_key'] = Variable<String>(sourceKey);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  ReviewTripsCompanion toCompanion(bool nullToAbsent) {
+    return ReviewTripsCompanion(
+      id: Value(id),
+      sourceKey: Value(sourceKey),
+      payload: Value(payload),
+    );
+  }
+
+  factory ReviewTripRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReviewTripRow(
+      id: serializer.fromJson<int>(json['id']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  ReviewTripRow copyWith({int? id, String? sourceKey, String? payload}) =>
+      ReviewTripRow(
+        id: id ?? this.id,
+        sourceKey: sourceKey ?? this.sourceKey,
+        payload: payload ?? this.payload,
+      );
+  ReviewTripRow copyWithCompanion(ReviewTripsCompanion data) {
+    return ReviewTripRow(
+      id: data.id.present ? data.id.value : this.id,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewTripRow(')
+          ..write('id: $id, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, sourceKey, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReviewTripRow &&
+          other.id == this.id &&
+          other.sourceKey == this.sourceKey &&
+          other.payload == this.payload);
+}
+
+class ReviewTripsCompanion extends UpdateCompanion<ReviewTripRow> {
+  final Value<int> id;
+  final Value<String> sourceKey;
+  final Value<String> payload;
+  const ReviewTripsCompanion({
+    this.id = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.payload = const Value.absent(),
+  });
+  ReviewTripsCompanion.insert({
+    this.id = const Value.absent(),
+    required String sourceKey,
+    required String payload,
+  }) : sourceKey = Value(sourceKey),
+       payload = Value(payload);
+  static Insertable<ReviewTripRow> custom({
+    Expression<int>? id,
+    Expression<String>? sourceKey,
+    Expression<String>? payload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (payload != null) 'payload': payload,
+    });
+  }
+
+  ReviewTripsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? sourceKey,
+    Value<String>? payload,
+  }) {
+    return ReviewTripsCompanion(
+      id: id ?? this.id,
+      sourceKey: sourceKey ?? this.sourceKey,
+      payload: payload ?? this.payload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewTripsCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ClarificationSessionsTable extends ClarificationSessions
+    with TableInfo<$ClarificationSessionsTable, ClarificationSessionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClarificationSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [sourceKey, payload, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'clarification_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ClarificationSessionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {sourceKey};
+  @override
+  ClarificationSessionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ClarificationSessionRow(
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ClarificationSessionsTable createAlias(String alias) {
+    return $ClarificationSessionsTable(attachedDatabase, alias);
+  }
+}
+
+class ClarificationSessionRow extends DataClass
+    implements Insertable<ClarificationSessionRow> {
+  final String sourceKey;
+  final String payload;
+  final int updatedAt;
+  const ClarificationSessionRow({
+    required this.sourceKey,
+    required this.payload,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['source_key'] = Variable<String>(sourceKey);
+    map['payload'] = Variable<String>(payload);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  ClarificationSessionsCompanion toCompanion(bool nullToAbsent) {
+    return ClarificationSessionsCompanion(
+      sourceKey: Value(sourceKey),
+      payload: Value(payload),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ClarificationSessionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ClarificationSessionRow(
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      payload: serializer.fromJson<String>(json['payload']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'payload': serializer.toJson<String>(payload),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  ClarificationSessionRow copyWith({
+    String? sourceKey,
+    String? payload,
+    int? updatedAt,
+  }) => ClarificationSessionRow(
+    sourceKey: sourceKey ?? this.sourceKey,
+    payload: payload ?? this.payload,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ClarificationSessionRow copyWithCompanion(
+    ClarificationSessionsCompanion data,
+  ) {
+    return ClarificationSessionRow(
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClarificationSessionRow(')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(sourceKey, payload, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClarificationSessionRow &&
+          other.sourceKey == this.sourceKey &&
+          other.payload == this.payload &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ClarificationSessionsCompanion
+    extends UpdateCompanion<ClarificationSessionRow> {
+  final Value<String> sourceKey;
+  final Value<String> payload;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const ClarificationSessionsCompanion({
+    this.sourceKey = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ClarificationSessionsCompanion.insert({
+    required String sourceKey,
+    required String payload,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : sourceKey = Value(sourceKey),
+       payload = Value(payload),
+       updatedAt = Value(updatedAt);
+  static Insertable<ClarificationSessionRow> custom({
+    Expression<String>? sourceKey,
+    Expression<String>? payload,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (payload != null) 'payload': payload,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ClarificationSessionsCompanion copyWith({
+    Value<String>? sourceKey,
+    Value<String>? payload,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ClarificationSessionsCompanion(
+      sourceKey: sourceKey ?? this.sourceKey,
+      payload: payload ?? this.payload,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClarificationSessionsCompanion(')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecommendationDraftsTable extends RecommendationDrafts
+    with TableInfo<$RecommendationDraftsTable, RecommendationDraftRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecommendationDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, sourceKey, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recommendation_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecommendationDraftRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecommendationDraftRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecommendationDraftRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $RecommendationDraftsTable createAlias(String alias) {
+    return $RecommendationDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class RecommendationDraftRow extends DataClass
+    implements Insertable<RecommendationDraftRow> {
+  final int id;
+  final String sourceKey;
+  final String payload;
+  const RecommendationDraftRow({
+    required this.id,
+    required this.sourceKey,
+    required this.payload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['source_key'] = Variable<String>(sourceKey);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  RecommendationDraftsCompanion toCompanion(bool nullToAbsent) {
+    return RecommendationDraftsCompanion(
+      id: Value(id),
+      sourceKey: Value(sourceKey),
+      payload: Value(payload),
+    );
+  }
+
+  factory RecommendationDraftRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecommendationDraftRow(
+      id: serializer.fromJson<int>(json['id']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  RecommendationDraftRow copyWith({
+    int? id,
+    String? sourceKey,
+    String? payload,
+  }) => RecommendationDraftRow(
+    id: id ?? this.id,
+    sourceKey: sourceKey ?? this.sourceKey,
+    payload: payload ?? this.payload,
+  );
+  RecommendationDraftRow copyWithCompanion(RecommendationDraftsCompanion data) {
+    return RecommendationDraftRow(
+      id: data.id.present ? data.id.value : this.id,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecommendationDraftRow(')
+          ..write('id: $id, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, sourceKey, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecommendationDraftRow &&
+          other.id == this.id &&
+          other.sourceKey == this.sourceKey &&
+          other.payload == this.payload);
+}
+
+class RecommendationDraftsCompanion
+    extends UpdateCompanion<RecommendationDraftRow> {
+  final Value<int> id;
+  final Value<String> sourceKey;
+  final Value<String> payload;
+  const RecommendationDraftsCompanion({
+    this.id = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.payload = const Value.absent(),
+  });
+  RecommendationDraftsCompanion.insert({
+    this.id = const Value.absent(),
+    required String sourceKey,
+    required String payload,
+  }) : sourceKey = Value(sourceKey),
+       payload = Value(payload);
+  static Insertable<RecommendationDraftRow> custom({
+    Expression<int>? id,
+    Expression<String>? sourceKey,
+    Expression<String>? payload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (payload != null) 'payload': payload,
+    });
+  }
+
+  RecommendationDraftsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? sourceKey,
+    Value<String>? payload,
+  }) {
+    return RecommendationDraftsCompanion(
+      id: id ?? this.id,
+      sourceKey: sourceKey ?? this.sourceKey,
+      payload: payload ?? this.payload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecommendationDraftsCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReusableTripsTable extends ReusableTrips
+    with TableInfo<$ReusableTripsTable, ReusableTripRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReusableTripsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, payload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reusable_trips';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReusableTripRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReusableTripRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReusableTripRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $ReusableTripsTable createAlias(String alias) {
+    return $ReusableTripsTable(attachedDatabase, alias);
+  }
+}
+
+class ReusableTripRow extends DataClass implements Insertable<ReusableTripRow> {
+  final String id;
+  final String name;
+  final String payload;
+  const ReusableTripRow({
+    required this.id,
+    required this.name,
+    required this.payload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  ReusableTripsCompanion toCompanion(bool nullToAbsent) {
+    return ReusableTripsCompanion(
+      id: Value(id),
+      name: Value(name),
+      payload: Value(payload),
+    );
+  }
+
+  factory ReusableTripRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReusableTripRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  ReusableTripRow copyWith({String? id, String? name, String? payload}) =>
+      ReusableTripRow(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        payload: payload ?? this.payload,
+      );
+  ReusableTripRow copyWithCompanion(ReusableTripsCompanion data) {
+    return ReusableTripRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReusableTripRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReusableTripRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.payload == this.payload);
+}
+
+class ReusableTripsCompanion extends UpdateCompanion<ReusableTripRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> payload;
+  final Value<int> rowid;
+  const ReusableTripsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReusableTripsCompanion.insert({
+    required String id,
+    required String name,
+    required String payload,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       payload = Value(payload);
+  static Insertable<ReusableTripRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? payload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (payload != null) 'payload': payload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReusableTripsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? payload,
+    Value<int>? rowid,
+  }) {
+    return ReusableTripsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      payload: payload ?? this.payload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReusableTripsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('payload: $payload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$WaydayDatabase extends GeneratedDatabase {
   _$WaydayDatabase(QueryExecutor e) : super(e);
   $WaydayDatabaseManager get managers => $WaydayDatabaseManager(this);
@@ -2295,6 +3524,14 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
   );
   late final $GroupErrandsTable groupErrands = $GroupErrandsTable(this);
   late final $SavedPlacesTable savedPlaces = $SavedPlacesTable(this);
+  late final $AcceptedItinerariesTable acceptedItineraries =
+      $AcceptedItinerariesTable(this);
+  late final $ReviewTripsTable reviewTrips = $ReviewTripsTable(this);
+  late final $ClarificationSessionsTable clarificationSessions =
+      $ClarificationSessionsTable(this);
+  late final $RecommendationDraftsTable recommendationDrafts =
+      $RecommendationDraftsTable(this);
+  late final $ReusableTripsTable reusableTrips = $ReusableTripsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2305,6 +3542,11 @@ abstract class _$WaydayDatabase extends GeneratedDatabase {
     recurringGroups,
     groupErrands,
     savedPlaces,
+    acceptedItineraries,
+    reviewTrips,
+    clarificationSessions,
+    recommendationDrafts,
+    reusableTrips,
   ];
 }
 
@@ -3554,6 +4796,884 @@ typedef $$SavedPlacesTableProcessedTableManager =
       SavedPlace,
       PrefetchHooks Function()
     >;
+typedef $$AcceptedItinerariesTableCreateCompanionBuilder =
+    AcceptedItinerariesCompanion Function({
+      Value<int> id,
+      required String payload,
+    });
+typedef $$AcceptedItinerariesTableUpdateCompanionBuilder =
+    AcceptedItinerariesCompanion Function({
+      Value<int> id,
+      Value<String> payload,
+    });
+
+class $$AcceptedItinerariesTableFilterComposer
+    extends Composer<_$WaydayDatabase, $AcceptedItinerariesTable> {
+  $$AcceptedItinerariesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AcceptedItinerariesTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $AcceptedItinerariesTable> {
+  $$AcceptedItinerariesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AcceptedItinerariesTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $AcceptedItinerariesTable> {
+  $$AcceptedItinerariesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$AcceptedItinerariesTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $AcceptedItinerariesTable,
+          AcceptedItineraryRow,
+          $$AcceptedItinerariesTableFilterComposer,
+          $$AcceptedItinerariesTableOrderingComposer,
+          $$AcceptedItinerariesTableAnnotationComposer,
+          $$AcceptedItinerariesTableCreateCompanionBuilder,
+          $$AcceptedItinerariesTableUpdateCompanionBuilder,
+          (
+            AcceptedItineraryRow,
+            BaseReferences<
+              _$WaydayDatabase,
+              $AcceptedItinerariesTable,
+              AcceptedItineraryRow
+            >,
+          ),
+          AcceptedItineraryRow,
+          PrefetchHooks Function()
+        > {
+  $$AcceptedItinerariesTableTableManager(
+    _$WaydayDatabase db,
+    $AcceptedItinerariesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AcceptedItinerariesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AcceptedItinerariesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AcceptedItinerariesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+              }) => AcceptedItinerariesCompanion(id: id, payload: payload),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String payload,
+              }) =>
+                  AcceptedItinerariesCompanion.insert(id: id, payload: payload),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AcceptedItinerariesTable, AcceptedItineraryRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $AcceptedItinerariesTable,
+                    AcceptedItineraryRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AcceptedItinerariesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $AcceptedItinerariesTable,
+      AcceptedItineraryRow,
+      $$AcceptedItinerariesTableFilterComposer,
+      $$AcceptedItinerariesTableOrderingComposer,
+      $$AcceptedItinerariesTableAnnotationComposer,
+      $$AcceptedItinerariesTableCreateCompanionBuilder,
+      $$AcceptedItinerariesTableUpdateCompanionBuilder,
+      (
+        AcceptedItineraryRow,
+        BaseReferences<
+          _$WaydayDatabase,
+          $AcceptedItinerariesTable,
+          AcceptedItineraryRow
+        >,
+      ),
+      AcceptedItineraryRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ReviewTripsTableCreateCompanionBuilder =
+    ReviewTripsCompanion Function({
+      Value<int> id,
+      required String sourceKey,
+      required String payload,
+    });
+typedef $$ReviewTripsTableUpdateCompanionBuilder =
+    ReviewTripsCompanion Function({
+      Value<int> id,
+      Value<String> sourceKey,
+      Value<String> payload,
+    });
+
+class $$ReviewTripsTableFilterComposer
+    extends Composer<_$WaydayDatabase, $ReviewTripsTable> {
+  $$ReviewTripsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReviewTripsTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $ReviewTripsTable> {
+  $$ReviewTripsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReviewTripsTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $ReviewTripsTable> {
+  $$ReviewTripsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$ReviewTripsTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $ReviewTripsTable,
+          ReviewTripRow,
+          $$ReviewTripsTableFilterComposer,
+          $$ReviewTripsTableOrderingComposer,
+          $$ReviewTripsTableAnnotationComposer,
+          $$ReviewTripsTableCreateCompanionBuilder,
+          $$ReviewTripsTableUpdateCompanionBuilder,
+          (
+            ReviewTripRow,
+            BaseReferences<_$WaydayDatabase, $ReviewTripsTable, ReviewTripRow>,
+          ),
+          ReviewTripRow,
+          PrefetchHooks Function()
+        > {
+  $$ReviewTripsTableTableManager(_$WaydayDatabase db, $ReviewTripsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReviewTripsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReviewTripsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReviewTripsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+              }) => ReviewTripsCompanion(
+                id: id,
+                sourceKey: sourceKey,
+                payload: payload,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String sourceKey,
+                required String payload,
+              }) => ReviewTripsCompanion.insert(
+                id: id,
+                sourceKey: sourceKey,
+                payload: payload,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReviewTripsTable, ReviewTripRow>(table),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $ReviewTripsTable,
+                    ReviewTripRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReviewTripsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $ReviewTripsTable,
+      ReviewTripRow,
+      $$ReviewTripsTableFilterComposer,
+      $$ReviewTripsTableOrderingComposer,
+      $$ReviewTripsTableAnnotationComposer,
+      $$ReviewTripsTableCreateCompanionBuilder,
+      $$ReviewTripsTableUpdateCompanionBuilder,
+      (
+        ReviewTripRow,
+        BaseReferences<_$WaydayDatabase, $ReviewTripsTable, ReviewTripRow>,
+      ),
+      ReviewTripRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ClarificationSessionsTableCreateCompanionBuilder =
+    ClarificationSessionsCompanion Function({
+      required String sourceKey,
+      required String payload,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ClarificationSessionsTableUpdateCompanionBuilder =
+    ClarificationSessionsCompanion Function({
+      Value<String> sourceKey,
+      Value<String> payload,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ClarificationSessionsTableFilterComposer
+    extends Composer<_$WaydayDatabase, $ClarificationSessionsTable> {
+  $$ClarificationSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ClarificationSessionsTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $ClarificationSessionsTable> {
+  $$ClarificationSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ClarificationSessionsTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $ClarificationSessionsTable> {
+  $$ClarificationSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ClarificationSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $ClarificationSessionsTable,
+          ClarificationSessionRow,
+          $$ClarificationSessionsTableFilterComposer,
+          $$ClarificationSessionsTableOrderingComposer,
+          $$ClarificationSessionsTableAnnotationComposer,
+          $$ClarificationSessionsTableCreateCompanionBuilder,
+          $$ClarificationSessionsTableUpdateCompanionBuilder,
+          (
+            ClarificationSessionRow,
+            BaseReferences<
+              _$WaydayDatabase,
+              $ClarificationSessionsTable,
+              ClarificationSessionRow
+            >,
+          ),
+          ClarificationSessionRow,
+          PrefetchHooks Function()
+        > {
+  $$ClarificationSessionsTableTableManager(
+    _$WaydayDatabase db,
+    $ClarificationSessionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClarificationSessionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$ClarificationSessionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ClarificationSessionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ClarificationSessionsCompanion(
+                sourceKey: sourceKey,
+                payload: payload,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String sourceKey,
+                required String payload,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ClarificationSessionsCompanion.insert(
+                sourceKey: sourceKey,
+                payload: payload,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $ClarificationSessionsTable,
+                    ClarificationSessionRow
+                  >(table),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $ClarificationSessionsTable,
+                    ClarificationSessionRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ClarificationSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $ClarificationSessionsTable,
+      ClarificationSessionRow,
+      $$ClarificationSessionsTableFilterComposer,
+      $$ClarificationSessionsTableOrderingComposer,
+      $$ClarificationSessionsTableAnnotationComposer,
+      $$ClarificationSessionsTableCreateCompanionBuilder,
+      $$ClarificationSessionsTableUpdateCompanionBuilder,
+      (
+        ClarificationSessionRow,
+        BaseReferences<
+          _$WaydayDatabase,
+          $ClarificationSessionsTable,
+          ClarificationSessionRow
+        >,
+      ),
+      ClarificationSessionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RecommendationDraftsTableCreateCompanionBuilder =
+    RecommendationDraftsCompanion Function({
+      Value<int> id,
+      required String sourceKey,
+      required String payload,
+    });
+typedef $$RecommendationDraftsTableUpdateCompanionBuilder =
+    RecommendationDraftsCompanion Function({
+      Value<int> id,
+      Value<String> sourceKey,
+      Value<String> payload,
+    });
+
+class $$RecommendationDraftsTableFilterComposer
+    extends Composer<_$WaydayDatabase, $RecommendationDraftsTable> {
+  $$RecommendationDraftsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecommendationDraftsTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $RecommendationDraftsTable> {
+  $$RecommendationDraftsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecommendationDraftsTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $RecommendationDraftsTable> {
+  $$RecommendationDraftsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$RecommendationDraftsTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $RecommendationDraftsTable,
+          RecommendationDraftRow,
+          $$RecommendationDraftsTableFilterComposer,
+          $$RecommendationDraftsTableOrderingComposer,
+          $$RecommendationDraftsTableAnnotationComposer,
+          $$RecommendationDraftsTableCreateCompanionBuilder,
+          $$RecommendationDraftsTableUpdateCompanionBuilder,
+          (
+            RecommendationDraftRow,
+            BaseReferences<
+              _$WaydayDatabase,
+              $RecommendationDraftsTable,
+              RecommendationDraftRow
+            >,
+          ),
+          RecommendationDraftRow,
+          PrefetchHooks Function()
+        > {
+  $$RecommendationDraftsTableTableManager(
+    _$WaydayDatabase db,
+    $RecommendationDraftsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecommendationDraftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecommendationDraftsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecommendationDraftsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+              }) => RecommendationDraftsCompanion(
+                id: id,
+                sourceKey: sourceKey,
+                payload: payload,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String sourceKey,
+                required String payload,
+              }) => RecommendationDraftsCompanion.insert(
+                id: id,
+                sourceKey: sourceKey,
+                payload: payload,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $RecommendationDraftsTable,
+                    RecommendationDraftRow
+                  >(table),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $RecommendationDraftsTable,
+                    RecommendationDraftRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecommendationDraftsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $RecommendationDraftsTable,
+      RecommendationDraftRow,
+      $$RecommendationDraftsTableFilterComposer,
+      $$RecommendationDraftsTableOrderingComposer,
+      $$RecommendationDraftsTableAnnotationComposer,
+      $$RecommendationDraftsTableCreateCompanionBuilder,
+      $$RecommendationDraftsTableUpdateCompanionBuilder,
+      (
+        RecommendationDraftRow,
+        BaseReferences<
+          _$WaydayDatabase,
+          $RecommendationDraftsTable,
+          RecommendationDraftRow
+        >,
+      ),
+      RecommendationDraftRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ReusableTripsTableCreateCompanionBuilder =
+    ReusableTripsCompanion Function({
+      required String id,
+      required String name,
+      required String payload,
+      Value<int> rowid,
+    });
+typedef $$ReusableTripsTableUpdateCompanionBuilder =
+    ReusableTripsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> payload,
+      Value<int> rowid,
+    });
+
+class $$ReusableTripsTableFilterComposer
+    extends Composer<_$WaydayDatabase, $ReusableTripsTable> {
+  $$ReusableTripsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReusableTripsTableOrderingComposer
+    extends Composer<_$WaydayDatabase, $ReusableTripsTable> {
+  $$ReusableTripsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReusableTripsTableAnnotationComposer
+    extends Composer<_$WaydayDatabase, $ReusableTripsTable> {
+  $$ReusableTripsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$ReusableTripsTableTableManager
+    extends
+        RootTableManager<
+          _$WaydayDatabase,
+          $ReusableTripsTable,
+          ReusableTripRow,
+          $$ReusableTripsTableFilterComposer,
+          $$ReusableTripsTableOrderingComposer,
+          $$ReusableTripsTableAnnotationComposer,
+          $$ReusableTripsTableCreateCompanionBuilder,
+          $$ReusableTripsTableUpdateCompanionBuilder,
+          (
+            ReusableTripRow,
+            BaseReferences<
+              _$WaydayDatabase,
+              $ReusableTripsTable,
+              ReusableTripRow
+            >,
+          ),
+          ReusableTripRow,
+          PrefetchHooks Function()
+        > {
+  $$ReusableTripsTableTableManager(
+    _$WaydayDatabase db,
+    $ReusableTripsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReusableTripsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReusableTripsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReusableTripsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReusableTripsCompanion(
+                id: id,
+                name: name,
+                payload: payload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String payload,
+                Value<int> rowid = const Value.absent(),
+              }) => ReusableTripsCompanion.insert(
+                id: id,
+                name: name,
+                payload: payload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReusableTripsTable, ReusableTripRow>(table),
+                  BaseReferences<
+                    _$WaydayDatabase,
+                    $ReusableTripsTable,
+                    ReusableTripRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReusableTripsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WaydayDatabase,
+      $ReusableTripsTable,
+      ReusableTripRow,
+      $$ReusableTripsTableFilterComposer,
+      $$ReusableTripsTableOrderingComposer,
+      $$ReusableTripsTableAnnotationComposer,
+      $$ReusableTripsTableCreateCompanionBuilder,
+      $$ReusableTripsTableUpdateCompanionBuilder,
+      (
+        ReusableTripRow,
+        BaseReferences<_$WaydayDatabase, $ReusableTripsTable, ReusableTripRow>,
+      ),
+      ReusableTripRow,
+      PrefetchHooks Function()
+    >;
 
 class $WaydayDatabaseManager {
   final _$WaydayDatabase _db;
@@ -3568,4 +5688,14 @@ class $WaydayDatabaseManager {
       $$GroupErrandsTableTableManager(_db, _db.groupErrands);
   $$SavedPlacesTableTableManager get savedPlaces =>
       $$SavedPlacesTableTableManager(_db, _db.savedPlaces);
+  $$AcceptedItinerariesTableTableManager get acceptedItineraries =>
+      $$AcceptedItinerariesTableTableManager(_db, _db.acceptedItineraries);
+  $$ReviewTripsTableTableManager get reviewTrips =>
+      $$ReviewTripsTableTableManager(_db, _db.reviewTrips);
+  $$ClarificationSessionsTableTableManager get clarificationSessions =>
+      $$ClarificationSessionsTableTableManager(_db, _db.clarificationSessions);
+  $$RecommendationDraftsTableTableManager get recommendationDrafts =>
+      $$RecommendationDraftsTableTableManager(_db, _db.recommendationDrafts);
+  $$ReusableTripsTableTableManager get reusableTrips =>
+      $$ReusableTripsTableTableManager(_db, _db.reusableTrips);
 }

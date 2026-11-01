@@ -1,0 +1,3 @@
+Made with Natural Earth. Public-domain cartographic country data.
+https://www.naturalearthdata.com/about/terms-of-use/
+PHL subset from Natural Earth Vector v5.1.2. This validation mask is not a legal boundary or navigation/access guarantee. Raw world data is not bundled.

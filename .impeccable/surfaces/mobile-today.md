@@ -2,6 +2,10 @@
 
 Mode: Operate. Build directly in Flutter. This is a constrained adaptation of V2, with its route structure and compact list preserved, rather than a new visual identity exercise.
 
+## Current implementation context — 2026-10-30
+
+README.md and DESIGN.md are authoritative. The descriptions below are preserved historical design context where they mention sample seeding, memory-only storage, illustrative maps or deferred planning. Current Android Today/Recurring state is persisted in Drift, startup is empty without reset-to-example actions, and the shared picker uses real maps/search/pins. D47 adds the separate Plan my day preparation, recommendation, Google result-map/timeline and accepted itinerary flow. Keep the existing Cornflower/Figtree tokens, focused editors, quiet compact surfaces, large-text scrolling and reduced motion. Do not copy historical simulated route times into runtime screens. No active Impeccable design tool was available for this implementation; use the actual Flutter theme and shared widgets.
+
 ## Direction contract
 
 The first viewport must show Today, the date, route endpoints, a numbered errand list, trip settings, and a clear next action. The signature is the From/Errands/To route spine: tasks visibly belong between the endpoints. The supplied reference contributes generous spacing, quiet tinted surfaces, and a strong anchored action; its booking, payments, glass, and gradients are not product requirements.

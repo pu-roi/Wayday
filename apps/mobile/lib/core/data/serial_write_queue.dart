@@ -1,7 +1,10 @@
 class SerialWriteQueue {
+  static final _owners = Expando<SerialWriteQueue>();
+  static SerialWriteQueue forOwner(Object owner) =>
+      _owners[owner] ??= SerialWriteQueue();
   Future<void> _tail = Future<void>.value();
 
-  Future<void> enqueue(Future<void> Function() operation) {
+  Future<T> enqueue<T>(Future<T> Function() operation) {
     final write = _tail.then((_) => operation());
     _tail = write.then<void>(
       (_) {},

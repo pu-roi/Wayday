@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/day_repository.dart';
 import '../domain/day.dart';
+import '../../errands/domain/errand_order.dart';
 import '../../places/domain/place_intent.dart';
 
 final dayRepositoryProvider = Provider<DayRepository>(
@@ -13,21 +14,44 @@ final dayRepositoryProvider = Provider<DayRepository>(
 final todayProvider = NotifierProvider<TodayController, DayPlan>(
   TodayController.new,
 );
+final todayClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 class TodayController extends Notifier<DayPlan> {
   int _nextId = 0;
+  DayPlan? recoveredOrder;
+  bool _disposed = false;
   @override
   DayPlan build() {
+    _disposed = false;
+    ref.onDispose(() => _disposed = true);
     final day = ref.read(dayRepositoryProvider).read();
     _nextId = _nextSequence(day.errands.map((item) => item.id), const [
       'new-',
       'copy-',
     ]);
-    return day;
+    final order = ErrandOrder.reconcile(day.errands);
+    if (!order.changed) return day;
+    recoveredOrder = day;
+    final corrected = day.copyWith(
+      errands: order.items,
+      revision: day.revision + 1,
+    );
+    scheduleMicrotask(() {
+      if (!_disposed && identical(state, corrected)) _persist(corrected);
+    });
+    return corrected;
   }
 
-  void _commit(DayPlan day) {
-    state = day;
+  void _commit(DayPlan day, {bool reconcile = true}) {
+    final order = reconcile ? ErrandOrder.reconcile(day.errands) : null;
+    state = day.copyWith(
+      errands: order?.items ?? day.errands,
+      revision: state.revision + 1,
+    );
+    _persist(state);
+  }
+
+  void _persist(DayPlan day) {
     unawaited(
       persistSafely(
         ref.read(dayRepositoryProvider).save(day),
@@ -100,8 +124,28 @@ class TodayController extends Notifier<DayPlan> {
       errands: state.errands.where((item) => item.id != id).toList(),
     ),
   );
-  void restore(DayPlan day) => _commit(day);
-  void clear() => _commit(state.copyWith(errands: []));
+  void restore(DayPlan day, {bool reconcile = true}) =>
+      _commit(day, reconcile: reconcile);
+
+  /// Finishing already committed this snapshot atomically with trip cleanup.
+  void applyFinishedReset(DayPlan reset) {
+    if (state.revision >= reset.revision) return;
+    state = reset;
+    ref.read(saveFailuresProvider.notifier).saved('Today errands');
+  }
+
+  void clear() => _commit(
+    state.copyWith(
+      errands: [],
+      from: '',
+      to: '',
+      departure: 510,
+      deadline: 1080,
+      profile: TravelProfile.motor,
+      date: pilotToday(ref.read(todayClockProvider)()),
+      dateSelected: false,
+    ),
+  );
   void setEndpoint({required bool start, required PlaceIntent value}) {
     if (value.label.trim().isEmpty) return;
     _commit(
@@ -114,7 +158,14 @@ class TodayController extends Notifier<DayPlan> {
   void setProfile(TravelProfile value) =>
       _commit(state.copyWith(profile: value));
   void setDate(DateTime value) =>
-      _commit(state.copyWith(date: calendarDate(value)));
+      _commit(state.copyWith(date: calendarDate(value), dateSelected: true));
+  void refreshDefaultDate(DateTime now) {
+    final date = pilotToday(now);
+    if (state.canDefaultDate && state.date != date) {
+      _commit(state.copyWith(date: date));
+    }
+  }
+
   void setTimes({int? departure, int? deadline}) =>
       _commit(state.copyWith(departure: departure, deadline: deadline));
 }

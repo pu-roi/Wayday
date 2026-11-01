@@ -7,6 +7,7 @@ import '../../../core/widgets/section_surface.dart';
 import '../../maps/presentation/online_pin_picker.dart';
 import '../data/saved_place_repository.dart';
 import '../domain/place_intent.dart';
+import 'search_attribution.dart';
 
 class SavedPlacesPage extends ConsumerStatefulWidget {
   const SavedPlacesPage({super.key});
@@ -94,7 +95,10 @@ class _SavedPlacesPageState extends ConsumerState<SavedPlacesPage> {
                                 leading: const Icon(Icons.bookmark_outline),
                                 title: Text(place.place.label),
                                 subtitle: Text(
-                                  place.place.address ?? 'Saved pin',
+                                  place.place.isGoogle &&
+                                          !place.place.hasCoordinates
+                                      ? 'Internet is required to refresh this Google pin'
+                                      : place.place.address ?? 'Saved pin',
                                 ),
                                 trailing: const Icon(
                                   Icons.chevron_right_rounded,
@@ -160,19 +164,7 @@ class _SavedPlaceEditorState extends State<SavedPlaceEditor> {
       _error = null;
     });
     final location = _location;
-    final place = PlaceIntent(
-      kind: location.kind,
-      label: _name.text.trim(),
-      latitude: location.latitude,
-      longitude: location.longitude,
-      savedPlaceId: location.savedPlaceId,
-      category: location.category,
-      brand: location.brand,
-      source: location.source,
-      address: location.address,
-      sourceDate: location.sourceDate,
-      coordinateKind: location.coordinateKind,
-    );
+    final place = location.withLabel(_name.text.trim());
     try {
       await widget.repository.update(
         SavedPlace(id: widget.place.id, place: place),
@@ -245,13 +237,22 @@ class _SavedPlaceEditorState extends State<SavedPlaceEditor> {
                     : null,
               ),
               const SizedBox(height: 24),
+              SearchAttribution(
+                credits: [
+                  ..._location.attributions,
+                  if (_location.source.startsWith('osm/'))
+                    '© OpenStreetMap contributors',
+                ],
+              ),
               Text('Location', style: context.type.titleMedium),
               const SizedBox(height: 8),
               Text(
-                _location.address ??
-                    (_location.hasCoordinates
-                        ? 'Saved pin'
-                        : 'Location unavailable'),
+                _location.isGoogle && !_location.hasCoordinates
+                    ? 'Internet is required to refresh this Google pin. Your label is saved.'
+                    : _location.address ??
+                          (_location.hasCoordinates
+                              ? 'Saved pin'
+                              : 'Location unavailable'),
               ),
               if (_location.hasCoordinates)
                 Text(
