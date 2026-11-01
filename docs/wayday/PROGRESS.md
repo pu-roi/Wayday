@@ -2,6 +2,13 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Prepare the actual Wayday release candidate after phone-app removal
+
+- The owner explicitly approved a separate US$2 shared Google allowance and one guided two-errand planning trial, including separate Gemini/infrastructure usage. They reported initial ledger counters `0` / `0`, then confirmed saving only `limitMicros: 2000000` while retaining usage at zero. No independent server accounting transaction has verified that edit yet.
+- Transferred and checksum-verified the full separate test APK. Read-only package inspection then found the original app absent; the owner confirmed personally uninstalling both apps because they expected the website download to be usable. The agent performed no uninstall/reset or personal-phone harness and did not assume the removed local data was preserved or recover it.
+- Prepared the actual production package directly with the existing release certificate and original Firebase identity: `0.1.0-rc.1` / `100003`. After another local secure password entry, its universal build passed in 325.7 seconds; independent inspection verified identity, signature, gateway and absence of all four configured private credentials. Rechecked absence of installed/retained Wayday registrations before copying the candidate to the phone and verifying its remote checksum. Manual installation and the live trial remain pending.
+- Read-only GitHub inspection as `pu-roi` confirmed public APK publication still disabled and the protected `public-release` environment still missing. [Distribution](DISTRIBUTION.md#production-candidate-after-the-owner-removed-both-phone-apps) records the artifact, approved costs and remaining phone/release-configuration gates. All public qualification flags remain false.
+
 ### [2026-11-02] Prepare the full application under the separate test identity
 
 - After the connection check passed, the owner requested the full Wayday Test app and reported uninstalling the checker. The Android configuration now accepts the ordinary `lib/main.dart` entry point for the existing `.publictest` package, retaining the distinct launcher name, public gateway transport, permanent release certificate and all private-credential/map-fixture guards. No Flutter feature, database schema or personal-app data was changed.
