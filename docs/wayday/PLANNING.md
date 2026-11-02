@@ -1,5 +1,15 @@
 # Plan my day implementation plan
 
+## Context-aware interpretation and explicit fresh analysis — D76
+
+The owner approved a shared errand-intent-v2 interpretation/clarification policy for English, Filipino and Taglish. Infer ordinary consumer/service intent unless the request binds an existing destination or contains essential ambiguity. Offer at most one relevant optional refinement for any errand family; missing notes, item lists, brands and preferred stores do not block suitable recommendations. Typed focus separates destination preferences, task requirements, target identity, timing and dependencies. Reuse source-compatible typed optional answers across question rephrasing; newer withdrawal records continue to win. Existing fixed points, approved rules, durations and explicit flexibility remain authoritative.
+
+Search intent v2 declares preferred types, additional fallback types and incompatible primary types. The client derives acceptable types from preferred plus fallback, preserving validated legacy hints separately. Reject declared exclusions and meaningful conflicting primary classifications before secondary matches; consumer grocery needs do not silently become wholesale errands. Keep specialist retailers and missing-classification uncertainty honest. Discovery and alternatives share this policy; corridor/two-anchor, shortlist, hours and solver constraints remain unchanged. Corrections replace or clear obsolete hints.
+
+Analyze again explicitly starts a unique persisted run while retaining the prior usable review. The same run identity participates in Dart coalescing and native journaling. Persist before dispatch and commit validated results before replacing the review. Check saved analysis never generates; Retry analysis may dispatch the same pending/failed run. Preserve manual places, selected branches, approved rules, accepted extra errands and applicable saved answers. Reject stale callbacks and snapshots after edits. Analysis state uses additive existing clarification JSON, not a new database table. Historical request bodies, native fingerprints and d66-v1 gateway contracts remain compatible; new public requests use errand-v2.
+
+See [D76 implementation and evaluation evidence](evidence/errand-understanding-2026-11-03.md). The evaluation corpus has sixty public inputs across ten families and three languages, thirty held out. Offline parsing/mock/native checks do not establish the 95% live intent target or human-reviewed semantic accuracy. Gateway rollout and rebuilt public-client distribution remain separate, with no automatic regeneration of saved answers.
+
 ## Planning hierarchy and explicit completion — D69 current contract
 
 The owner approved retaining compact plan summaries and inline Details. Review errands groups the exact past-departure date/time and both recovery actions in a left-aligned notice with semantic red error text, warning icon and light error-container fill. Preserve validation and separate amber unanswered-question styling.

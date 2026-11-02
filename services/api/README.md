@@ -1,5 +1,7 @@
 # Wayday local place service
 
+D76 prepares the errand-v2 interpretation/clarification contract in `contracts-v2.json` while retaining installed-client d66-v1 behavior in `contracts.json`. Validation pins each prompt/schema to its declared version, and distribution includes both files. Deploy compatible server support before distributing the new public client. This implementation performs no deployment, quota/billing change or live model evaluation. See [D76 evidence](../../docs/wayday/evidence/errand-understanding-2026-11-03.md).
+
 ## Public provider gateway — D67
 
 The new Cloud Run entry point is `wayday_api.gateway.app:app`; use `Dockerfile.gateway` and `requirements-gateway.lock`. It is independent of the historical bounded catalog below and requires no catalog database. [Distribution](../../docs/wayday/DISTRIBUTION.md) documents the contract, app verification, secrets, shared accounting and live qualification gates. Do not expose the local pilot endpoints as a side effect of gateway deployment. The remainder of this README describes that preserved historical pilot.

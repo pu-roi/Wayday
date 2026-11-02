@@ -1,5 +1,7 @@
 # Wayday mobile
 
+Errand understanding (D76): new interpretations and answer resolution share ordinary-intent defaults, typed clarification focus and v2 venue preferences/fallbacks/exclusions. Analyze again explicitly requests a fresh interpretation while retaining the prior usable review; Check saved analysis sends no generation, and explicit retry resumes its persisted run. Saved answers and older request identities remain readable. New public builds need the prepared errand-v2 gateway contract deployed before distribution; this local implementation does not update either phone app or live gateway. See [D76 evidence and offline evaluation instructions](../../docs/wayday/evidence/errand-understanding-2026-11-03.md).
+
 ## Public development builds — D67
 
 [Distribution](../../docs/wayday/DISTRIBUTION.md) owns the public gateway, release signing, public build-defines allowlist, workflows and qualification. Public builds retain local scheduling/journals while private-credential operations use the gateway. The private debug setup below remains supported. Do not use its search-defines wrapper for public releases, copy private allowances onto testers, or install a release-signed APK over the owner's debug app. Compilation does not qualify live App Check, providers or physical devices; public downloads and deployment remain gated.
