@@ -1,6 +1,7 @@
 import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import 'place_search_intent.dart';
+import 'errand_understanding_policy.dart';
 
 enum LocationIntent { flexible, specific, unclear }
 
@@ -32,6 +33,7 @@ class ErrandNeed {
     this.proposedTitle,
     this.questionKind,
     this.questionRequired,
+    this.questionFocus,
     this.requiresSpecificLocation = false,
     this.locationIntent,
     this.searchIntent,
@@ -43,6 +45,7 @@ class ErrandNeed {
   final bool? optional;
   final int? minute;
   final String? questionKind;
+  final String? questionFocus;
   final bool? questionRequired;
   final bool requiresSpecificLocation;
   final LocationIntent? locationIntent;
@@ -54,6 +57,7 @@ class ErrandNeed {
     bool? requiresSpecificLocation,
     LocationIntent? locationIntent,
     PlaceSearchIntent? searchIntent,
+    bool clearSearchIntent = false,
   }) => ErrandNeed(
     id: id,
     query: query ?? this.query,
@@ -68,10 +72,11 @@ class ErrandNeed {
     proposedTitle: proposedTitle,
     questionKind: questionKind,
     questionRequired: questionRequired,
+    questionFocus: questionFocus,
     requiresSpecificLocation:
         requiresSpecificLocation ?? this.requiresSpecificLocation,
     locationIntent: locationIntent ?? this.locationIntent,
-    searchIntent: searchIntent ?? this.searchIntent,
+    searchIntent: clearSearchIntent ? null : searchIntent ?? this.searchIntent,
   );
   bool get meeting => category == 'meeting';
   Map<String, dynamic> toJson() => {
@@ -93,6 +98,7 @@ class ErrandNeed {
       'clarification': {
         'kind': questionKind,
         'required': questionRequired ?? true,
+        if (questionFocus != null) 'focus': questionFocus,
       },
   };
 
@@ -127,7 +133,7 @@ class ErrandNeed {
     if (json.keys.any((key) => !allowed.contains(key))) {
       throw const FormatException('Unexpected interpretation field');
     }
-    final intent = json['locationIntent'];
+    var intent = json['locationIntent'];
     if (intent != null &&
         (intent is! String ||
             !LocationIntent.values.any((v) => v.name == intent))) {
@@ -161,6 +167,13 @@ class ErrandNeed {
       throw const FormatException('Invalid destination requirement');
     }
     final spec = json['clarification'] as Map?;
+    if (spec?['focus'] != null &&
+        !ErrandUnderstandingPolicy.focuses.contains(spec!['focus'])) {
+      throw const FormatException('Invalid clarification focus');
+    }
+    if (spec?['focus'] == 'destinationPreference' && intent == 'unclear') {
+      intent = 'flexible';
+    }
     if (spec != null &&
         (!{
               'preference',
@@ -175,7 +188,12 @@ class ErrandNeed {
     if (intent == 'unclear' &&
         (json['question'] is! String ||
             (json['question'] as String).trim().isEmpty ||
-            spec?['kind'] != 'location' ||
+            (spec?['focus'] == null && spec?['kind'] != 'location') ||
+            (spec?['focus'] != null &&
+                !{
+                  'targetIdentity',
+                  'taskRequirements',
+                }.contains(spec?['focus'])) ||
             spec?['required'] != true)) {
       throw const FormatException(
         'Unclear location intent needs an essential question',
@@ -193,8 +211,19 @@ class ErrandNeed {
       optional: json['optional'] as bool?,
       timing: timing as String?,
       minute: minute as int?,
-      questionKind: spec?['kind'] as String?,
-      questionRequired: spec?['kind'] == 'preference'
+      questionKind: switch (spec?['focus']) {
+        'destinationPreference' => 'preference',
+        'targetIdentity' => 'location',
+        'timing' => 'timing',
+        'dependency' => 'dependency',
+        'taskRequirements' =>
+          spec?['required'] == false ? 'preference' : 'other',
+        _ => spec?['kind'] as String?,
+      },
+      questionFocus: spec?['focus'] as String?,
+      questionRequired:
+          (spec?['focus'] == null && spec?['kind'] == 'preference') ||
+              spec?['focus'] == 'destinationPreference'
           ? false
           : spec?['required'] as bool?,
       requiresSpecificLocation: json['specificLocation'] == true,

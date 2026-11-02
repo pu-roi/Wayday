@@ -6,6 +6,7 @@ import 'location_assessment.dart';
 import 'errand_location_review.dart';
 import '../../errands/domain/errand_order.dart';
 import 'place_search_intent.dart';
+import 'analysis_run.dart';
 
 String clarificationHash(Object value) =>
     sha256.convert(utf8.encode(jsonEncode(value))).toString();
@@ -31,6 +32,22 @@ class ClarificationContext {
     ])
       k: facts[k],
   });
+
+  /// Current typed optional questions share a semantic scope even when the
+  /// model rephrases them. Legacy questions retain their exact question key.
+  String? get semanticPreferenceKey =>
+      {'destinationPreference', 'taskRequirements'}.contains(facts['focus'])
+      ? clarificationHash({
+          for (final key in [
+            'id',
+            'title',
+            'notes',
+            'focus',
+            'placePreference',
+          ])
+            key: facts[key],
+        })
+      : null;
   factory ClarificationContext.create(
     Errand e,
     ErrandNeed n,
@@ -39,6 +56,7 @@ class ClarificationContext {
     'id': e.id,
     'question': n.question ?? '',
     'kind': n.questionKind,
+    if (n.questionFocus != null) 'focus': n.questionFocus,
     'title': e.title,
     'notes': e.notes,
     'timing': e.timing.name,
@@ -231,6 +249,12 @@ class ClarificationResolution {
         : locationIntent == LocationIntent.specific,
     locationIntent: locationIntent,
     searchIntent: searchIntent,
+    clearSearchIntent:
+        searchIntent == null &&
+        ((query != null && query != n.query) ||
+            (category != null && category != n.category) ||
+            items.any((item) => !n.items.contains(item)) ||
+            (locationIntent != null && locationIntent != n.locationIntent)),
   );
   Errand applyRules(Errand e) => e.copyWith(
     timing: timing == null ? null : TimingRule.values.byName(timing!),
@@ -342,6 +366,7 @@ class ClarificationSession {
     Map<String, int>? deferralRevisions,
     Map<String, Map<String, dynamic>>? places,
     Map<String, LocationAssessment>? locationAssessments,
+    this.analysis,
   }) : records = records ?? {},
        deferrals = deferrals ?? {},
        deferralRevisions = deferralRevisions ?? {},
@@ -352,12 +377,14 @@ class ClarificationSession {
   final Map<String, int> deferralRevisions;
   final Map<String, Map<String, dynamic>> places;
   final Map<String, LocationAssessment> locationAssessments;
+  AnalysisState? analysis;
   Map<String, dynamic> toJson() => {
     'version': 1,
     'records': records.map((k, v) => MapEntry(k, v.toJson())),
     'deferrals': deferrals,
     'deferralRevisions': deferralRevisions,
     'places': places,
+    if (analysis != null) 'analysis': analysis!.toJson(),
     if (locationAssessments.isNotEmpty)
       'locationAssessments': locationAssessments.map(
         (key, value) => MapEntry(key, value.toJson()),
@@ -387,6 +414,11 @@ class ClarificationSession {
       throw const FormatException('Invalid location assessment identities');
     }
     return ClarificationSession(
+      analysis: j['analysis'] == null
+          ? null
+          : AnalysisState.fromJson(
+              Map<String, dynamic>.from(j['analysis'] as Map),
+            ),
       records: records,
       locationAssessments: assessments,
       places: (j['places'] as Map? ?? {}).map(
@@ -408,6 +440,11 @@ ClarificationSession mergeClarifications(
   ClarificationSession incoming,
 ) {
   final result = ClarificationSession.fromJson(old.toJson());
+  if (incoming.analysis != null &&
+      (result.analysis == null ||
+          incoming.analysis!.revision >= result.analysis!.revision)) {
+    result.analysis = AnalysisState.fromJson(incoming.analysis!.toJson());
+  }
   for (final entry in incoming.records.entries) {
     final prior = result.records[entry.key],
         next = ClarificationRecord.fromJson(entry.value.toJson());

@@ -28,8 +28,16 @@ void main() {
       ),
       'clarification': fixed(clarificationRequest(context, 'Rice', const [])),
     };
+    final legacy = {
+      'interpretation': fixed(
+        transportInterpretationRequest(DayPlan(errands: const [errand])),
+      ),
+      'clarification': fixed(
+        transportClarificationRequest(context, 'Rice', const []),
+      ),
+    };
     final file = File(
-      '../../services/api/src/wayday_api/gateway/contracts.json',
+      '../../services/api/src/wayday_api/gateway/contracts-v2.json',
     );
     if (Platform.environment['WAYDAY_EXPORT_CONTRACTS'] == '1') {
       file.parent.createSync(recursive: true);
@@ -42,6 +50,16 @@ void main() {
       contracts,
       reason:
           'Explicitly export/review changed gateway contracts; transport changes must not alter native cache identities.',
+    );
+    expect(
+      jsonDecode(
+        File(
+          '../../services/api/src/wayday_api/gateway/contracts.json',
+        ).readAsStringSync(),
+      ),
+      legacy,
+      reason:
+          'Installed-client contracts and historical cache bodies must stay unchanged.',
     );
   });
 }

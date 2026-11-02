@@ -97,7 +97,11 @@ void main() {
       for (final key in ['needs', 'additions']) {
         final search =
             request['generationConfig']['responseSchema']['properties'][key]['items']['properties']['searchIntent'];
-        for (final types in ['preferredTypes', 'acceptableTypes']) {
+        for (final types in [
+          'preferredTypes',
+          'fallbackTypes',
+          'excludedPrimaryTypes',
+        ]) {
           expect(search['properties'][types]['items'], {'type': 'STRING'});
           expect(search['properties'][types]['maxItems'], 12);
         }

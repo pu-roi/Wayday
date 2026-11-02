@@ -36,8 +36,9 @@ class GeminiRequestClient {
     List<String> legacyBodies = const [],
     bool retry = false,
     bool savedOnly = false,
+    String? runId,
   }) {
-    final key = '$purpose:$body';
+    final key = '$purpose:${runId ?? ''}:$body';
     final existing = _flights[key];
     if (existing != null) return existing;
     final result = _request(
@@ -46,6 +47,7 @@ class GeminiRequestClient {
       [?legacyBody, ...legacyBodies],
       retry,
       savedOnly,
+      runId,
     );
     _flights[key] = result;
     return result.whenComplete(() {
@@ -56,13 +58,15 @@ class GeminiRequestClient {
   Future<Map<String, dynamic>> _status(
     String body,
     String purpose,
-    bool retry,
-  ) async {
+    bool retry, [
+    String? runId,
+  ]) async {
     try {
       final status = await channel
           .invokeMapMethod<String, dynamic>('interpretationStatus', {
             'body': body,
             'purpose': purpose,
+            'runId': ?runId,
           })
           .timeout(const Duration(seconds: 40));
       if (status == null) {
@@ -84,13 +88,17 @@ class GeminiRequestClient {
     List<String> historical,
     bool retry,
     bool savedOnly,
+    String? runId,
   ) async {
     try {
-      var status = await _status(body, purpose, retry);
+      var status = await _status(body, purpose, retry, runId);
       if (status['state'] == 'completed') {
         return GeminiReply(body, status['response'] as String);
       }
-      for (final legacy in historical.toSet().where((value) => value != body)) {
+      for (final legacy
+          in (runId == null ? historical : <String>[]).toSet().where(
+            (value) => value != body,
+          )) {
         final old = await _status(legacy, purpose, retry);
         if (old['state'] == 'completed') {
           return GeminiReply(legacy, old['response'] as String);
@@ -136,6 +144,8 @@ class GeminiRequestClient {
             'body': body,
             'purpose': purpose,
             'retry': retry,
+            'contractVersion': 'errand-v2',
+            'runId': ?runId,
           })
           .timeout(const Duration(seconds: 40));
       if (raw == null) {
@@ -216,10 +226,11 @@ class GeminiRequestClient {
         'geminiStatus',
       ))?['configured'] ==
       true;
-  Future<void> invalidate(String body, String purpose) async {
+  Future<void> invalidate(String body, String purpose, {String? runId}) async {
     await channel.invokeMethod<void>('invalidateInterpretation', {
       'body': body,
       'purpose': purpose,
+      'runId': ?runId,
     });
   }
 }

@@ -4,8 +4,12 @@ class PlaceSearchIntent {
     required this.variants,
     required this.preferredTypes,
     required this.acceptableTypes,
+    this.excludedPrimaryTypes = const [],
+    this.version = 1,
   });
   final List<String> variants, preferredTypes, acceptableTypes;
+  final List<String> excludedPrimaryTypes;
+  final int version;
   static const supportedTypes = {
     'supermarket',
     'grocery_store',
@@ -57,8 +61,19 @@ class PlaceSearchIntent {
     'sporting_goods_store',
   };
   factory PlaceSearchIntent.fromJson(Map<String, dynamic> json) {
+    final modern = json['version'] == 2;
     if (json.keys.any(
-      (k) => !{'variants', 'preferredTypes', 'acceptableTypes'}.contains(k),
+      (k) =>
+          !(modern
+                  ? {
+                      'version',
+                      'variants',
+                      'preferredTypes',
+                      'fallbackTypes',
+                      'excludedPrimaryTypes',
+                    }
+                  : {'variants', 'preferredTypes', 'acceptableTypes'})
+              .contains(k),
     )) {
       throw const FormatException('Unexpected search intent');
     }
@@ -80,14 +95,24 @@ class PlaceSearchIntent {
 
     final variants = values('variants', 3);
     final preferred = values('preferredTypes', 12, types: true);
-    final acceptable = values('acceptableTypes', 12, types: true);
+    final acceptable = modern
+        ? {...preferred, ...values('fallbackTypes', 12, types: true)}.toList()
+        : values('acceptableTypes', 12, types: true);
+    final excluded = modern
+        ? values('excludedPrimaryTypes', 12, types: true)
+        : <String>[];
     if (variants.isEmpty || !preferred.every(acceptable.contains)) {
       throw const FormatException('Invalid search alternatives');
+    }
+    if (acceptable.any(excluded.contains)) {
+      throw const FormatException('Conflicting search families');
     }
     return PlaceSearchIntent(
       variants: variants,
       preferredTypes: preferred,
       acceptableTypes: acceptable,
+      excludedPrimaryTypes: excluded,
+      version: modern ? 2 : 1,
     );
   }
 
@@ -103,10 +128,55 @@ class PlaceSearchIntent {
   }
 
   Map<String, dynamic> toJson() => {
+    if (version == 2) 'version': 2,
     'variants': variants,
     'preferredTypes': preferredTypes,
-    'acceptableTypes': acceptableTypes,
+    if (version == 1) 'acceptableTypes': acceptableTypes,
+    if (version == 2)
+      'fallbackTypes': acceptableTypes
+          .where((v) => !preferredTypes.contains(v))
+          .toList(),
+    if (version == 2) 'excludedPrimaryTypes': excludedPrimaryTypes,
   };
+  static Map<String, dynamic> get currentSchema => {
+    'type': 'OBJECT',
+    'nullable': true,
+    'properties': {
+      'version': {'type': 'INTEGER'},
+      'variants': {
+        'type': 'ARRAY',
+        'maxItems': 3,
+        'items': {'type': 'STRING'},
+      },
+      for (final key in [
+        'preferredTypes',
+        'fallbackTypes',
+        'excludedPrimaryTypes',
+      ])
+        key: {
+          'type': 'ARRAY',
+          'maxItems': 12,
+          'items': {'type': 'STRING'},
+        },
+    },
+    'required': [
+      'version',
+      'variants',
+      'preferredTypes',
+      'fallbackTypes',
+      'excludedPrimaryTypes',
+    ],
+  };
+  static final currentPolicy =
+      ' Place search policy v2 replaces the earlier searchIntent format: version=2, one to three complementary queries, '
+      'preferredTypes for strongest venue matches, fallbackTypes for additional plausible families, excludedPrimaryTypes for incompatible primary business types. '
+      'All type lists use only: ${supportedTypes.join(', ')}. Each type list has at most twelve entries. '
+      'Preferred and fallback types must not overlap exclusions. The client derives acceptable types from their union. '
+      'Return searchIntent for flexible business needs, otherwise null. Preserve explicit brands and qualifiers in every query. '
+      'For consumer grocery purchases prefer supermarkets, grocery stores and public markets, with suitable retailers as alternatives; exclude wholesaler primary types unless bulk/wholesale intent is explicit. '
+      'For service errands choose the needed service family; distinguish ingredients from prepared meals and existing pickups from new purchases. '
+      'Use complementary venue queries rather than repeating only product words. Empty positive type lists allow specialist queries not described by the supported taxonomy. '
+      'Do not invent business names, stock, availability, access, coordinates or hours. ';
   static Map<String, dynamic> get schema => {
     'type': 'OBJECT',
     'nullable': true,
