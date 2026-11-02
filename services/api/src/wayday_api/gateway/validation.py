@@ -11,6 +11,10 @@ from .config import GatewayFailure
 CONTRACTS = json.loads(
     Path(__file__).with_name("contracts.json").read_text(encoding="utf-8")
 )
+CURRENT_CONTRACTS = json.loads(
+    Path(__file__).with_name("contracts-v2.json").read_text(encoding="utf-8")
+)
+CONTRACT_VERSIONS = {"d66-v1": CONTRACTS, "errand-v2": CURRENT_CONTRACTS}
 ROUTE_FIELDS = {
     "computeRoutes": {
         "routes.polyline.encodedPolyline",
@@ -44,14 +48,16 @@ def exact(value, required, optional=()):
 def interpretation(body):
     exact(body, ["purpose", "contractVersion", "request"])
     purpose = body["purpose"]
+    version = body["contractVersion"]
     require(
         isinstance(purpose, str)
         and purpose in CONTRACTS
-        and body["contractVersion"] == "d66-v1"
+        and isinstance(version, str)
+        and version in CONTRACT_VERSIONS
     )
     request = body["request"]
     exact(request, ["systemInstruction", "generationConfig", "contents"])
-    require({k: v for k, v in request.items() if k != "contents"} == CONTRACTS[purpose])
+    require({k: v for k, v in request.items() if k != "contents"} == CONTRACT_VERSIONS[version][purpose])
     contents = request["contents"]
     require(isinstance(contents, list) and len(contents) == 1)
     exact(contents[0], ["role", "parts"])

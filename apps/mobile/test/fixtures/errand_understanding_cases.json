@@ -1,0 +1,1184 @@
+[
+  {
+    "id": "laundry-en-development",
+    "family": "laundry",
+    "language": "en",
+    "split": "development",
+    "title": "Laundry",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "laundry"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "laundry-en-heldout",
+    "family": "laundry",
+    "language": "en",
+    "split": "heldout",
+    "title": "Collect clothes already deposited at my usual shop",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "laundry-fil-development",
+    "family": "laundry",
+    "language": "fil",
+    "split": "development",
+    "title": "Magpalaba",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "laundry"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "laundry-fil-heldout",
+    "family": "laundry",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Kunin ang damit na iniwan ko sa shop",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "laundry-taglish-development",
+    "family": "laundry",
+    "language": "taglish",
+    "split": "development",
+    "title": "Laundry muna",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "laundry"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "laundry-taglish-heldout",
+    "family": "laundry",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pickup ng deposited clothes sa usual shop",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "grocery-en-development",
+    "family": "grocery",
+    "language": "en",
+    "split": "development",
+    "title": "Grocery",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "farmers_market"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "grocery-en-heldout",
+    "family": "grocery",
+    "language": "en",
+    "split": "heldout",
+    "title": "Buy tofu and fresh vegetables for cooking",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "farmers_market"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "grocery-fil-development",
+    "family": "grocery",
+    "language": "fil",
+    "split": "development",
+    "title": "Mamili ng pagkain",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "farmers_market"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "grocery-fil-heldout",
+    "family": "grocery",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Bumili ng tokwa at sariwang gulay na lulutuin",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "farmers_market"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "grocery-taglish-development",
+    "family": "grocery",
+    "language": "taglish",
+    "split": "development",
+    "title": "Grocery muna",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "farmers_market"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "grocery-taglish-heldout",
+    "family": "grocery",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Bili tofu at veggies for cooking",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "farmers_market"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "rice-en-development",
+    "family": "rice",
+    "language": "en",
+    "split": "development",
+    "title": "Buy rice",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "food_store"
+    ],
+    "forbidWholesalePrimary": true,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "rice-en-heldout",
+    "family": "rice",
+    "language": "en",
+    "split": "heldout",
+    "title": "Find a wholesale rice supplier for resale",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "wholesaler",
+      "warehouse_store"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "rice-fil-development",
+    "family": "rice",
+    "language": "fil",
+    "split": "development",
+    "title": "Bumili ng bigas",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "food_store"
+    ],
+    "forbidWholesalePrimary": true,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "rice-fil-heldout",
+    "family": "rice",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Maghanap ng pakyawang bigas na ibebenta ko",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "wholesaler",
+      "warehouse_store"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "rice-taglish-development",
+    "family": "rice",
+    "language": "taglish",
+    "split": "development",
+    "title": "Bili rice para sa bahay",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "supermarket",
+      "grocery_store",
+      "market",
+      "food_store"
+    ],
+    "forbidWholesalePrimary": true,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "rice-taglish-heldout",
+    "family": "rice",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Wholesale rice supplier para sa resale",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "wholesaler",
+      "warehouse_store"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "food-en-development",
+    "family": "food",
+    "language": "en",
+    "split": "development",
+    "title": "Eat lunch",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "restaurant",
+      "cafe",
+      "meal_takeaway",
+      "fast_food_restaurant"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "food-en-heldout",
+    "family": "food",
+    "language": "en",
+    "split": "heldout",
+    "title": "Collect a prepaid meal at the agreed branch",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "food-fil-development",
+    "family": "food",
+    "language": "fil",
+    "split": "development",
+    "title": "Kumain ng tanghalian",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "restaurant",
+      "cafe",
+      "meal_takeaway",
+      "fast_food_restaurant"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "food-fil-heldout",
+    "family": "food",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Kunin ang nabayaran nang pagkain sa napagkasunduang branch",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "food-taglish-development",
+    "family": "food",
+    "language": "taglish",
+    "split": "development",
+    "title": "Lunch muna",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "restaurant",
+      "cafe",
+      "meal_takeaway",
+      "fast_food_restaurant"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "food-taglish-heldout",
+    "family": "food",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pickup ng prepaid meal sa agreed branch",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "pharmacy-en-development",
+    "family": "pharmacy",
+    "language": "en",
+    "split": "development",
+    "title": "Buy bandages",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "pharmacy",
+      "drugstore"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "pharmacy-en-heldout",
+    "family": "pharmacy",
+    "language": "en",
+    "split": "heldout",
+    "title": "Collect the prescription order prepared at my pharmacy",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "pharmacy-fil-development",
+    "family": "pharmacy",
+    "language": "fil",
+    "split": "development",
+    "title": "Bumili ng benda",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "pharmacy",
+      "drugstore"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "pharmacy-fil-heldout",
+    "family": "pharmacy",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Kunin ang reseta na inihanda na ng botika ko",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "pharmacy-taglish-development",
+    "family": "pharmacy",
+    "language": "taglish",
+    "split": "development",
+    "title": "Bili bandages",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "pharmacy",
+      "drugstore"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "pharmacy-taglish-heldout",
+    "family": "pharmacy",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pickup ng prepared prescription order sa pharmacy ko",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "hair-en-development",
+    "family": "hair",
+    "language": "en",
+    "split": "development",
+    "title": "Get a haircut",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "hair_salon",
+      "barber_shop",
+      "beauty_salon"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "hair-en-heldout",
+    "family": "hair",
+    "language": "en",
+    "split": "heldout",
+    "title": "Attend my booked haircut at the agreed salon",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "hair-fil-development",
+    "family": "hair",
+    "language": "fil",
+    "split": "development",
+    "title": "Magpagupit",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "hair_salon",
+      "barber_shop",
+      "beauty_salon"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "hair-fil-heldout",
+    "family": "hair",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Pumunta sa nakabook kong gupit sa napagkasunduang salon",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "hair-taglish-development",
+    "family": "hair",
+    "language": "taglish",
+    "split": "development",
+    "title": "Haircut muna",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "hair_salon",
+      "barber_shop",
+      "beauty_salon"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "hair-taglish-heldout",
+    "family": "hair",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Booked haircut sa agreed salon",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "printing-en-development",
+    "family": "printing",
+    "language": "en",
+    "split": "development",
+    "title": "Print documents",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "printing-en-heldout",
+    "family": "printing",
+    "language": "en",
+    "split": "heldout",
+    "title": "Collect the completed poster order",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "printing-fil-development",
+    "family": "printing",
+    "language": "fil",
+    "split": "development",
+    "title": "Magpa-print ng dokumento",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "printing-fil-heldout",
+    "family": "printing",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Kunin ang natapos nang poster na ipinagawa ko",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "printing-taglish-development",
+    "family": "printing",
+    "language": "taglish",
+    "split": "development",
+    "title": "Print ng documents",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "printing-taglish-heldout",
+    "family": "printing",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pickup ng finished poster order",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "vehicle-en-development",
+    "family": "vehicle",
+    "language": "en",
+    "split": "development",
+    "title": "Get the car washed",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "car_wash"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "vehicle-en-heldout",
+    "family": "vehicle",
+    "language": "en",
+    "split": "heldout",
+    "title": "Collect my repaired vehicle from the garage",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "vehicle-fil-development",
+    "family": "vehicle",
+    "language": "fil",
+    "split": "development",
+    "title": "Magpalinis ng kotse",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "car_wash"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "vehicle-fil-heldout",
+    "family": "vehicle",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Kunin ang kotse kong naipaayos na sa talyer",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "vehicle-taglish-development",
+    "family": "vehicle",
+    "language": "taglish",
+    "split": "development",
+    "title": "Car wash muna",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [
+      "car_wash"
+    ],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "vehicle-taglish-heldout",
+    "family": "vehicle",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pickup ng repaired car sa garage",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "bills-en-development",
+    "family": "bills",
+    "language": "en",
+    "split": "development",
+    "title": "Pay my electricity bill in person",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "bills-en-heldout",
+    "family": "bills",
+    "language": "en",
+    "split": "heldout",
+    "title": "Pay it at the right payment center",
+    "notes": "",
+    "expectedLocationIntent": "unclear",
+    "essentialQuestion": true,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "bills-fil-development",
+    "family": "bills",
+    "language": "fil",
+    "split": "development",
+    "title": "Magbayad ng kuryente nang personal",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "bills-fil-heldout",
+    "family": "bills",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Bayaran iyon sa tamang bayaran",
+    "notes": "",
+    "expectedLocationIntent": "unclear",
+    "essentialQuestion": true,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "bills-taglish-development",
+    "family": "bills",
+    "language": "taglish",
+    "split": "development",
+    "title": "Pay ng electricity bill in person",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "bills-taglish-heldout",
+    "family": "bills",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pay nito sa right center",
+    "notes": "",
+    "expectedLocationIntent": "unclear",
+    "essentialQuestion": true,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "parcels-en-development",
+    "family": "parcels",
+    "language": "en",
+    "split": "development",
+    "title": "Send a parcel",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "parcels-en-heldout",
+    "family": "parcels",
+    "language": "en",
+    "split": "heldout",
+    "title": "Collect my parcel held at the designated depot",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "parcels-fil-development",
+    "family": "parcels",
+    "language": "fil",
+    "split": "development",
+    "title": "Magpadala ng pakete",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "parcels-fil-heldout",
+    "family": "parcels",
+    "language": "fil",
+    "split": "heldout",
+    "title": "Kunin ang paketeng nasa itinalagang depot na",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "parcels-taglish-development",
+    "family": "parcels",
+    "language": "taglish",
+    "split": "development",
+    "title": "Send ng parcel",
+    "notes": "",
+    "expectedLocationIntent": "flexible",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": false,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  },
+  {
+    "id": "parcels-taglish-heldout",
+    "family": "parcels",
+    "language": "taglish",
+    "split": "heldout",
+    "title": "Pickup ng parcel sa designated depot",
+    "notes": "",
+    "expectedLocationIntent": "specific",
+    "essentialQuestion": false,
+    "venueFamilies": [],
+    "forbidWholesalePrimary": false,
+    "critical": true,
+    "requiresHumanReview": [
+      "noInventedBusinesses",
+      "noAvailabilityClaims",
+      "relevantQuestion"
+    ]
+  }
+]

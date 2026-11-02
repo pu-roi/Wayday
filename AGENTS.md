@@ -1,5 +1,13 @@
 # Wayday agent instructions
 
+## Context-aware errand understanding — D76
+
+The owner approved ordinary low-risk intent defaults, useful skippable refinements across errand types, focused essential clarification, v2 venue families/exclusions and explicit Analyze again. Preserve the shared errand-intent-v2 policy, typed clarification focus, source-bound semantic preference reuse/withdrawal, fixed destinations and explicit constraints. Fresh analysis persists a unique run and previous usable review before dispatch; reopening checks saved processing only, retries reuse the same run, and stale snapshots cannot overwrite edits. Keep frozen request builders, original native fingerprints without run IDs, and installed-client d66-v1 gateway contracts byte-compatible. New errand-v2 contracts require compatible gateway rollout before a new public client. No database-table migration, automatic second model pass, live evaluation spending, deployment, publication or personal-phone operation is authorized by this implementation. The sixty-case evaluation corpus and human review gates are preparation, not measured model accuracy. See D76 evidence.
+
+## Planning screen hierarchy and completion — D69
+
+The owner approved a red, icon-labelled past-departure notice with grouped recovery actions; compact Your plan rows with inline Place, Visit timing and Business hours groups; and a larger current-errand title beside a dedicated Cornflower Done button. D69 supersedes D64's navigation checkbox and instructional label only. Stack Done at narrow widths or enlarged text, retain bounded panel scrolling and native map controls, and save completion before showing the next errand. Preserve shared-stop progression, explicit failures and Finish trip semantics. This presentation refinement does not authorize provider requests or personal-phone installation/reset for verification.
+
 ## Public development distribution — D67
 
 The owner approved the full single-page marketing website in `apps/website/`, GitHub Pages, GitHub Releases APK downloads, gated automatic publication after passing `main` checks, and a dedicated Cloud Run provider gateway within `services/api/`. Follow [distribution setup](docs/wayday/DISTRIBUTION.md) and its evidence. The website uses the supplied original logo, Lenis/GSAP and reduced motion; it is not a browser app/demo.

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +17,7 @@ import '../test/trip_session_test.dart'
 
 /// Android UI/Back/progress fixture: no real navigator, GPS or paid requests.
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('Android compact checklist keeps manual progress across Back', (
     tester,
   ) async {
@@ -78,14 +79,23 @@ void main() {
     );
     await tester.tap(find.text('Open trip'));
     await tester.pumpAndSettle();
-    expect(find.byType(CheckboxListTile), findsOneWidget);
+    await binding.convertFlutterSurfaceToImage();
+    await tester.pumpAndSettle();
+    await File(
+      '${Directory.systemTemp.path}/ui-refinement-trip-current.png',
+    ).writeAsBytes(await binding.takeScreenshot('ui-refinement-trip-current'));
+    expect(find.widgetWithText(FilledButton, 'Done'), findsOneWidget);
     await tester.tap(find.text('Grocery'));
+    await tester.pump();
+    expect(saved.completed, isEmpty);
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(saved.completed, {'a'});
     expect(driver.advances, 0);
-    await tester.tap(
-      find.text('Eat pares kasama ang girlfriend ko pagkatapos mamili'),
-    );
+    await File(
+      '${Directory.systemTemp.path}/ui-refinement-trip-next.png',
+    ).writeAsBytes(await binding.takeScreenshot('ui-refinement-trip-next'));
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(saved.completed, {'a', 'b'});
     expect(driver.advances, 1);

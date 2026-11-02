@@ -1,0 +1,33 @@
+# D76 — Errand understanding and recommendation intelligence
+
+## Implemented behavior
+
+The shared errand-intent-v2 policy interprets complete English, Filipino and Taglish requests using ordinary low-risk defaults, useful optional refinements and focused essential clarification. It preserves existing arrangements and explicit fields. New focus metadata distinguishes destination preference, task requirements, target identity, timing and dependencies. Destination preference cannot turn an otherwise flexible errand into a blocking location question. Typed optional preferences survive wording changes only within the same source/focus; explicit withdrawal suppresses older answers.
+
+Search intent v2 returns preferred, fallback and excluded-primary venue types. Their union forms the positive set; malformed optional hints remain absent without corrupting core meaning. Corrections clear obsolete hints. Shared discovery/alternative suitability rejects conflicting primary types before matching secondary tags. Explicit wholesale intent remains supported; ordinary retail grocery needs do not promote wholesale-primary businesses. Unknown metadata and inventory remain unknown. Existing geographic bounds, actual road comparisons, hours, selected branches and quotas are retained.
+
+Analyze again persists a unique run plus the previous usable review before dispatch. The body includes applicable saved raw answers but no map coordinates. Native journals namespace that body by run ID without changing historical fingerprints. Check saved analysis is lookup-only; explicit Retry analysis uses the same pending run. Completion replaces the active result only after validation and durable saving. Manual settings, explicit candidate choices and selected extra errands are retained. Source/epoch and input-snapshot checks reject late results after edits; storage failures do not silently resend. Unreadable saved-session state blocks replacement generation and explicit reopening retries the local read. Existing clarification JSON owns this additive state without a table migration. Saved optional answers retain their pre-answer question/meaning context so they remain editable after reanalysis; withdrawing an answer restores the unanswered optional state without another generation.
+
+The public gateway accepts both original d66-v1 and pinned errand-v2 prompt/schema contracts. Frozen builders and original contracts remain unchanged, with compatibility asserted by tests. Roll out compatible gateway support before distributing a rebuilt public app. No live endpoint was changed here.
+
+## Verification
+
+Red/green regressions reproduced discarded venue hints, conflicting wholesale classifications, stale hints after corrected meaning, unnecessary destination-preference questions and late-result recovery overwriting a manual timing edit. Focused controller checks also exercise duplicate taps, failure before dispatch, failure saving completed output, restart, same-run retry and preservation of selected places. SQLite close/reopen verifies pending-run retention and revisioned merge protection. Review widgets are checked at 390 units/100% text and 320 units/200% text.
+
+The guarded disposable Wayday_Clarification_Test emulator passed the native run-journal fixture. It seeds synthetic responses, uses saved-only lookups and verifies that one run's invalidation leaves baseline understanding intact. The debug fixture APK compiled and installed only on the isolated .maptest emulator; no personal package was installed, reset or contacted. There were no live Gemini, Places, Routes or Navigation requests.
+
+The original combined working-tree run had clean Flutter analysis and passed 668 Flutter tests with one existing skip. An initial full API run hit WinError 5 creating the shared pytest temporary directory. Repeating with a new workspace-local --basetemp passed 82 tests with seven existing skips; the existing Starlette/httpx deprecation warning remains. No tests were removed or weakened to obtain these results.
+
+## roi-branch handoff
+
+The owner requested updating the planning skill and pushing the D76 changes to roi-branch. Earlier local branding, navigation and tooling changes were left intact and excluded from this push. The exact staged runtime tree was verified in a detached disposable checkout based on da2c12b: clean Flutter analysis, 624 Flutter passes with one existing skip, and 65 API/release-tool passes with seven existing skips. This is a smaller branch-only set than the earlier combined-workspace checks; no tests were deleted or skipped to create it. The planning skill passed quick_validate, and a credential-pattern scan of the staged files found no matches. The old gateway contract and workflow files remain unchanged. The new public client still requires compatible gateway rollout before publication; pushing roi-branch performs neither a main merge nor a gateway deployment.
+
+## Offline model evaluation
+
+The corpus is `apps/mobile/test/fixtures/errand_understanding_cases.json`: sixty public inputs, ten errand families, three languages and thirty held-out cases. No runtime keyword classifier uses this file. Do not tune prompts against held-out responses.
+
+Run `flutter test --no-pub test/errand_understanding_evaluation_test.dart` from apps/mobile for corpus checks. Setting WAYDAY_ERRAND_EVAL_EXPORT to an output directory exports sixty bounded current requests and sends nothing. Actual model dispatch needs a separately reviewed request budget and must retain baseline/candidate identities without automatic retries.
+
+For offline scoring, WAYDAY_ERRAND_EVAL_RESPONSES points to a JSON array of sixty objects containing caseId and response (the full saved Gemini envelope). Each must also carry human-reviewed boolean attestations noInventedBusinesses, noAvailabilityClaims and relevantQuestion. The actual app parser validates the response, the harness scores destination intent and required questions, enforces critical laundry/grocery/rice/fixed-place cases and requires at least 95% overall correctness. Cases with declared supported venue families must retain usable hints with an appropriate family. Consumer-rice cases must exclude wholesale-primary destinations. Missing review attestations fail rather than being presumed correct. Keep baseline and candidate response files separate.
+
+Model judgment, provider retrieval and final route suitability are different qualifications. Mock/place fixtures validate filtering and route constraints, not real listing relevance or stock. No live comparison or human response review has been performed, so the live accuracy target remains unmeasured. The model is unchanged. There is no deployment, publication or phone-test delivery in this task.

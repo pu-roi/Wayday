@@ -9,6 +9,62 @@ import 'package:wayday/features/places/data/search_quota.dart';
 import 'helpers/planning_fixtures.dart';
 
 void main() {
+  test(
+    'automatic and alternative searches reject wholesale primary conflicts',
+    () async {
+      final pins = GooglePinCache(read: () async => null, write: (_) async {});
+      addTearDown(pins.dispose);
+      final discovery = GoogleRecommendationDiscovery(
+        QuotaLedger(read: () async => null, write: (_) async {}),
+        pins,
+        invoke: (_, args) async => [
+          for (final primary in ['wholesaler', 'supermarket'])
+            {
+              'id': primary,
+              'name': 'Synthetic $primary',
+              'latitude': 14.58,
+              'longitude': 121.06,
+              'country': 'PH',
+              'types': [primary, 'grocery_store'],
+              'primaryType': primary,
+              'at': DateTime.now().millisecondsSinceEpoch,
+            },
+        ],
+      );
+      final need = ErrandNeed(
+        id: 'rice',
+        query: 'rice',
+        category: 'grocery',
+        searchIntent: PlaceSearchIntent.fromJson({
+          'version': 2,
+          'variants': ['supermarket'],
+          'preferredTypes': ['supermarket'],
+          'fallbackTypes': ['grocery_store', 'market'],
+          'excludedPrimaryTypes': ['wholesaler'],
+        }),
+      );
+      final automatic = await discovery.discover(
+        need,
+        polyline: 'seed',
+        anchors: [],
+        limit: 3,
+        cancelled: () => false,
+      );
+      final alternatives = await discovery.moreAlternatives(
+        need,
+        polyline: 'seed',
+        anchors: [],
+        excludedKeys: {},
+        limit: 3,
+        cancelled: () => false,
+      );
+      expect(automatic.candidates.single.place.providerPlaceId, 'supermarket');
+      expect(
+        alternatives.candidates.single.place.providerPlaceId,
+        'supermarket',
+      );
+    },
+  );
   Map<String, Object?> raw(String id, String type, {double lat = 14.58}) => {
     'id': id,
     'name': id,

@@ -12,9 +12,10 @@ extension LocationUnderstanding on PlanningController {
         n.query.trim().isEmpty) {
       return false;
     }
+    final questionNeed = _questionNeed(e);
     return questionContext(e).facts['kind'] == 'location' ||
-        (n.questionKind == 'preference' &&
-            n.questionRequired == false &&
+        (!{'timing', 'dependency'}.contains(questionNeed.questionKind) &&
+            questionNeed.questionRequired == false &&
             n.locationIntent == LocationIntent.flexible);
   }
 

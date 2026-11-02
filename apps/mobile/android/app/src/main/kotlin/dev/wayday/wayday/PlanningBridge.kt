@@ -56,7 +56,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                         synchronized(requestLock) {
                             try {
                                 val args = call.arguments as Map<*, *>
-                                val key = fingerprint(args["body"] as String)
+                                val key = fingerprint(args["body"] as String, args["runId"] as? String)
                                 val state = args["state"] as String
                                 require(state in setOf("pending", "completed"))
                                 val response = args["response"] as? String
@@ -119,7 +119,9 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                             require(purpose in setOf("interpretation", "clarification"))
                             requestJournal = if (purpose == "clarification") clarificationJournal else journal
                             val body = args["body"] as? String ?: throw IllegalArgumentException()
-                            val cacheKey = fingerprint(body)
+                            val runId = args["runId"] as? String
+                            require(runId == null || runId.matches(Regex("[a-z0-9-]{1,80}")))
+                            val cacheKey = fingerprint(body, runId)
                             if (call.method == "invalidateInterpretation") {
                                 if (requestJournal.find(cacheKey) != null) {
                                     requestJournal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = "invalid_response"))
@@ -174,7 +176,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                 else connection.setRequestProperty("x-goog-api-key", key)
                                 connection.doOutput = true
                                 val transmitted = if (publicGateway) JSONObject().put("purpose", purpose)
-                                    .put("contractVersion", "d66-v1").put("request", JSONObject(body)).toString() else body
+                                    .put("contractVersion", args["contractVersion"] as? String ?: "d66-v1").put("request", JSONObject(body)).toString() else body
                                 connection.outputStream.use { it.write(transmitted.toByteArray(Charsets.UTF_8)) }
                                 val status = connection.responseCode
                                 if (status == 200) {
@@ -210,7 +212,8 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
             }
         }
     }
-    private fun fingerprint(body: String): String {
+    private fun fingerprint(body: String, runId: String? = null): String {
+        require(runId == null || runId.matches(Regex("[a-z0-9-]{1,80}")))
         require(body.toByteArray(Charsets.UTF_8).size <= 50000)
         val request = JSONObject(body)
         val config = request.getJSONObject("generationConfig")
@@ -218,7 +221,7 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
         require(config.optInt("candidateCount", 1) == 1)
         require(!request.has("tools") && !request.has("cachedContent"))
         return MessageDigest.getInstance("SHA-256")
-            .digest(("wayday-interpretation-v2|gemini-3.1-flash-lite|" + body).toByteArray(Charsets.UTF_8))
+            .digest(("wayday-interpretation-v2|gemini-3.1-flash-lite|" + (runId?.let { "run:$it|" } ?: "") + body).toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
     }
     private fun java.io.InputStream.readBytesBounded(limit: Int): ByteArray {

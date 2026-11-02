@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -8,6 +9,8 @@ import '../../places/data/google_pin_cache.dart';
 import '../../places/domain/place_intent.dart';
 import '../../today/domain/day.dart';
 import '../data/gemini_interpreter.dart';
+import '../data/interpretation_request.dart';
+import '../domain/analysis_run.dart';
 import '../data/clarification_repository.dart';
 import '../data/clarification_resolver.dart';
 import '../data/location_intent_resolver.dart';
@@ -33,6 +36,7 @@ part 'location_understanding.dart';
 part 'alternative_browsing.dart';
 part 'route_refresh.dart';
 part 'planning_hours.dart';
+part 'fresh_analysis.dart';
 
 final planningBudgetProvider = googleTestingBudgetProvider;
 final reviewTripRepositoryProvider = Provider<ReviewTripRepository>((ref) {
@@ -379,15 +383,29 @@ class PlanningController extends ChangeNotifier {
   /// The same projection is committed by applyReview; the baseline stays intact.
   Errand _baseReview(Errand e) =>
       approved.contains(e.id) ? needs[e.id]!.apply(e) : e;
+  ErrandNeed _questionNeed(Errand e) {
+    final need = needs[e.id]!,
+        base = clarifications.session.analysis?.answerBases[e.id];
+    return base != null &&
+            (need.question?.isNotEmpty != true ||
+                need.questionFocus == base.questionFocus)
+        ? base
+        : need;
+  }
+
   ClarificationContext _originalQuestionContext(Errand e) =>
-      ClarificationContext.create(_baseReview(reviewInput(e)), needs[e.id]!, [
-        for (final x in _reviewItems.values)
-          if (_originalIds.contains(x.id) || additions.contains(x.id))
-            _baseReview(x),
-        for (final n in interpretation?.additions ?? <ErrandNeed>[])
-          if (additions.contains(n.id) && !_reviewItems.containsKey(n.id))
-            n.apply(Errand(id: n.id, title: n.proposedTitle!)),
-      ]);
+      ClarificationContext.create(
+        _baseReview(reviewInput(e)),
+        _questionNeed(e),
+        [
+          for (final x in _reviewItems.values)
+            if (_originalIds.contains(x.id) || additions.contains(x.id))
+              _baseReview(x),
+          for (final n in interpretation?.additions ?? <ErrandNeed>[])
+            if (additions.contains(n.id) && !_reviewItems.containsKey(n.id))
+              n.apply(Errand(id: n.id, title: n.proposedTitle!)),
+        ],
+      );
   ClarificationContext questionContext(Errand e) {
     final original = _originalQuestionContext(e), n = needs[e.id]!;
     if (original.question.isNotEmpty) return original;
@@ -411,6 +429,9 @@ class PlanningController extends ChangeNotifier {
     if (n == null) return null;
     final r = answerFor(e),
         assessment = clarifications.locationAssessment(locationContext(e));
+    if (r?.status == 'cleared') {
+      n = clarifications.session.analysis?.answerBases[e.id] ?? n;
+    }
     if (assessment?.applied == true) {
       n = n.copyWith(
         locationIntent: assessment!.result!.intent,
@@ -585,6 +606,7 @@ class PlanningController extends ChangeNotifier {
   String? failedRecommendationErrand;
   RecommendationOperation? recommendationOperation;
   Future<void>? _recommendationFlight;
+  Future<void>? _analysisFlight;
   final overrides = <String, String>{};
   final approved = <String>{};
   final additions = <String>{};
@@ -652,6 +674,9 @@ class PlanningController extends ChangeNotifier {
             e.id: clarificationHash(e.placeIntent.toJson()),
         });
       await clarifications.bind(clarificationSourceKey(day));
+      if (clarifications.storageError != null) {
+        throw PlanningFailure(clarifications.storageError!, kind: 'cache');
+      }
       final service = interpreter;
       if (savedOnly && service is! SavedErrandInterpreter) {
         throw const PlanningFailure(
@@ -659,17 +684,26 @@ class PlanningController extends ChangeNotifier {
           kind: 'cache_miss',
         );
       }
-      final value = await (savedOnly
-          ? (service as SavedErrandInterpreter).saved(day)
-          : retry && service is ConfirmedRetryInterpreter
-          ? service.retry(day)
-          : service.interpret(day));
+      final restoredAnalysis = clarifications.session.analysis;
+      final value =
+          restoredAnalysis?.result ??
+          await (savedOnly
+              ? (service as SavedErrandInterpreter).saved(day)
+              : retry && service is ConfirmedRetryInterpreter
+              ? service.retry(day)
+              : service.interpret(day));
       if (_closed || epoch != _epoch) return;
       interpretation = value;
       interpretationStale = false;
+      final restoredErrands = restoredAnalysis == null
+          ? day.errands
+          : AnalysisState.fromJson(
+              restoredAnalysis.toJson(),
+              resolveGooglePin: resolveGooglePin,
+            ).errands;
       _reviewItems
         ..clear()
-        ..addEntries(day.errands.map((e) => MapEntry(e.id, e)));
+        ..addEntries(restoredErrands.map((e) => MapEntry(e.id, e)));
       _originalIds
         ..clear()
         ..addAll(_reviewItems.keys);
@@ -688,6 +722,9 @@ class PlanningController extends ChangeNotifier {
       await clarifications.resumeSaved(
         reviewErrands.where((e) => needs[e.id] != null).map(questionContext),
       );
+      if (clarifications.session.analysis?.pending != null) {
+        await analyzeAgain(savedOnly: true, retry: retry);
+      }
     } catch (e) {
       if (_closed || epoch != _epoch) return;
       understandingFailure = e is PlanningFailure ? e : null;
@@ -847,6 +884,11 @@ class PlanningController extends ChangeNotifier {
   }
 
   void applyReview() {
+    if (analysisRunning) {
+      throw const PlanningFailure(
+        'Wait for the current analysis before finding places.',
+      );
+    }
     if (interpretationStale) {
       throw const PlanningFailure(
         'Titles or notes changed. Read the updated notes with Gemini before finding places.',

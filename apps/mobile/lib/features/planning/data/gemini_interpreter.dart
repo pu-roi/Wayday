@@ -17,8 +17,21 @@ abstract interface class SavedErrandInterpreter implements ErrandInterpreter {
   Future<Interpretation> saved(DayPlan day);
 }
 
+abstract interface class FreshErrandInterpreter implements ErrandInterpreter {
+  Future<Interpretation> analyze(
+    DayPlan day, {
+    required String runId,
+    required String body,
+    bool retry = false,
+    bool savedOnly = false,
+  });
+}
+
 class GeminiInterpreter
-    implements ConfirmedRetryInterpreter, SavedErrandInterpreter {
+    implements
+        ConfirmedRetryInterpreter,
+        SavedErrandInterpreter,
+        FreshErrandInterpreter {
   GeminiInterpreter({MethodChannel? channel, GeminiRequestClient? client})
     : client =
           client ??
@@ -36,16 +49,34 @@ class GeminiInterpreter
   @override
   Future<Interpretation> saved(DayPlan day) => _start(day, savedOnly: true);
   Future<bool> configured() => client.configured();
+  @override
+  Future<Interpretation> analyze(
+    DayPlan day, {
+    required String runId,
+    required String body,
+    bool retry = false,
+    bool savedOnly = false,
+  }) => _start(
+    day,
+    retry: retry,
+    savedOnly: savedOnly,
+    runId: runId,
+    requestBody: body,
+  );
   Future<Interpretation> _start(
     DayPlan day, {
     bool retry = false,
     bool savedOnly = false,
+    String? runId,
+    String? requestBody,
   }) async {
-    final body = interpretationRequest(day);
-    if (_lastInput == body && _lastResult != null) return _lastResult!;
+    final body = requestBody ?? interpretationRequest(day);
+    final memoryKey = '${runId ?? ''}:$body';
+    if (_lastInput == memoryKey && _lastResult != null) return _lastResult!;
     final reply = await client.request(
       body,
       legacyBodies: [
+        transportInterpretationRequest(day),
         searchIntentInterpretationRequest(day),
         locationInterpretationRequest(day),
         previousInterpretationRequest(day),
@@ -53,6 +84,7 @@ class GeminiInterpreter
       ],
       retry: retry,
       savedOnly: savedOnly,
+      runId: runId,
     );
     try {
       final usage = reply.envelope['usageMetadata'] as Map?;
@@ -70,12 +102,12 @@ class GeminiInterpreter
           'Current understanding omitted destination intent',
         );
       }
-      _lastInput = body;
+      _lastInput = memoryKey;
       _lastResult = result;
       return result;
     } catch (_) {
       try {
-        await client.invalidate(reply.body, 'interpretation');
+        await client.invalidate(reply.body, 'interpretation', runId: runId);
       } catch (_) {}
       throw const PlanningFailure(
         'The saved answer could not be validated against these errands. An explicit retry may use another request.',

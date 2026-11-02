@@ -3,6 +3,7 @@ import '../domain/clarification.dart';
 import '../domain/planning_models.dart';
 import 'gemini_request_client.dart';
 import '../domain/place_search_intent.dart';
+import '../domain/errand_understanding_policy.dart';
 
 abstract interface class ClarificationResolver {
   Future<ClarificationResolution> resolve(
@@ -30,6 +31,7 @@ class GeminiClarificationResolver implements ClarificationResolver {
       clarificationRequest(context, answer, history),
       purpose: 'clarification',
       legacyBodies: [
+        transportClarificationRequest(context, answer, history),
         searchIntentClarificationRequest(context, answer, history),
         locationClarificationRequest(context, answer, history),
         legacyClarificationRequest(context, answer, history),
@@ -204,7 +206,7 @@ String searchIntentClarificationRequest(
   return result;
 }
 
-String clarificationRequest(
+String transportClarificationRequest(
   ClarificationContext context,
   String answer,
   List<String> history,
@@ -216,6 +218,33 @@ String clarificationRequest(
       PlaceSearchIntent.transportPolicy;
   body['generationConfig']['responseSchema']['properties']['searchIntent'] =
       PlaceSearchIntent.transportSchema;
+  final result = jsonEncode(body);
+  if (utf8.encode(result).length > 50000) {
+    throw const PlanningFailure(
+      'Shorten this answer before interpretation.',
+      kind: 'invalid_input',
+    );
+  }
+  return result;
+}
+
+String clarificationRequest(
+  ClarificationContext context,
+  String answer,
+  List<String> history,
+) {
+  final body =
+      jsonDecode(locationClarificationRequest(context, answer, history))
+          as Map<String, dynamic>;
+  body['systemInstruction']['parts'][0]['text'] +=
+      '${ErrandUnderstandingPolicy.instruction}${PlaceSearchIntent.currentPolicy}'
+      ' When this answer changes items, purpose, category or service requirements, return replacement searchIntent for the new meaning. '
+      'Do not keep an earlier venue family after the user corrects it. Unknown optional details resolve to flexible, with no followUp. ';
+  body['generationConfig']['responseSchema']['properties']['searchIntent'] =
+      PlaceSearchIntent.currentSchema;
+  body['generationConfig']['responseSchema']['required'] =
+      (body['generationConfig']['responseSchema']['properties'] as Map).keys
+          .toList();
   final result = jsonEncode(body);
   if (utf8.encode(result).length > 50000) {
     throw const PlanningFailure(

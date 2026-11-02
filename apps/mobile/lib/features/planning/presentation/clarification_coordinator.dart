@@ -5,6 +5,7 @@ import '../data/clarification_repository.dart';
 import '../data/clarification_resolver.dart';
 import '../data/location_intent_resolver.dart';
 import '../domain/location_assessment.dart';
+import '../domain/analysis_run.dart';
 
 part 'location_assessment_coordinator.dart';
 
@@ -23,6 +24,7 @@ class ClarificationCoordinator extends ChangeNotifier {
   final errors = <String, String>{};
   final _flights = <String, Future<void>>{};
   bool _closed = false;
+  bool _restoreFailed = false;
   int _stamp(int previous) {
     final now = DateTime.now().microsecondsSinceEpoch;
     return now > previous ? now : previous + 1;
@@ -39,15 +41,18 @@ class ClarificationCoordinator extends ChangeNotifier {
   }
 
   Future<void> bind(String key) async {
-    if (sourceKey == key) return;
+    if (sourceKey == key && !_restoreFailed) return;
     sourceKey = key;
     session = ClarificationSession();
     errors.clear();
     storageError = null;
+    _restoreFailed = false;
     try {
       final saved = await repository.read(key);
       if (sourceKey == key) session = saved;
     } catch (_) {
+      if (sourceKey != key) return;
+      _restoreFailed = true;
       storageError =
           'Saved answers could not be restored. Your errands are kept.';
     }
@@ -58,7 +63,10 @@ class ClarificationCoordinator extends ChangeNotifier {
   bool _sameResolvedScope(ClarificationRecord r, ClarificationContext c) {
     if (!r.applied ||
         r.proposesRules ||
-        r.context.preferenceKey != c.preferenceKey) {
+        (r.context.preferenceKey != c.preferenceKey &&
+            !(r.resolution?.kind == 'preference' &&
+                c.semanticPreferenceKey != null &&
+                r.context.semanticPreferenceKey == c.semanticPreferenceKey))) {
       return false;
     }
     return switch (r.resolution!.kind) {
@@ -78,7 +86,10 @@ class ClarificationCoordinator extends ChangeNotifier {
     for (final r in session.records.values) {
       if ((_sameResolvedScope(r, c) ||
               (r.status == 'cleared' &&
-                  r.context.preferenceKey == c.preferenceKey)) &&
+                  (r.context.preferenceKey == c.preferenceKey ||
+                      (c.semanticPreferenceKey != null &&
+                          r.context.semanticPreferenceKey ==
+                              c.semanticPreferenceKey)))) &&
           (latest == null || r.revision > latest.revision)) {
         latest = r;
       }
@@ -275,6 +286,17 @@ class ClarificationCoordinator extends ChangeNotifier {
   }
 
   Future<void> retrySave() => _save();
+  Future<void> saveAnalysis(AnalysisState value) async {
+    final previous = session.analysis;
+    session.analysis = value;
+    try {
+      await _save();
+    } catch (_) {
+      if (identical(session.analysis, value)) session.analysis = previous;
+      rethrow;
+    }
+  }
+
   Future<void> approveRules(ClarificationContext c, bool approved) async {
     final r = record(c);
     if (r == null) return;

@@ -53,24 +53,13 @@ class ReviewFeedback extends StatelessWidget {
                   child: const Text('Retry saving trip settings'),
                 ),
               ],
-              if (past) ...[
-                _notice(
-                  'Departure has passed: ${day.date}, ${formatMinute(day.departure)}.',
+              if (past)
+                _DepartureWarning(
+                  message:
+                      'Departure has passed: ${day.date}, ${formatMinute(day.departure)}.',
+                  onDate: onDate,
+                  onDeparture: onDeparture,
                 ),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: onDate,
-                      child: const Text('Change date'),
-                    ),
-                    TextButton(
-                      onPressed: onDeparture,
-                      child: const Text('Change departure'),
-                    ),
-                  ],
-                ),
-              ],
               if (orderIssue != null) _notice(orderIssue!),
               for (final issue in issues) ...[
                 _notice(issue.message),
@@ -104,4 +93,66 @@ class ReviewFeedback extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
     child: Text(text),
   );
+}
+
+class _DepartureWarning extends StatelessWidget {
+  const _DepartureWarning({
+    required this.message,
+    required this.onDate,
+    required this.onDeparture,
+  });
+  final String message;
+  final VoidCallback onDate, onDeparture;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context), colors = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      decoration: BoxDecoration(
+        color: colors.errorContainer.withValues(alpha: .35),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ExcludeSemantics(
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: colors.error,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton(onPressed: onDate, child: const Text('Change date')),
+              TextButton(
+                onPressed: onDeparture,
+                child: const Text('Change departure'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,21 @@
 # Foundation decision log
 
+## D76 — Context-aware errand meaning, clarification and fresh analysis (2026-11-03)
+
+The owner approved implementing the investigation's plan, including useful optional questions across all errand types and explicit Analyze again for existing saved answers. Gemini remains responsible for sentence-level meaning; runtime title/keyword dictionaries are not introduced. A shared versioned policy teaches low-risk ordinary defaults, existing-arrangement preservation, focused essential questions and consumer-versus-wholesale context. Typed focus drives consistent display/blocking and source-scoped optional-answer reuse, including explicit withdrawal.
+
+New search hints separate preferred families from fallbacks and incompatible primary types. Their declared union defines acceptable types, avoiding the observed preferred/acceptable subset failure without repairing invalid historical metadata. Shared suitability checks run before positive secondary-type matches in both discovery and alternatives. Preserve route-aware bounded retrieval, explicit brands, actual provider data, hours and scheduling constraints.
+
+Fresh analysis has a unique source-bound run identity, durable pending state and retained previous interpretation/manual snapshot. Duplicate taps coalesce; reopening and saved checks do not generate; explicit retry resumes the same run; invalid/stale output cannot replace current work. Keep accepted places, overrides, user constraints and relevant answers. Additive clarification JSON retains existing table schemas. Historical builders/fingerprints and old d66-v1 gateway contracts stay compatible alongside new errand-v2 contracts.
+
+No model change, automatic second pass, paid live evaluation, Cloud deployment, publication or personal-phone installation/reset is included. The sixty-case development/held-out corpus defines measurable accuracy and human semantic review gates; synthetic passes are not model qualification. See [D76 evidence](evidence/errand-understanding-2026-11-03.md).
+
+## D69 — Planning hierarchy and explicit errand completion (2026-11-02)
+
+The owner approved the three-screen refinement plan: a semantic red past-departure warning with its recovery actions; compact Your plan summaries with inline Place, Visit timing and Business hours groups; and a readable current errand beside a dedicated Done button. Done stacks on narrow/enlarged-text layouts and uses the existing Cornflower action geometry. This supersedes D64's navigation checkbox/instruction, without changing manual completion, save-before-advance, independent errands at shared stops, Back/recovery or Finish trip semantics.
+
+Preserve provider-backed facts, transient metadata, current versus planned hours, stale-route hiding and the existing planning/persistence operations. No schema, public API, dependency, provider, Cloud or credential change is part of this refinement. Mocked layout, disposable Android and physical-phone qualification remain separate. See [the focused evidence](evidence/planning-ui-refinement-2026-11-02.md).
+
 ## D67 — Public development website, managed access and gated delivery (2026-11-01)
 
 The 2026-11-02 production phone crash identified a Navigation SDK 7.9.0 reflection boundary broken by R8: the loader `internal.alt.ax` was repackaged while its generated package-private registry `internal.alt.k` stayed in place. Preserve only that loader and its methods through the app's release keep rules. Retain minification, SDK versions, provider restrictions and all application data. Verify the compiled DEX access relationship against its matching R8 map in CI release builds and before publication; debug fixtures alone cannot detect this release-only failure. [Distribution evidence](evidence/public-distribution-2026-11-01.md#release-navigation-reflection-crash--2026-11-02) records the exact phone/mapping/SDK proof and separate physical requalification.

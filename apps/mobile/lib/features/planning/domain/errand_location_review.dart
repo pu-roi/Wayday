@@ -44,8 +44,18 @@ String? locationIntentQuestion(Errand errand, ErrandNeed? need) {
 String? outstandingQuestion(ErrandNeed? need, {required bool clarified}) {
   final question = need?.question?.trim();
   if (clarified || question == null || question.isEmpty) return null;
-  if (need?.questionKind == 'location' && need?.locationIntent != null && need?.locationIntent != LocationIntent.unclear) return null;
-  if (need?.questionKind != null || need?.locationIntent != null) return question;
+  if (need?.questionFocus == 'destinationPreference' &&
+      need?.locationIntent == LocationIntent.flexible) {
+    return null;
+  }
+  if (need?.questionKind == 'location' &&
+      need?.locationIntent != null &&
+      need?.locationIntent != LocationIntent.unclear) {
+    return null;
+  }
+  if (need?.questionKind != null || need?.locationIntent != null) {
+    return question;
+  }
   return _locationOnly(question) ? null : question;
 }
 
