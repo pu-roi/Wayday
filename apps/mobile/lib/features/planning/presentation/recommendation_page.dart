@@ -209,6 +209,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                     ),
                   const SizedBox(height: 20),
                   Container(
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: context.colors.surface,
                       borderRadius: BorderRadius.circular(24),

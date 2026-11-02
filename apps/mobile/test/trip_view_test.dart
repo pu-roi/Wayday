@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -8,14 +9,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
 import 'package:wayday/features/planning/presentation/trip_view.dart';
+import 'package:wayday/features/planning/presentation/trip_session.dart';
 import 'trip_navigation_test.dart' show FakeNavigationDriver;
 import 'trip_session_test.dart' show FakeTripMap, tripSession, tripFixture;
 
-Future<void> mountTrip(
+Future<TripSession> mountTrip(
   WidgetTester tester, {
   Size size = const Size(390, 844),
   double textScale = 1,
   bool shared = false,
+  Future<void> Function(AcceptedItinerary)? save,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -31,7 +34,7 @@ Future<void> mountTrip(
           ],
           acceptedAt: DateTime.now(),
         );
-  final session = tripSession(FakeNavigationDriver(), plan: plan);
+  final session = tripSession(FakeNavigationDriver(), plan: plan, save: save);
   final map = FakeTripMap();
   await tester.pumpWidget(
     ProviderScope(
@@ -63,6 +66,7 @@ Future<void> mountTrip(
   );
   await tester.pumpAndSettle();
   expect(session.active, isTrue);
+  return session;
 }
 
 void main() {
@@ -75,15 +79,66 @@ void main() {
       find.text('Eat pares kasama ang girlfriend ko pagkatapos mamili'),
       findsNothing,
     );
-    expect(find.byType(CheckboxListTile), findsOneWidget);
+    expect(find.byType(CheckboxListTile), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Done'), findsOneWidget);
     await tester.tap(find.text('Grocery'));
+    await tester.pump();
+    expect(find.text('Grocery'), findsOneWidget);
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(find.text('Grocery'), findsNothing);
     expect(
       find.text('Eat pares kasama ang girlfriend ko pagkatapos mamili'),
       findsOneWidget,
     );
-    expect(find.byType(CheckboxListTile), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Done'), findsOneWidget);
+  });
+  testWidgets('Done waits for saving and ignores repeated taps', (
+    tester,
+  ) async {
+    final gate = Completer<void>();
+    var writes = 0;
+    final session = await mountTrip(
+      tester,
+      shared: true,
+      save: (_) {
+        writes++;
+        return gate.future;
+      },
+    );
+    await tester.tap(find.text('Done'));
+    await tester.pump();
+    expect(find.text('Saving…'), findsOneWidget);
+    expect(find.text('Grocery'), findsOneWidget);
+    expect(session.plan.completed, isEmpty);
+    final button = find.widgetWithText(FilledButton, 'Saving…');
+    expect(tester.widget<FilledButton>(button).onPressed, isNull);
+    await tester.tap(button);
+    expect(writes, 1);
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(session.plan.completed, {'a'});
+    expect(find.text('Grocery'), findsNothing);
+    expect(find.text('Done'), findsOneWidget);
+  });
+  testWidgets('a failed save retains the errand and recovery', (tester) async {
+    final session = await mountTrip(
+      tester,
+      save: (_) async {
+        throw StateError('fixture storage failure');
+      },
+    );
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(session.plan.completed, isEmpty);
+    expect(find.text('Grocery'), findsOneWidget);
+    expect(find.text('Resume guidance'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Done'))
+          .onPressed,
+      isNull,
+    );
   });
   setUpAll(() async {
     await (FontLoader(
@@ -97,7 +152,7 @@ void main() {
     tester,
   ) async {
     await mountTrip(tester);
-    expect(find.byType(CheckboxListTile), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Done'), findsOneWidget);
     expect(find.text('Grocery'), findsOneWidget);
     expect(find.textContaining('Traffic rerouting'), findsNothing);
     expect(
@@ -122,22 +177,35 @@ void main() {
   for (final data in [
     (const Size(390, 844), 1.0),
     (const Size(320, 740), 2.0),
+    (const Size(768, 1024), 1.0),
     (const Size(740, 390), 1.3),
   ]) {
     testWidgets('trip controls wrap at ${data.$1} / ${data.$2}', (
       tester,
     ) async {
       await mountTrip(tester, size: data.$1, textScale: data.$2, shared: true);
-      await tester.tap(find.text('Grocery'));
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Done'));
       await tester.pumpAndSettle();
-      expect(find.byType(CheckboxListTile), findsOneWidget);
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      final done = find.widgetWithText(FilledButton, 'Done');
+      await tester.ensureVisible(done);
+      await tester.pumpAndSettle();
+      expect(done.hitTestable(), findsOneWidget);
+      expect(tester.getSize(done).height, greaterThanOrEqualTo(56));
       expect(find.byTooltip('Trip options'), findsOneWidget);
       expect(
         tester.getSize(find.byKey(const ValueKey('fixture-map'))).height,
         greaterThan(150),
       );
       final semantics = tester.ensureSemantics();
-      expect(find.byType(Checkbox), findsOneWidget);
+      await tester.pump();
+      expect(
+        tester.getSemantics(done).label,
+        contains(
+          'Mark Eat pares kasama ang girlfriend ko pagkatapos mamili as done',
+        ),
+      );
       semantics.dispose();
       expect(tester.takeException(), isNull);
       if (Platform.environment['WAYDAY_CAPTURE'] == '1') {

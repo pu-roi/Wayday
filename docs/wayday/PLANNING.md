@@ -1,5 +1,15 @@
 # Plan my day implementation plan
 
+## Planning hierarchy and explicit completion — D69 current contract
+
+The owner approved retaining compact plan summaries and inline Details. Review errands groups the exact past-departure date/time and both recovery actions in a left-aligned notice with semantic red error text, warning icon and light error-container fill. Preserve validation and separate amber unanswered-question styling.
+
+Your plan groups expanded information as Place (address, available rating/count and reason), Visit timing (departure, waiting, buffer and calculation age), and Business hours (current status, trip-date periods, calculated compatibility, weekly disclosure and retrieval attribution). Change remains visible. Unknown/stale hours remain unknown and route refresh still hides invalid times/geometry.
+
+Your trip uses one larger current-errand title and one filled check-icon Done button, superseding D64's checkbox/instruction only. Stack the button below the title when inner width is below 320 logical pixels or scaled 14-point text exceeds 18. Retain bounded panel scrolling and native map controls. Saving… disables repeat taps; the title itself does not complete an errand. Use the existing completion operation and preserve save-before-next-task, shared-stop progression, errors/recovery and Finish trip behavior. No public interface, schema, provider or request-policy change is required.
+
+Acceptance covers warning correction; details disclosure; long labels/addresses; absent ratings; current/future/unknown/stale hours; route-refresh hiding; delayed/failed saves; repeated taps; shared stops; Back/resume and Finish. Verify 320-, 390- and 768-unit layouts up to 200% text, semantic labels, contrast and targets. Use mocked services and the guarded disposable Android harness, without personal-phone installation or paid requests. Record rendered/emulator verification separately from physical-phone qualification in [the evidence](evidence/planning-ui-refinement-2026-11-02.md).
+
 ## Gemini retry repair — D66 continuation
 
 The owner-reported retry failure was reproduced with a nonpersonal request: the original D66 format returned HTTP 400; a reduced venue-type schema returned HTTP 200. New requests send the type allowlist in the instruction and retain local type/list validation. Preserve the original D66 interpretation and clarification builders as historical lookup paths, including explicit retry guards. Invalid optional search hints are omitted while core meaning remains strictly validated. Known HTTP failures retain a useful explanation after reopening. See [the focused investigation](evidence/gemini-retry-investigation-2026-11-01.md) for the two separately authorized requests, parser replay and remaining physical-phone qualification. Building this repair does not update the personal installation or authorize automatic replacement of failed understanding.

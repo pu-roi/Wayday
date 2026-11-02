@@ -180,11 +180,21 @@ class _PlaceHoursState extends State<PlaceHours> {
               ),
             ],
           ),
-        Text(summary()),
-        if (hours.usual) const Text('Special-date hours are not confirmed.'),
+        if (status != null) const SizedBox(height: 8),
+        Text(summary(), style: context.type.bodyMedium),
+        if (hours.usual) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Special-date hours are not confirmed.',
+            style: context.type.bodyMedium?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+        ],
         if (stop != null &&
             hours.state == HoursState.available &&
-            !closedStatus)
+            !closedStatus) ...[
+          const SizedBox(height: 6),
           Text(
             hours.fits(stop.tasks.first.start, stop.departure)
                 ? '${hours.usual ? 'Usually' : 'Expected'} open for your planned visit'
@@ -194,22 +204,38 @@ class _PlaceHoursState extends State<PlaceHours> {
                 ? 'Usual hours end before your planned visit finishes'
                 : 'Closes before your planned visit finishes',
           ),
+        ],
         if (!widget.compact && hours.checkedAt != null)
-          Builder(
-            builder: (_) {
-              final at = hours.checkedAt!.toUtc().add(const Duration(hours: 8));
-              return Text(
-                'Checked ${at.toIso8601String().split('T').first} ${TimeOfDay(hour: at.hour, minute: at.minute).format(context)} · Google Maps',
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Builder(
+              builder: (_) {
+                final at = hours.checkedAt!.toUtc().add(
+                  const Duration(hours: 8),
+                );
+                return Text(
+                  'Checked ${at.toIso8601String().split('T').first} ${TimeOfDay(hour: at.hour, minute: at.minute).format(context)} · Google Maps',
+                  style: context.type.bodyMedium?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                );
+              },
+            ),
           ),
         if (!widget.compact && hours.weekdays.isNotEmpty) ...[
-          TextButton(
-            onPressed: () => setState(() => weekly = !weekly),
-            child: Text(weekly ? 'Hide weekly hours' : 'Weekly hours'),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => setState(() => weekly = !weekly),
+              child: Text(weekly ? 'Hide weekly hours' : 'Weekly hours'),
+            ),
           ),
           if (weekly)
-            for (final day in hours.weekdays) Text(day),
+            for (final day in hours.weekdays)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(day),
+              ),
         ],
         if (error != null && retryable)
           Semantics(liveRegion: true, child: Text(error!)),

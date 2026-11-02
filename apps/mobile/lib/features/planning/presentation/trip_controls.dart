@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme.dart';
 import 'trip_session.dart';
 import 'finish_trip.dart';
 
@@ -7,65 +8,116 @@ class TripChecklist extends StatelessWidget {
   final TripSession model;
   final VoidCallback onFinish;
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    key: const ValueKey('trip-checklist'),
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.orientationOf(context) == Orientation.landscape
-          ? MediaQuery.sizeOf(context).height
-          : MediaQuery.sizeOf(context).height * .32,
-    ),
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            model.currentErrandId == null
-                ? model.current.finalDestination
-                      ? 'Final destination'
-                      : 'This stop is complete'
-                : model.arrived
-                ? 'You have arrived. Mark this errand when done'
-                : 'Mark this errand when done',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          for (final id in [
-            if (model.currentErrandId != null) model.currentErrandId!,
-          ])
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                value: model.plan.completed.contains(id),
-                title: Text(
-                  model.plan.day.errands.firstWhere((e) => e.id == id).title,
-                ),
-                onChanged:
-                    model.busy ||
-                        !model.active ||
-                        model.plan.completed.contains(id)
-                    ? null
-                    : (_) => model.complete(id),
-              ),
-            ),
-          if (model.current.finalDestination &&
-              model.currentErrands.every(model.plan.completed.contains)) ...[
-            Text(
-              model.plan.day.toPlace.label,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            FinishTripAction(
-              plan: model.plan,
-              enabled: !model.busy,
-              onFinished: onFinish,
-            ),
-          ],
-        ],
+  Widget build(BuildContext context) {
+    final id = model.currentErrandId;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.outlineVariant)),
       ),
-    ),
-  );
+      child: ConstrainedBox(
+        key: const ValueKey('trip-checklist'),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * .32,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (id != null)
+                _CurrentErrand(model: model, id: id)
+              else
+                Text(
+                  model.current.finalDestination
+                      ? 'Final destination'
+                      : 'This stop is complete',
+                  style: context.type.bodyMedium?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              if (model.current.finalDestination &&
+                  model.currentErrands.every(
+                    model.plan.completed.contains,
+                  )) ...[
+                const SizedBox(height: 8),
+                Text(
+                  model.plan.day.toPlace.label,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                FinishTripAction(
+                  plan: model.plan,
+                  enabled: !model.busy,
+                  onFinished: onFinish,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CurrentErrand extends StatelessWidget {
+  const _CurrentErrand({required this.model, required this.id});
+  final TripSession model;
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = model.plan.day.errands.firstWhere((e) => e.id == id).title;
+    final heading = Semantics(
+      liveRegion: true,
+      child: Text(title, style: context.type.titleLarge),
+    );
+    final done = FilledButton.icon(
+      onPressed: model.busy || !model.active ? null : () => model.complete(id),
+      icon: const Icon(Icons.check, size: 20),
+      label: Text(
+        model.saving ? 'Saving…' : 'Done',
+        semanticsLabel: model.saving
+            ? 'Saving completion for $title'
+            : 'Mark $title as done',
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          model.arrived ? 'You have arrived' : 'Current errand',
+          style: context.type.bodyMedium?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 320 ||
+                MediaQuery.textScalerOf(context).scale(14) > 18) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  heading,
+                  const SizedBox(height: 16),
+                  SizedBox(width: double.infinity, child: done),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: heading),
+                const SizedBox(width: 16),
+                done,
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
 }
 
 class TripStatus extends StatelessWidget {

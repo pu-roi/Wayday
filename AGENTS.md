@@ -1,5 +1,9 @@
 # Wayday agent instructions
 
+## Planning screen hierarchy and completion — D69
+
+The owner approved a red, icon-labelled past-departure notice with grouped recovery actions; compact Your plan rows with inline Place, Visit timing and Business hours groups; and a larger current-errand title beside a dedicated Cornflower Done button. D69 supersedes D64's navigation checkbox and instructional label only. Stack Done at narrow widths or enlarged text, retain bounded panel scrolling and native map controls, and save completion before showing the next errand. Preserve shared-stop progression, explicit failures and Finish trip semantics. This presentation refinement does not authorize provider requests or personal-phone installation/reset for verification.
+
 ## Public development distribution — D67
 
 The owner approved the full single-page marketing website in `apps/website/`, GitHub Pages, GitHub Releases APK downloads, gated automatic publication after passing `main` checks, and a dedicated Cloud Run provider gateway within `services/api/`. Follow [distribution setup](docs/wayday/DISTRIBUTION.md) and its evidence. The website uses the supplied original logo, Lenis/GSAP and reduced motion; it is not a browser app/demo.

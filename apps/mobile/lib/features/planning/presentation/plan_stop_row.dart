@@ -73,7 +73,7 @@ class PlanStopRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   CircleAvatar(
                     radius: 12,
@@ -88,58 +88,117 @@ class PlanStopRow extends StatelessWidget {
               ),
               if (stackActions)
                 Align(alignment: Alignment.centerRight, child: change),
+              const SizedBox(height: 4),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(category, size: 18, color: context.wayday.link),
+                  SizedBox(
+                    width: 24,
+                    child: Icon(category, size: 18, color: context.wayday.link),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      place == null
-                          ? 'Choose a place'
-                          : model.displayPlace(place),
-                      style: context.type.bodyLarge,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          place == null
+                              ? 'Choose a place'
+                              : model.displayPlace(place),
+                          style: context.type.titleMedium,
+                        ),
+                        if (metadata != null &&
+                            metadata.locality.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            metadata.locality,
+                            style: context.type.bodyMedium?.copyWith(
+                              color: context.colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
               ),
-              if (metadata != null) Text(metadata.locality),
+              const SizedBox(height: 8),
               if (stop != null && task != null)
-                Text(
-                  'Arrive ${clock(stop.arrival)} · Visit ${e.durationMinutes} min${e.durationConfirmed ? '' : ' estimated'}',
+                Padding(
+                  padding: const EdgeInsets.only(left: 32),
+                  child: Text(
+                    'Arrive ${clock(stop.arrival)} · Visit ${e.durationMinutes} min${e.durationConfirmed ? '' : ' estimated'}',
+                    style: context.type.bodyMedium,
+                  ),
                 ),
               if (leg != null)
-                Text(
-                  'From previous stop: ${(leg.seconds / 60).ceil()} min${leg.meters == null ? '' : ' · ${(leg.meters! / 1000).toStringAsFixed(1)} km'}',
+                Padding(
+                  padding: const EdgeInsets.only(left: 32, top: 4),
+                  child: Text(
+                    'From previous stop: ${(leg.seconds / 60).ceil()} min${leg.meters == null ? '' : ' · ${(leg.meters! / 1000).toStringAsFixed(1)} km'}',
+                    style: context.type.bodyMedium?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               if (open) ...[
-                if (metadata != null && metadata.address.isNotEmpty)
-                  Text(metadata.address),
-                if (metadata?.ratingSummary case final summary?) Text(summary),
-                if (stop != null)
-                  Text('Leave ${clock(stop.departure)} · 5 min buffer'),
-                if (task != null && stop != null && task.start > stop.arrival)
-                  Text(
-                    'Wait ${(task.start - stop.arrival) ~/ 60} min before this errand',
-                  ),
-                Text(
-                  model.candidates[e.id]
-                          ?.where(
-                            (p) => place != null && p.key == placeKey(place),
-                          )
-                          .firstOrNull
-                          ?.reason ??
-                      'Your selected location.',
+                const SizedBox(height: 16),
+                const Divider(),
+                _DetailGroup(
+                  title: 'Place',
+                  children: [
+                    if (metadata != null && metadata.address.isNotEmpty)
+                      Text(metadata.address),
+                    if (metadata?.ratingSummary case final summary?)
+                      Text(summary),
+                    Text(
+                      model.candidates[e.id]
+                              ?.where(
+                                (p) =>
+                                    place != null && p.key == placeKey(place),
+                              )
+                              .firstOrNull
+                              ?.reason ??
+                          'Your selected location.',
+                      style: context.type.bodyMedium?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                if (plan?.calculatedAt != null && ready)
-                  Text(
-                    'Calculated ${TimeOfDay.fromDateTime(plan!.calculatedAt!.toLocal()).format(context)}',
+                if (stop != null || (ready && plan?.calculatedAt != null))
+                  _DetailGroup(
+                    title: 'Visit timing',
+                    children: [
+                      if (stop != null)
+                        Text('Leave ${clock(stop.departure)} · 5 min buffer'),
+                      if (task != null &&
+                          stop != null &&
+                          task.start > stop.arrival)
+                        Text(
+                          'Wait ${(task.start - stop.arrival) ~/ 60} min before this errand',
+                        ),
+                      if (plan?.calculatedAt != null && ready)
+                        Text(
+                          'Calculated ${TimeOfDay.fromDateTime(plan!.calculatedAt!.toLocal()).format(context)}',
+                          style: context.type.bodyMedium?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
-                if (place != null) PlaceHours(model: model, place: place),
+                if (place != null)
+                  _DetailGroup(
+                    title: 'Business hours',
+                    children: [PlaceHours(model: model, place: place)],
+                  ),
               ],
-              TextButton(
-                onPressed: onExpand,
-                child: Text(open ? 'Less detail' : 'Details'),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: onExpand,
+                  child: Text(open ? 'Less detail' : 'Details'),
+                ),
               ),
             ],
           ),
@@ -147,4 +206,29 @@ class PlanStopRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DetailGroup extends StatelessWidget {
+  const _DetailGroup({required this.title, required this.children});
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(title, style: context.type.titleMedium),
+        ),
+        const SizedBox(height: 8),
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(height: 6),
+          children[i],
+        ],
+      ],
+    ),
+  );
 }

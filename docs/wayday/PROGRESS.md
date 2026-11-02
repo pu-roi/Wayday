@@ -2,6 +2,13 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-02] Refine planning hierarchy and completion — D69
+
+- Implemented the owner-approved past-departure warning, inline Place/Visit timing/Business hours detail groups, and larger current-errand panel with a dedicated Cornflower Done button. Narrow/enlarged-text layouts stack the button and retain bounded scrolling. Existing persistence, shared-stop progression, Back/recovery and Finish behavior remain unchanged.
+- Verification: 606 Flutter tests passed with the existing skip unchanged; analysis found no issues. Final focused plan/warning checks passed, including warning contrast. Inspected widget renders at 320/390/768 widths, up to 200% text, and short landscape. The guarded disposable Android fixture built and passed with synthetic drivers and retained progress/Finish checks. A separate finish assessment found no actionable layout regressions; the layout detector and diff checks were clean.
+- Updated Design, the current planning contract, agent guidance and mobile documentation. No schema, public API, dependency, provider or Cloud changes, paid requests, personal-phone installation/reset or publication. See [D69 evidence](evidence/planning-ui-refinement-2026-11-02.md) for native/rendered evidence and remaining physical-phone limits.
+- Native follow-up: the approximately 393-unit phone-density fixture passed with a temporary 4 GB emulator RAM override after the original 2 GB instance was interrupted by Android's low-memory killer. Inspected current/next-errand native captures, restored the existing density setting and retained the stored 2 GB AVD configuration. This is disposable fixture evidence, not physical-phone or live-guidance qualification.
+
 ### [2026-11-02] Publish the first signed public APK and website download
 
 - After the owner-approved phone/accounting qualification, PR #12 passed and merged as `c5d8875`. Enabled the public-release flag after verifying the protected main-only environment, production identifiers and unchanged signing-secret metadata. [Main run 41349292023](https://github.com/pu-roi/Wayday/actions/runs/41349292023) passed all four checks, permanently signed APK publication and Pages deployment. Checks include 598 Flutter tests with one existing skip, 14 browser cases and the compiled Navigation access guard.

@@ -93,6 +93,14 @@ components:
 
 # Design System: Wayday mobile
 
+## Planning screen hierarchy and completion — D69
+
+Review errands groups the exact past-departure date/time and Change date/Change departure in one left-aligned notice. Use the theme's error foreground, a warning icon and subtle error-container fill. Preserve the separate amber unanswered-question treatment, validation and bounded feedback scrolling.
+
+Your plan keeps compact numbered summaries and visible Change. Business names use the existing 16-unit semibold title role; locality and incoming travel use the 14-unit muted body role. Details expands inline beneath a quiet divider into Place, Visit timing and Business hours. Use 16-unit group headings, 8-unit heading-to-content spacing, and 6-unit gaps between related facts. Keep address, rating, recommendation reason, departure/wait/buffer, calculation age, current hours status, trip-day hours, validated visit compatibility and retrieval attribution available. Weekly hours remains a nested disclosure. Missing/stale/failed data and current versus planned hours retain their existing meanings.
+
+Your trip replaces D64's checkbox/instruction with one current-errand title in the existing 21-unit title role and a check-icon Done button. Current errand/You have arrived uses the 14-unit supporting role. The flat white panel has a quiet top divider, 20-unit horizontal/16-unit vertical padding and no decorative shadow. Done uses the shared Cornflower 56-unit minimum-height geometry beside the title; it stacks full-width when inner width is below 320 units or scaled 14-unit text exceeds 18. Keep content-sized scrolling bounded to 32% of screen height, including short landscape layouts, leaving the map the remaining viewport. Saving… disables repeat taps. Completion persists before revealing another independent errand or advancing a shared stop; error recovery and the outlined Finish trip action are unchanged. Native navigation estimates, directions and attribution remain separate from this Flutter panel.
+
 ## Place information and stable map confirmation — D66
 
 Choose a place keeps its content-sized sheet and fixed errand pager. Use actual business name, current-place/locality line, wrapping formatted address, trip-day hours and available travel comparison; suppress equal locality/address lines. Available Google rating/count is secondary text in alternatives and Details, without expanding compact main rows or adding rating cutoffs. Missing addresses/ratings are not invented and displaying rows does not fetch data.
