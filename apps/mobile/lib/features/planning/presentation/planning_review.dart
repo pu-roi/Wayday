@@ -25,127 +25,171 @@ class PlanningReview extends StatelessWidget {
   final VoidCallback onChanged;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 560),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              children: [
-                Text(
-                  'Your settings stay unless you choose a suggestion.',
-                  style: context.type.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                tripDetails,
-                const SizedBox(height: 16),
-                if (model.interpretationStale) ...[
-                  const Text(
-                    'Notes changed. Read them again before finding places.',
-                  ),
-                  OutlinedButton(
-                    onPressed: model.understand,
-                    child: const Text('Read updated notes with Gemini'),
+  Widget build(BuildContext context) => AbsorbPointer(
+    absorbing: model.analysisRunning,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                children: [
+                  Text(
+                    'Your settings stay unless you choose a suggestion.',
+                    style: context.type.bodyMedium,
                   ),
                   const SizedBox(height: 16),
-                ],
-                if (model.clarifications.storageError != null) ...[
-                  Text(model.clarifications.storageError!),
-                  TextButton(
-                    onPressed: () async {
-                      try {
-                        await model.clarifications.retrySave();
-                      } catch (_) {}
-                    },
-                    child: const Text('Retry saving answers'),
-                  ),
-                ],
-                if (model.error != null) Text(model.error!),
-                SectionSurface(
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < model.reviewErrands.length; i++) ...[
-                        if (i > 0)
-                          const Divider(height: 1, indent: 20, endIndent: 20),
-                        _errand(model.reviewErrands[i], i + 1),
-                      ],
-                    ],
-                  ),
-                ),
-                for (final n
-                    in (model.interpretation?.additions ?? <ErrandNeed>[])
-                        .where((n) => !model.additions.contains(n.id))) ...[
-                  const SizedBox(height: 12),
-                  ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    shape: const Border(),
-                    collapsedShape: const Border(),
-                    expansionAnimationStyle:
-                        MediaQuery.disableAnimationsOf(context)
-                        ? AnimationStyle.noAnimation
-                        : null,
-                    title: Text(n.proposedTitle ?? n.query),
-                    subtitle: Text(
-                      model.additions.contains(n.id)
-                          ? 'Extra errand selected'
-                          : 'Suggested extra errand',
+                  tripDetails,
+                  const SizedBox(height: 16),
+                  if (model.interpretationStale) ...[
+                    const Text(
+                      'Notes changed. Read them again before finding places.',
                     ),
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          [
-                            n.query,
-                            if (n.items.isNotEmpty)
-                              'Items: ${n.items.join(', ')}',
-                            '${n.durationMinutes} min estimate · ${n.optional == true ? 'If there’s time' : 'Required'}',
-                            reviewTiming(
-                              n.apply(
-                                Errand(
-                                  id: n.id,
-                                  title: n.proposedTitle ?? n.query,
+                    OutlinedButton(
+                      onPressed: model.understand,
+                      child: const Text('Read updated notes with Gemini'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (model.clarifications.storageError != null) ...[
+                    Text(model.clarifications.storageError!),
+                    TextButton(
+                      onPressed: () async {
+                        try {
+                          await model.clarifications.retrySave();
+                        } catch (_) {}
+                      },
+                      child: const Text('Retry saving answers'),
+                    ),
+                  ],
+                  if (model.error != null) Text(model.error!),
+                  if (model.supportsFreshAnalysis &&
+                      !model.interpretationStale) ...[
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          onPressed: model.analysisRunning
+                              ? null
+                              : () => model.analyzeAgain(
+                                  retry: model.hasPendingAnalysis,
+                                ),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text(
+                            model.analysisRunning
+                                ? 'Analyzing…'
+                                : model.hasPendingAnalysis
+                                ? 'Retry analysis'
+                                : 'Analyze again',
+                          ),
+                        ),
+                        if (model.hasPendingAnalysis)
+                          TextButton(
+                            onPressed: model.analysisRunning
+                                ? null
+                                : () => model.analyzeAgain(savedOnly: true),
+                            child: const Text('Check saved analysis'),
+                          ),
+                      ],
+                    ),
+                    Text(
+                      model.hasPendingAnalysis
+                          ? 'Retry may use another Gemini request. Checking saved analysis sends none.'
+                          : 'Uses another Gemini request. Your confirmed settings stay.',
+                      style: context.type.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  SectionSurface(
+                    child: Column(
+                      children: [
+                        for (
+                          var i = 0;
+                          i < model.reviewErrands.length;
+                          i++
+                        ) ...[
+                          if (i > 0)
+                            const Divider(height: 1, indent: 20, endIndent: 20),
+                          _errand(model.reviewErrands[i], i + 1),
+                        ],
+                      ],
+                    ),
+                  ),
+                  for (final n
+                      in (model.interpretation?.additions ?? <ErrandNeed>[])
+                          .where((n) => !model.additions.contains(n.id))) ...[
+                    const SizedBox(height: 12),
+                    ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      expansionAnimationStyle:
+                          MediaQuery.disableAnimationsOf(context)
+                          ? AnimationStyle.noAnimation
+                          : null,
+                      title: Text(n.proposedTitle ?? n.query),
+                      subtitle: Text(
+                        model.additions.contains(n.id)
+                            ? 'Extra errand selected'
+                            : 'Suggested extra errand',
+                      ),
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            [
+                              n.query,
+                              if (n.items.isNotEmpty)
+                                'Items: ${n.items.join(', ')}',
+                              '${n.durationMinutes} min estimate · ${n.optional == true ? 'If there’s time' : 'Required'}',
+                              reviewTiming(
+                                n.apply(
+                                  Errand(
+                                    id: n.id,
+                                    title: n.proposedTitle ?? n.query,
+                                  ),
                                 ),
                               ),
+                              if (n.after.isNotEmpty)
+                                'After ${n.after.map((id) => model.day.errands.where((e) => e.id == id).firstOrNull?.title ?? model.interpretation?.additions.where((e) => e.id == id).firstOrNull?.proposedTitle ?? 'another suggested errand').join(', ')}',
+                            ].join('\n'),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              if (model.additions.contains(n.id)) {
+                                model.additions.remove(n.id);
+                              } else {
+                                model.addAddition(n);
+                              }
+                              onChanged();
+                            },
+                            icon: Icon(
+                              model.additions.contains(n.id)
+                                  ? Icons.remove
+                                  : Icons.add,
+                              size: 18,
                             ),
-                            if (n.after.isNotEmpty)
-                              'After ${n.after.map((id) => model.day.errands.where((e) => e.id == id).firstOrNull?.title ?? model.interpretation?.additions.where((e) => e.id == id).firstOrNull?.proposedTitle ?? 'another suggested errand').join(', ')}',
-                          ].join('\n'),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () {
-                            if (model.additions.contains(n.id)) {
-                              model.additions.remove(n.id);
-                            } else {
-                              model.addAddition(n);
-                            }
-                            onChanged();
-                          },
-                          icon: Icon(
-                            model.additions.contains(n.id)
-                                ? Icons.remove
-                                : Icons.add,
-                            size: 18,
-                          ),
-                          label: Text(
-                            model.additions.contains(n.id)
-                                ? 'Remove extra errand'
-                                : 'Add extra errand',
+                            label: Text(
+                              model.additions.contains(n.id)
+                                  ? 'Remove extra errand'
+                                  : 'Add extra errand',
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          footer,
-        ],
+            footer,
+          ],
+        ),
       ),
     ),
   );
