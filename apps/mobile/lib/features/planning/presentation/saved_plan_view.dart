@@ -9,6 +9,9 @@ import 'planning_controller.dart';
 import 'planning_view.dart';
 import 'trip_view.dart';
 import 'finish_trip.dart';
+import 'dart:async';
+import '../../sharing/share_models.dart';
+import '../../sharing/share_repository.dart';
 export 'trip_view.dart' show TripView;
 
 final savedItineraryProvider = FutureProvider<AcceptedItinerary?>(
@@ -34,6 +37,7 @@ class _SavedPlanState extends ConsumerState<SavedPlanView> {
     try {
       final next = plan.complete(id);
       await ref.read(itineraryRepositoryProvider).updateProgress(next);
+      if (sharingEnabled) unawaited(ShareRepository.shared.publish(next));
       ref.invalidate(savedItineraryProvider);
       if (mounted) setState(() => plan = next);
     } catch (e) {

@@ -10,11 +10,26 @@ import 'settings_view.dart';
 import 'theme.dart';
 import '../features/planning/data/navigation_target_resolver.dart';
 import '../features/planning/data/navigation_target_maintenance.dart';
+import '../features/sharing/share_models.dart';
+import '../features/sharing/share_views.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/today',
     routes: [
+      if (sharingEnabled)
+        GoRoute(
+          path: '/shared',
+          builder: (_, state) => state.extra is ShareAccess
+              ? SharedTripPage(access: state.extra as ShareAccess)
+              : const Scaffold(
+                  body: SafeArea(
+                    child: Center(
+                      child: Text('Open the original shared trip link again.'),
+                    ),
+                  ),
+                ),
+        ),
       StatefulShellRoute(
         builder: (context, state, shell) => AppShell(
           location: state.uri.path,
@@ -72,6 +87,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
   ref.onDispose(router.dispose);
+  SharingLinks.bind(router);
   return router;
 });
 
@@ -107,6 +123,7 @@ class AppShell extends ConsumerWidget {
     final failures = ref.watch(saveFailuresProvider);
     final content = Column(
       children: [
+        if (sharingEnabled) const SharingRecoveryBanner(),
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [

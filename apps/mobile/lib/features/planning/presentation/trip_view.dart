@@ -20,6 +20,9 @@ import 'trip_provider_sheet.dart';
 import '../data/navigation_target_resolver.dart';
 import '../../places/data/search_quota.dart';
 import 'trip_place_details.dart';
+import '../../sharing/share_models.dart';
+import '../../sharing/share_repository.dart';
+import '../../sharing/share_views.dart';
 
 final tripNavigationProvider = Provider<TripNavigation>(
   (ref) => TripNavigation(ref.read(planningBudgetProvider)),
@@ -51,6 +54,18 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
   TripPlaceDetailsController? _details;
   String? _presentedTargetId;
   bool closing = false;
+  String? _sharedNavigationSource;
+  final _sharingSession = ShareRepository.operationId();
+  bool _sharingHandoff = false;
+  Future<void> _sharingNavigationSource(String? source) async {
+    if (!sharingEnabled || source == _sharedNavigationSource) return;
+    await sharingChannel.invokeMethod<void>('navigationSource', {
+      'source': source,
+      'session': _sharingSession,
+    });
+    _sharedNavigationSource = source;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -151,6 +166,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
           save: (plan) async {
             await ref.read(itineraryRepositoryProvider).updateProgress(plan);
             container.invalidate(savedItineraryProvider);
+            if (sharingEnabled) unawaited(ShareRepository.shared.publish(plan));
           },
         );
     model.addListener(_changed);
@@ -162,6 +178,13 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
 
   void _changed() {
     if (!mounted) return;
+    if (!_sharingHandoff && model.active) {
+      unawaited(
+        _sharingNavigationSource(
+          model.provider == TripMapProvider.google ? 'google' : 'alternative',
+        ).catchError((Object _) {}),
+      );
+    }
     if (!model.switching) {
       final id = model.provider == TripMapProvider.openStreetMap && model.active
           ? model.current.target?.placeId
@@ -182,18 +205,41 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
       return;
     }
     final colors = Theme.of(context).colorScheme;
-    unawaited(
-      model.start(
-        allowTargetFetch: explicit,
-        colors: NavigationAppearance(
-          backgroundColor: colors.surface,
-          titleColor: colors.onSurface,
-          mainTextColor: colors.onSurface,
-          acceptButtonTextColor: colors.secondary,
-          cancelButtonTextColor: colors.secondary,
-        ),
-      ),
-    );
+    unawaited(() async {
+      _sharingHandoff = true;
+      try {
+        await _sharingNavigationSource(
+          model.provider == TripMapProvider.google ? 'google' : 'alternative',
+        );
+        if (!mounted || closing) return;
+        await model.start(
+          allowTargetFetch: explicit,
+          colors: NavigationAppearance(
+            backgroundColor: colors.surface,
+            titleColor: colors.onSurface,
+            mainTextColor: colors.onSurface,
+            acceptButtonTextColor: colors.secondary,
+            cancelButtonTextColor: colors.secondary,
+          ),
+        );
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Location sharing could not hand over to navigation. Try again.',
+              ),
+            ),
+          );
+        }
+      } finally {
+        _sharingHandoff = false;
+        if (!model.active) {
+          await model.foregroundStopped;
+          await _sharingNavigationSource(null).catchError((Object _) {});
+        }
+      }
+    }());
   }
 
   Future<void> _providers() async {
@@ -204,30 +250,59 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
     );
     if (!mounted || selected == null) return;
     final colors = Theme.of(context).colorScheme;
-    await model.switchProvider(
-      selected,
-      colors: NavigationAppearance(
-        backgroundColor: colors.surface,
-        titleColor: colors.onSurface,
-        mainTextColor: colors.onSurface,
-        acceptButtonTextColor: colors.secondary,
-        cancelButtonTextColor: colors.secondary,
-      ),
-    );
+    _sharingHandoff = true;
+    try {
+      await _sharingNavigationSource(
+        selected == TripMapProvider.google ? 'google' : 'alternative',
+      );
+      if (!mounted || closing) return;
+      await model.switchProvider(
+        selected,
+        colors: NavigationAppearance(
+          backgroundColor: colors.surface,
+          titleColor: colors.onSurface,
+          mainTextColor: colors.onSurface,
+          acceptButtonTextColor: colors.secondary,
+          cancelButtonTextColor: colors.secondary,
+        ),
+      );
+    } finally {
+      _sharingHandoff = false;
+      if (!model.active) await model.foregroundStopped;
+      await _sharingNavigationSource(
+        model.active
+            ? (model.provider == TripMapProvider.google
+                  ? 'google'
+                  : 'alternative')
+            : null,
+      ).catchError((Object _) {});
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      unawaited(model.pause());
+      unawaited(
+        model
+            .pause()
+            .then((_) => model.foregroundStopped)
+            .then((_) => _sharingNavigationSource(null)),
+      );
     }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     model.removeListener(_changed);
+    unawaited(
+      model
+          .pause()
+          .then((_) => model.foregroundStopped)
+          .then((_) => _sharingNavigationSource(null))
+          .catchError((Object _) {}),
+    );
+    WidgetsBinding.instance.removeObserver(this);
     model.dispose();
     _details?.dispose();
     super.dispose();
@@ -251,7 +326,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
     final colors = Theme.of(context).colorScheme;
     final mapSession = model.mapSession;
     final compactToolbar =
-        MediaQuery.sizeOf(context).width < 360 ||
+        MediaQuery.sizeOf(context).width < (sharingEnabled ? 420 : 360) ||
         MediaQuery.textScalerOf(context).scale(14) > 18;
     return PopScope(
       canPop: false,
@@ -267,6 +342,12 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
             icon: const Icon(Icons.arrow_back),
           ),
           actions: [
+            if (sharingEnabled)
+              ShareToolbarAction(
+                runId: model.plan.runId,
+                snapshot: () =>
+                    ShareRepository.shared.snapshotForTrip(model.plan),
+              ),
             if (compactToolbar)
               IconButton(
                 tooltip: 'Whole trip',

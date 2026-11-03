@@ -164,7 +164,9 @@ class ShareRepository extends ChangeNotifier {
       throw const SharingFailure('Sharing changed. Refresh and try again.');
     }
     if (response.statusCode == 413 || response.statusCode == 422) {
-      throw const SharingFailure('This trip could not be shared with its current route. Refresh your plan before sharing.');
+      throw const SharingFailure(
+        'This trip could not be shared with its current route. Refresh your plan before sharing.',
+      );
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw const SharingFailure(
@@ -222,10 +224,13 @@ class ShareRepository extends ChangeNotifier {
     };
     await _save();
   });
-  Future<void> invalidateCandidate() => _serial(() async {
-    (await _load()).remove('candidate');
-    await _save();
-  });
+  Future<void> invalidateCandidate({bool endSharing = false}) =>
+      _serial(() async {
+        (await _load()).remove('candidate');
+        await _save();
+        final owner = valuesOrNullOwner;
+        if (endSharing && owner != null) await _end(owner);
+      });
   Map<String, dynamic>? get valuesOrNullOwner => _values?['owner'] is Map
       ? Map<String, dynamic>.from(_values!['owner'] as Map)
       : null;
@@ -284,7 +289,9 @@ class ShareRepository extends ChangeNotifier {
   Future<ShareAccess> create(SharedSnapshot snapshot) => _serial(() async {
     final values = await _load();
     var owner = valuesOrNullOwner;
-    if (owner != null && (owner['expiresAt'] as num? ?? 0) <= now().millisecondsSinceEpoch / 1000) {
+    if (owner != null &&
+        (owner['expiresAt'] as num? ?? 0) <=
+            now().millisecondsSinceEpoch / 1000) {
       await _end(owner);
       owner = null;
     }
@@ -437,7 +444,8 @@ class ShareRepository extends ChangeNotifier {
 
   Future<void> _stop(ShareAccess access) async {
     final status = await _nativeStatus();
-    if (status?['shareId'] == access.id && status?['role'] == access.role) await _stopNative();
+    if (status?['shareId'] == access.id && status?['role'] == access.role)
+      await _stopNative();
   }
 
   Future<void> _end(Map<String, dynamic> owner) async {
@@ -588,5 +596,7 @@ class ShareRepository extends ChangeNotifier {
             ((await _load())['owner'] as Map)['revocationPending'] == true) ||
         (await _nativeStatus())?['revocationPending'] == true,
     'progressPending': (await _load())['progressPending'] is Map,
+    'linkRevocationPending':
+        ((await _load())['owner'] as Map?)?['revocationPending'] == true,
   };
 }

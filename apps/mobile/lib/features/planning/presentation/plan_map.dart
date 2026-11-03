@@ -16,6 +16,7 @@ class PlanMap extends StatefulWidget {
     required this.onSelect,
     this.selected,
     this.labels,
+    this.markerLabels,
     this.traffic = false,
     this.interactive = true,
     super.key,
@@ -25,6 +26,7 @@ class PlanMap extends StatefulWidget {
   final ValueChanged<int> onSelect;
   final int? selected;
   final List<String>? labels;
+  final List<String>? markerLabels;
   final bool traffic;
   final bool interactive;
   @override
@@ -103,6 +105,7 @@ class _PlanMapState extends State<PlanMap> {
         value.labels?[i] ?? value.places[i].label,
       ],
     value.geometry,
+    value.markerLabels,
   ]);
   Future<void> synchronize() {
     final revision = ++_overlayRevision, snapshot = widget;
@@ -128,11 +131,12 @@ class _PlanMapState extends State<PlanMap> {
         final icons = <int, nav.ImageDescriptor>{};
         for (final i in eligibleIndices) {
           icons[i] = await markerIcon(
-            i == 0
-                ? 'A'
-                : i == snapshot.places.length - 1
-                ? 'B'
-                : '$i',
+            snapshot.markerLabels?[i] ??
+                (i == 0
+                    ? 'A'
+                    : i == snapshot.places.length - 1
+                    ? 'B'
+                    : '$i'),
           );
           if (obsolete()) return;
         }
@@ -144,11 +148,11 @@ class _PlanMapState extends State<PlanMap> {
                 position: point(snapshot.places[i]),
                 infoWindow: nav.InfoWindow(
                   title:
-                      '${i == 0
-                          ? 'A'
-                          : i == snapshot.places.length - 1
-                          ? 'B'
-                          : i}. ${snapshot.labels?[i] ?? snapshot.places[i].label}',
+                      '${snapshot.markerLabels?[i] ?? (i == 0
+                              ? 'A'
+                              : i == snapshot.places.length - 1
+                              ? 'B'
+                              : i)}. ${snapshot.labels?[i] ?? snapshot.places[i].label}',
                 ),
               ),
         ]);

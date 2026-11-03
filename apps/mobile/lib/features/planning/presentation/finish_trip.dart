@@ -8,6 +8,8 @@ import '../domain/planning_models.dart';
 import 'planning_controller.dart';
 import 'saved_plan_view.dart' show savedItineraryProvider;
 import '../data/navigation_target_resolver.dart';
+import '../../sharing/share_models.dart';
+import '../../sharing/share_repository.dart';
 
 class TripExit {
   const TripExit.paused(this.plan) : finished = false;
@@ -46,6 +48,14 @@ class TripFinishController extends Notifier<bool> {
       );
       ref.read(todayProvider.notifier).applyFinishedReset(reset);
       ref.invalidate(savedItineraryProvider);
+      if (sharingEnabled) {
+        try {
+          await ShareRepository.shared.finish(runId);
+        } catch (_) {
+          // The local finish already committed. Sharing cleanup cannot report
+          // that Today or the accepted trip was retained after that commit.
+        }
+      }
       if (uiKitNavigationTargetsEnabled) {
         try {
           await NavigationTargetResolver.clearFinished(runId);
