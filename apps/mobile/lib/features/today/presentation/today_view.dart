@@ -18,7 +18,7 @@ import '../../planning/presentation/saved_plan_view.dart'
     show savedItineraryProvider;
 import '../../planning/presentation/finish_trip.dart';
 import '../../maps/presentation/place_map.dart';
-import '../../maps/presentation/regional_map.dart';
+import '../../maps/presentation/map_platform.dart';
 import '../../places/data/google_pin_cache.dart';
 import '../../places/data/combined_place_search.dart';
 import '../../places/domain/place_search.dart';

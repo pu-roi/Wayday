@@ -11,7 +11,7 @@ import '../../places/domain/place_intent.dart';
 import '../../places/data/google_pin_cache.dart';
 import '../../places/presentation/search_attribution.dart';
 import 'map_credits_page.dart';
-import 'regional_map.dart';
+import 'map_platform.dart';
 
 String _color(Color color) =>
     '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';

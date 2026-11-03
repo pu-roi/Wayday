@@ -8,7 +8,7 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:wayday/app/wayday_app.dart';
 import 'package:wayday/core/data/persist_safely.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
-import 'package:wayday/features/maps/presentation/regional_map.dart';
+import 'package:wayday/features/maps/presentation/map_platform.dart';
 import 'package:wayday/features/places/data/combined_place_search.dart';
 import 'package:wayday/features/places/data/search_quota.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
@@ -103,6 +103,22 @@ Future<void> tab(WidgetTester tester, String name) async {
 }
 
 void main() {
+  testWidgets('Recurring keeps its selected inner tab across main tabs', (
+    tester,
+  ) async {
+    await mountTabs(tester, MapLifetime());
+    await tab(tester, 'Recurring');
+    await tester.tap(find.text('Trips'));
+    await tester.pumpAndSettle();
+    expect(find.text('No saved trips yet.'), findsOneWidget);
+    await tab(tester, 'Profile');
+    await tab(tester, 'Recurring');
+    expect(find.text('No saved trips yet.'), findsOneWidget);
+    expect(find.byTooltip('New recurring list'), findsNothing);
+    await tab(tester, 'Recurring');
+    expect(find.text('No saved trips yet.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('tab changes retain the map until the shell is removed', (
     tester,

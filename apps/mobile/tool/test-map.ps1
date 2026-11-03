@@ -1,13 +1,18 @@
 param(
     [Parameter(Mandatory = $true)][string]$DeviceId,
-    [string]$Target = 'integration_test/regional_map_test.dart',
+    [string]$Target = 'integration_test/online_pin_test.dart',
     [switch]$GoogleSingleSample,
     [switch]$GoogleRealMap,
     [switch]$RecommendationRehearsal,
-    [switch]$PlacesOnly
+    [switch]$PlacesOnly,
+    [switch]$UiKitIdProbe
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Target -eq 'integration_test/trip_place_ui_kit_probe_test.dart' -and
+    (-not $UiKitIdProbe -or $DeviceId -notmatch '^emulator-[0-9]+$')) {
+    throw 'The single UI Kit ID probe requires explicit -UiKitIdProbe and a disposable emulator.'
+}
 $adbExecutable = Join-Path $env:LOCALAPPDATA 'Android/Sdk/platform-tools/adb.exe'
 if (-not (Test-Path -LiteralPath $adbExecutable)) { $adbExecutable = (Get-Command adb -ErrorAction Stop).Source }
 # The Flutter launcher can uninstall a stale pre-build application identity on
@@ -22,6 +27,21 @@ $previousMapTest = [Environment]::GetEnvironmentVariable('ORG_GRADLE_PROJECT_WAY
 try {
     $env:ORG_GRADLE_PROJECT_WAYDAY_MAP_TEST = 'true'
     $testArguments = @('test', $Target, '-d', $DeviceId, '--no-uninstall')
+    if ($Target -eq 'integration_test/trip_place_ui_kit_probe_test.dart') {
+        # Only the already-restricted native SDK key enters this debug fixture.
+        # Do not copy private REST-provider credentials or released app identity.
+        $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
+        $public = Get-Content -Raw (Join-Path $repositoryRoot '.tools/public-full-test/public-defines.json') | ConvertFrom-Json
+        if ($public.WAYDAY_FIREBASE_APP_ID -ne '1:793890374960:android:dbe21167436a082af974f5' -or
+            [string]::IsNullOrWhiteSpace($public.GOOGLE_MAPS_ANDROID_API_KEY)) {
+            throw 'The existing public-test SDK configuration is unavailable.'
+        }
+        $configuration = Join-Path $repositoryRoot '.tools/trip-switch-qualification/sdk-defines.json'
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $configuration) | Out-Null
+        [IO.File]::WriteAllText($configuration, (@{GOOGLE_MAPS_ANDROID_API_KEY=$public.GOOGLE_MAPS_ANDROID_API_KEY} | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
+        $testArguments += '--dart-define-from-file=' + $configuration
+        $testArguments += '--dart-define=WAYDAY_LIVE_UI_KIT_ID_PROBE=true'
+    }
     if ($Target -eq 'integration_test/recommendation_live_test.dart') {
         if (-not $RecommendationRehearsal) { throw 'The live recommendation rehearsal must be requested explicitly.' }
         $configuration = & (Join-Path $PSScriptRoot 'configure-search.ps1')

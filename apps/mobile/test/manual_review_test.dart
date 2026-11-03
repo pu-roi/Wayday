@@ -8,7 +8,7 @@ import 'package:wayday/features/today/data/day_repository.dart';
 import 'package:wayday/features/today/domain/day.dart';
 import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
-import 'package:wayday/features/maps/presentation/regional_map.dart';
+import 'package:wayday/features/maps/presentation/map_platform.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 
 void main() {

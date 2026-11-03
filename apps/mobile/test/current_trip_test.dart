@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/wayday_app.dart';
-import 'package:wayday/features/maps/presentation/regional_map.dart';
+import 'package:wayday/features/maps/presentation/map_platform.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
 import 'package:wayday/features/planning/presentation/saved_plan_view.dart';
