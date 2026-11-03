@@ -87,10 +87,11 @@ def publish(directory, *, candidate_commit=None):
         else:
             if not existing['draft']:
                 raise ValueError('Published release is incomplete; refusing to modify it.')
-            gh('release', 'upload', tag, str(path), '--repo', REPOSITORY)
+            gh('api', f'https://uploads.github.com/repos/{REPOSITORY}/releases/{existing["id"]}/assets?name={path.name}',
+               '--method', 'POST', '--header', 'Content-Type: application/octet-stream', '--input', str(path))
     require_current(control_commit)
     if existing['draft']:
-        gh('release', 'edit', tag, '--repo', REPOSITORY, '--draft=false')
+        gh('api', f'repos/{REPOSITORY}/releases/{existing["id"]}', '--method', 'PATCH', '--field', 'draft=false')
     write(directory / 'publication.json', {'commit': commit, 'tag': tag, 'complete': True})
 
 

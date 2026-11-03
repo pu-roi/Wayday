@@ -38,23 +38,28 @@ def test_partial_release_resumes_without_overwriting_and_publishes_only_complete
         if args[0] == 'api':
             if '/releases?' in args[1]: return json.dumps([state['release']] if state['release'] else [])
             if '/releases/tags/' in args[1]: raise RuntimeError('Draft release is not visible through the public tag endpoint')
-            assert args[args.index('--method') + 1] == 'POST'
-            state['release'] = {'id': 42, 'tag_name': 'dev-200000', 'target_commitish': 'a' * 40, 'draft': True, 'assets': []}
-            return json.dumps(state['release'])
-        elif args[1] == 'upload':
-            p = Path(args[3])
-            if state['fail'] and len(state['uploads']) == 2:
-                state['fail'] = False
-                raise RuntimeError('fixture interrupted upload')
-            assert p.name not in state['uploads']
-            state['uploads'][p.name] = p.read_bytes()
-            state['release']['assets'].append({'name': p.name})
+            if args[1].endswith('/releases'):
+                assert args[args.index('--method') + 1] == 'POST'
+                state['release'] = {'id': 42, 'tag_name': 'dev-200000', 'target_commitish': 'a' * 40, 'draft': True, 'assets': []}
+                return json.dumps(state['release'])
+            if args[1].startswith('https://uploads.github.com/'):
+                assert '/releases/42/assets?name=' in args[1]
+                p = Path(args[args.index('--input') + 1])
+                if state['fail'] and len(state['uploads']) == 2:
+                    state['fail'] = False
+                    raise RuntimeError('fixture interrupted upload')
+                assert p.name not in state['uploads']
+                state['uploads'][p.name] = p.read_bytes()
+                state['release']['assets'].append({'name': p.name})
+            else:
+                assert args[1].endswith('/releases/42')
+                assert args[args.index('--method') + 1] == 'PATCH'
+                assert args[args.index('--field') + 1] == 'draft=false'
+                assert len(state['uploads']) == 6
+                state['release']['draft'] = False
         elif args[1] == 'download':
             name = args[args.index('--pattern') + 1]
             (Path(args[args.index('--dir') + 1]) / name).write_bytes(state['uploads'][name])
-        elif args[1] == 'edit':
-            assert len(state['uploads']) == 6
-            state['release']['draft'] = False
         else: raise AssertionError(args)
         return ''
     monkeypatch.setattr(publication, 'gh', gh)
@@ -96,16 +101,17 @@ def test_new_release_uses_creation_response_even_when_listing_is_stale(monkeypat
         if args[0] == 'api' and '--method' not in args:
             assert '/releases?' in args[1]
             return '[]'  # Creation has not propagated to the listing yet.
-        if args[:2] == ('release', 'create') or (args[0] == 'api' and '--method' in args):
-            if args[0] == 'api':
-                payload = json.loads(Path(args[args.index('--input') + 1]).read_text())
-                assert payload['tag_name'] == 'dev-200000'
-                assert payload['target_commitish'] == 'a' * 40
-                assert payload['draft'] is True and payload['prerelease'] is True
+        if args[0] == 'api' and args[1].endswith('/releases'):
+            payload = json.loads(Path(args[args.index('--input') + 1]).read_text())
+            assert payload['tag_name'] == 'dev-200000'
+            assert payload['target_commitish'] == 'a' * 40
+            assert payload['draft'] is True and payload['prerelease'] is True
             return json.dumps(release)
-        if args[:2] == ('release', 'upload'):
-            uploads.append(Path(args[3]).name)
-        elif args[:2] == ('release', 'edit'):
+        if args[0] == 'api' and args[1].startswith('https://uploads.github.com/'):
+            assert '/releases/42/assets?name=' in args[1]
+            uploads.append(Path(args[args.index('--input') + 1]).name)
+        elif args[0] == 'api' and args[1].endswith('/releases/42'):
+            assert args[args.index('--method') + 1] == 'PATCH'
             assert len(uploads) == 6
         else: raise AssertionError(args)
         return ''
