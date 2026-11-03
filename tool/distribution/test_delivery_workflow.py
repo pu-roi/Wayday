@@ -12,7 +12,7 @@ def test_publication_is_ordered_after_compatible_gateway_and_both_candidates():
     assert jobs['release-candidates']['needs'] == ['gateway']
     assert jobs['publish-apk']['needs'] == ['release-candidates']
     assert jobs['publish-website']['needs'] == ['publish-apk']
-    assert body['concurrency']['cancel-in-progress'] is False
+    assert body['concurrency']['cancel-in-progress'] == "${{ github.ref != 'refs/heads/main' }}"
     script = '\n'.join(s.get('run', '') for s in jobs['release-candidates']['steps'])
     assert 'for channel in public test' in script
     assert 'verify_apk.py' in script and 'check_navigation_reflection.py' in script
