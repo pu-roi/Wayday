@@ -444,8 +444,9 @@ class ShareRepository extends ChangeNotifier {
 
   Future<void> _stop(ShareAccess access) async {
     final status = await _nativeStatus();
-    if (status?['shareId'] == access.id && status?['role'] == access.role)
+    if (status?['shareId'] == access.id && status?['role'] == access.role) {
       await _stopNative();
+    }
   }
 
   Future<void> _end(Map<String, dynamic> owner) async {
