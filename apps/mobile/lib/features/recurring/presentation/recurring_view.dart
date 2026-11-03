@@ -5,10 +5,10 @@ import '../../../app/theme.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/section_surface.dart';
-import '../../errands/domain/errand.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
 import '../../today/presentation/today_controller.dart';
+import '../../today/domain/day.dart';
 import '../domain/errand_group.dart';
 import 'group_editor.dart';
 import 'recurring_controller.dart';
@@ -20,11 +20,16 @@ class RecurringView extends ConsumerStatefulWidget {
   ConsumerState<RecurringView> createState() => _RecurringViewState();
 }
 
-class _RecurringViewState extends ConsumerState<RecurringView> {
+class _RecurringViewState extends ConsumerState<RecurringView>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  int _selectedTab = 0;
+  bool _tripsLoaded = false;
   final _collapsed = <String>{};
   @override
   void initState() {
     super.initState();
+    _tabs = TabController(length: 2, vsync: this)..addListener(_selectTab);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final controller = ref.read(recurringProvider.notifier);
@@ -38,6 +43,22 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
         );
       }
     });
+  }
+
+  void _selectTab() {
+    if (_selectedTab == _tabs.index) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _selectedTab = _tabs.index;
+      _tripsLoaded |= _selectedTab == 1;
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabs.removeListener(_selectTab);
+    _tabs.dispose();
+    super.dispose();
   }
 
   void _edit(BuildContext context, ErrandGroup group, {bool isNew = false}) {
@@ -102,6 +123,206 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
     }
   }
 
+  Widget _errandsList(
+    BuildContext context,
+    List<ErrandGroup> groups,
+    DayPlan today,
+    VoidCallback create,
+  ) => ListView(
+    key: const PageStorageKey('recurring-errands'),
+    primary: false,
+    padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    children: [
+      if (groups.isEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('No recurring lists yet.', style: context.type.titleLarge),
+              const SizedBox(height: 8),
+              Text(
+                'Group your regular errands, then bring them into Today whenever you need them.',
+                style: context.type.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      for (final group in groups)
+        Padding(
+          key: ValueKey(group.id),
+          padding: const EdgeInsets.only(bottom: 20),
+          child: SectionSurface(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 8, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => setState(() {
+                            if (!_collapsed.remove(group.id)) {
+                              _collapsed.add(group.id);
+                            }
+                          }),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        group.name,
+                                        style: context.type.titleMedium,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    AnimatedRotation(
+                                      turns: _collapsed.contains(group.id)
+                                          ? 0
+                                          : .5,
+                                      duration: WaydayMotion.duration(context),
+                                      curve: WaydayMotion.curve,
+                                      child: Icon(
+                                        Icons.expand_more_rounded,
+                                        size: 20,
+                                        color: context.colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  group.schedule,
+                                  style: context.type.bodySmall?.copyWith(
+                                    color: context.colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Edit ${group.name}',
+                        onPressed: () => _edit(context, group),
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+                SmoothDisclosure(
+                  key: ValueKey('group-${group.id}'),
+                  expanded: !_collapsed.contains(group.id),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 8),
+                      AnimatedErrandList(
+                        items: group.items,
+                        onEdit: (errand) =>
+                            _editItem(context, ref, group, errand),
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(indent: 20, endIndent: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed:
+                                group.items.isEmpty ||
+                                    group.items.every(
+                                      (item) => today.errands.any(
+                                        (copy) =>
+                                            copy.sourceGroupId == group.id &&
+                                            copy.sourceItemId == item.id,
+                                      ),
+                                    )
+                                ? null
+                                : () {
+                                    final count = ref
+                                        .read(todayProvider.notifier)
+                                        .addGroup(
+                                          groupId: group.id,
+                                          errands: group.items,
+                                        );
+                                    showFeedback(
+                                      context,
+                                      '$count ${count == 1 ? 'errand' : 'errands'} added to Today.',
+                                    );
+                                  },
+                            icon: Icon(
+                              group.items.isNotEmpty &&
+                                      group.items.every(
+                                        (item) => today.errands.any(
+                                          (copy) =>
+                                              copy.sourceGroupId == group.id &&
+                                              copy.sourceItemId == item.id,
+                                        ),
+                                      )
+                                  ? Icons.check_rounded
+                                  : Icons.playlist_add_rounded,
+                              size: 20,
+                            ),
+                            label: Text(
+                              group.items.isNotEmpty &&
+                                      group.items.every(
+                                        (item) => today.errands.any(
+                                          (copy) =>
+                                              copy.sourceGroupId == group.id &&
+                                              copy.sourceItemId == item.id,
+                                        ),
+                                      )
+                                  ? 'Added to Today'
+                                  : 'Add to Today',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+          ),
+          onPressed: create,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('New recurring list'),
+        ),
+      ),
+      const SizedBox(height: 16),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          kIsWeb
+              ? 'Browser preview · Changes last for this session.'
+              : 'Saved on this device.',
+          style: context.type.bodySmall?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+        ),
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final groups = ref.watch(recurringProvider);
@@ -120,230 +341,67 @@ class _RecurringViewState extends ConsumerState<RecurringView> {
         toolbarHeight: 64,
         title: Text('Recurring', style: context.type.headlineLarge),
         actions: [
-          IconButton(
-            tooltip: 'New recurring list',
-            onPressed: create,
-            icon: Icon(Icons.note_add_outlined, color: context.wayday.link),
-          ),
-          const SizedBox(width: 12),
+          if (_selectedTab == 0) ...[
+            IconButton(
+              tooltip: 'New recurring list',
+              onPressed: create,
+              icon: Icon(Icons.note_add_outlined, color: context.wayday.link),
+            ),
+            const SizedBox(width: 12),
+          ],
         ],
       ),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+          child: Column(
             children: [
-              const SavedTripsSection(),
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 24),
-                child: Text(
-                  'Your familiar errands, all in one place.',
-                  style: context.type.bodyMedium?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TabBar(
+                  controller: _tabs,
+                  labelStyle: context.type.labelLarge,
+                  labelColor: context.wayday.link,
+                  unselectedLabelColor: context.colors.onSurfaceVariant,
+                  indicatorColor: context.wayday.link,
+                  tabs: const [
+                    Tab(text: 'Errands'),
+                    Tab(text: 'Trips'),
+                  ],
                 ),
               ),
-              if (groups.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 24,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'A list worth keeping.',
-                        style: context.type.titleLarge,
+              Expanded(
+                child: IndexedStack(
+                  index: _selectedTab,
+                  children: [
+                    ExcludeFocus(
+                      excluding: _selectedTab != 0,
+                      child: TickerMode(
+                        enabled: _selectedTab == 0,
+                        child: _errandsList(context, groups, today, create),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Group your regular errands, then bring them into Today whenever you need them.',
-                        style: context.type.bodyLarge?.copyWith(
-                          color: context.colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              for (final group in groups)
-                Padding(
-                  key: ValueKey(group.id),
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: SectionSurface(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 8, 4),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() {
-                                    if (!_collapsed.remove(group.id)) {
-                                      _collapsed.add(group.id);
-                                    }
-                                  }),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                group.name,
-                                                style: context.type.titleMedium,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            AnimatedRotation(
-                                              turns:
-                                                  _collapsed.contains(group.id)
-                                                  ? 0
-                                                  : .5,
-                                              duration: WaydayMotion.duration(
-                                                context,
-                                              ),
-                                              curve: WaydayMotion.curve,
-                                              child: Icon(
-                                                Icons.expand_more_rounded,
-                                                size: 20,
-                                                color: context
-                                                    .colors
-                                                    .onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          group.schedule,
-                                          style: context.type.bodySmall
-                                              ?.copyWith(
-                                                color: context
-                                                    .colors
-                                                    .onSurfaceVariant,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: 'Edit ${group.name}',
-                                onPressed: () => _edit(context, group),
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SmoothDisclosure(
-                          key: ValueKey('group-${group.id}'),
-                          expanded: !_collapsed.contains(group.id),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 8),
-                              AnimatedErrandList(
-                                items: group.items,
-                                onEdit: (errand) =>
-                                    _editItem(context, ref, group, errand),
-                              ),
-                              const SizedBox(height: 8),
-                              const Divider(indent: 20, endIndent: 20),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 4,
-                                ),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: TextButton.icon(
-                                    onPressed:
-                                        group.items.isEmpty ||
-                                            group.items.every(
-                                              (item) => today.errands.any(
-                                                (copy) =>
-                                                    copy.sourceGroupId ==
-                                                        group.id &&
-                                                    copy.sourceItemId ==
-                                                        item.id,
-                                              ),
-                                            )
-                                        ? null
-                                        : () {
-                                            final count = ref
-                                                .read(todayProvider.notifier)
-                                                .addGroup(
-                                                  groupId: group.id,
-                                                  errands: group.items,
-                                                );
-                                            showFeedback(
-                                              context,
-                                              '$count ${count == 1 ? 'errand' : 'errands'} added to Today.',
-                                            );
-                                          },
-                                    icon: Icon(
-                                      group.items.isNotEmpty &&
-                                              group.items.every(
-                                                (item) => today.errands.any(
-                                                  (copy) =>
-                                                      copy.sourceGroupId ==
-                                                          group.id &&
-                                                      copy.sourceItemId ==
-                                                          item.id,
-                                                ),
-                                              )
-                                          ? Icons.check_rounded
-                                          : Icons.playlist_add_rounded,
-                                      size: 20,
-                                    ),
-                                    label: Text(
-                                      group.items.isNotEmpty &&
-                                              group.items.every(
-                                                (item) => today.errands.any(
-                                                  (copy) =>
-                                                      copy.sourceGroupId ==
-                                                          group.id &&
-                                                      copy.sourceItemId ==
-                                                          item.id,
-                                                ),
-                                              )
-                                          ? 'Added to Today'
-                                          : 'Add to Today',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
                     ),
-                  ),
-                ),
-              TextButton.icon(
-                onPressed: create,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('New recurring list'),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                kIsWeb
-                    ? 'Browser preview · Changes last for this session.'
-                    : 'Saved on this device.',
-                style: context.type.bodySmall?.copyWith(
-                  color: context.colors.onSurfaceVariant,
+                    ExcludeFocus(
+                      excluding: _selectedTab != 1,
+                      child: TickerMode(
+                        enabled: _selectedTab == 1,
+                        child: _tripsLoaded
+                            ? ListView(
+                                key: const PageStorageKey('recurring-trips'),
+                                primary: false,
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  24,
+                                  24,
+                                  32,
+                                ),
+                                children: const [SavedTripsSection()],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

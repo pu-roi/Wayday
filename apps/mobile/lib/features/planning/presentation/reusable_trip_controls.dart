@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
 import '../../today/domain/day.dart';
@@ -59,7 +60,6 @@ class SavedTripsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text('Saved trips', style: TextStyle(fontWeight: FontWeight.w600)),
       ref
           .watch(reusableTripsProvider)
           .when(
@@ -69,21 +69,36 @@ class SavedTripsSection extends ConsumerWidget {
               child: const Text('Saved trips could not load. Retry'),
             ),
             data: (trips) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (trips.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      'Save a plan to reuse its errands and chosen places.',
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'No saved trips yet.',
+                        style: context.type.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Save a plan from Your plan to reuse its errands and chosen places.',
+                        style: context.type.bodyMedium?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 for (final trip in trips)
                   ExpansionTile(
-                    key: ValueKey(trip.id),
+                    key: PageStorageKey('saved-trip-${trip.id}'),
+                    maintainState: true,
                     tilePadding: EdgeInsets.zero,
-                    title: Text(trip.name),
+                    title: Text(trip.name, style: context.type.titleMedium),
                     subtitle: Text(
                       '${trip.day.errands.length} errands · ${trip.day.profile.label}',
+                      style: context.type.bodyMedium?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
                     ),
                     children: [
                       for (final e in trip.day.errands)
@@ -163,7 +178,6 @@ class SavedTripsSection extends ConsumerWidget {
               ],
             ),
           ),
-      const Divider(height: 28),
     ],
   );
 }

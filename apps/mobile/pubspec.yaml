@@ -38,13 +38,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/branding/wayday-logo.png
     - assets/fonts/OFL.txt
     - assets/notices/nsi/
     - assets/notices/natural-earth/
-    - assets/maps/pilot/
-    - assets/maps/pilot/fonts/NotoSansRegular/
-    - assets/maps/pilot/sprites/
-    - assets/maps/pilot/notices/
   fonts:
     - family: Figtree
       fonts:

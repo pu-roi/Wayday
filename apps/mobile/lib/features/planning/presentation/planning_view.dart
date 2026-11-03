@@ -516,7 +516,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       ref.invalidate(reusableTripsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved in Recurring → Saved trips')),
+          const SnackBar(content: Text('Saved in Recurring → Trips')),
         );
       }
     } catch (e) {

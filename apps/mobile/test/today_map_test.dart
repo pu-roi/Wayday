@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
-import 'package:wayday/features/maps/presentation/regional_map.dart';
+import 'package:wayday/features/maps/presentation/map_platform.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
 import 'package:wayday/features/today/data/day_repository.dart';
 import 'package:wayday/features/today/domain/day.dart';

@@ -5,6 +5,27 @@ import 'package:wayday/features/places/domain/place_search.dart';
 
 void main() {
   test(
+    'public daily opt-out preserves usage and burst spacing across restart',
+    () async {
+      var now = DateTime.utc(2026, 11, 3);
+      String? disk;
+      QuotaLedger create() => QuotaLedger(
+        enforceDaily: false,
+        now: () => now,
+        read: () async => disk,
+        write: (s) async => disk = s,
+      );
+      const policy = ProviderPolicy(Duration(seconds: 2), 2, 1, Duration.zero);
+      expect(await create().reserve('locationiq', policy), isNull);
+      now = now.add(const Duration(seconds: 3));
+      await create().checkCapacity('locationiq', 10000, policy);
+      expect(await create().reserve('locationiq', policy), isNull);
+      now = now.add(const Duration(seconds: 3));
+      expect(await create().reserve('locationiq', policy), isNotNull);
+      expect((jsonDecode(disk!)['starts']['locationiq'] as List).length, 2);
+    },
+  );
+  test(
     'minute and daily reservations survive restart without storing queries',
     () async {
       var now = DateTime.utc(2026, 10, 28);

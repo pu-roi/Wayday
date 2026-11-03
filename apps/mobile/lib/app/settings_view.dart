@@ -1,57 +1,59 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../features/maps/presentation/regional_map.dart';
 import '../features/maps/presentation/map_credits_page.dart';
 import '../core/widgets/section_surface.dart';
 import 'theme.dart';
+import '../core/widgets/build_identity.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Settings')),
+    appBar: AppBar(
+      toolbarHeight: 64,
+      title: Text('Settings', style: context.type.headlineLarge),
+    ),
     body: Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560),
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
-            Icon(Icons.route_rounded, size: 36, color: context.wayday.link),
+            const SectionSurface(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('Settings are not available yet.'),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Image.asset(
+              'assets/branding/wayday-logo.png',
+              width: 72,
+              height: 72,
+              semanticLabel: 'Wayday logo',
+            ),
             const SizedBox(height: 16),
             Text(
               'Wayday',
               style: context.type.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const ExpansionTile(
-              title: Text('Offline Pasig/Ortigas preview'),
-              children: [RegionalMap()],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your list. A little more on the way.',
-              style: context.type.bodyLarge?.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
             Text('About Wayday', style: context.type.titleMedium),
+            const BuildIdentity(),
             const SizedBox(height: 12),
             Text(
               kIsWeb
                   ? 'This browser preview keeps changes for this session. Add recurring lists to Today whenever you choose; they are not added automatically.'
-                  : 'Your errands and recurring lists are saved on this device. Add recurring lists to Today whenever you choose; they are not added automatically.',
+                  : 'Your errands, recurring lists, saved trips, and saved places stay on this device. Add recurring lists to Today whenever you choose; they are not added automatically.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              kIsWeb
-                  ? 'Search uses an online place service. The regional offline map is available on Android; browser map support may differ. Trip planning, saved trips, and reminders are coming later.'
-                  : 'Search and map pin selection use online services. The offline regional map covers Pasig/Ortigas. Trip planning, saved trips, and reminders are coming later.',
+              'Place search, maps, and route updates use online services.',
               style: context.type.bodyMedium?.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),

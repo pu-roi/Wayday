@@ -1,6 +1,7 @@
 """All upstream URLs, prompts, field masks and costs are server owned."""
 
 import json
+import hashlib
 import math
 import re
 from datetime import datetime
@@ -15,6 +16,10 @@ CURRENT_CONTRACTS = json.loads(
     Path(__file__).with_name("contracts-v2.json").read_text(encoding="utf-8")
 )
 CONTRACT_VERSIONS = {"d66-v1": CONTRACTS, "errand-v2": CURRENT_CONTRACTS}
+CONTRACT_HASHES = {
+    version: hashlib.sha256(Path(__file__).with_name(filename).read_bytes()).hexdigest()
+    for version, filename in [("d66-v1", "contracts.json"), ("errand-v2", "contracts-v2.json")]
+}
 ROUTE_FIELDS = {
     "computeRoutes": {
         "routes.polyline.encodedPolyline",
@@ -53,11 +58,13 @@ def interpretation(body):
         isinstance(purpose, str)
         and purpose in CONTRACTS
         and isinstance(version, str)
-        and version in CONTRACT_VERSIONS
     )
+    if version not in CONTRACT_VERSIONS:
+        raise GatewayFailure(422, "unsupported_contract")
     request = body["request"]
     exact(request, ["systemInstruction", "generationConfig", "contents"])
-    require({k: v for k, v in request.items() if k != "contents"} == CONTRACT_VERSIONS[version][purpose])
+    if {k: v for k, v in request.items() if k != "contents"} != CONTRACT_VERSIONS[version][purpose]:
+        raise GatewayFailure(422, "contract_mismatch")
     contents = request["contents"]
     require(isinstance(contents, list) and len(contents) == 1)
     exact(contents[0], ["role", "parts"])

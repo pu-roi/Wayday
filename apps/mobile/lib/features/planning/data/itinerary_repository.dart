@@ -7,6 +7,7 @@ import '../../today/domain/day.dart';
 import '../../places/domain/place_intent.dart';
 import '../domain/planning_models.dart';
 import '../domain/clarification.dart';
+import '../domain/navigation_models.dart';
 import 'reusable_trip_repository.dart' show newTripIdentity;
 
 /// Durable task-owned choices/progress only: no Google response text, ETAs,
@@ -19,6 +20,7 @@ class AcceptedItinerary {
     Set<String> completed = const {},
     Map<String, String> omitted = const {},
     this.lightPickupConfirmed = false,
+    this.navigationProvider = TripMapProvider.google,
     String? runId,
     Map<String, String> deferred = const {},
     Map<String, Map<String, dynamic>> clarifications = const {},
@@ -40,6 +42,20 @@ class AcceptedItinerary {
   final Map<String, Map<String, dynamic>> clarifications;
   final bool lightPickupConfirmed;
   final String runId;
+  final TripMapProvider navigationProvider;
+  AcceptedItinerary withNavigationProvider(TripMapProvider provider) =>
+      AcceptedItinerary(
+        day: day,
+        stops: stops,
+        acceptedAt: acceptedAt,
+        completed: completed,
+        omitted: omitted,
+        deferred: deferred,
+        clarifications: clarifications,
+        lightPickupConfirmed: lightPickupConfirmed,
+        runId: runId,
+        navigationProvider: provider,
+      );
   AcceptedItinerary complete(String id) {
     if (!stops.any((s) => s.errandIds.contains(id))) {
       throw const FormatException('Unknown task');
@@ -61,12 +77,14 @@ class AcceptedItinerary {
       clarifications: clarifications,
       lightPickupConfirmed: lightPickupConfirmed,
       runId: runId,
+      navigationProvider: navigationProvider,
     );
   }
 
   Map<String, Object> toJson() => {
     'version': 2,
     'runId': runId,
+    'navigationProvider': navigationProvider.name,
     'day': day.toJson(),
     'stops': stops.map((s) => s.toJson()).toList(),
     'acceptedAt': acceptedAt.toUtc().toIso8601String(),
@@ -116,6 +134,11 @@ class AcceptedItinerary {
       clarifications: clarifications,
       lightPickupConfirmed: json['lightPickupConfirmed'] == true,
       runId: json['runId'] as String? ?? 'legacy-${json['acceptedAt']}',
+      navigationProvider: switch (json['navigationProvider']) {
+        null || 'google' => TripMapProvider.google,
+        'openStreetMap' => TripMapProvider.openStreetMap,
+        _ => throw const FormatException('Unsupported navigation provider'),
+      },
     );
     result.validateAssignments();
     return result;
@@ -194,6 +217,10 @@ abstract interface class ItineraryRepository {
   Future<AcceptedItinerary?> read();
   Future<void> save(AcceptedItinerary value);
   Future<void> updateProgress(AcceptedItinerary value);
+  Future<AcceptedItinerary> updateNavigationProvider(
+    String runId,
+    TripMapProvider provider,
+  );
   Future<DayPlan> finish(
     String runId, {
     required DayRepository today,
@@ -216,7 +243,16 @@ class MemoryItineraryRepository implements ItineraryRepository {
   @override
   Future<void> updateProgress(AcceptedItinerary value) async {
     _checkProgress(this.value, value);
-    this.value = value;
+    this.value = value.withNavigationProvider(this.value!.navigationProvider);
+  }
+
+  @override
+  Future<AcceptedItinerary> updateNavigationProvider(
+    String runId,
+    TripMapProvider provider,
+  ) async {
+    final current = _currentTrip(value, runId);
+    return value = current.withNavigationProvider(provider);
   }
 
   @override
@@ -279,9 +315,20 @@ class SqliteItineraryRepository implements ItineraryRepository {
   @override
   Future<void> updateProgress(AcceptedItinerary value) =>
       SerialWriteQueue.forOwner(database).enqueue(() async {
-        _checkProgress(await read(), value);
-        await _save(value);
+        final current = await read();
+        _checkProgress(current, value);
+        await _save(value.withNavigationProvider(current!.navigationProvider));
       });
+  @override
+  Future<AcceptedItinerary> updateNavigationProvider(
+    String runId,
+    TripMapProvider provider,
+  ) => SerialWriteQueue.forOwner(database).enqueue(() async {
+    final current = _currentTrip(await read(), runId);
+    final changed = current.withNavigationProvider(provider);
+    await _save(changed);
+    return changed;
+  });
   @override
   Future<DayPlan> finish(
     String runId, {
@@ -309,6 +356,16 @@ class SqliteItineraryRepository implements ItineraryRepository {
 
 bool allTripErrandsComplete(AcceptedItinerary value) =>
     value.stops.expand((s) => s.errandIds).every(value.completed.contains);
+
+AcceptedItinerary _currentTrip(AcceptedItinerary? value, String runId) {
+  if (value == null || value.runId != runId) {
+    throw const PlanningFailure(
+      'This trip changed or has finished. Your newer progress is kept.',
+      kind: 'trip_changed',
+    );
+  }
+  return value;
+}
 
 void _checkFinished(AcceptedItinerary? value, String runId) {
   if (value == null || value.runId != runId) {

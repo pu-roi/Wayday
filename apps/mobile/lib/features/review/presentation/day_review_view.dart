@@ -6,7 +6,7 @@ import '../../../core/widgets/place_picker.dart';
 import '../../../core/widgets/section_surface.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../maps/presentation/place_map.dart';
-import '../../maps/presentation/regional_map.dart';
+import '../../maps/presentation/map_platform.dart';
 import '../../today/domain/day.dart';
 import '../../today/presentation/today_controller.dart';
 import '../domain/day_review.dart';

@@ -154,14 +154,15 @@ class _RecommendationPageState extends State<RecommendationPage> {
             model.error == null &&
             model.routeRefreshState != RouteRefreshState.failed);
     final failure = model.recommendationFailure;
-    final mayUpdate = !{
-      'testing_budget',
-      'accounting',
-      'access',
-      'configuration',
-      'quota',
-      'unsupported_profile',
-    }.contains(failure?.kind);
+    final mayUpdate =
+        (failure?.kind != 'quota' || model.unresolved.isEmpty) &&
+        !{
+          'testing_budget',
+          'accounting',
+          'access',
+          'configuration',
+          'unsupported_profile',
+        }.contains(failure?.kind);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),

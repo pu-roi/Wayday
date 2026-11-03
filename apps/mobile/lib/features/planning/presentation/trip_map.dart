@@ -9,13 +9,25 @@ class GoogleTripMapPort implements TripMapPort {
   GoogleTripMapPort(this.controller);
   final nav.GoogleNavigationViewController controller;
   @override
-  Future<nav.LatLng?> location() => controller.getMyLocation();
+  Future<NavigationCoordinate?> location() async {
+    final fix = await controller.getMyLocation();
+    return fix == null
+        ? null
+        : NavigationCoordinate(
+            latitude: fix.latitude,
+            longitude: fix.longitude,
+          );
+  }
+
   @override
   Future<void> enable() async {
     await controller.setMyLocationEnabled(true);
     await controller.setNavigationUIEnabled(true);
     await controller.setForceNightMode(nav.NavigationForceNightMode.auto);
   }
+
+  @override
+  Future<void> disable() => controller.setMyLocationEnabled(false);
 
   @override
   Future<void> follow(TravelProfile profile) => controller.followMyLocation(
@@ -25,19 +37,18 @@ class GoogleTripMapPort implements TripMapPort {
   );
   @override
   Future<void> overview(
-    List<nav.RouteSegment> segments,
+    List<NavigationLeg> segments,
     List<TripWaypoint> points,
   ) async {
     final coordinates = [
-      for (final segment in segments)
-        ...?segment.latLngs?.whereType<nav.LatLng>(),
+      for (final segment in segments) ...segment.coordinates,
     ];
     if (segments.length < points.length || coordinates.isEmpty) {
       throw const PlanningFailure('Remaining road geometry is unavailable.');
     }
     coordinates.addAll(
       points.map(
-        (p) => nav.LatLng(
+        (p) => NavigationCoordinate(
           latitude: p.place.latitude!,
           longitude: p.place.longitude!,
         ),

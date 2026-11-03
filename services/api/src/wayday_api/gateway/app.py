@@ -14,6 +14,7 @@ from requests.exceptions import RequestException
 from . import validation as v
 from .config import GatewayFailure, Settings
 from .providers import Providers
+from .navigation import route_request, route_response
 
 
 def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
@@ -133,7 +134,14 @@ def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
             or (production and not settings.ledger_document)
         ):
             raise GatewayFailure(503, "configuration")
-        return {"status": "configured", "version": 1, "providerCalls": False}
+        return {
+            "status": "configured", "version": 1, "providerCalls": False,
+            "contracts": v.CONTRACT_HASHES,
+            "capabilities": {
+                "alternativeNavigation": settings.alternative_navigation,
+                "dailyCeilings": settings.geoapify_testing_limits,
+            },
+        }
 
     @app.post("/v1/interpretations", dependencies=[Depends(authenticate)])
     async def interpret(request: Request):
@@ -159,6 +167,20 @@ def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
         await asyncio.to_thread(book.reserve, str(uuid4()), cost, sku=operation)
         return await provider.request(operation, {"request": data, "fieldMask": fields})
 
+    @app.post("/v1/navigation/geoapify/route", dependencies=[Depends(authenticate)])
+    async def alternative_route(request: Request):
+        if not settings.alternative_navigation or (settings.geoapify_testing_limits and settings.geoapify_daily_credits <= 0):
+            raise GatewayFailure(503, "alternative_disabled")
+        if production and not settings.geoapify_key:
+            raise GatewayFailure(503, "configuration")
+        body = await payload(request)
+        params, credits = route_request(body)
+        book = await account()
+        await asyncio.to_thread(book.geoapify_route_start, credits, settings.geoapify_daily_credits,
+                                enforce_limits=settings.geoapify_testing_limits)
+        data = await provider.request("geoapify_navigation", params)
+        return route_response(data, body["points"])
+
     @app.post("/v1/search/{provider_id}", dependencies=[Depends(authenticate)])
     async def search(provider_id: str, request: Request):
         body = await payload(request)
@@ -167,7 +189,9 @@ def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
         except (KeyError, TypeError, ValueError):
             raise GatewayFailure(422, "invalid_request") from None
         book = await account()
-        await asyncio.to_thread(book.search_start, provider_id)
+        await asyncio.to_thread(book.search_start, provider_id,
+                                credit_limit=settings.geoapify_daily_credits if settings.alternative_navigation else 0,
+                                enforce_limits=settings.geoapify_testing_limits)
         return await provider.request(provider_id, {"path": path, "parameters": params})
 
     @app.post("/v1/usage/{operation}", dependencies=[Depends(authenticate)])

@@ -522,6 +522,25 @@ void main() {
     },
   );
 
+  test(
+    'saved gateway rejection is attributed to Wayday without a new request',
+    () async {
+      disk[interpretationRequest(day())] = {
+        'state': 'failed',
+        'failure': 'gateway_unsupported_contract',
+      };
+      await expectLater(
+        interpreter().saved(day()),
+        throwsA(
+          isA<PlanningFailure>()
+              .having((e) => e.kind, 'kind', 'gateway_contract')
+              .having((e) => e.message, 'message', contains('Wayday service')),
+        ),
+      );
+      expect(requests, 0);
+    },
+  );
+
   for (final failure in ['access', 'quota', 'http_404', 'http_503']) {
     test(
       'saved $failure keeps a useful explanation without dispatch',

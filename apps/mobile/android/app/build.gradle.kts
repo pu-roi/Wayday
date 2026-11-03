@@ -59,6 +59,8 @@ android {
         applicationId = "dev.wayday.wayday"
         if (publicTest) applicationIdSuffix = ".publictest"
         manifestPlaceholders["waydayAppLabel"] = if (publicTest) "Wayday Test" else "Wayday"
+        manifestPlaceholders["waydaySourceCommit"] = waydayDefines["WAYDAY_SOURCE_COMMIT"] ?: "local"
+        manifestPlaceholders["waydayReleaseProfile"] = waydayDefines["WAYDAY_RELEASE_PROFILE_SHA"] ?: "local"
         buildConfigField("boolean", "WAYDAY_PUBLIC_BUILD", publicBuild.toString())
         for (key in listOf("WAYDAY_GATEWAY_URL", "WAYDAY_FIREBASE_APP_ID", "WAYDAY_FIREBASE_API_KEY", "WAYDAY_FIREBASE_PROJECT_ID", "WAYDAY_RECAPTCHA_SITE_KEY")) {
             buildConfigField("String", key, buildString(waydayDefines[key].orEmpty()))
@@ -143,6 +145,11 @@ dependencies {
     implementation("com.google.android.libraries.navigation:navigation:7.9.0")
     implementation("com.google.android.libraries.places:places:6.0.2")
     implementation("com.google.android.material:material:1.13.0")
+    // Navigation core only: keep Flutter's pinned OpenGL map renderer.
+    // 5.0.1 requires compile SDK 37; this integration retains the current SDK.
+    implementation("org.maplibre.navigation:navigation-core-android:5.0.0") {
+        exclude(group = "org.maplibre.gl", module = "android-sdk")
+    }
     // 13.7.1 fixes PMTiles asset byte ranges and queries during map detachment.
     // Keep this paired with maplibre_gl 0.27.1 until a verified plugin upgrade.
     implementation("org.maplibre.gl:android-sdk-opengl") {

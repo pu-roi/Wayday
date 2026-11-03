@@ -9,6 +9,7 @@ import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/place_picker.dart';
 import '../../../core/widgets/section_surface.dart';
 import '../../../core/widgets/time_entry_sheet.dart';
+import '../../../core/widgets/shell_tab_activity.dart';
 import '../../errands/presentation/errand_editor.dart';
 import '../../errands/presentation/errand_list.dart';
 import '../../planning/presentation/planning_view.dart';
@@ -17,7 +18,7 @@ import '../../planning/presentation/saved_plan_view.dart'
     show savedItineraryProvider;
 import '../../planning/presentation/finish_trip.dart';
 import '../../maps/presentation/place_map.dart';
-import '../../maps/presentation/regional_map.dart';
+import '../../maps/presentation/map_platform.dart';
 import '../../places/data/google_pin_cache.dart';
 import '../../places/data/combined_place_search.dart';
 import '../../places/domain/place_search.dart';
@@ -49,6 +50,29 @@ class _TodayViewState extends ConsumerState<TodayView>
   Timer? _midnight;
   bool _composerDraft = false;
   int _editors = 0;
+  bool _tabActive = true, _foreground = true;
+  int _visibilityRevision = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final active = ShellTabActivity.isActiveOf(context);
+    if (active == _tabActive) return;
+    _tabActive = active;
+    final revision = ++_visibilityRevision;
+    _midnight?.cancel();
+    if (!active) {
+      _cancelLookup(true);
+      _cancelLookup(false);
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || revision != _visibilityRevision) return;
+      _watchDate();
+      unawaited(_refreshDate());
+    });
+  }
+
   Future<T> _editor<T>(Future<T> Function() open) async {
     _editors++;
     try {
@@ -61,16 +85,22 @@ class _TodayViewState extends ConsumerState<TodayView>
 
   Future<void> _refreshDate() async {
     if (!mounted ||
+        !_tabActive ||
+        !_foreground ||
         _composerDraft ||
         _editors > 0 ||
         ModalRoute.of(context)?.isCurrent == false) {
       return;
     }
     final day = ref.read(todayProvider);
+    final revision = _visibilityRevision;
     if (!day.canDefaultDate) return;
     try {
       final trip = await ref.read(savedItineraryProvider.future);
       if (!mounted ||
+          !_tabActive ||
+          !_foreground ||
+          revision != _visibilityRevision ||
           trip != null ||
           _composerDraft ||
           _editors > 0 ||
@@ -88,6 +118,7 @@ class _TodayViewState extends ConsumerState<TodayView>
 
   void _watchDate() {
     _midnight?.cancel();
+    if (!_tabActive || !_foreground) return;
     final now = ref.read(todayClockProvider)().toUtc();
     final manila = now.add(const Duration(hours: 8));
     final next = DateTime.utc(
@@ -155,12 +186,16 @@ class _TodayViewState extends ConsumerState<TodayView>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _foreground = true;
+      _visibilityRevision++;
       _watchDate();
       unawaited(_refreshDate());
     }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
+      _foreground = false;
+      _visibilityRevision++;
       _midnight?.cancel();
       setState(() {
         _cancelLookup(true);

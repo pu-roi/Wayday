@@ -13,6 +13,13 @@ import 'trip_session.dart';
 import 'trip_controls.dart';
 import 'trip_map.dart';
 import 'finish_trip.dart';
+import '../data/alternative_navigation_driver.dart';
+import '../data/alternative_route_client.dart';
+import 'alternative_trip_map.dart';
+import 'trip_provider_sheet.dart';
+import '../data/navigation_target_resolver.dart';
+import '../../places/data/search_quota.dart';
+import 'trip_place_details.dart';
 
 final tripNavigationProvider = Provider<TripNavigation>(
   (ref) => TripNavigation(ref.read(planningBudgetProvider)),
@@ -22,7 +29,7 @@ typedef TripMapBuilder =
     Widget Function(
       BuildContext context,
       ValueChanged<TripMapPort> ready,
-      nav.LatLng? position,
+      NavigationCoordinate? position,
     );
 
 class TripView extends ConsumerStatefulWidget {
@@ -41,16 +48,88 @@ class TripView extends ConsumerStatefulWidget {
 
 class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
   late final TripSession model;
+  TripPlaceDetailsController? _details;
+  String? _presentedTargetId;
   bool closing = false;
   @override
   void initState() {
     super.initState();
     final container = ProviderScope.containerOf(context, listen: false);
+    if (uiKitNavigationTargetsEnabled && AlternativeRouteClient().enabled) {
+      _details = TripPlaceDetailsController(
+        ref.read(searchQuotaLedgerProvider),
+      );
+      _details!.onPresentationFailure = () {
+        if (!mounted) return;
+        model.placeDetailsAvailability(false);
+      };
+      _details!.onPresentationSuccess = (id) {
+        if (mounted &&
+            model.active &&
+            model.provider == TripMapProvider.openStreetMap &&
+            model.current.target?.placeId == id &&
+            model.placeDetailsUnavailable) {
+          model.placeDetailsAvailability(true);
+        }
+      };
+    }
+    Future<NavigationCoordinate> acquire() async {
+      final location = ref.read(searchLocationProvider);
+      final fix = await location.refresh(requestPermission: true);
+      if (fix == null) {
+        throw const PlanningFailure(
+          'Your location is unavailable. Check phone location services and permissions, then retry.',
+          kind: 'location',
+        );
+      }
+      final acquired = fix.acquiredAt;
+      if (fix.approximate ||
+          fix.accuracy > 100 ||
+          acquired == null ||
+          DateTime.now().difference(acquired).isNegative ||
+          DateTime.now().difference(acquired) > const Duration(seconds: 15)) {
+        throw const PlanningFailure(
+          'A fresh, precise GPS fix is needed for alternative guidance. Enable precise location, move where GPS is available and retry.',
+          kind: 'location_accuracy',
+        );
+      }
+      return NavigationCoordinate(
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+      );
+    }
+
+    TripNavigation create(TripMapProvider provider) => TripNavigation(
+      ref.read(planningBudgetProvider),
+      provider: provider,
+      driver: provider == TripMapProvider.google
+          ? GoogleNavigationDriver()
+          : AlternativeNavigationDriver(
+              client: AlternativeRouteClient(),
+              acquireLocation: acquire,
+              tripId: widget.initial.runId,
+            ),
+    );
     model =
         widget.session ??
         TripSession(
           plan: widget.initial,
-          navigation: ref.read(tripNavigationProvider),
+          navigation:
+              widget.initial.navigationProvider == TripMapProvider.google
+              ? ref.read(tripNavigationProvider)
+              : create(widget.initial.navigationProvider),
+          createNavigation: create,
+          targetResolver: _details == null
+              ? null
+              : NavigationTargetResolver(load: _details!.load),
+          acquireAlternativeLocation: acquire,
+          persistProvider: (run, provider) async {
+            final changed = await ref
+                .read(itineraryRepositoryProvider)
+                .updateNavigationProvider(run, provider);
+            container.invalidate(savedItineraryProvider);
+            return changed;
+          },
           acquireLocation: () async {
             final location = ref.read(searchLocationProvider);
             final fix = await location.refresh(requestPermission: true);
@@ -64,7 +143,10 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
                   'Your location is unavailable. Move where GPS is available and retry.',
               }, kind: 'location_${location.phase.name}');
             }
-            return nav.LatLng(latitude: fix.latitude, longitude: fix.longitude);
+            return NavigationCoordinate(
+              latitude: fix.latitude,
+              longitude: fix.longitude,
+            );
           },
           save: (plan) async {
             await ref.read(itineraryRepositoryProvider).updateProgress(plan);
@@ -79,20 +161,57 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
   }
 
   void _changed() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    if (!model.switching) {
+      final id = model.provider == TripMapProvider.openStreetMap && model.active
+          ? model.current.target?.placeId
+          : null;
+      if (id != _presentedTargetId) {
+        _presentedTargetId = id;
+        unawaited(_details?.present(id));
+      }
+      if (id == null) _details?.hide();
+    }
+    setState(() {});
   }
 
-  void _start() {
+  void _start({bool explicit = false}) {
+    if (explicit && model.active && _details != null) {
+      model.placeDetailsAvailability(true);
+      unawaited(_details!.present(model.current.target?.placeId, retry: true));
+      return;
+    }
     final colors = Theme.of(context).colorScheme;
     unawaited(
       model.start(
-        colors: nav.TermsAndConditionsUIParams(
+        allowTargetFetch: explicit,
+        colors: NavigationAppearance(
           backgroundColor: colors.surface,
           titleColor: colors.onSurface,
           mainTextColor: colors.onSurface,
           acceptButtonTextColor: colors.secondary,
           cancelButtonTextColor: colors.secondary,
         ),
+      ),
+    );
+  }
+
+  Future<void> _providers() async {
+    final selected = await showTripProviders(
+      context,
+      model,
+      alternativeEnabled: AlternativeRouteClient().enabled,
+    );
+    if (!mounted || selected == null) return;
+    final colors = Theme.of(context).colorScheme;
+    await model.switchProvider(
+      selected,
+      colors: NavigationAppearance(
+        backgroundColor: colors.surface,
+        titleColor: colors.onSurface,
+        mainTextColor: colors.onSurface,
+        acceptButtonTextColor: colors.secondary,
+        cancelButtonTextColor: colors.secondary,
       ),
     );
   }
@@ -110,6 +229,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     model.removeListener(_changed);
     model.dispose();
+    _details?.dispose();
     super.dispose();
   }
 
@@ -129,6 +249,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final mapSession = model.mapSession;
     final compactToolbar =
         MediaQuery.sizeOf(context).width < 360 ||
         MediaQuery.textScalerOf(context).scale(14) > 18;
@@ -162,12 +283,18 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
               onSelected: (value) {
                 if (value == 'plan') {
                   _exit();
+                } else if (value == 'provider') {
+                  unawaited(_providers());
                 } else {
                   showNavigationInfo(context);
                 }
               },
               itemBuilder: (_) => const [
                 PopupMenuItem(value: 'plan', child: Text('View plan')),
+                PopupMenuItem(
+                  value: 'provider',
+                  child: Text('Map & navigation'),
+                ),
                 PopupMenuItem(value: 'info', child: Text('Navigation info')),
               ],
             ),
@@ -176,47 +303,111 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
         body: SafeArea(
           child: Column(
             children: [
-              if (!model.active || model.error != null || model.gpsLost)
-                TripStatus(model: model, onResume: _start),
+              if (!model.active ||
+                  model.error != null ||
+                  model.gpsLost ||
+                  model.switching)
+                TripStatus(
+                  model: model,
+                  onResume: () => _start(explicit: true),
+                  onProviders: _providers,
+                ),
               Expanded(
-                child: model.mapRequested
-                    ? widget.mapBuilder?.call(
-                            context,
-                            model.attach,
-                            model.initialPosition,
-                          ) ??
-                          nav.GoogleMapsNavigationView(
-                            key: const ValueKey('trip-navigation-map'),
-                            onViewCreated: (controller) =>
-                                model.attach(GoogleTripMapPort(controller)),
-                            initialCameraPosition: nav.CameraPosition(
-                              target:
-                                  model.initialPosition ??
-                                  nav.LatLng(
-                                    latitude:
-                                        model.current.place.latitude ?? 14.58,
-                                    longitude:
-                                        model.current.place.longitude ?? 121.06,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => Column(
+                    children: [
+                      Expanded(
+                        child: model.mapRequested
+                            ? widget.mapBuilder?.call(
+                                    context,
+                                    (map) =>
+                                        model.attach(map, session: mapSession),
+                                    model.initialPosition,
+                                  ) ??
+                                  (model.navigation.driver
+                                          is AlternativeNavigationDriver
+                                      ? AlternativeTripMap(
+                                          key: ValueKey(
+                                            'alternative-trip-$mapSession',
+                                          ),
+                                          model: model,
+                                          driver:
+                                              model.navigation.driver
+                                                  as AlternativeNavigationDriver,
+                                          session: mapSession,
+                                        )
+                                      : nav.GoogleMapsNavigationView(
+                                          key: ValueKey(
+                                            'trip-navigation-map-$mapSession',
+                                          ),
+                                          onViewCreated: (controller) =>
+                                              model.attach(
+                                                GoogleTripMapPort(controller),
+                                                session: mapSession,
+                                              ),
+                                          initialCameraPosition:
+                                              nav.CameraPosition(
+                                                target:
+                                                    (model.initialPosition ==
+                                                            null
+                                                        ? null
+                                                        : nav.LatLng(
+                                                            latitude: model
+                                                                .initialPosition!
+                                                                .latitude,
+                                                            longitude: model
+                                                                .initialPosition!
+                                                                .longitude,
+                                                          )) ??
+                                                    nav.LatLng(
+                                                      latitude:
+                                                          model
+                                                              .current
+                                                              .place
+                                                              .latitude ??
+                                                          14.58,
+                                                      longitude:
+                                                          model
+                                                              .current
+                                                              .place
+                                                              .longitude ??
+                                                          121.06,
+                                                    ),
+                                                zoom: 16,
+                                              ),
+                                          initialForceNightMode:
+                                              nav.NavigationForceNightMode.auto,
+                                          initialMapToolbarEnabled: false,
+                                          onCameraStartedFollowingLocation:
+                                              (_) =>
+                                                  model.cameraFollowing(true),
+                                          onCameraStoppedFollowingLocation:
+                                              (_) =>
+                                                  model.cameraFollowing(false),
+                                          onCameraMoveStarted: (_, gesture) {
+                                            if (gesture) model.cameraGesture();
+                                          },
+                                        ))
+                            : ColoredBox(
+                                color: colors.surfaceContainerHighest,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.navigation_outlined,
+                                    size: 40,
                                   ),
-                              zoom: 16,
-                            ),
-                            initialForceNightMode:
-                                nav.NavigationForceNightMode.auto,
-                            initialMapToolbarEnabled: false,
-                            onCameraStartedFollowingLocation: (_) =>
-                                model.cameraFollowing(true),
-                            onCameraStoppedFollowingLocation: (_) =>
-                                model.cameraFollowing(false),
-                            onCameraMoveStarted: (_, gesture) {
-                              if (gesture) model.cameraGesture();
-                            },
-                          )
-                    : ColoredBox(
-                        color: colors.surfaceContainerHighest,
-                        child: const Center(
-                          child: Icon(Icons.navigation_outlined, size: 40),
-                        ),
+                                ),
+                              ),
                       ),
+                      if (_details != null)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: constraints.maxHeight * .4,
+                          ),
+                          child: TripPlaceDetailsHost(controller: _details!),
+                        ),
+                    ],
+                  ),
+                ),
               ),
               TripChecklist(model: model, onFinish: _finished),
             ],

@@ -1,20 +1,20 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:google_navigation_flutter/google_navigation_flutter.dart'
-    as nav;
 import '../../today/domain/day.dart';
 import '../data/itinerary_repository.dart';
 import '../data/trip_navigation.dart';
 import '../domain/planning_models.dart';
+import '../data/navigation_target_resolver.dart';
 
 enum TripStage { idle, terms, location, map, route, guiding, paused, failed }
 
 abstract class TripMapPort {
-  Future<nav.LatLng?> location();
+  Future<NavigationCoordinate?> location();
   Future<void> enable();
+  Future<void> disable();
   Future<void> follow(TravelProfile profile);
   Future<void> overview(
-    List<nav.RouteSegment> segments,
+    List<NavigationLeg> segments,
     List<TripWaypoint> points,
   );
 }
@@ -26,6 +26,10 @@ class TripSession extends ChangeNotifier {
     required this.navigation,
     required this.acquireLocation,
     required this.save,
+    this.createNavigation,
+    this.persistProvider,
+    this.acquireAlternativeLocation,
+    this.targetResolver,
     this.mapTimeout = const Duration(seconds: 10),
     this.locationTimeout = const Duration(seconds: 30),
     this.routeTimeout = const Duration(seconds: 45),
@@ -33,11 +37,16 @@ class TripSession extends ChangeNotifier {
     _events = navigation.events.listen(_onEvent);
   }
   AcceptedItinerary plan;
-  final TripNavigation navigation;
-  final Future<nav.LatLng> Function() acquireLocation;
+  TripNavigation navigation;
+  final TripNavigation Function(TripMapProvider)? createNavigation;
+  final Future<AcceptedItinerary> Function(String, TripMapProvider)?
+  persistProvider;
+  final Future<NavigationCoordinate> Function() acquireLocation;
+  final Future<NavigationCoordinate> Function()? acquireAlternativeLocation;
+  final NavigationTargetResolver? targetResolver;
   final Future<void> Function(AcceptedItinerary) save;
   final Duration mapTimeout, locationTimeout, routeTimeout;
-  late final StreamSubscription<NavigationSignal> _events;
+  late StreamSubscription<NavigationSignal> _events;
   TripStage stage = TripStage.idle;
   bool mapRequested = false,
       saving = false,
@@ -46,9 +55,27 @@ class TripSession extends ChangeNotifier {
       overview = false,
       following = true;
   String? error;
-  nav.LatLng? initialPosition;
+  static const _placeDetailsMessage =
+      'Google place details are unavailable. Existing directions and your progress are kept. Retry explicitly.';
+  bool placeDetailsUnavailable = false;
+  void placeDetailsAvailability(bool available) {
+    placeDetailsUnavailable = !available;
+    if (!available) {
+      error = _placeDetailsMessage;
+    } else if (error == _placeDetailsMessage) {
+      error = null;
+    }
+    _emit();
+  }
+
+  NavigationProgress? progress;
+  NavigationCoordinate? initialPosition;
   TripMapPort? _map;
-  final _mapReady = Completer<TripMapPort>();
+  var _mapReady = Completer<TripMapPort>();
+  int mapSession = 0;
+  bool switching = false;
+  Future<void>? _switchFlight;
+  TripMapProvider get provider => navigation.provider;
   Future<void>? _startFlight;
   bool _disposed = false;
   int _revision = 0;
@@ -58,6 +85,7 @@ class TripSession extends ChangeNotifier {
   int _index = 0;
   bool get active => stage == TripStage.guiding;
   bool get busy =>
+      switching ||
       saving ||
       {
         TripStage.terms,
@@ -72,6 +100,31 @@ class TripSession extends ChangeNotifier {
   List<TripWaypoint> get remaining => _submitted.isNotEmpty
       ? _submitted.skip(_index).toList()
       : remainingWaypoints(plan);
+  String? get alternativeIssue =>
+      targetResolver?.issue(remaining) ??
+      (targetResolver == null
+          ? alternativeDestinationIssue(remaining.map((p) => p.place))
+          : null);
+
+  Future<List<TripWaypoint>> _targets(
+    List<TripWaypoint> points,
+    TripMapProvider provider,
+    int revision, {
+    required bool allowFetch,
+  }) async {
+    if (targetResolver == null ||
+        (provider == TripMapProvider.google &&
+            points.every((p) => p.place.hasCoordinates))) {
+      return points;
+    }
+    return targetResolver!.resolve(
+      plan.runId,
+      points,
+      allowFetch: allowFetch,
+      stillCurrent: () => _valid(revision),
+    );
+  }
+
   List<String> get currentErrands => current.errandIds;
   String? get currentErrandId =>
       currentErrands.where((id) => !plan.completed.contains(id)).firstOrNull;
@@ -80,14 +133,154 @@ class TripSession extends ChangeNotifier {
   }
 
   bool _valid(int revision) => !_disposed && revision == _revision;
-  void attach(TripMapPort map) {
+  void attach(TripMapPort map, {int? session}) {
+    if (_disposed || (session != null && session != mapSession)) return;
     _map = map;
     if (!_mapReady.isCompleted) _mapReady.complete(map);
   }
 
-  Future<void> start({nav.TermsAndConditionsUIParams? colors}) {
+  Future<void> switchProvider(
+    TripMapProvider provider, {
+    NavigationAppearance? colors,
+  }) {
+    if (_switchFlight != null) return _switchFlight!;
+    if (busy ||
+        (provider == this.provider && plan.navigationProvider == provider) ||
+        createNavigation == null ||
+        persistProvider == null) {
+      return Future.value();
+    }
+    final work = _switchProvider(provider, colors);
+    _switchFlight = work;
+    unawaited(
+      work.whenComplete(() {
+        if (identical(_switchFlight, work)) _switchFlight = null;
+      }),
+    );
+    return work;
+  }
+
+  Future<void> _switchProvider(
+    TripMapProvider provider,
+    NavigationAppearance? colors,
+  ) async {
+    final revision = ++_revision;
+    final old = navigation;
+    TripNavigation? next;
+    bool choiceSaved = false;
+    switching = true;
+    error = null;
+    _emit();
+    try {
+      if (_saveFlight != null || old.settling || _startFlight != null) {
+        throw const PlanningFailure(
+          'The previous navigation or progress save is still finishing. Try again shortly.',
+        );
+      }
+      var points = remainingWaypoints(plan);
+      if (provider == TripMapProvider.openStreetMap) {
+        final issue = alternativeIssue;
+        if (issue != null) {
+          throw PlanningFailure(issue, kind: 'destination_restricted');
+        }
+      }
+      if (plan.day.profile == TravelProfile.bike ||
+          (plan.day.profile == TravelProfile.truck &&
+              !plan.lightPickupConfirmed)) {
+        throw const PlanningFailure(
+          'This travel mode is not qualified for alternative guidance.',
+          kind: 'unsupported_profile',
+        );
+      }
+      points = await _targets(
+        points,
+        provider,
+        revision,
+        allowFetch: true,
+      ).timeout(routeTimeout);
+      if (!_valid(revision)) return;
+      next = createNavigation!(provider);
+      final driver = next.driver;
+      if (driver is PreparedNavigationDriver) {
+        final origin = await (acquireAlternativeLocation ?? acquireLocation)()
+            .timeout(locationTimeout);
+        await (driver as PreparedNavigationDriver)
+            .prepare(points, plan.day.profile, origin)
+            .timeout(routeTimeout);
+      }
+      if (!_valid(revision)) return;
+      final write = persistProvider!(plan.runId, provider);
+      _saveFlight = write.then<void>(
+        (_) {},
+        onError: (Object _, StackTrace _) {},
+      );
+      // Do not detach a timed-out storage write or permit another switch while
+      // it can still commit. This operation serializes with repository progress.
+      final saved = await write;
+      _saveFlight = null;
+      plan = saved;
+      choiceSaved = true;
+      String identity(TripWaypoint point) =>
+          '${placeKey(point.place)}:${point.errandIds.join(',')}:${point.finalDestination}';
+      if (!listEquals(
+        points.map(identity).toList(),
+        remainingWaypoints(saved).map(identity).toList(),
+      )) {
+        throw const PlanningFailure(
+          'Trip progress changed during preparation. Your latest progress is kept. Choose a provider again.',
+          kind: 'target_changed',
+        );
+      }
+      await _map?.disable();
+      await old.stop();
+      if (_disposed) return;
+      await _events.cancel();
+      navigation = next;
+      choiceSaved = false;
+      next = null;
+      _events = navigation.events.listen(_onEvent);
+      _map = null;
+      _mapReady = Completer<TripMapPort>();
+      mapSession++;
+      mapRequested = false;
+      progress = null;
+      placeDetailsUnavailable = false;
+      _submitted = [];
+      _index = 0;
+      stage = TripStage.paused;
+      if (!_valid(revision)) return;
+      switching = false;
+      await start(colors: colors);
+    } catch (failure) {
+      _saveFlight = null;
+      if (choiceSaved) {
+        try {
+          plan = await persistProvider!(plan.runId, old.provider);
+        } catch (_) {
+          // Never overwrite newer progress or recreate a finished trip during
+          // recovery. The explicit error keeps retry/provider choices visible.
+        }
+      }
+      if (_valid(revision)) {
+        _revision++;
+        error = failure is PlanningFailure
+            ? failure.message
+            : 'The navigation provider could not be changed. Your trip and progress are kept. Choose a provider or retry explicitly.';
+        if (!old.initialized) stage = TripStage.failed;
+      }
+    } finally {
+      if (next != null) await next.stop().catchError((Object _) {});
+      switching = false;
+      _emit();
+    }
+  }
+
+  Future<void> start({
+    NavigationAppearance? colors,
+    bool allowTargetFetch = false,
+  }) {
     if (_startFlight != null) return _startFlight!;
-    final work = _start(colors);
+    final work = _start(colors, allowTargetFetch);
     _startFlight = work;
     unawaited(
       work.then(
@@ -98,7 +291,10 @@ class TripSession extends ChangeNotifier {
     return work;
   }
 
-  Future<void> _start(nav.TermsAndConditionsUIParams? colors) async {
+  Future<void> _start(
+    NavigationAppearance? colors,
+    bool allowTargetFetch,
+  ) async {
     if (active) return;
     final revision = ++_revision;
     error = null;
@@ -114,13 +310,31 @@ class TripSession extends ChangeNotifier {
           'Confirm a compatible light pickup before starting ordinary driving guidance.',
         );
       }
+      stage = TripStage.route;
+      _emit();
+      final points = await _targets(
+        remainingWaypoints(plan),
+        provider,
+        revision,
+        allowFetch: allowTargetFetch,
+      ).timeout(routeTimeout);
+      if (!_valid(revision)) return;
+      // Style-ready callbacks can render markers before guide() runs. Publish
+      // the validated snapshot before requesting either map, never original
+      // SDK coordinates that may already have expired.
+      _submitted = points;
+      _index = 0;
       stage = TripStage.terms;
       _emit();
       await navigation.initialize(colors: colors);
       if (!_valid(revision)) return;
       stage = TripStage.location;
       _emit();
-      initialPosition = await acquireLocation().timeout(locationTimeout);
+      initialPosition =
+          await (provider == TripMapProvider.openStreetMap
+                  ? (acquireAlternativeLocation ?? acquireLocation)()
+                  : acquireLocation())
+              .timeout(locationTimeout);
       if (!_valid(revision)) return;
       stage = TripStage.map;
       mapRequested = true;
@@ -132,8 +346,6 @@ class TripSession extends ChangeNotifier {
       _emit();
       await _waitForLocation(map, revision).timeout(locationTimeout);
       if (!_valid(revision)) return;
-      _submitted = remainingWaypoints(plan);
-      _index = 0;
       stage = TripStage.route;
       _emit();
       await navigation
@@ -177,14 +389,28 @@ class TripSession extends ChangeNotifier {
     }
   }
 
+  void mapFailure(int session) {
+    if (_disposed || session != mapSession) return;
+    _revision++;
+    stage = TripStage.failed;
+    error =
+        'The alternative map could not be displayed. Check the internet connection and retry, or choose Google. Your progress is kept.';
+    mapRequested = false;
+    _map = null;
+    _mapReady = Completer<TripMapPort>();
+    mapSession++;
+    unawaited(navigation.stop().catchError((Object _) {}));
+    _emit();
+  }
+
   void _onEvent(NavigationSignal event) {
     if (!active) return;
     switch (event.kind) {
       case NavigationSignalKind.arrival:
         final target = event.target;
         if (target != null &&
-            target.latitude == current.place.latitude &&
-            target.longitude == current.place.longitude) {
+            target.latitude == current.coordinate?.latitude &&
+            target.longitude == current.coordinate?.longitude) {
           arrived = true;
         }
       case NavigationSignalKind.gpsLost:
@@ -192,7 +418,18 @@ class TripSession extends ChangeNotifier {
       case NavigationSignalKind.gpsAvailable:
         gpsLost = false;
       case NavigationSignalKind.routeChanged:
+        error = null;
         if (overview) unawaited(showWholeTrip());
+      case NavigationSignalKind.progress:
+        progress = event.progress;
+      case NavigationSignalKind.offRoute:
+        error = 'You are away from the route. Updating directions…';
+      case NavigationSignalKind.failure:
+        error =
+            event.message ??
+            'Guidance is unavailable. Retry guidance explicitly.';
+        stage = TripStage.failed;
+        unawaited(navigation.stop().catchError((Object _) {}));
     }
     _emit();
   }
@@ -290,6 +527,7 @@ class TripSession extends ChangeNotifier {
   }
 
   void cameraGesture() {
+    if (!following && !overview) return;
     _overviewRevision++;
     overview = false;
     following = false;
@@ -300,7 +538,17 @@ class TripSession extends ChangeNotifier {
     _revision++;
     stage = TripStage.paused;
     _emit();
-    unawaited(navigation.stop().catchError((Object _) {}));
+    unawaited(_stopForeground());
+  }
+
+  Future<void> _stopForeground() async {
+    final stopping = navigation.stop().catchError((Object _) {});
+    try {
+      await _map?.disable();
+    } catch (_) {
+      /* The navigator still must stop. */
+    }
+    await stopping;
   }
 
   @override
@@ -308,7 +556,7 @@ class TripSession extends ChangeNotifier {
     _disposed = true;
     _revision++;
     unawaited(_events.cancel());
-    unawaited(navigation.stop().catchError((Object _) {}));
+    unawaited(_stopForeground());
     super.dispose();
   }
 }

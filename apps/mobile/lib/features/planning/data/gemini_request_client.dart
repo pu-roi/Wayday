@@ -184,6 +184,16 @@ class GeminiRequestClient {
 
   /// Allowlisted diagnostics only. Never display native/provider message text.
   PlanningFailure? _providerFailure(Object? code) {
+    if ({
+      'gateway_unsupported_contract',
+      'gateway_contract_mismatch',
+      'gateway_invalid_request',
+    }.contains(code)) {
+      return const PlanningFailure(
+        'The Wayday service could not accept this app’s request. Your errands are kept. Check for an app update or retry after the service is updated.',
+        kind: 'gateway_contract',
+      );
+    }
     final status =
         code is String && RegExp(r'^http_[1-5][0-9]{2}$').hasMatch(code)
         ? int.parse(code.substring(5))
@@ -202,7 +212,7 @@ class GeminiRequestClient {
     }
     if (status == 400 || status == 422) {
       return PlanningFailure(
-        'Gemini rejected the app’s request (HTTP $status). The request format needs investigation; repeating the same request may fail again.',
+        'The understanding request was not accepted (HTTP $status). Your errands are kept. The app or service may need an update before retrying.',
         kind: 'request_rejected',
       );
     }

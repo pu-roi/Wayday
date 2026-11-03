@@ -10,9 +10,9 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "wayday-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }

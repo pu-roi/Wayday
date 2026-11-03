@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wayday/app/wayday_app.dart';
 import 'package:wayday/features/maps/presentation/place_map.dart';
-import 'package:wayday/features/maps/presentation/regional_map.dart';
+import 'package:wayday/features/maps/presentation/map_platform.dart';
 import 'package:wayday/features/today/presentation/today_controller.dart';
 import 'package:wayday/features/maps/data/location_reader.dart';
 import 'support/fake_location.dart';

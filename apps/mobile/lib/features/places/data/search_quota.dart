@@ -4,6 +4,7 @@ import '../domain/place_search.dart';
 import 'quota_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../planning/data/planning_budget.dart';
+import '../../../core/network/gateway_client.dart';
 
 final searchQuotaLedgerProvider = Provider<QuotaLedger>(
   (ref) => QuotaLedger(googleBudget: ref.read(googleTestingBudgetProvider)),
@@ -41,6 +42,7 @@ class QuotaLedger {
     Future<void> Function(String)? write,
     DateTime Function()? now,
     this.googleBudget,
+    this.enforceDaily = !GatewayClient.enabled,
   }) : read = read ?? readQuotaFile,
        write = write ?? writeQuotaFile,
        now = now ?? DateTime.now;
@@ -48,6 +50,7 @@ class QuotaLedger {
   final Future<void> Function(String) write;
   final DateTime Function() now;
   final PlanningBudget? googleBudget;
+  final bool enforceDaily;
   final Map<String, List<DateTime>> _starts = {};
   final Map<String, DateTime> _cooldowns = {};
   final Map<String, int> _streaks = {};
@@ -119,7 +122,8 @@ class QuotaLedger {
         final recent = (_starts[id] ?? []).where(
           (d) => d.isAfter(time.subtract(const Duration(hours: 24))),
         );
-        if (count < 0 || recent.length + count > policy.daily) {
+        if (count < 0 ||
+            (enforceDaily && recent.length + count > policy.daily)) {
           throw const SearchFailure(SearchFailureKind.daily);
         }
       });
@@ -139,7 +143,7 @@ class QuotaLedger {
     starts.removeWhere(
       (d) => !d.isAfter(time.subtract(const Duration(hours: 24))),
     );
-    if (starts.length >= policy.daily) {
+    if (enforceDaily && starts.length >= policy.daily) {
       throw SearchFailure(
         SearchFailureKind.daily,
         retryAt: starts.first.add(const Duration(hours: 24)),

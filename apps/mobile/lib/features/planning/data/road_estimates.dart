@@ -287,7 +287,7 @@ class PlanningRoads {
             );
       if (response.statusCode == 429) {
         throw PlanningFailure(
-          'Google routing quota is exhausted. Your draft is kept.',
+          'Route calculation is temporarily unavailable. Try again later.',
           kind: 'quota',
           providerStatus: response.statusCode,
         );

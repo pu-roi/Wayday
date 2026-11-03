@@ -79,7 +79,6 @@ components:
   trip-settings: { textColor: "{colors.link-blue}", padding: "14px" }
   navigation: { backgroundColor: "{colors.canvas}", height: "76px" }
   time-field: { backgroundColor: "{colors.field-light}", textColor: "{colors.text-light}", typography: "{typography.headline}", rounded: "{rounded.field}", padding: "16px" }
-  regional-map: { backgroundColor: "{colors.field-light}", rounded: "{rounded.card}" }
   feedback: { backgroundColor: "{colors.selected-blue}", textColor: "{colors.link-blue}", typography: "{typography.body}", rounded: "{rounded.button}" }
   website-button-primary: { backgroundColor: "{colors.website-ink}", textColor: "{colors.website-white}", typography: "{typography.website-button}", rounded: "{rounded.website-panel}", padding: "16px 24px" }
   website-button-small: { backgroundColor: "{colors.website-ink}", textColor: "{colors.website-white}", rounded: "{rounded.website-panel}", padding: "10px 18px" }
@@ -92,6 +91,22 @@ components:
 ---
 
 # Design System: Wayday mobile
+
+## Recurring, Settings, and credits — D78
+
+Recurring keeps the 64-unit toolbar and large page heading, followed by Material Errands and Trips tabs. Errands is initially selected; the selection, independent scrolling, and disclosures persist while the shell remains mounted. Hidden tab content is excluded from focus and semantics. The New recurring list toolbar action belongs only to Errands. Existing lists, independent Add to Today copies, trip reuse, and deletion keep their behavior. Empty states share the 21-unit title role, one 14-unit muted explanation, and aligned 24-unit text insets; no introductory tagline repeats the explanation.
+
+Settings matches Profile's page heading and outlined placeholder: Settings are not available yet. Keep the supplied branding, concise About text, and credits entry. The obsolete offline Pasig/Ortigas preview, package loader, assets, and preparation tools are retired; shared online maps retain their renderer and platform gate.
+
+Credits use 16-unit section headings, 14-unit body/link text, 24-unit section gaps, and labelled provider links with external-link icons. Online maps, Place search, Supporting datasets, and Fonts remain distinct. Complete NSI and Figtree notices expand inline, remain selectable, and preserve upstream wording. Display-only formatting removes Markdown heading markers and decorative rules and joins source line wraps into paragraphs; bundled originals remain unchanged. Asset loads persist across rebuilds and scrolling; failures offer explicit retry.
+
+## Your trip provider options — D71
+
+Retain the current trip layout and controls. Map & navigation is an additional three-dot-menu entry with the existing drag-handle, Figtree heading, content-sized scrolling sheet and selected checkmark treatment. Google/OpenStreetMap helper text explains the map/routing sources and any destination restriction. Supported alternative directions/ETA, voice, compass, follow/Recenter and attribution remain inside its map area. Existing status feedback handles explicit provider recovery; no mockup replaces surrounding components. Preserve D69 Done, Whole trip, Back and Finish, including narrow/enlarged-text behavior.
+
+## Retained tab navigation — D70
+
+Today, Recurring, Profile and Settings retain their loaded page state during the running session. Switching tabs preserves Today's map instance/camera, scroll, expanded sections and unfinished errand text. Leaving dismisses keyboard focus without clearing the draft; returning does not open the keyboard automatically. Re-selecting the current tab does not reset its position. Hidden branches are not interactive or exposed in accessibility traversal, and their Flutter animations are disabled. The bottom bar and rail retain the same labels/appearance and switch without replacing page content. Storage-error banners occupy a stable slot above the retained content. Map attribution and explicit failure/Retry remain unchanged; retention does not imply offline tiles or survival after process death.
 
 ## Planning screen hierarchy and completion — D69
 
@@ -115,6 +130,8 @@ The latest focused review repair preserves existing layout, labels, Edit errand 
 
 ## Overview
 
+The current logo is the owner's transparent navy-to-cyan route-W artwork in `wayday-logo-rmbg.png`, supplied on 2026-11-02. Use it without recoloring, distortion or an added white tile in the website header/footer and Flutter branding. Android launcher icons use the existing Canvas background and a padded adaptive foreground; legacy densities and browser icons derive from the same source. Run `./tools/update-branding.ps1` from the repository root to regenerate these assets. The logo does not change the application theme or semantic action colors.
+
 Product context for design tools is maintained in [the README product requirements](README.md#product-requirements), including the product schema marker and platform/stack context. Supply README.md explicitly when a tool needs product context. See [the documentation index](README.md) for the remaining project documents.
 
 **Creative North Star: "A clear day, in order"**
@@ -130,7 +147,7 @@ The token source is [the Flutter theme](apps/mobile/lib/app/theme.dart). Reused 
 - One light Canvas/Cornflower theme with readable dark text.
 - Compact shared errand rows and simple Anytime-default quick add.
 - Quiet outlined groups, focused editors, and familiar Material states.
-- Numeric time entry and a shared regional map with explicit manual-label semantics.
+- Numeric time entry and shared online maps with explicit location confirmation.
 - Visible labels, content-driven sizing, and scrollable forms.
 - State-preserving disclosure, reduced-motion support, and transient in-app feedback.
 
@@ -147,7 +164,7 @@ Warm Canvas and white surfaces carry a restrained blue palette. Frontmatter list
 ### Neutral
 
 - **Canvas:** scaffold, app bars, and bottom navigation.
-- **White:** enclosing groups, modal sheets, and regional map roads.
+- **White:** enclosing groups and modal sheets.
 - **Text and supporting text:** `text-light` and `text-muted-light` establish hierarchy across the single light theme.
 - **Quiet outline:** `outline-light` frames groups and divides related sections.
 - **Field fill:** `field-light` separates text entry and map loading/unavailable surfaces.
@@ -237,11 +254,11 @@ Profile provides an outlined Saved places entry leading to a local list. Selecti
 
 [The place screen](apps/mobile/lib/core/widgets/place_picker.dart) opens one map-based picker for endpoints, errands and saved-place location editing. A persistent search field stays above the map with the keyboard initially closed. Focusing search displays a scrollable panel of saved places and online results. Search waits for a 600 ms typing pause and at least two characters, runs one request at a time and retains only the latest queued query. Choosing a result closes search and centers its location beneath the pin. Moving the map changes a draft point, and one Confirm location action commits it. Initial map positioning never selects a point automatically. Back closes search before cancelling the picker. Name-only entry is explicit and retains no invented coordinates. Attribution is accessible from the map and search results, and failures retain saved-place and manual entry.
 
-Today shows an online map directly below trip settings, extending to the edges of the same surface. A and Z mark confirmed From and To locations; numbered markers correspond to errands. Places without coordinates remain in the list, and no route is drawn. The map starts at a Philippines overview when no locations are confirmed, fits confirmed places, and shows loading and retry states. Its Cornflower information button opens Wayday's credits page, without an always-visible credit label; this differs from the OpenStreetMap Foundation's attribution safe-harbour guidance. The separate offline Pasig/Ortigas preview remains in Settings, with its source details and bundled notices on the credits page.
+Today shows an online map directly below trip settings, extending to the edges of the same surface. A and Z mark confirmed From and To locations; numbered markers correspond to errands. Places without coordinates remain in the list, and no route is drawn. The map starts at a Philippines overview when no locations are confirmed, fits confirmed places, and shows loading and retry states. Its Cornflower information button opens Wayday's credits page, without an always-visible credit label; this differs from the OpenStreetMap Foundation's attribution safe-harbour guidance. The offline Pasig/Ortigas preview has been retired. Settings retains credits for the online map, search providers, supporting datasets, and bundled font.
 
 ### Navigation and editing
 
-[The shell](apps/mobile/lib/app/wayday_app.dart) has labeled Today, Recurring, and Settings destinations; the selected icon sits within a pale-blue indicator. Shared pushed editors keep native Back and visible Save actions. Recurring supports named lists, direct item editing, independent group drafts, deletion with Undo, and manual copying to Today. Repeat controls expand within the group editor and describe metadata only. [Settings](apps/mobile/lib/app/settings_view.dart) explains local Android storage, the in-memory browser preview, and unavailable planning features; it has no appearance or example-reset controls.
+[The shell](apps/mobile/lib/app/wayday_app.dart) has labeled Today, Recurring, Profile, and Settings destinations; the selected icon sits within a pale-blue indicator. Shared pushed editors keep native Back and visible Save actions. Recurring supports named lists, direct item editing, independent group drafts, deletion with Undo, and manual copying to Today. Repeat controls expand within the group editor and describe metadata only. [Settings](apps/mobile/lib/app/settings_view.dart) uses the shared page heading, the Profile-style unavailable-settings placeholder, concise storage/online-service information, and the credits entry. It has no appearance, offline-preview, or example-reset controls.
 
 ### Selection controls
 

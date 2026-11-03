@@ -2,6 +2,18 @@
 
 The owner approved a public, Android-first development download with no invitation, account sign-in, personal API-key entry, ADB provisioning or reachable laptop. Expected initial use is two to five testers; access is nevertheless public. The first qualified development preview is available through [the website](https://pu-roi.github.io/Wayday/#download) and [GitHub Releases](https://github.com/pu-roi/Wayday/releases/tag/dev-102001). Qualification and its device/flow limits are recorded below; source implementation alone is not readiness evidence.
 
+## Coordinated delivery — D77
+
+Both channels use the same main commit and tool/distribution/release-profile.json, with separate app/Firebase identities and gateway endpoints. Passing reviewed main updates deploy and verify both gateway revisions, explicitly promote traffic, build and verify both signed candidates, gate public publication on current physical qualification, publish immutable assets, then update and smoke-check Pages. Main checks must finish before merge; the separate Cloud approval pause is removed.
+
+Health reports loaded contract hashes and effective capabilities without provider calls. Both d66-v1 and errand-v2 remain supported. Daily application ceilings are disabled for public/test search and routing; usage records and burst safeguards remain. Preserve existing runtime/secret references and accounting/public-preview. No new funds are authorized.
+
+Use `apps/mobile/tool/build-navigation-test.ps1 -SyncPublished` to fetch the qualified matching test release and verify source/profile/package/version/certificate/checksum before atomically replacing Android Studio's ignored stable APK alias. It never installs or touches a phone. About shows the installed channel/version/source. Install updates only into their matching app; never uninstall/reset to overcome a signing mismatch.
+
+Changed contract/feature profiles invalidate earlier physical qualification. Verified release-candidates artifacts remain available for owner checks; current public downloads stay intact until qualified. Reruns verify immutable uploads and add only missing assets. Gateway stage reports include partial failure and pre-publication promotion rollback; never roll back below already-distributed contract requirements.
+
+If Pages is unreachable, use [GitHub Releases](https://github.com/pu-roi/Wayday/releases) directly. Diagnose DNS/TLS separately from deployment; do not hardcode CDN IPs or alter hosts.
+
 ## Responsibilities
 
 | Component | Source and deployment |
@@ -15,6 +27,29 @@ The owner approved a public, Android-first development download with no invitati
 The gateway entry point is `wayday_api.gateway.app:app`. It does not import the historical pilot's app factory or require its catalog, PostgreSQL, PostGIS or downloaded geographic data. The container runs as a non-root user and disables HTTP access logs. Provider error text, full requests, errands, queries and coordinates are not logged or durably cached by the gateway.
 
 Website work follows the owner's full marketing brief: original logo, Figtree/blue visual identity, single-page anchored product story, Lenis/GSAP motion, reduced motion, accessible mobile navigation, Back to Top, honest requirements and installation instructions. It contains no browser demo or live app-provider calls. Approved marketing screenshots remain an optional later asset; the current interface preview is explicitly illustrative.
+
+## Alternative navigation configuration review — D71 (test preview only)
+
+D74 owner direction supersedes the 250-credit application test ceiling below for the navigation-test revision. The explicit `WAYDAY_GEOAPIFY_TEST_LIMITS=false` setting disables both the custom daily credit ceiling and the 500-request combined Geoapify daily ceiling, while keeping accounting and shared short spacing/minute safeguards. `WAYDAY_ALTERNATIVE_NAVIGATION=true` remains required. With the opt-out active, legacy `WAYDAY_GEOAPIFY_DAILY_CREDITS=0` is informational and does not disable routing; absent/other opt-out values retain capped defaults. Google Navigation's two daily-15 consumer overrides are separately removed project-wide, restoring provider defaults. No normal-release flag or production traffic allocation changes. See [D74 deployment evidence](evidence/navigation-test-limit-removal-2026-11-03.md) for actual configuration, verification and rollback.
+
+Verified live state after D74: test tag `navigation-test` targets `wayday-gateway-navuncap-6571a139`, with the explicit cap opt-out active and unchanged URL/app allowlist/secret references. Production remains 100% on `wayday-gateway-00005-swj`. Both Google Navigation daily overrides are absent and their provider-default effective values are 43,200,000. Usage records are retained; actual provider limits and billing remain separate. The installed v100004 test APK requires no rebuild for these changes.
+
+D73 adds the non-secret client flag `WAYDAY_UI_KIT_NAVIGATION_TARGETS=true` only to the existing Wayday Test build, alongside `WAYDAY_PUBLIC_TEST` and `WAYDAY_ALTERNATIVE_NAVIGATION`. It prepares same-ID UI Kit targets without changing the gateway contract, deployed revision, allowlist, native SDK key, secret references or the reviewed Geoapify reservation limit. Normal builds/publication workflows do not enable this path. The build helper verifies a newer test version, label, package, existing certificate and minified Navigation access before replacing Android Studio's stable APK. [D73 evidence](evidence/trip-target-switching-test-build-2026-11-03.md) records actual checks and delivery status. This technical test enablement does not establish provider permissions or authorize publication.
+
+The additive `POST /v1/navigation/geoapify/route` operation requires the existing allowlisted App Check proof. Its body contains only `points` (two to twenty-six ordered `[latitude, longitude]` pairs) and `profile` (`walk`, `motor`, or `sedan`). A compatible light pickup uses the confirmed ordinary-driving estimate; bicycle guidance remains unqualified. The server owns the Geoapify host/path, modes, metric units, English instructions, stopover legs and disabled stop optimization. Versioned validated legs/coordinates/maneuvers are returned without durable route storage.
+
+Configuration boundaries for review and qualification:
+
+- Cloud Run: `WAYDAY_ALTERNATIVE_NAVIGATION=true` after qualification; absent/default means disabled. `WAYDAY_GEOAPIFY_DAILY_CREDITS` must be an explicitly reviewed positive allocation from the existing account's available quota. Default zero assumes no free balance.
+- Secrets/IAM: reuse the existing `GEOAPIFY_API_KEY` secret reference and gateway identity. No new secret, role, account, billing activation or key-restriction change is required. Separately qualify actual routing access for the existing key.
+- Ledger: additive bounded rolling `geoapifyRouteCredits` records contain dispatch time and conservative reserved credits only. Preserve the ledger and `searchStarts`. Routing and search share request spacing, rolling request limits and the reviewed credit allocation when enabled. Google dollar records and private/disposable ledgers remain separate.
+- APK: explicitly add the non-secret Dart define `WAYDAY_ALTERNATIVE_NAVIGATION=true` to a qualified server-backed build after review. Default false and existing publication workflows do not enable it automatically. Existing gateway/App Check configuration remains required; this define alone does not configure private debug gateway access.
+
+Routing reserves one baseline credit per waypoint pair plus a 100-credit distance-surcharge buffer per dispatch. This is conservative accounting, not an exact invoice, account-wide cap or guarantee for arbitrary provider behavior. Failed dispatches retain their reservation. Review the buffer, expected route lengths, direct-client search outside this gateway, other account consumers and actual provider pricing before allocating quota. No stop optimization, detailed-road/elevation surcharge or planning matrix is requested. The independent shared Google dollar-cap removal remains in force.
+
+Real attested access, travel modes, provider credits, independent coordinates and unplugged GPS/voice/map recovery need separate qualification. App Check/Cloud Run outages remain a shared dependency. Turning either feature flag off is the configuration rollback; trips and progress remain local. The source implementation did not deploy or publish this feature.
+
+After the owner reviewed Geoapify Free-plan evidence, a 250-credit shared rolling reservation limit, the test identity and Cloud operating exposure, they explicitly approved a separate test deployment on 2026-11-02. Revision `wayday-gateway-navtest-f7377376` now serves only its [navigation-test tag URL](https://navigation-test---wayday-gateway-553ek3bxxq-as.a.run.app). Authenticated read-back confirms production remains 100% on `wayday-gateway-00005-swj`, the test revision allows only the registered `dev.wayday.wayday.publictest` Firebase app identity, and all four version-1 secret references plus the runtime account are preserved. No IAM/billing change, new secret, ledger reset, main merge, publication or production-app replacement occurred. Both health checks pass and unauthenticated preview routing is rejected without provider calls. [Phone-test preparation and deployment evidence](evidence/alternative-navigation-phone-test-preparation-2026-11-02.md) records the immutable image, exact settings and pending physical/App Check/routing qualification. Production flags/workflows still do not enable alternative navigation automatically.
 
 ## Gateway interface, version 1
 

@@ -43,6 +43,11 @@ class Providers:
             headers["X-Goog-Api-Key"] = key
             headers["X-Goog-FieldMask"] = payload["fieldMask"]
             body = payload["request"]
+        elif operation == "geoapify_navigation":
+            method = "GET"
+            key = self.settings.geoapify_key
+            url = "https://api.geoapify.com/v1/routing"
+            params = {**payload, "apiKey": key}
         elif operation in ("geoapify", "locationiq"):
             method, maximum = "GET", 1000000
             key = (

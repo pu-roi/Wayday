@@ -17,7 +17,7 @@ import 'package:wayday/core/widgets/feedback.dart';
 import 'package:wayday/features/today/data/day_repository.dart';
 import 'package:wayday/features/recurring/data/group_repository.dart';
 import 'fixtures/sample_data.dart';
-import 'package:wayday/features/maps/presentation/regional_map.dart';
+import 'package:wayday/features/maps/presentation/map_platform.dart';
 
 const captureKey = Key('capture');
 Future<ProviderContainer> launch(

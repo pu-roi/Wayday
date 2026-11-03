@@ -6,7 +6,9 @@
     <application
         android:label="${waydayAppLabel}"
         android:name="${applicationName}"
-        android:icon="@drawable/wayday_icon">
+        android:icon="@mipmap/wayday_icon">
+        <meta-data android:name="wayday.sourceCommit" android:value="${waydaySourceCommit}" />
+        <meta-data android:name="wayday.releaseProfile" android:value="${waydayReleaseProfile}" />
         <!-- Local build configuration; the value is never committed in source. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"

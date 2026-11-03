@@ -7,6 +7,7 @@ import '../data/itinerary_repository.dart';
 import '../domain/planning_models.dart';
 import 'planning_controller.dart';
 import 'saved_plan_view.dart' show savedItineraryProvider;
+import '../data/navigation_target_resolver.dart';
 
 class TripExit {
   const TripExit.paused(this.plan) : finished = false;
@@ -45,6 +46,14 @@ class TripFinishController extends Notifier<bool> {
       );
       ref.read(todayProvider.notifier).applyFinishedReset(reset);
       ref.invalidate(savedItineraryProvider);
+      if (uiKitNavigationTargetsEnabled) {
+        try {
+          await NavigationTargetResolver.clearFinished(runId);
+        } catch (_) {
+          // The accepted trip is already transactionally finished. Temporary
+          // cache cleanup cannot roll that back or revive it; leases still expire.
+        }
+      }
       return reset;
     }();
     _flight = work;

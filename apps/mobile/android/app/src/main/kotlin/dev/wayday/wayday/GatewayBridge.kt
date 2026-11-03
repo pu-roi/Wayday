@@ -15,6 +15,14 @@ class GatewayBridge(private val activity: Activity, messenger: BinaryMessenger) 
     init {
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "buildInfo" -> {
+                    val info = activity.packageManager.getPackageInfo(activity.packageName, 0)
+                    result.success(mapOf(
+                        "version" to info.versionName,
+                        "versionCode" to if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode.toString() else info.versionCode.toString(),
+                        "channel" to if (activity.packageName.endsWith(".publictest")) "Wayday Test" else "Wayday"
+                    ))
+                }
                 "token" -> executor.execute {
                     try {
                         val token = GatewayAccess.token(activity)

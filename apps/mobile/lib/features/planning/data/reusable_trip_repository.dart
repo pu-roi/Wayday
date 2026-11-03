@@ -194,4 +194,5 @@ final reusableTripRepositoryProvider = Provider<ReusableTripRepository>((ref) {
 });
 final reusableTripsProvider = FutureProvider(
   (ref) => ref.watch(reusableTripRepositoryProvider).read(),
+  retry: (_, _) => null,
 );

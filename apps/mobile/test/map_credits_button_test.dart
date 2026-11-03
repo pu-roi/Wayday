@@ -19,9 +19,9 @@ void main() {
     expect(find.byTooltip('Map credits and licenses'), findsOneWidget);
     await tester.tap(find.byTooltip('Map credits and licenses'));
     await tester.pumpAndSettle();
-    expect(find.text('Online map and place search'), findsOneWidget);
+    expect(find.text('Online maps'), findsOneWidget);
     expect(find.textContaining('OpenMapTiles'), findsOneWidget);
-    expect(find.textContaining('openstreetmap.org/copyright'), findsOneWidget);
+    expect(find.text('© OpenStreetMap contributors'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byTooltip('Map credits and licenses'), findsOneWidget);
