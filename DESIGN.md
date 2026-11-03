@@ -92,6 +92,12 @@ components:
 
 # Design System: Wayday mobile
 
+## Trip sharing — D81
+
+Your plan keeps Share as a labelled-tooltip icon beside Close, with Start trip and Save for reuse unchanged. Your trip adds the same icon beside Whole trip, using the compact Whole trip icon when space is limited. An existing share changes the tooltip to Manage sharing. Sheets use the existing drag handle, Figtree title, scrolling content and shared Cornflower/outlined action geometry. Preview the actual shared fields and route before confirmation; live location starts off.
+
+The read-only shared-trip browser and Flutter views use the original logo, Figtree, warm Canvas, readable blue, white quiet groups and compact numbered errands. Phone layouts put the real map before the itinerary; desktop places them alongside each other. Retain From, independent errand rows, Done/Next status and final destination. Show expiry and location freshness plainly. Map failure retains the list and a bounded Retry action without a synthetic diagram. Recipient location is labelled as visible only to the owner. Consent, stopped state and pending recovery remain explicit.
+
 ## Recurring, Settings, and credits — D78
 
 Recurring keeps the 64-unit toolbar and large page heading, followed by Material Errands and Trips tabs. Errands is initially selected; the selection, independent scrolling, and disclosures persist while the shell remains mounted. Hidden tab content is excluded from focus and semantics. The New recurring list toolbar action belongs only to Errands. Existing lists, independent Add to Today copies, trip reuse, and deletion keep their behavior. Empty states share the 21-unit title role, one 14-unit muted explanation, and aligned 24-unit text insets; no introductory tagline repeats the explanation.

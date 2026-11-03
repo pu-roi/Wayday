@@ -9,8 +9,10 @@ class MainActivity : FlutterFragmentActivity() {
     private var recommendations: RecommendationBridge? = null
     private var gateway: GatewayBridge? = null
     private var alternativeNavigation: AlternativeNavigationBridge? = null
+    private var sharing: SharingBridge? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        sharing = SharingBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         planning = PlanningBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         gateway = GatewayBridge(this, flutterEngine.dartExecutor.binaryMessenger)
         alternativeNavigation = AlternativeNavigationBridge(this, flutterEngine.dartExecutor.binaryMessenger)
@@ -20,6 +22,8 @@ class MainActivity : FlutterFragmentActivity() {
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        sharing?.onIntent(intent)
         if (intent.getBooleanExtra("wayday_refresh_credential", false)) planning?.refreshCredential()
     }
     override fun onPause() {
@@ -27,6 +31,8 @@ class MainActivity : FlutterFragmentActivity() {
         super.onPause()
     }
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        sharing?.dispose()
+        sharing = null
         planning?.dispose()
         planning = null
         gateway?.dispose()
@@ -36,5 +42,9 @@ class MainActivity : FlutterFragmentActivity() {
         recommendations?.dispose()
         recommendations = null
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        sharing?.permissions(requestCode, grantResults)
     }
 }

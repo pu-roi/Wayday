@@ -28,6 +28,9 @@ import 'recommendation_page.dart';
 import 'place_alternatives_page.dart';
 import '../data/reusable_trip_repository.dart';
 import 'reusable_trip_controls.dart';
+import '../../sharing/share_models.dart';
+import '../../sharing/share_repository.dart';
+import '../../sharing/share_views.dart';
 
 class PlanningView extends ConsumerStatefulWidget {
   const PlanningView({this.initial, this.history, this.reusable, super.key});
@@ -532,17 +535,44 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     }
   }
 
+  String sharingSourceId() {
+    try {
+      return SharedSnapshot.fromPlan(model).sourceId;
+    } catch (_) {
+      return '';
+    }
+  }
+
   Future<void> accept() async {
     setState(() {
       saving = true;
       localError = null;
     });
     try {
+      if (sharingEnabled) {
+        try {
+          await ShareRepository.shared.prepareReplacement(
+            SharedSnapshot.fromPlan(model),
+          );
+        } catch (_) {
+          /* Sharing failure cannot undo a valid local trip. */
+          try {
+            await ShareRepository.shared.invalidateCandidate(endSharing: true);
+          } catch (_) {}
+        }
+      }
       final accepted = await model.accept(
         ref.read(todayProvider).revision,
         sourceRevision,
         history: widget.history,
       );
+      if (sharingEnabled) {
+        try {
+          await ShareRepository.shared.bind(accepted);
+        } catch (_) {
+          /* The share sheet reports an unavailable retained route. */
+        }
+      }
       if (!mounted) return;
       ref.invalidate(savedItineraryProvider);
       await Navigator.pushReplacement(
@@ -591,6 +621,22 @@ class _PlanningViewState extends ConsumerState<PlanningView>
           ),
           title: Text(title),
           actions: [
+            if (sharingEnabled && title == 'Your plan')
+              ShareToolbarAction(
+                label: 'Share plan',
+                sourceId: sharingSourceId(),
+                enabled:
+                    model.proposalReady &&
+                    !model.busy &&
+                    !saving &&
+                    model.recommendationStorageError == null &&
+                    !model.recommendationSavePending,
+                snapshot: () async {
+                  final snapshot = SharedSnapshot.fromPlan(model);
+                  await ShareRepository.shared.cacheCandidate(snapshot);
+                  return snapshot;
+                },
+              ),
             TextButton(
               onPressed: () async {
                 if (await model.saveRecommendationDraft() && context.mounted) {

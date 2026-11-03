@@ -1,4 +1,5 @@
 import java.util.Base64
+import java.net.URI
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -62,6 +63,10 @@ android {
         manifestPlaceholders["waydaySourceCommit"] = waydayDefines["WAYDAY_SOURCE_COMMIT"] ?: "local"
         manifestPlaceholders["waydayReleaseProfile"] = waydayDefines["WAYDAY_RELEASE_PROFILE_SHA"] ?: "local"
         buildConfigField("boolean", "WAYDAY_PUBLIC_BUILD", publicBuild.toString())
+        buildConfigField("boolean", "WAYDAY_SHARING", (waydayDefines["WAYDAY_SHARING"] == "true").toString())
+        manifestPlaceholders["waydayShareHost"] = if (waydayDefines["WAYDAY_SHARING"] == "true")
+            URI(waydayDefines["WAYDAY_GATEWAY_URL"].orEmpty()).host ?: "sharing.invalid"
+            else "sharing.invalid"
         for (key in listOf("WAYDAY_GATEWAY_URL", "WAYDAY_FIREBASE_APP_ID", "WAYDAY_FIREBASE_API_KEY", "WAYDAY_FIREBASE_PROJECT_ID", "WAYDAY_RECAPTCHA_SITE_KEY")) {
             buildConfigField("String", key, buildString(waydayDefines[key].orEmpty()))
         }

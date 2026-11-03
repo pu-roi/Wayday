@@ -67,6 +67,9 @@ jobs:
           exit 1
       - run: flutter pub get --enforce-lockfile && flutter analyze && flutter test
         working-directory: apps/mobile
+      - name: Verify sharing controls with the release feature enabled
+        run: flutter test --no-pub --dart-define=WAYDAY_SHARING=true --dart-define=WAYDAY_GATEWAY_URL=https://sharing.example test/share_repository_test.dart test/share_views_test.dart test/share_trip_toolbar_test.dart
+        working-directory: apps/mobile
       - name: Verify the actual public feature compilation profile without providers
         run: |
           python tool/distribution/release.py defines --fixture --output "$RUNNER_TEMP/profile-check.json"

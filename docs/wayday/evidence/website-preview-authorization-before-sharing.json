@@ -1,0 +1,39 @@
+{
+  "mode": "website-first-development-preview",
+  "ownerApproved": true,
+  "officialPhoneVerified": false,
+  "testAppUserReportedTested": true,
+  "signingSha256": "8b0232dd12853d9bd35b198fa9c1d3656e14bae1ed0b50edef3fa9fad3554151",
+  "releaseProfile": {
+    "version": 1,
+    "features": {
+      "WAYDAY_ALTERNATIVE_NAVIGATION": "true",
+      "WAYDAY_UI_KIT_NAVIGATION_TARGETS": "true"
+    },
+    "capabilities": {
+      "alternativeNavigation": true,
+      "dailyCeilings": false
+    },
+    "contracts": {
+      "d66-v1": "a89318ee6de468bfe46b99e4b6eebe1a19f23bfb8f450c0f4e8a87f64e7154aa",
+      "errand-v2": "216efe0395850179a461bb758833f09105ae11cbf6ced30826fea57304ac5e13"
+    }
+  },
+  "channelConfigFingerprints": {
+    "public": "a617177f87893090ae25e6da67a009a8f7e6a2ae142879872a904b2fe01c9985",
+    "test": "e42780faf5911aabcecbe156f5c12aa033d629e3ca595d817f08c048637b5331"
+  },
+  "compatibility": "Android 7.0+ (API 24); ARMv7, ARM64 and x86_64. Development preview: official-app phone verification is pending.",
+  "evidence": "docs/wayday/evidence/website-first-testing-2026-11-03.md",
+  "selectedCandidate": {
+    "runId": 41585787187,
+    "artifactId": 13208589928,
+    "artifactSha256": "576c3c2e2f8964a3099ca95279c65d21a11c7565dd657aeba1709ad8f7cb484b",
+    "commit": "5992ced220e27c7dc8332e41815f98a43da6b291",
+    "versionCode": 103401,
+    "apks": {
+      "wayday.apk": "0753399abd6a217df10343a55046fd379e3e3b6e7b6927223206eb0a616ec616",
+      "wayday-test.apk": "1b097dcafe5cf95f95923607d925917641880910c3f88ac4d4b1851f0a37afcc"
+    }
+  }
+}

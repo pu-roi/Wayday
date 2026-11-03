@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 
-from release import write, verify_gateway
+from release import write, verify_gateway, release_profile
 
 
 def run(*args, decode=True):
@@ -36,6 +36,14 @@ def revision_environment(base, *, test):
     if test and values['WAYDAY_FIREBASE_APP_IDS'] != os.environ['WAYDAY_TEST_FIREBASE_APP_ID']:
         raise ValueError('Test identity differs from the registered test channel.')
     values.update(WAYDAY_ALTERNATIVE_NAVIGATION='true', WAYDAY_DAILY_CEILINGS='false', WAYDAY_GEOAPIFY_TEST_LIMITS='false')
+    if release_profile()['features'].get('WAYDAY_SHARING') == 'true':
+        browser_key = os.environ.get('WAYDAY_SHARE_BROWSER_KEY', '').strip()
+        if not browser_key:
+            raise ValueError('The restricted sharing browser map configuration is missing.')
+        values.update(WAYDAY_SHARING_ENABLED='true', WAYDAY_SHARE_BROWSER_KEY=browser_key,
+                      WAYDAY_SHARE_COLLECTION='tripShares',
+                      WAYDAY_SHARE_PACKAGE='dev.wayday.wayday.publictest' if test else 'dev.wayday.wayday',
+                      WAYDAY_SHARE_CERTIFICATE='8B:02:32:DD:12:85:3D:9B:D3:5B:19:8F:A9:C1:D3:65:6E:14:BA:E1:ED:0B:50:ED:EF:3F:A9:FA:D3:55:41:51')
     return values, secrets
 
 

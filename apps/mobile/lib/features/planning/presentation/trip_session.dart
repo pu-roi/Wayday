@@ -77,6 +77,8 @@ class TripSession extends ChangeNotifier {
   Future<void>? _switchFlight;
   TripMapProvider get provider => navigation.provider;
   Future<void>? _startFlight;
+  Future<void>? _foregroundStop;
+  Future<void> get foregroundStopped => _foregroundStop ?? Future<void>.value();
   bool _disposed = false;
   int _revision = 0;
   int _overviewRevision = 0;
@@ -541,14 +543,22 @@ class TripSession extends ChangeNotifier {
     unawaited(_stopForeground());
   }
 
-  Future<void> _stopForeground() async {
-    final stopping = navigation.stop().catchError((Object _) {});
-    try {
-      await _map?.disable();
-    } catch (_) {
-      /* The navigator still must stop. */
-    }
-    await stopping;
+  Future<void> _stopForeground() {
+    if (_foregroundStop != null) return _foregroundStop!;
+    final work = () async {
+      final stopping = navigation.stop().catchError((Object _) {});
+      try {
+        await _map?.disable();
+      } catch (_) {}
+      await stopping;
+    }();
+    _foregroundStop = work;
+    unawaited(
+      work.then((_) {
+        if (identical(_foregroundStop, work)) _foregroundStop = null;
+      }),
+    );
+    return work;
   }
 
   @override

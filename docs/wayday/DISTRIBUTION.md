@@ -1,5 +1,11 @@
 # Development distribution and public provider access
 
+## Sharing development preview — D81
+
+The owner approved a new current-profile development preview with real sharing and explicit pending physical verification. Both channels enable `WAYDAY_SHARING` only with compatible gateway health advertising `tripSharing`. The gateway deployment receives `WAYDAY_SHARE_BROWSER_KEY` from the separate website-restricted repository configuration, retains existing four provider secret references, and configures the official or test package association with the permanent signing certificate. Deploy and verify both gateway/viewer revisions before building and publishing matching immutable APKs, then Pages.
+
+`website-preview-authorization.json` binds this approval to the exact new profile and both channel configuration fingerprints. The prior selected candidate and preview authorization remain historical; the new profile is not phone-qualified by them. Required main checks, original signing identities, APK provenance/checksums and ordinary immutable publication remain mandatory. No installation or phone reset is automated. See [sharing evidence](evidence/trip-sharing-implementation-2026-11-03.md).
+
 The owner approved a public, Android-first development download with no invitation, account sign-in, personal API-key entry, ADB provisioning or reachable laptop. Expected initial use is two to five testers; access is nevertheless public. The first qualified development preview is available through [the website](https://pu-roi.github.io/Wayday/#download) and [GitHub Releases](https://github.com/pu-roi/Wayday/releases/tag/dev-102001). Qualification and its device/flow limits are recorded below; source implementation alone is not readiness evidence.
 
 ## Website-first development preview — D79

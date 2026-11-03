@@ -1,5 +1,11 @@
 # Planned architecture
 
+## Temporary trip sharing — D81
+
+The gateway owns a separate capability-authorized sharing module and Firestore `tripShares` collection. App Check guards native writes; random role credentials independently authorize viewer, owner and one paired recipient. The owner retains authoritative local progress in Drift. Sharing stores a fixed two-hour exact planned-route snapshot and latest-only opted-in locations, with revision checks, immediate request-time expiry and eventual TTL cleanup. Provider accounting and installed-client contracts are separate.
+
+Android keeps sharing credentials and temporary route leases in Keystore-encrypted no-backup files. A location foreground service starts from visible consent and hands GPS ownership to or from the existing navigation feed. A received HTTPS link opens a read-only route outside Today; browser viewers use the same read contract and a Google basemap. Progress publishes after local completion commits; replacement and finish end the old session with durable offline recovery. See [sharing evidence and contract](evidence/trip-sharing-implementation-2026-11-03.md).
+
 ## Test-build navigation targets — D73
 
 The public-test-only target resolver adds a navigation snapshot to each remaining waypoint without modifying its accepted PlaceIntent or task IDs. Exact-ID UI Kit results live in a separate trip/source-bound cache under Android cacheDir, excluded from backup. The shared GooglePinCache remains unchanged. The temporary cache records acquisition time and maximum thirty-day expiry, plus interrupted/failed resolution; restart cannot automatically repeat a missing/expired/failed lookup. Standard SDK coordinates cannot satisfy a UI Kit resolution.

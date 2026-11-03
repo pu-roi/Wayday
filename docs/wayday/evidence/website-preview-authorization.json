@@ -8,11 +8,13 @@
     "version": 1,
     "features": {
       "WAYDAY_ALTERNATIVE_NAVIGATION": "true",
-      "WAYDAY_UI_KIT_NAVIGATION_TARGETS": "true"
+      "WAYDAY_UI_KIT_NAVIGATION_TARGETS": "true",
+      "WAYDAY_SHARING": "true"
     },
     "capabilities": {
       "alternativeNavigation": true,
-      "dailyCeilings": false
+      "dailyCeilings": false,
+      "tripSharing": true
     },
     "contracts": {
       "d66-v1": "a89318ee6de468bfe46b99e4b6eebe1a19f23bfb8f450c0f4e8a87f64e7154aa",
@@ -20,12 +22,12 @@
     }
   },
   "channelConfigFingerprints": {
-    "public": "a617177f87893090ae25e6da67a009a8f7e6a2ae142879872a904b2fe01c9985",
-    "test": "e42780faf5911aabcecbe156f5c12aa033d629e3ca595d817f08c048637b5331"
+    "public": "99f2ef5dda94dfa9a15ed55ab8bd92e690441b12e3b5c7872c1ce8c5ece8b4fd",
+    "test": "b915a3c0eb74a4ed3d2234537fe1b186a4aa6d732fb3bd0d8b38f73cbe823dde"
   },
-  "compatibility": "Android 7.0+ (API 24); ARMv7, ARM64 and x86_64. Development preview: official-app phone verification is pending.",
-  "evidence": "docs/wayday/evidence/website-first-testing-2026-11-03.md",
-  "selectedCandidate": {
+  "compatibility": "Android 7.0+ (API 24); ARMv7, ARM64 and x86_64. Development preview: official-app and two-phone live-sharing verification are pending.",
+  "evidence": "docs/wayday/evidence/trip-sharing-implementation-2026-11-03.md",
+  "previousSelectedCandidate": {
     "runId": 41585787187,
     "artifactId": 13208589928,
     "artifactSha256": "576c3c2e2f8964a3099ca95279c65d21a11c7565dd657aeba1709ad8f7cb484b",
@@ -35,5 +37,7 @@
       "wayday.apk": "0753399abd6a217df10343a55046fd379e3e3b6e7b6927223206eb0a616ec616",
       "wayday-test.apk": "1b097dcafe5cf95f95923607d925917641880910c3f88ac4d4b1851f0a37afcc"
     }
-  }
+  },
+  "sharingPhoneVerified": false,
+  "testAppReportAppliesTo": "Historical pre-sharing profile only; no current sharing phone result is claimed."
 }
