@@ -11,6 +11,9 @@ class Settings:
     geoapify_key: str = field(default="", repr=False)
     locationiq_key: str = field(default="", repr=False)
     ledger_document: str = ""
+    alternative_navigation: bool = False
+    geoapify_daily_credits: int = 0
+    geoapify_testing_limits: bool = True
 
     @classmethod
     def environment(cls):
@@ -24,6 +27,9 @@ class Settings:
             geoapify_key=os.getenv("GEOAPIFY_API_KEY", ""),
             locationiq_key=os.getenv("LOCATIONIQ_API_KEY", ""),
             ledger_document=os.getenv("WAYDAY_PUBLIC_LEDGER_DOCUMENT", ""),
+            alternative_navigation=os.getenv("WAYDAY_ALTERNATIVE_NAVIGATION", "") == "true",
+            geoapify_daily_credits=int(os.getenv("WAYDAY_GEOAPIFY_DAILY_CREDITS", "0")),
+            geoapify_testing_limits=os.getenv("WAYDAY_DAILY_CEILINGS", os.getenv("WAYDAY_GEOAPIFY_TEST_LIMITS", "true")) != "false",
         )
 
 

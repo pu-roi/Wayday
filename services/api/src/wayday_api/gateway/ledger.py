@@ -5,6 +5,7 @@ is retained as historical data, never read as a spending allowance or reset.
 """
 
 from datetime import UTC, datetime
+import math
 
 from google.api_core.exceptions import GoogleAPIError, RetryError
 from google.auth.exceptions import GoogleAuthError
@@ -111,7 +112,7 @@ class FirestoreLedger:
         ):
             raise GatewayFailure(503, "accounting_unavailable") from None
 
-    def search_start(self, provider):
+    def search_start(self, provider, *, credit_limit=0, enforce_limits=True):
         from google.cloud import firestore
 
         now = datetime.now(UTC).timestamp()
@@ -124,15 +125,21 @@ class FirestoreLedger:
             records = dict(account.to_dict().get("searchStarts", {}))
             history = records.get(provider, [])
             if not isinstance(history, list) or any(
-                type(x) not in (int, float) for x in history
+                type(x) not in (int, float) or not math.isfinite(x) for x in history
             ):
                 raise GatewayFailure(503, "accounting_unavailable")
             history = [x for x in history if now - x < 86400]
+            starts = history
+            if provider == "geoapify":
+                routes = _geoapify_routes(account.to_dict(), now)
+                starts = history + [r[0] for r in routes]
+                if enforce_limits and credit_limit and len(history) + sum(r[1] for r in routes) + 1 > credit_limit:
+                    raise GatewayFailure(429, "provider_quota")
             minute = 50 if provider == "locationiq" else 60
             if (
-                len(history) >= 500
-                or sum(now - x < 60 for x in history) >= minute
-                or (history and now - history[-1] < 1.1)
+                (enforce_limits and len(starts) >= 500)
+                or sum(now - x < 60 for x in starts) >= minute
+                or (starts and now - max(starts) < 1.1)
             ):
                 raise GatewayFailure(429, "provider_rate")
             records[provider] = history + [now]
@@ -151,3 +158,46 @@ class FirestoreLedger:
             OSError,
         ):
             raise GatewayFailure(503, "accounting_unavailable") from None
+
+    def geoapify_route_start(self, credits, credit_limit, *, enforce_limits=True):
+        from google.cloud import firestore
+
+        now = datetime.now(UTC).timestamp()
+
+        @firestore.transactional
+        def update(transaction):
+            account = self.document.get(transaction=transaction)
+            if not account.exists:
+                raise GatewayFailure(503, "accounting_unavailable")
+            data = account.to_dict()
+            routes = _geoapify_routes(data, now)
+            searches = data.get("searchStarts", {}).get("geoapify", [])
+            if not isinstance(searches, list) or any(type(x) not in (int, float) or not math.isfinite(x) for x in searches):
+                raise GatewayFailure(503, "accounting_unavailable")
+            searches = [x for x in searches if now - x < 86400]
+            starts = searches + [r[0] for r in routes]
+            if (enforce_limits and len(starts) >= 500) or sum(now - x < 60 for x in starts) >= 60 or (starts and now - max(starts) < 1.1):
+                raise GatewayFailure(429, "provider_rate")
+            if enforce_limits and sum(r[1] for r in routes) + len(searches) + credits > credit_limit:
+                raise GatewayFailure(429, "provider_quota")
+            # Conservative dispatched credit reservations, never Google dollars.
+            # No coordinates, trip identity or route response enters the ledger.
+            transaction.update(self.document, {"geoapifyRouteCredits": routes + [[now, credits]]})
+
+        try:
+            update(self.db.transaction())
+        except GatewayFailure:
+            raise
+        except (GoogleAPIError, GoogleAuthError, RetryError, ValueError, TypeError, OSError):
+            raise GatewayFailure(503, "accounting_unavailable") from None
+
+
+def _geoapify_routes(data, now):
+    rows = data.get("geoapifyRouteCredits", [])
+    if not isinstance(rows, list) or any(
+        not isinstance(r, list) or len(r) != 2
+        or type(r[0]) not in (float, int) or not math.isfinite(r[0])
+        or type(r[1]) is not int or r[1] < 1 for r in rows
+    ):
+        raise GatewayFailure(503, "accounting_unavailable")
+    return [r for r in rows if now - r[0] < 86400]

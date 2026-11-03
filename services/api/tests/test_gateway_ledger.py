@@ -76,6 +76,71 @@ def test_multiple_clients_record_usage_without_a_dollar_cap(book):
     assert store["account"]["limitMicros"] == 50000
 
 
+def test_alternative_credits_share_search_quota_without_google_spending(book):
+    ledger, store = book
+    ledger.geoapify_route_start(101, 101)
+    assert store["account"]["usedMicros"] == 0
+    assert store["account"]["geoapifyRouteCredits"][0][1] == 101
+    with pytest.raises(GatewayFailure):
+        ledger.search_start("geoapify", credit_limit=101)
+
+
+def test_alternative_dispatch_is_spaced_and_accounting_is_preserved(book):
+    ledger, store = book
+    ledger.geoapify_route_start(101, 3000)
+    with pytest.raises(GatewayFailure) as failure:
+        ledger.geoapify_route_start(101, 3000)
+    assert failure.value.code == "provider_rate"
+    assert len(store["account"]["geoapifyRouteCredits"]) == 1
+
+
+@pytest.mark.parametrize("operation", ["route", "search"])
+def test_disabled_geoapify_daily_caps_preserve_records_and_spacing(book, operation):
+    from datetime import UTC, datetime
+
+    ledger, store = book
+    now = datetime.now(UTC).timestamp()
+    # Beyond both old daily thresholds, but outside minute/spacing windows.
+    routes = [[now - 3600 - i * 2, 105] for i in range(501)]
+    searches = [now - 7200]
+    store["account"].update(geoapifyRouteCredits=routes[:], searchStarts={"geoapify": searches[:]})
+    if operation == "route":
+        ledger.geoapify_route_start(105, 250, enforce_limits=False)
+        assert store["account"]["geoapifyRouteCredits"][:-1] == routes
+        assert store["account"]["geoapifyRouteCredits"][-1][1] == 105
+    else:
+        ledger.search_start("geoapify", credit_limit=250, enforce_limits=False)
+        assert store["account"]["geoapifyRouteCredits"] == routes
+        assert store["account"]["searchStarts"]["geoapify"][:-1] == searches
+    assert store["account"]["usedMicros"] == 0
+    before = repr(store)
+    with pytest.raises(GatewayFailure) as failure:
+        ledger.geoapify_route_start(105, 250, enforce_limits=False)
+    assert failure.value.code == "provider_rate"
+    assert repr(store) == before
+
+
+def test_daily_opt_out_keeps_burst_limits_for_all_providers(book):
+    from datetime import UTC, datetime
+
+    ledger, store = book
+    now = datetime.now(UTC).timestamp()
+    store["account"]["geoapifyRouteCredits"] = [[now - 2, 101]] * 60
+    with pytest.raises(GatewayFailure) as failure:
+        ledger.search_start("geoapify", enforce_limits=False)
+    assert failure.value.code == "provider_rate"
+    store["account"]["searchStarts"] = {"locationiq": [now - 3600] * 500}
+    # A capped legacy configuration still rejects the original daily threshold.
+    with pytest.raises(GatewayFailure) as failure:
+        ledger.search_start("locationiq")
+    assert failure.value.code == "provider_rate"
+    ledger.search_start("locationiq", enforce_limits=False)
+    assert len(store['account']['searchStarts']['locationiq']) == 501
+    with pytest.raises(GatewayFailure) as failure:
+        ledger.search_start('locationiq', enforce_limits=False)
+    assert failure.value.code == 'provider_rate'
+
+
 @pytest.mark.parametrize("legacy_limit", [0, 2000000, None, "historical"])
 def test_legacy_limit_neither_blocks_nor_resets_usage(book, legacy_limit):
     ledger, store = book

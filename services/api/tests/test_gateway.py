@@ -175,7 +175,7 @@ class FakeLedger:
     def reserve(self, request_id, cost, **options):
         self.reservations.append((request_id, cost, options))
 
-    def search_start(self, provider):
+    def search_start(self, provider, **options):
         self.searches.append(provider)
 
     def release(self, request_id):
