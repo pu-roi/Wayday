@@ -208,9 +208,9 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
     unawaited(() async {
       _sharingHandoff = true;
       try {
-        await _sharingNavigationSource(
-          model.provider == TripMapProvider.google ? 'google' : 'alternative',
-        );
+        // Reserve GPS without starting Google's independent location listener
+        // while a navigator is still preparing or stopping.
+        await _sharingNavigationSource('handoff');
         if (!mounted || closing) return;
         await model.start(
           allowTargetFetch: explicit,
@@ -237,6 +237,10 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
         if (!model.active) {
           await model.foregroundStopped;
           await _sharingNavigationSource(null).catchError((Object _) {});
+        } else {
+          await _sharingNavigationSource(
+            model.provider == TripMapProvider.google ? 'google' : 'alternative',
+          ).catchError((Object _) {});
         }
       }
     }());
@@ -252,9 +256,7 @@ class _TripState extends ConsumerState<TripView> with WidgetsBindingObserver {
     final colors = Theme.of(context).colorScheme;
     _sharingHandoff = true;
     try {
-      await _sharingNavigationSource(
-        selected == TripMapProvider.google ? 'google' : 'alternative',
-      );
+      await _sharingNavigationSource('handoff');
       if (!mounted || closing) return;
       await model.switchProvider(
         selected,

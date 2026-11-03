@@ -6,16 +6,20 @@ import 'trip_view_test.dart' show mountTrip;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final sources = <String?>[];
   setUp(() {
+    sources.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          sharingChannel,
-          (call) async => switch (call.method) {
+        .setMockMethodCallHandler(sharingChannel, (call) async {
+          if (call.method == 'navigationSource') {
+            sources.add((call.arguments as Map)['source'] as String?);
+          }
+          return switch (call.method) {
             'readStorage' => '{}',
             'broadcastStatus' => {'active': false},
             _ => null,
-          },
-        );
+          };
+        });
   });
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -26,6 +30,9 @@ void main() {
       'Your trip keeps Share, Whole trip and Done accessible at $width / $scale',
       (tester) async {
         await mountTrip(tester, size: Size(width, 844), textScale: scale);
+        if (sharingEnabled) {
+          expect(sources.take(2), ['handoff', 'google']);
+        }
         expect(
           find.byTooltip('Share trip'),
           sharingEnabled ? findsOneWidget : findsNothing,
