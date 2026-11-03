@@ -17,8 +17,9 @@ sealed class ErrandEditResult {
 }
 
 class SavedErrand extends ErrandEditResult {
-  const SavedErrand(this.errand);
+  const SavedErrand(this.errand, {this.touchedFields = const {}});
   final Errand errand;
+  final Set<String> touchedFields;
 }
 
 class RemovedErrand extends ErrandEditResult {
@@ -64,6 +65,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
   );
   late bool _durationConfirmed = widget.errand.durationConfirmed;
   late final _confirmed = {...widget.errand.confirmedFields};
+  final _touched = <String>{};
   late String _place = widget.errand.place;
   late PlaceIntent _placeIntent = widget.errand.placeIntent;
   late TimingRule _timing = widget.errand.timing;
@@ -231,6 +233,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
           durationConfirmed: _durationConfirmed,
           confirmedFields: {
             ..._confirmed,
+            ..._touched,
             if (_title.text.trim() != widget.errand.title) 'title',
             if (_notes.text.trim() != widget.errand.notes) 'notes',
             if (_timing != widget.errand.timing ||
@@ -246,6 +249,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
           optional: _optional,
           afterErrandIds: _after.toList(),
         ),
+        touchedFields: Set.unmodifiable(_touched),
       ),
     );
   }
@@ -335,6 +339,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
     );
     if (result != null && mounted) {
       setState(() {
+        _touched.add('dependencies');
         _after
           ..clear()
           ..addAll(result);
@@ -464,6 +469,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                     if (choice == TimingRule.anytime) {
                       setState(() {
                         _timing = choice;
+                        _touched.add('timing');
                         _timeError = null;
                       });
                       return;
@@ -477,6 +483,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                       setState(() {
                         _timing = choice;
                         _minute = time;
+                        _touched.add('timing');
                         _timeError = null;
                       });
                     }
@@ -501,6 +508,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                       if (mounted && time != null) {
                         setState(() {
                           _minute = time;
+                          _touched.add('timing');
                           _timeError = null;
                         });
                       }
@@ -521,7 +529,10 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                     'This errand can wait if the day is full.',
                   ),
                   value: _optional,
-                  onChanged: (value) => setState(() => _optional = value),
+                  onChanged: (value) => setState(() {
+                    _optional = value;
+                    _touched.add('optional');
+                  }),
                 ),
                 const SizedBox(height: 16),
                 const Divider(height: 1),
@@ -572,7 +583,7 @@ class _ErrandEditorState extends ConsumerState<ErrandEditor>
                               onChanged: (_) => setState(() {
                                 _durationError = null;
                                 _durationConfirmed = true;
-                                _confirmed.add('duration');
+                                _touched.add('duration');
                               }),
                               validator: (value) {
                                 final minutes = int.tryParse(value ?? '');

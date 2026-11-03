@@ -190,7 +190,9 @@ class PlanStopRow extends StatelessWidget {
                 if (place != null)
                   _DetailGroup(
                     title: 'Business hours',
-                    children: [PlaceHours(model: model, place: place)],
+                    children: [
+                      PlaceHours(model: model, place: place, errandId: e.id),
+                    ],
                   ),
               ],
               Align(

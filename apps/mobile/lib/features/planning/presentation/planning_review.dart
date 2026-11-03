@@ -17,12 +17,14 @@ class PlanningReview extends StatelessWidget {
     required this.onClarify,
     required this.onDefer,
     required this.onChanged,
+    this.onReadUpdatedNotes,
     super.key,
   });
   final PlanningController model;
   final Widget tripDetails, footer;
   final ValueChanged<Errand> onEdit, onLocation, onClarify, onDefer;
   final VoidCallback onChanged;
+  final VoidCallback? onReadUpdatedNotes;
 
   @override
   Widget build(BuildContext context) => AbsorbPointer(
@@ -48,7 +50,7 @@ class PlanningReview extends StatelessWidget {
                       'Notes changed. Read them again before finding places.',
                     ),
                     OutlinedButton(
-                      onPressed: model.understand,
+                      onPressed: onReadUpdatedNotes,
                       child: const Text('Read updated notes with Gemini'),
                     ),
                     const SizedBox(height: 16),

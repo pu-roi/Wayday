@@ -13,6 +13,7 @@ extension RecommendationPreparation on PlanningController {
     'errands': activeErrands.map((e) => e.toJson()).toList(),
     'points': points.map((p) => [p.key, _coordinateIdentity(p)]).toList(),
     'hours': hoursIdentity,
+    'manualPlaces': hoursAdvisoryErrands.toList()..sort(),
   });
   bool _canReuseMatrix(List<PlanCandidate> selected) =>
       _matrixResponse != null &&
@@ -155,6 +156,9 @@ extension RecommendationPreparation on PlanningController {
         ..clear()
         ..addAll(draft.choices);
       overrides.clear();
+      _manualPlaces
+        ..clear()
+        ..addAll(draft.manualPlaces);
       for (final entry in draft.pendingCandidates.entries) {
         candidates[entry.key] = [
           for (final p in entry.value)
@@ -180,6 +184,11 @@ extension RecommendationPreparation on PlanningController {
           overrides[entry.key] = placeKey(p);
         }
       }
+      for (final e in activeErrands) {
+        if (candidates.containsKey(e.id)) {
+          _shortlistHours[e.id] = hoursQuery(e).context;
+        }
+      }
       selectedErrand = draft.selectedErrand;
       recommendationScrollOffset = draft.scrollOffset;
       recommendationStorageError = null;
@@ -192,6 +201,7 @@ extension RecommendationPreparation on PlanningController {
 
   Future<bool> saveRecommendationDraft() async {
     if (interpretation == null) return true;
+    discardShortlistsForChangedHours();
     if (!_recommendationDraftRestored &&
         !_recommendationDraftChanged &&
         result == null &&
@@ -224,6 +234,7 @@ extension RecommendationPreparation on PlanningController {
               entry.key: entry.value.map((p) => p.place).toList(),
         },
         overrides: overrides.keys.where(choices.containsKey).toSet(),
+        manualPlaces: _manualPlaces.where(choices.containsKey).toSet(),
         approved: {...approved},
         additions: {...additions},
         from: day.fromPlace,
@@ -293,6 +304,7 @@ extension RecommendationPreparation on PlanningController {
     }
     try {
       applyReview();
+      discardShortlistsForChangedHours();
     } catch (e) {
       error = e.toString();
       _emit();
@@ -425,13 +437,14 @@ extension RecommendationPreparation on PlanningController {
             polyline: route,
             anchors: [anchorBefore, anchorAfter],
           );
+          final query = hoursQuery(e);
           final batch = await service.discover(
             effectiveNeed(e)!,
             polyline: route,
             anchors: [anchorBefore, anchorAfter],
             limit: candidateLimit,
             cancelled: cancelled,
-            hours: hoursQuery(e),
+            hours: query,
           );
           if (cancelled()) return;
           final values = batch.candidates;
@@ -460,6 +473,7 @@ extension RecommendationPreparation on PlanningController {
                 ),
               )
               .toList();
+          _shortlistHours[e.id] = query.context;
           _recommendationDraftChanged = true;
         }
       }

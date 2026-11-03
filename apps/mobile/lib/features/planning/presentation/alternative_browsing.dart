@@ -13,6 +13,12 @@ class AlternativeBrowseState {
 extension AlternativeBrowsing on PlanningController {
   String _alternativeSearchIdentity(String id) => clarificationHash({
     'road': _roadContext,
+    'deadline': day.deadline,
+    'mayShareStop': activeErrands.length > 1,
+    'visit': [
+      for (final e in activeErrands.where((e) => e.id == id))
+        [e.timing.name, e.minute, e.durationMinutes],
+    ],
     'need': effectiveNeed(
       activeErrands.firstWhere((e) => e.id == id),
     )!.toJson(),
@@ -56,7 +62,7 @@ extension AlternativeBrowsing on PlanningController {
       polyline: _discoveryPolyline,
       anchors: [before, after],
       key: clarificationHash({
-        'road': _roadContext,
+        'identity': _alternativeSearchIdentity(id),
         'need': need.toJson(),
         'seed': _discoveryPolyline,
         'anchors': [

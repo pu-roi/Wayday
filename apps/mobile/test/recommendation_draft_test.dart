@@ -12,7 +12,20 @@ void main() {
       final legacy = RecommendationDraft(
         context: 'x',
         choices: const {},
-      ).toJson();
+      ).toJson()..remove('manualPlaces');
+      expect(
+        RecommendationDraft.fromJson(
+          Map<String, dynamic>.from(legacy),
+        ).manualPlaces,
+        isEmpty,
+      );
+      expect(
+        () => RecommendationDraft.fromJson({
+          ...legacy,
+          'manualPlaces': ['a'],
+        }),
+        throwsFormatException,
+      );
       expect(
         RecommendationDraft.fromJson(
           Map<String, dynamic>.from(legacy),
@@ -20,7 +33,7 @@ void main() {
         isEmpty,
       );
       for (final pending in [
-      {'a': <Object?>[]},
+        {'a': <Object?>[]},
         {
           'a': [pin.toJson(), pin.toJson(), pin.toJson(), pin.toJson()],
         },
@@ -60,6 +73,7 @@ void main() {
             'b': [pin],
           },
           overrides: {'a'},
+          manualPlaces: {'a'},
           selectedErrand: 'a',
           scrollOffset: 64,
         ),
@@ -72,6 +86,7 @@ void main() {
         ).read('source', 'context');
         expect(restored!.selectedErrand, 'a');
         expect(restored.overrides, {'a'});
+        expect(restored.manualPlaces, {'a'});
         expect(restored.choices['a']!.toJson(), pin.toJson());
         expect(restored.pendingCandidates['b']!.single.toJson(), pin.toJson());
         expect(restored.scrollOffset, 64);

@@ -6,6 +6,28 @@ Replaced the private sample entry with real source-bound sharing, matching brows
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-04] Integrate the missing official planning fixes
+
+Matched the phone's official 105502 APK checksum to its published source and confirmed that the source omitted the locally tested planning fixes. Integrated editor confirmations, manual Review retention, planned-time hours filtering and advisory hours for user-selected places into an isolated current-main branch while retaining existing sharing behavior. The isolated branch passed 110 focused Flutter tests, 754 full-suite tests with one existing skip, clean analysis, 58 release-tool tests and the public feature-profile fixture. All routine providers were simulated. Hosted checks, coordinated publication and the unchanged-plan official phone calculation remain separate verification stages. See [the official update record](evidence/official-planning-update-2026-11-04.md).
+
+### [2026-11-03] User-selected destinations and reported hours — D82
+
+Reproduced the five-errand campus failure on the connected release-signed Wayday Test app. The saved Review used November 4, 6 AM–8 PM, and the provider reported campus hours beginning at 9 AM against the user's 8:30 AM event. The hours precheck stopped before route-matrix dispatch. Direct database extraction was blocked by Android's release-build sandbox, so actual fields and hours were inspected through the app. The owner confirmed school access from 7 AM and requested that user-supplied places remain authoritative.
+
+Reported intervals now remain visible as advisory information for source-selected places and explicit overrides. Automatically recommended errands retain hours enforcement. Solving, independent validation and refined-arrival checking apply the distinction per task at shared stops. See [the focused investigation](evidence/user-places-hours-2026-11-03.md) for the five-errand audit and local versus phone verification boundaries.
+
+Verified all five errands through the solver and production road adapter with simulated transport, preserved both appointments, generated geometry and accepted the itinerary. Explicit selections survive recommendation-draft reopening and a real SQLite close-and-reopen; automatic locks retain hours enforcement. Legacy payloads, shared-stop presentation and stale solve rejection are covered. The final Flutter suite passed 752 tests with one existing skip, and static analysis reported no issues. The installed phone remains on the earlier build; fixed-build live routing is pending.
+### [2026-11-03] Planned visit hours QA
+
+Traced trip dates and visit times through discovery, alternatives, scheduling and refined road estimates. The final schedule already used the selected date and calculated arrival. Reproduced and repaired an earlier shortlist defect that omitted the errand's appointment or finish deadline, allowing incompatible branches to displace a suitable branch. Automatic shortlists and alternatives now invalidate their scheduling context after date, time or duration edits, with discovery performed on explicit rebuild. Fixed locations and explicit choices retain their existing recalculation behavior. See [the focused investigation](evidence/planned-hours-qa-2026-11-03.md).
+
+Verified appointment, isolated arrival and completion deadlines, tomorrow's dated hours, later weekly hours, full-visit boundaries, shared-stop timing, estimated arrivals and refined-route closing conflicts. All 45 focused tests and 736 full-suite tests passed, with one existing skip in the full suite. Static analysis reported no issues. These checks used synthetic provider records and road estimates. The fixes are local and physical-phone/live-provider qualification remains separate.
+### [2026-11-03] Preserve manual Review edits — D80
+
+Extended the source-bound Review draft to keep timing, notes, optional status, duration and prerequisites across reopening. Explicit selections remain authoritative even when they match the editor's starting value. The existing SQLite row accepts both legacy clock drafts and the new field overrides. Updated notes use saved-only analysis on reopen, and a save failure preserves the draft in Review with an explicit retry. See [the planning contract](PLANNING.md#saved-manual-review-edits--d80).
+
+Verified SQLite close and reopen, legacy draft reads, stale response guards, save recovery and acceptance of itineraries using all four restored timing choices. Flutter passed 718 tests with one existing skip, and analysis reported no issues. Provider responses and roads were simulated.
+
 ### [2026-11-03] Website-first official-app testing — D79
 
 Implemented the owner’s request to test official delivery through the website button after trying Wayday Test. The selected verified candidate is authorized for a development preview with official-phone verification pending. Historical qualification is preserved; exact source/profile/config/signature/gateway/artifact guards remain. See [website-first evidence](evidence/website-first-testing-2026-11-03.md) for tests and actual delivery.

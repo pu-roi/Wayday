@@ -77,6 +77,23 @@ class ShiftedRoads extends Roads {
   }
 }
 
+class ArrivalRoads extends Roads {
+  ArrivalRoads(this.seconds);
+  final int seconds;
+  @override
+  Future<Map<String, dynamic>> matrix(
+    DayPlan day,
+    List<PlanCandidate> points, {
+    bool Function()? cancelled,
+  }) async => {
+    'matrix': List.generate(
+      points.length,
+      (i) => List.generate(points.length, (j) => i == j ? 0 : seconds),
+    ),
+    'fallback': false,
+  };
+}
+
 void main() {
   GoogleRecommendationDiscovery service(
     PlacesInvoker invoke, {
@@ -106,6 +123,118 @@ void main() {
     cancelled: () => false,
     hours: hours,
   );
+  for (final timing in [
+    TimingRule.at,
+    TimingRule.arriveBy,
+    TimingRule.finishBefore,
+  ]) {
+    test(
+      'shortlist keeps the branch that can serve a future ${timing.name} errand',
+      () async {
+        final appointment = timing == TimingRule.at ? 840 : 600;
+        final errand = Errand(
+          id: 'a',
+          title: 'Gym',
+          timing: timing,
+          minute: appointment,
+          durationMinutes: 30,
+        );
+        final source = service(
+          (_, _) async => [
+            for (var i = 0; i < 3; i++)
+              timing == TimingRule.at
+                  ? listing('a$i', opening: 8, closing: 12)
+                  : listing('a$i', opening: 12, closing: 17),
+            timing == TimingRule.at
+                ? listing('z-compatible', opening: 13, closing: 17)
+                : listing(
+                    'z-compatible',
+                    opening: 8,
+                    closing: timing == TimingRule.arriveBy ? 12 : 10,
+                  ),
+          ],
+        );
+        final roads = Roads();
+        addTearDown(roads.client.close);
+        final model = PlanningController(
+          fixture().copyWith(
+            errands: [errand],
+            departure: timing == TimingRule.arriveBy ? 590 : 540,
+            deadline: 1080,
+          ),
+          Interpreter(),
+          roads,
+          MemoryItineraryRepository(),
+          discovery: source,
+          solver: (input) async => solveDay(input),
+        );
+        addTearDown(model.dispose);
+        await model.understand();
+        model.applyReview();
+        final shortlisted = await search(
+          source,
+          hours: model.hoursQuery(errand),
+        );
+        expect(shortlisted.candidates.map((p) => p.key), [
+          'google:z-compatible',
+        ]);
+        model.found('a', shortlisted.candidates);
+        await model.calculate();
+        expect(model.proposalReady, isTrue);
+        final stop = model.result!.schedule.stops.single;
+        expect(stop.placeKey, 'google:z-compatible');
+        expect(stop.arrival, (timing == TimingRule.arriveBy ? 591 : 541) * 60);
+        if (timing == TimingRule.at) {
+          expect(stop.tasks.single.start, appointment * 60);
+        } else if (timing == TimingRule.arriveBy) {
+          expect(stop.arrival, lessThanOrEqualTo(appointment * 60));
+          expect(stop.departure, greaterThan(appointment * 60));
+        } else {
+          expect(stop.departure, lessThanOrEqualTo(appointment * 60));
+        }
+      },
+    );
+  }
+  for (final minutes in [1, 55]) {
+    test(
+      'future-date branch selection uses a $minutes minute estimated arrival and full visit',
+      () async {
+        final source = service(
+          (_, _) async => [
+            listing('a-early', opening: 8, closing: 10),
+            listing('z-later', opening: 9, closing: 12),
+          ],
+        );
+        final roads = ArrivalRoads(minutes * 60);
+        addTearDown(roads.client.close);
+        const errand = Errand(id: 'a', title: 'Gym', durationMinutes: 15);
+        final model = PlanningController(
+          fixture().copyWith(errands: [errand], departure: 540, deadline: 1080),
+          Interpreter(),
+          roads,
+          MemoryItineraryRepository(),
+          discovery: source,
+          solver: (input) async => solveDay(input),
+        );
+        addTearDown(model.dispose);
+        await model.understand();
+        model.applyReview();
+        model.found(
+          'a',
+          (await search(source, hours: model.hoursQuery(errand))).candidates,
+        );
+        await model.calculate();
+        expect(model.proposalReady, isTrue);
+        final stop = model.result!.schedule.stops.single;
+        expect(
+          stop.placeKey,
+          minutes == 1 ? 'google:a-early' : 'google:z-later',
+        );
+        expect(stop.arrival, (540 + minutes) * 60);
+        expect(stop.departure, stop.arrival + 20 * 60);
+      },
+    );
+  }
   test(
     'closed-window records are excluded before the three-place shortlist',
     () async {
@@ -227,7 +356,8 @@ void main() {
       await model.calculate();
       expect(model.proposalReady, isTrue);
       expect(model.result!.schedule.stops.single.placeKey, 'google:early');
-      model.overridePlace('a', model.displayChoices['a']!);
+      model.review();
+      model.applyReview();
       model.result = null;
       roads.shift = true;
       await model.calculate();
@@ -235,7 +365,7 @@ void main() {
       expect(model.recommendationFailure!.kind, 'business_hours');
       expect(model.error, contains('Gym'));
       expect(model.displayChoices['a']!.providerPlaceId, 'early');
-      expect(model.overrides['a'], 'google:early');
+      expect(model.overrides, isEmpty);
     },
   );
 }

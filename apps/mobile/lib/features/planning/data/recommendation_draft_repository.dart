@@ -19,6 +19,7 @@ class RecommendationDraft {
     required this.context,
     required this.choices,
     this.overrides = const {},
+    this.manualPlaces = const {},
     this.approved = const {},
     this.additions = const {},
     this.selectedErrand,
@@ -29,7 +30,7 @@ class RecommendationDraft {
   });
   final String context;
   final Map<String, PlaceIntent> choices;
-  final Set<String> overrides, approved, additions;
+  final Set<String> overrides, manualPlaces, approved, additions;
   final String? selectedErrand;
   final double scrollOffset;
   final PlaceIntent? from, to;
@@ -39,6 +40,7 @@ class RecommendationDraft {
     'context': context,
     'choices': choices.map((id, place) => MapEntry(id, place.toJson())),
     'overrides': overrides.toList(),
+    'manualPlaces': manualPlaces.toList(),
     'approved': approved.toList(),
     'additions': additions.toList(),
     'selected': selectedErrand,
@@ -86,7 +88,9 @@ class RecommendationDraft {
         ),
       ),
     );
-    final overrides = ids('overrides'), selected = json['selected'];
+    final overrides = ids('overrides'),
+        manualPlaces = ids('manualPlaces'),
+        selected = json['selected'];
     final pending = json['pendingCandidates'] ?? <String, dynamic>{};
     if (pending is! Map ||
         pending.length > 12 ||
@@ -107,6 +111,7 @@ class RecommendationDraft {
       throw const FormatException('Invalid pending place candidates');
     }
     if (overrides.any((id) => !choices.containsKey(id)) ||
+        manualPlaces.any((id) => !overrides.contains(id)) ||
         (selected != null &&
             (selected is! String || !choices.containsKey(selected)))) {
       throw const FormatException('Unassigned draft selection');
@@ -125,6 +130,7 @@ class RecommendationDraft {
           ],
       },
       overrides: overrides,
+      manualPlaces: manualPlaces,
       approved: ids('approved'),
       additions: ids('additions'),
       selectedErrand: selected as String?,

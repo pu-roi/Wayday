@@ -143,9 +143,23 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Your review changes could not be saved. Retry saving before closing.',
+          'Your review changes could not be saved. Retry saving before continuing.',
         ),
         findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Close'))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Build recommendations'),
+            )
+            .onPressed,
+        isNull,
       );
       trips.fail = false;
       await tester.tap(find.text('Retry saving trip settings'));

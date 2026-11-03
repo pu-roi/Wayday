@@ -40,6 +40,126 @@ class Discovery implements RecommendationDiscovery {
 }
 
 void main() {
+  for (final change in [
+    'date',
+    'departure',
+    'deadline',
+    'duration',
+    'timing',
+  ]) {
+    test(
+      'changed $change refreshes an automatic shortlist on explicit build',
+      () async {
+        final roads = Roads(), discovery = Discovery();
+        addTearDown(roads.client.close);
+        final model = PlanningController(
+          fixture().copyWith(
+            errands: const [Errand(id: 'a', title: 'Grocery')],
+          ),
+          Interpreter(),
+          roads,
+          MemoryItineraryRepository(),
+          discovery: discovery,
+          solver: (input) async => solveDay(input),
+        );
+        addTearDown(model.dispose);
+        await model.understand();
+        await model.buildRecommendations();
+        expect(model.proposalReady, isTrue);
+        expect(discovery.calls, 1);
+        final oldAlternatives = model.alternativesFor('a')..exhausted = true;
+        model.review();
+        switch (change) {
+          case 'date':
+            model.day = model.day.copyWith(
+              date: calendarDate(
+                DateTime.parse(model.day.date).add(const Duration(days: 1)),
+              ),
+            );
+          case 'departure':
+            model.day = model.day.copyWith(departure: 600);
+          case 'deadline':
+            model.day = model.day.copyWith(deadline: 900);
+          case 'duration':
+            model.edit(
+              model
+                  .reviewInput(model.day.errands.single)
+                  .copyWith(durationMinutes: 35, durationConfirmed: true),
+            );
+          case 'timing':
+            model.edit(
+              model
+                  .reviewInput(model.day.errands.single)
+                  .copyWith(
+                    timing: TimingRule.at,
+                    minute: 660,
+                    confirmedFields: {'timing'},
+                  ),
+            );
+        }
+        final newAlternatives = model.alternativesFor('a');
+        expect(identical(newAlternatives, oldAlternatives), isFalse);
+        expect(newAlternatives.exhausted, isFalse);
+        // Saving the current draft invalidates old automatic candidates without
+        // dispatching discovery. Explicit Build performs the new bounded search.
+        await model.saveRecommendationDraft();
+        expect(discovery.calls, 1);
+        await model.buildRecommendations();
+        expect(discovery.calls, 2);
+        expect(model.proposalReady, isTrue);
+      },
+    );
+  }
+
+  test(
+    'alternatives without a previous search also invalidate on trip timing edits',
+    () async {
+      final roads = Roads();
+      addTearDown(roads.client.close);
+      final model = PlanningController(
+        fixture().copyWith(
+          errands: const [Errand(id: 'a', title: 'Grocery')],
+        ),
+        Interpreter(),
+        roads,
+        MemoryItineraryRepository(),
+      );
+      addTearDown(model.dispose);
+      await model.understand();
+      final previous = model.alternativesFor('a')..exhausted = true;
+      model.day = model.day.copyWith(deadline: 900);
+      expect(identical(model.alternativesFor('a'), previous), isFalse);
+      expect(model.alternativesFor('a').exhausted, isFalse);
+    },
+  );
+
+  test(
+    'changing trip time retains an explicit place choice for recalculation',
+    () async {
+      final roads = Roads(), discovery = Discovery();
+      addTearDown(roads.client.close);
+      final model = PlanningController(
+        fixture().copyWith(
+          errands: const [Errand(id: 'a', title: 'Grocery')],
+        ),
+        Interpreter(),
+        roads,
+        MemoryItineraryRepository(),
+        discovery: discovery,
+        solver: (input) async => solveDay(input),
+      );
+      addTearDown(model.dispose);
+      await model.understand();
+      await model.buildRecommendations();
+      model.overridePlace('a', pin);
+      model.day = model.day.copyWith(deadline: 900);
+      await model.buildRecommendations();
+      expect(discovery.calls, 1);
+      expect(model.overrides['a'], placeKey(pin));
+      expect(model.proposalReady, isTrue);
+    },
+  );
+
   test(
     'retry retains the successful errand and only repeats failed discovery',
     () async {

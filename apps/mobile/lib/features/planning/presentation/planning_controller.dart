@@ -19,6 +19,7 @@ import '../domain/clarification.dart';
 import 'clarification_coordinator.dart';
 import '../data/itinerary_repository.dart';
 import '../data/review_trip_repository.dart';
+import '../domain/review_errand_edit.dart';
 import '../data/planning_budget.dart';
 import '../data/road_estimates.dart';
 import '../domain/day_scheduler.dart';
@@ -142,6 +143,7 @@ class PlanningController extends ChangeNotifier {
         ({String identity, String? polyline, List<PlaceIntent> anchors})
       >{};
   String? _discoveryPolyline;
+  final _shortlistHours = <String, Object>{};
   final _draftSaveFlights = <String, Future<void>>{};
   Timer? _routeRefreshTimer;
   DateTime? _refreshNotBefore;
@@ -229,7 +231,9 @@ class PlanningController extends ChangeNotifier {
       ..clear()
       ..addAll(trip.answers);
     candidates.clear();
+    _shortlistHours.clear();
     overrides.clear();
+    _manualPlaces.clear();
     for (final e in day.errands) {
       final place = trip.choices[e.id]!;
       candidates[e.id] = [
@@ -241,6 +245,7 @@ class PlanningController extends ChangeNotifier {
         ),
       ];
       overrides[e.id] = placeKey(place);
+      _manualPlaces.add(e.id);
     }
     stage = PreparationStage.calculating;
     progress = 'Refreshing your saved places…';
@@ -608,6 +613,7 @@ class PlanningController extends ChangeNotifier {
   Future<void>? _recommendationFlight;
   Future<void>? _analysisFlight;
   final overrides = <String, String>{};
+  final _manualPlaces = <String>{};
   final approved = <String>{};
   final additions = <String>{};
   RefinedPlan? result;
@@ -651,7 +657,11 @@ class PlanningController extends ChangeNotifier {
     super.dispose();
   }
 
-  Future<void> understand({bool retry = false, bool savedOnly = false}) async {
+  Future<void> understand({
+    bool retry = false,
+    bool savedOnly = false,
+    ReviewTrip? restoredReview,
+  }) async {
     final epoch = ++_epoch;
     error = null;
     understandingFailure = null;
@@ -666,7 +676,34 @@ class PlanningController extends ChangeNotifier {
       if (graphIssue != null) {
         throw PlanningFailure(graphIssue, kind: 'invalid_input');
       }
-      if (interpretationStale) day = day.copyWith(errands: reviewOrder.items);
+      if (interpretationStale) day = manualReviewDay;
+      final restoredDay = restoredReview?.apply(day);
+      final sourceById = {for (final e in day.errands) e.id: e};
+      final hasEditedNotes =
+          restoredDay != null &&
+          restoredDay.errands.indexed.any(
+            (entry) => entry.$2.notes != day.errands[entry.$1].notes,
+          );
+      final service = interpreter;
+      Interpretation? savedEditedMeaning;
+      if (hasEditedNotes) {
+        final editedDay = restoredDay;
+        try {
+          await clarifications.bind(clarificationSourceKey(editedDay));
+          if (_closed || epoch != _epoch) return;
+          if (clarifications.storageError == null) {
+            savedEditedMeaning =
+                clarifications.session.analysis?.result ??
+                (service is SavedErrandInterpreter
+                    ? await service.saved(editedDay)
+                    : null);
+          }
+        } on PlanningFailure {
+          // The restored notes remain editable when their meaning is unavailable.
+        }
+        if (_closed || epoch != _epoch) return;
+        if (savedEditedMeaning != null) day = editedDay;
+      }
       _sourcePlaces
         ..clear()
         ..addAll({
@@ -674,10 +711,10 @@ class PlanningController extends ChangeNotifier {
             e.id: clarificationHash(e.placeIntent.toJson()),
         });
       await clarifications.bind(clarificationSourceKey(day));
+      if (_closed || epoch != _epoch) return;
       if (clarifications.storageError != null) {
         throw PlanningFailure(clarifications.storageError!, kind: 'cache');
       }
-      final service = interpreter;
       if (savedOnly && service is! SavedErrandInterpreter) {
         throw const PlanningFailure(
           'Saved understanding is unavailable.',
@@ -685,32 +722,52 @@ class PlanningController extends ChangeNotifier {
         );
       }
       final restoredAnalysis = clarifications.session.analysis;
+      final staleNotes = hasEditedNotes && savedEditedMeaning == null;
       final value =
+          savedEditedMeaning ??
           restoredAnalysis?.result ??
-          await (savedOnly
-              ? (service as SavedErrandInterpreter).saved(day)
-              : retry && service is ConfirmedRetryInterpreter
-              ? service.retry(day)
-              : service.interpret(day));
+          (staleNotes
+              ? Interpretation([
+                  for (final e in day.errands) ErrandNeed(id: e.id, query: ''),
+                ])
+              : await (savedOnly
+                    ? (service as SavedErrandInterpreter).saved(day)
+                    : retry && service is ConfirmedRetryInterpreter
+                    ? service.retry(day)
+                    : service.interpret(day)));
       if (_closed || epoch != _epoch) return;
       interpretation = value;
-      interpretationStale = false;
+      interpretationStale = staleNotes;
       final restoredErrands = restoredAnalysis == null
           ? day.errands
           : AnalysisState.fromJson(
               restoredAnalysis.toJson(),
               resolveGooglePin: resolveGooglePin,
             ).errands;
+      final manual = [
+        for (final e in restoredErrands)
+          if (restoredReview != null && sourceById.containsKey(e.id))
+            restoredReview.applyErrand(
+              ReviewErrandEdit.protectSource(e, sourceById[e.id]!),
+            )
+          else
+            e,
+      ];
+      if (restoredReview != null) {
+        day = day.copyWith(errands: ErrandOrder.reconcile(manual).items);
+      }
       _reviewItems
         ..clear()
-        ..addEntries(restoredErrands.map((e) => MapEntry(e.id, e)));
+        ..addEntries(manual.map((e) => MapEntry(e.id, e)));
       _originalIds
         ..clear()
         ..addAll(_reviewItems.keys);
       approved.clear();
       additions.clear();
       candidates.clear();
+      _shortlistHours.clear();
       overrides.clear();
+      _manualPlaces.clear();
       result = null;
       needs
         ..clear()
@@ -718,6 +775,7 @@ class PlanningController extends ChangeNotifier {
           [...value.needs, ...value.additions].map((e) => MapEntry(e.id, e)),
         );
       await _restorePlaces();
+      if (_closed || epoch != _epoch) return;
       stage = PreparationStage.review;
       await clarifications.resumeSaved(
         reviewErrands.where((e) => needs[e.id] != null).map(questionContext),
@@ -852,6 +910,7 @@ class PlanningController extends ChangeNotifier {
     candidates.remove(value.id);
     discoveryResults.remove(value.id);
     overrides.remove(value.id);
+    _manualPlaces.remove(value.id);
     result = null;
     _emit();
   }
@@ -863,6 +922,7 @@ class PlanningController extends ChangeNotifier {
     day = day.copyWith(errands: day.errands.where((e) => e.id != id).toList());
     candidates.remove(id);
     overrides.remove(id);
+    _manualPlaces.remove(id);
     result = null;
     _emit();
   }
@@ -982,6 +1042,8 @@ class PlanningController extends ChangeNotifier {
   }
 
   void overridePlace(String id, PlaceIntent place) {
+    _epoch++;
+    _manualPlaces.add(id);
     final key = placeKey(place);
     final previous = candidates[id] ?? <PlanCandidate>[];
     candidates[id] = [
@@ -1000,6 +1062,8 @@ class PlanningController extends ChangeNotifier {
   }
 
   void chooseAlternative(String id, String key) {
+    _epoch++;
+    _manualPlaces.add(id);
     overrides[id] = key;
     result = null;
     stage = PreparationStage.discovery;
@@ -1145,6 +1209,7 @@ class PlanningController extends ChangeNotifier {
         'start': '@start',
         'end': '@end',
         'hours': openingWindows,
+        'hoursAdvisoryErrands': hoursAdvisoryErrands.toList(),
         'allowOpeningWait': false,
         'preferences': {
           for (final e in activeErrands)

@@ -140,6 +140,111 @@ void main() {
     );
   });
   test(
+    'trip date selects tomorrow and next-week hours independently of the current day',
+    () {
+      final today = DateTime.utc(
+        2030,
+        1,
+        7,
+      ); // Monday in the selected local calendar.
+      Map<String, dynamic> datePoint(DateTime date, int hour) => {
+        'day': date.weekday % 7,
+        'hour': hour,
+        'minute': 0,
+        'date': date.toIso8601String().split('T').first,
+      };
+      final tomorrow = today.add(const Duration(days: 1));
+      final future = today.add(const Duration(days: 8));
+      final value = BusinessHours(
+        version: 1,
+        offset: 480,
+        checkedAt: DateTime.now(),
+        coverageStart: '2030-01-07',
+        current: {
+          'periods': [period(datePoint(tomorrow, 13), datePoint(tomorrow, 17))],
+        },
+        regular: {
+          'periods': [period(point(2, 9), point(2, 12))],
+        },
+      );
+      expect(value.day('2030-01-07').windows, isEmpty);
+      const afternoon = HoursQuery(
+        '2030-01-08',
+        540,
+        1080,
+        30,
+        timing: TimingRule.at,
+        minute: 840,
+      );
+      expect(afternoon.permits(value), isTrue);
+      expect(
+        const HoursQuery(
+          '2030-01-08',
+          540,
+          1080,
+          30,
+          timing: TimingRule.at,
+          minute: 600,
+        ).permits(value),
+        isFalse,
+      );
+      expect(value.day(calendarDate(future)).usual, isTrue);
+      expect(
+        HoursQuery(
+          calendarDate(future),
+          540,
+          1080,
+          30,
+          timing: TimingRule.at,
+          minute: 600,
+        ).permits(value),
+        isTrue,
+      );
+      expect(
+        HoursQuery(
+          calendarDate(future),
+          540,
+          1080,
+          30,
+          timing: TimingRule.at,
+          minute: 840,
+        ).permits(value),
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'appointment and finish deadlines include the entire visit and buffer',
+    () {
+      final value = hours([period(point(0, 9), point(0, 12))]);
+      for (final rule in [TimingRule.at, TimingRule.finishBefore]) {
+        expect(
+          HoursQuery(
+            '2026-11-01',
+            540,
+            1080,
+            30,
+            timing: rule,
+            minute: rule == TimingRule.at ? 685 : 575,
+          ).permits(value),
+          isTrue,
+        );
+        expect(
+          HoursQuery(
+            '2026-11-01',
+            540,
+            1080,
+            30,
+            timing: rule,
+            minute: rule == TimingRule.at ? 686 : 574,
+          ).permits(value),
+          isFalse,
+        );
+      }
+    },
+  );
+  test(
     'shared stops must fit all tasks and one buffer, not each task alone',
     () {
       final data = input(
@@ -174,6 +279,52 @@ void main() {
       );
       expect(schedule.stops.single.tasks.length, 2);
       expect(schedule.stops.single.departure, 8 * 3600 + 40 * 60);
+    },
+  );
+  test(
+    'arrive-by checks physical arrival even when service follows a shared appointment',
+    () {
+      final value = hours([period(point(0, 8), point(0, 12))]);
+      const query = HoursQuery(
+        '2026-11-01',
+        480,
+        720,
+        15,
+        timing: TimingRule.arriveBy,
+        minute: 485,
+      );
+      expect(query.permits(value), isTrue);
+      final data = input(
+        [
+          const Errand(
+            id: 'a',
+            title: 'Appointment',
+            timing: TimingRule.at,
+            minute: 660,
+          ),
+          const Errand(
+            id: 'b',
+            title: 'Collect',
+            timing: TimingRule.arriveBy,
+            minute: 485,
+            afterErrandIds: ['a'],
+          ),
+        ],
+        options: {
+          'a': ['a'],
+          'b': ['a'],
+        },
+        deadline: 720 * 60,
+      );
+      data['hours'] = {'a': value.day('2026-11-01').windows};
+      final solved = solveDay(data);
+      expect(solved['error'], isNull);
+      final schedule = DaySchedule.fromJson(
+        solved['schedule'] as Map<String, dynamic>,
+      );
+      expect(schedule.stops.single.arrival, 485 * 60);
+      expect(schedule.stops.single.tasks.last.start, 675 * 60);
+      expect(validateSchedule(data, schedule), isNull);
     },
   );
   test(

@@ -1,8 +1,39 @@
 part of 'planning_controller.dart';
 
 extension PlanningHours on PlanningController {
-  HoursQuery hoursQuery(Errand e) =>
-      HoursQuery(day.date, day.departure, day.deadline, e.durationMinutes);
+  bool hoursAreAdvisory(String errandId) =>
+      _manualPlaces.contains(errandId) ||
+      reviewInput(
+        activeErrands.firstWhere((e) => e.id == errandId),
+      ).placeIntent.hasCoordinates;
+
+  Set<String> get hoursAdvisoryErrands => {
+    for (final e in activeErrands)
+      if (hoursAreAdvisory(e.id)) e.id,
+  };
+  HoursQuery hoursQuery(Errand e) => HoursQuery(
+    day.date,
+    day.departure,
+    day.deadline,
+    e.durationMinutes,
+    timing: e.timing,
+    minute: e.minute,
+    mayShareStop: activeErrands.length > 1,
+  );
+
+  void discardShortlistsForChangedHours() {
+    for (final e in activeErrands) {
+      final old = _shortlistHours[e.id];
+      if (old == null || old == hoursQuery(e).context) continue;
+      _shortlistHours.remove(e.id);
+      if (overrides.containsKey(e.id) || e.placeIntent.hasCoordinates) continue;
+      candidates.remove(e.id);
+      discoveryResults.remove(e.id);
+      _proposalChoices.remove(e.id);
+      _recommendationDraftChanged = true;
+    }
+  }
+
   HoursDay hoursFor(PlaceIntent place) => hoursForDate(place, day.date);
   HoursDay hoursForDate(PlaceIntent place, String date, {DateTime? now}) {
     final service = discovery;
@@ -49,9 +80,10 @@ extension PlanningHours on PlanningController {
         await discovery?.hydrate(p.place, cancelled: cancelled);
       }
       if (cancelled()) return;
-      if (hoursFor(p.place).state == HoursState.failed ||
-          discovery is HoursRefreshDiscovery &&
-              hoursFor(p.place).state == HoursState.notRequested) {
+      if (p.errandIds.any((id) => !hoursAreAdvisory(id)) &&
+          (hoursFor(p.place).state == HoursState.failed ||
+              discovery is HoursRefreshDiscovery &&
+                  hoursFor(p.place).state == HoursState.notRequested)) {
         throw const PlanningFailure(
           'Business hours could not be checked. Retry the hours check before starting.',
           kind: 'business_hours',
@@ -61,7 +93,9 @@ extension PlanningHours on PlanningController {
   }
 
   void checkHoursOptions(List<PlanCandidate> selected) {
-    for (final e in activeErrands.where((e) => !e.optional)) {
+    for (final e in activeErrands.where(
+      (e) => !e.optional && !hoursAreAdvisory(e.id),
+    )) {
       final options = selected
           .where((p) => p.errandIds.contains(e.id))
           .toList();
@@ -70,14 +104,10 @@ extension PlanningHours on PlanningController {
             (p) =>
                 p.place.isGoogle &&
                 hoursFor(p.place).windows != null &&
-                !hoursFor(p.place).possible(
-                  day.departure * 60,
-                  day.deadline * 60,
-                  e.durationMinutes * 60 + 300,
-                ),
+                !hoursQuery(e).permitsDay(hoursFor(p.place)),
           )) {
         throw PlanningFailure(
-          'No selected place has a reported opening window long enough for “${e.title}” during this trip. Change its place or the trip time.',
+          'No selected place can fit “${e.title}” within its scheduled time and reported hours. Change its place or timing.',
           kind: 'business_hours',
         );
       }
@@ -136,10 +166,10 @@ extension PlanningHours on PlanningController {
     for (final stop in schedule.stops) {
       final hours = windows[stop.placeKey];
       if (hours != null &&
-          !hours.any(
-            (w) => stop.tasks.first.start >= w[0] && stop.departure <= w[1],
-          )) {
-        final id = stop.tasks.first.errandId;
+          !reportedHoursFit(stop, hours, hoursAdvisoryErrands)) {
+        final id = stop.tasks
+            .firstWhere((t) => !hoursAreAdvisory(t.errandId))
+            .errandId;
         final title = activeErrands.firstWhere((e) => e.id == id).title;
         return '“$title” no longer fits the reported opening hours. Change the place or trip time and recalculate.';
       }

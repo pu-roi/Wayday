@@ -1,5 +1,11 @@
 # Wayday agent instructions
 
+## User-selected places and reported hours — D82
+
+The owner confirmed that supplied locations can have access outside provider-reported hours. Treat opening intervals as advisory for source-selected destinations and explicit branch overrides. Retain visible hours and access warnings. Automatically recommended errands continue to enforce date-specific hours, full duration and buffers. Apply the policy per task through preflight, solving, independent validation and route refinement, including mixed shared stops. Preserve appointment, duration, dependencies and separate permanent/temporary closure checks. D82 phone inspection used rendered app data because release sandboxing blocked direct database extraction. See the focused evidence and keep local fixture results distinct from fixed-build live routing.
+
+The November 4 follow-up authorizes reviewed main integration, the existing coordinated release/website flow and an in-place official phone update to verify the unchanged five errands. Preserve both installed apps and their data; no navigation start, task completion or Finish operation is authorized by that verification. Keep actual release and physical results in the official planning update evidence.
+
 ## Account-free trip sharing — D81
 
 The owner approved completing the real sharing feature and publishing a new official development preview through the existing website download flow. Use the shared Wayday design and visible Share icons on Your plan and Your trip. Preserve exact source-bound planned geometry, read-only recipient views, two-hour expiry, separate viewer/owner/recipient capabilities, App Check writes and optional independently consented live location. Keep recipient location owner-only. End/replacement/finish stops local broadcasts and durably records pending remote revocation. Never import a received trip into Today or silently restart location sharing. The private loopback sample is historical. Preserve installed app identities/data, provider provenance, accounting, quotas and main checks. Record current-profile preview authorization and immutable artifacts separately from outstanding physical two-phone/locked-screen/official upgrade checks. See D81 and the focused sharing evidence.

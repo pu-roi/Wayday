@@ -9,6 +9,8 @@ import 'package:wayday/app/theme.dart';
 import 'package:wayday/features/planning/data/itinerary_repository.dart';
 import 'package:wayday/features/planning/domain/recommendation.dart';
 import 'package:wayday/features/planning/domain/day_scheduler.dart';
+import 'package:wayday/features/planning/domain/planning_models.dart';
+import 'package:wayday/features/planning/data/road_estimates.dart';
 import 'package:wayday/features/planning/presentation/planning_controller.dart';
 import 'package:wayday/features/planning/presentation/place_hours.dart';
 import 'package:wayday/features/places/domain/place_intent.dart';
@@ -45,7 +47,114 @@ class HoursMetadata extends Discovery {
   );
 }
 
+// Isolates the hours presentation for an already validated shared-stop result.
+class SharedStopController extends PlanningController {
+  SharedStopController(HoursMetadata source, Roads roads)
+    : super(
+        fixture(),
+        Interpreter(),
+        roads,
+        MemoryItineraryRepository(),
+        discovery: source,
+      );
+  @override
+  bool get proposalReady => result != null;
+}
+
 void main() {
+  testWidgets('shared-stop hours describe each errand visit separately', (
+    tester,
+  ) async {
+    final source = HoursMetadata();
+    final roads = Roads();
+    addTearDown(roads.client.close);
+    final controller = SharedStopController(source, roads);
+    addTearDown(controller.dispose);
+    source.hours = BusinessHours(
+      version: 1,
+      offset: 480,
+      checkedAt: DateTime.now(),
+      regular: {
+        'periods': [
+          for (var d = 0; d < 7; d++)
+            {
+              'open': {'day': d, 'hour': 9, 'minute': 0},
+              'close': {'day': d, 'hour': 17, 'minute': 0},
+            },
+        ],
+      },
+    );
+    controller.result = const RefinedPlan(
+      DaySchedule(
+        stops: [
+          ScheduledStop('google:business', 490 * 60, 590 * 60, [
+            ScheduledTask('a', 490 * 60, 505 * 60),
+            ScheduledTask('b', 570 * 60, 585 * 60),
+          ]),
+        ],
+        omitted: {},
+        endArrival: 600 * 60,
+        travelSeconds: 60,
+      ),
+      [],
+      false,
+    );
+    Future<void> display(String id) => tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(),
+        home: Scaffold(
+          body: PlaceHours(model: controller, place: business, errandId: id),
+        ),
+      ),
+    );
+    await display('a');
+    expect(find.textContaining('Confirm access before going'), findsOneWidget);
+    await display('b');
+    expect(find.text('Usually open for your planned visit'), findsOneWidget);
+    expect(find.textContaining('Confirm access before going'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('user-chosen place keeps reported hours visible with an advisory', (
+    tester,
+  ) async {
+    final source = HoursMetadata();
+    final roads = Roads();
+    addTearDown(roads.client.close);
+    final controller = PlanningController(
+      fixture(),
+      Interpreter(),
+      roads,
+      MemoryItineraryRepository(),
+      discovery: source,
+    );
+    addTearDown(controller.dispose);
+    await controller.understand();
+    source.hours = BusinessHours(
+      version: 1,
+      offset: 480,
+      checkedAt: DateTime.now(),
+      regular: {'periods': <Object?>[]},
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(),
+        home: Scaffold(
+          body: PlaceHours(model: controller, place: business, errandId: 'a'),
+        ),
+      ),
+    );
+    expect(
+      find.text(
+        'You chose this place. Reported hours are guidance; your scheduled visit is kept.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Usual hours for'), findsOneWidget);
+    expect(find.textContaining('Closed'), findsWidgets);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   setUpAll(() async {
     await (FontLoader(
       'Figtree',

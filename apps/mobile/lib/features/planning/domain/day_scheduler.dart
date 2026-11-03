@@ -2,6 +2,27 @@ import '../../errands/domain/errand.dart';
 import '../../errands/domain/errand_order.dart';
 import 'planning_models.dart';
 
+/// Only tasks served by a recommended business constrain its reported hours.
+/// A user-supplied appointment at the same stop can have different access.
+bool reportedHoursFit(
+  ScheduledStop stop,
+  List<List<int>>? windows,
+  Set<String> advisoryErrands, {
+  int buffer = 300,
+}) {
+  if (windows == null) return true;
+  final constrained = stop.tasks
+      .where((t) => !advisoryErrands.contains(t.errandId))
+      .toList();
+  if (constrained.isEmpty) return true;
+  return windows.any(
+    (w) =>
+        w.length == 2 &&
+        constrained.first.start >= w[0] &&
+        constrained.last.finish + buffer <= w[1],
+  );
+}
+
 /// Plain values cross the worker-isolate boundary; no coordinate leases/widgets.
 /// Times are seconds from the selected local midnight, distances stay in meters.
 Map<String, dynamic> solveDay(Map<String, dynamic> input) {
@@ -36,6 +57,9 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
       (v as List).map((w) => (w as List).cast<int>()).toList(),
     ),
   );
+  final advisoryHours = (input['hoursAdvisoryErrands'] as List? ?? [])
+      .cast<String>()
+      .toSet();
   if (departure < 0 ||
       deadline <= departure ||
       deadline >= 86400 ||
@@ -205,7 +229,7 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
           }
           final leave = finish + buffer;
           // Waiting for a known opening interval is part of service timing.
-          if (!open(key, service, leave)) {
+          if (!advisoryHours.contains(e.id) && !open(key, service, leave)) {
             final windows = hours[key];
             if (windows == null ||
                 shared ||
@@ -231,13 +255,19 @@ Map<String, dynamic> solveDay(Map<String, dynamic> input) {
           if (e.timing == TimingRule.finishBefore && actualLeave > boundary) {
             continue;
           }
-          final visitStart = shared ? previous!.tasks.first.start : service;
-          if (!open(key, visitStart, actualLeave)) continue;
           final task = ScheduledTask(e.id, service, actualFinish);
           final next = ScheduledStop(key, arrival, actualLeave, [
             if (shared) ...previous!.tasks,
             task,
           ]);
+          if (!reportedHoursFit(
+            next,
+            hours[key],
+            advisoryHours,
+            buffer: buffer,
+          )) {
+            continue;
+          }
           search(
             {...done, e.id},
             skipped,
@@ -292,6 +322,9 @@ String? validateSchedule(Map<String, dynamic> input, DaySchedule schedule) {
       .toList();
   final options = input['options'] as Map;
   final buffer = input['buffer'] as int? ?? 300;
+  final advisoryHours = (input['hoursAdvisoryErrands'] as List? ?? [])
+      .cast<String>()
+      .toSet();
   var at = input['start'] as String,
       time = input['departure'] as int,
       travel = 0;
@@ -340,13 +373,9 @@ String? validateSchedule(Map<String, dynamic> input, DaySchedule schedule) {
     if (stop.departure != earliest + buffer) {
       return 'The visit buffer is invalid.';
     }
-    final windows = (input['hours'] as Map?)?[stop.placeKey] as List?;
-    if (windows != null &&
-        !windows.any((w) {
-          final interval = (w as List).cast<int>();
-          return stop.tasks.first.start >= interval[0] &&
-              stop.departure <= interval[1];
-        })) {
+    final rawWindows = (input['hours'] as Map?)?[stop.placeKey] as List?;
+    final windows = rawWindows?.map((w) => (w as List).cast<int>()).toList();
+    if (!reportedHoursFit(stop, windows, advisoryHours, buffer: buffer)) {
       return 'The visit is outside known business hours.';
     }
     time = stop.departure;
