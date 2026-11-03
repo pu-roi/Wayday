@@ -1,13 +1,14 @@
 """Verify the actual release binary before offering it to users. No device I/O."""
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
 
-from release import ROOT, certificate_normalized, config_fingerprint, release_profile
+from release import ROOT, QUALIFICATION, certificate_normalized, config_fingerprint, release_profile
 
 
 def command(*args):
@@ -18,6 +19,9 @@ def command(*args):
 
 
 def verify(apk, channel, number, commit, certificate, *, sdk=None):
+    registered = json.loads(QUALIFICATION.read_text(encoding='utf-8'))['signingSha256']
+    if certificate_normalized(certificate) != registered:
+        raise ValueError('Candidate signing identity differs from the registered permanent certificate.')
     sdk = Path(sdk or os.environ.get('ANDROID_HOME', os.environ.get('ANDROID_SDK_ROOT', '')))
     suffix = '.bat' if os.name == 'nt' else ''
     analyzer = sdk / ('cmdline-tools/latest/bin/apkanalyzer' + suffix)
