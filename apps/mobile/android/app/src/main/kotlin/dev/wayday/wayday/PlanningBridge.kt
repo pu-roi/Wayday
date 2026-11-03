@@ -191,7 +191,13 @@ class PlanningBridge(private val activity: Activity, messenger: BinaryMessenger)
                                     providerResponseReceived = true
                                     // Retain only the status, never provider error text, keys or
                                     // request content. Reopening must not hide a known cause.
-                                    val kind = "http_$status"
+                                    val kind = if (publicGateway) runCatching {
+                                        val error = connection.errorStream?.use { String(it.readBytesBounded(2048), Charsets.UTF_8) }
+                                        when (val code = error?.let { JSONObject(it).optJSONObject("error")?.optString("code") }) {
+                                            "unsupported_contract", "contract_mismatch", "invalid_request" -> "gateway_$code"
+                                            else -> "http_$status"
+                                        }
+                                    }.getOrDefault("http_$status") else "http_$status"
                                     requestJournal.put(InterpretationJournal.Entry(cacheKey, "failed", failure = kind))
                                     main.post { if (!disposed) result.error(kind, "Gemini could not interpret these errands", null) }
                                 }
