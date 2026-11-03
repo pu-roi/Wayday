@@ -5,16 +5,19 @@ import '../../../core/data/wayday_database.dart';
 import '../../../core/data/serial_write_queue.dart';
 import '../../today/domain/day.dart';
 import '../domain/review_timing_edit.dart';
+import '../domain/review_errand_edit.dart';
 
 /// Only manual trip settings, bound to the unchanged Today source. No model
-/// output, route content, coordinates or free-text task edits are stored here.
+/// output, route content or coordinates are stored here.
 class ReviewTrip {
   ReviewTrip(
     this.date,
     this.departure,
     this.deadline, {
     Map<String, ReviewTimingEdit> timingEdits = const {},
-  }) : timingEdits = Map.unmodifiable(timingEdits) {
+    Map<String, ReviewErrandEdit> errandEdits = const {},
+  }) : timingEdits = Map.unmodifiable(timingEdits),
+       errandEdits = Map.unmodifiable(errandEdits) {
     final parsed = DateTime.tryParse(date);
     if (parsed == null ||
         calendarDate(parsed) != date ||
@@ -28,40 +31,53 @@ class ReviewTrip {
   final String date;
   final int departure, deadline;
   final Map<String, ReviewTimingEdit> timingEdits;
+  final Map<String, ReviewErrandEdit> errandEdits;
   factory ReviewTrip.fromDay(DayPlan day, {DayPlan? source}) {
     final original = {for (final e in source?.errands ?? <Errand>[]) e.id: e};
+    final edits = <String, ReviewErrandEdit>{};
+    for (final e in day.errands) {
+      final before = original[e.id];
+      if (before == null) continue;
+      final edit = ReviewErrandEdit.between(before, e);
+      if (edit.values.isNotEmpty) edits[e.id] = edit;
+    }
     return ReviewTrip(
       day.date,
       day.departure,
       day.deadline,
-      timingEdits: {
-        for (final e in day.errands)
-          if (original.containsKey(e.id) &&
-              e.confirmedFields.contains('timing') &&
-              (e.timing != original[e.id]!.timing ||
-                  e.minute != original[e.id]!.minute))
-            e.id: ReviewTimingEdit(e.timing, e.minute),
-      },
+      errandEdits: edits,
     );
   }
   DayPlan applyTripSettings(DayPlan day) =>
       day.copyWith(date: date, departure: departure, deadline: deadline);
   DayPlan apply(DayPlan day) {
     final ids = day.errands.map((e) => e.id).toSet();
-    if (timingEdits.keys.any((id) => !ids.contains(id))) {
+    if ([
+      ...timingEdits.keys,
+      ...errandEdits.keys,
+    ].any((id) => !ids.contains(id))) {
       throw const FormatException(
         'Saved errand time no longer matches the source',
       );
     }
-    return applyTripSettings(day).copyWith(
-      errands: [for (final e in day.errands) timingEdits[e.id]?.apply(e) ?? e],
-    );
+    return applyTripSettings(
+      day,
+    ).copyWith(errands: [for (final e in day.errands) applyErrand(e)]);
+  }
+
+  Errand applyErrand(Errand e) {
+    final timed = timingEdits[e.id]?.apply(e) ?? e;
+    return errandEdits[e.id]?.apply(timed) ?? timed;
   }
 
   Map<String, Object> toJson() => {
     'date': date,
     'departure': departure,
     'deadline': deadline,
+    if (errandEdits.isNotEmpty)
+      'errandEdits': {
+        for (final entry in errandEdits.entries) entry.key: entry.value.values,
+      },
     if (timingEdits.isNotEmpty)
       'errandTimes': {
         for (final entry in timingEdits.entries)
@@ -69,6 +85,10 @@ class ReviewTrip {
       },
   };
   factory ReviewTrip.fromJson(Map<String, dynamic> json) {
+    final manual = json['errandEdits'];
+    if (manual != null && manual is! Map) {
+      throw const FormatException('Invalid saved errand edits');
+    }
     final raw = json['errandTimes'];
     if (raw != null && raw is! Map) {
       throw const FormatException('Invalid saved errand times');
@@ -87,6 +107,12 @@ class ReviewTrip {
       json['departure'] as int,
       json['deadline'] as int,
       timingEdits: edits,
+      errandEdits: {
+        for (final entry in (manual as Map? ?? {}).entries)
+          entry.key as String: ReviewErrandEdit.fromJson(
+            Map<String, dynamic>.from(entry.value as Map),
+          ),
+      },
     );
   }
 }

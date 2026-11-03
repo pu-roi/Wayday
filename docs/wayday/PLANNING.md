@@ -1,5 +1,16 @@
 # Plan my day implementation plan
 
+## User-selected places and opening hours — D82
+
+The owner clarified that user-supplied destinations remain authoritative when provider opening hours differ from known access. Reported opening intervals are advisory for source-selected places and explicit branch overrides. Preserve the user's date, appointment, duration and dependencies. Show the reported hours and an access warning for a mismatch. Automatically recommended businesses continue to require their full visit and buffer to fit date-specific hours. Apply this distinction per task through preflight, solving, independent validation and road refinement, including shared stops. Permanent and temporary business-closure status remains a separate check. See [the phone investigation](evidence/user-places-hours-2026-11-03.md).
+
+Persist explicit manual-place identities separately from recommendations locked only to preserve other rows during a place change. Automatic locks retain hours enforcement. Legacy drafts without manual-place provenance remain readable and retain strict checks for nonsource choices until the user explicitly selects them. A newer place selection invalidates an older calculation.
+## Saved manual Review edits — D80
+
+Closing Review and reopening it against the same Today source restores manual errand timing, priority, notes, duration and prerequisites. Explicit defaults and cleared values remain authoritative. The existing local Review draft stores only manual differences and continues to read legacy clock-only drafts. Today and accepted trip data remain separate.
+
+Structured edits reuse the original understanding context. When restored notes differ, reopening checks for matching saved analysis without requesting generation. If matching analysis is unavailable, the user can review the saved fields and explicitly read the updated notes before building recommendations. A pending or failed draft write blocks closing and building recommendations, and failed writes offer retry with the current draft.
+
 ## Temporary trip sharing — D81
 
 Your plan exposes Share beside Close; Your trip exposes Share beside Whole trip. A source-bound two-hour snapshot preserves the exact original route, ordered task identities and selected destinations. Sharing does not change route calculation, task ordering, local completion authority or provider choice. Publish progress after its successful local commit; replacing or finishing the itinerary ends the old share. Reopening a recipient link is read-only and never populates Today. Separate consent controls each latest-only location broadcast. See [sharing implementation and acceptance evidence](evidence/trip-sharing-implementation-2026-11-03.md).

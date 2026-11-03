@@ -1,3 +1,5 @@
+import '../../errands/domain/errand.dart';
+
 /// Google display/assessment data is transient and is never template content.
 enum HoursState { notRequested, available, notProvided, failed, stale }
 
@@ -21,12 +23,14 @@ class HoursDay {
       : windows!.any((w) => seconds >= w[0] && seconds < w[1]);
   bool fits(int start, int finish) =>
       windows == null || windows!.any((w) => start >= w[0] && finish <= w[1]);
-  bool possible(int start, int end, int duration) =>
+  bool possible(int start, int end, int duration, {int? latestStart}) =>
       windows == null ||
       windows!.any(
         (w) =>
+            (latestStart == null ||
+                (w[0] > start ? w[0] : start) <= latestStart) &&
             (w[0] > start ? w[0] : start) + duration <=
-            (w[1] < end ? w[1] : end),
+                (w[1] < end ? w[1] : end),
       );
 }
 
@@ -226,10 +230,47 @@ class BusinessHours {
 
 /// Trip context is local filtering input, not another provider request.
 class HoursQuery {
-  const HoursQuery(this.date, this.departure, this.deadline, this.visitMinutes);
+  const HoursQuery(
+    this.date,
+    this.departure,
+    this.deadline,
+    this.visitMinutes, {
+    this.timing = TimingRule.anytime,
+    this.minute,
+    this.mayShareStop = true,
+  });
   final String date;
   final int departure, deadline, visitMinutes;
-  bool permits(BusinessHours hours) => hours
-      .day(date)
-      .possible(departure * 60, deadline * 60, visitMinutes * 60 + 300);
+  final TimingRule timing;
+  final int? minute;
+  final bool mayShareStop;
+
+  Object get context =>
+      (date, departure, deadline, visitMinutes, timing, minute, mayShareStop);
+
+  bool permits(BusinessHours hours) => permitsDay(hours.day(date));
+
+  bool permitsDay(HoursDay hours) {
+    final start = departure * 60;
+    final end = deadline * 60;
+    final duration = visitMinutes * 60 + 300;
+    final boundary = minute == null ? null : minute! * 60;
+    if (boundary != null && timing == TimingRule.at) {
+      return boundary >= start &&
+          boundary + duration <= end &&
+          hours.fits(boundary, boundary + duration);
+    }
+    // Arrive by constrains the stop arrival. A shared stop can start this
+    // particular task later, so its service window needs the joint solver.
+    return hours.possible(
+      start,
+      boundary != null && timing == TimingRule.finishBefore && boundary < end
+          ? boundary
+          : end,
+      duration,
+      latestStart: timing == TimingRule.arriveBy && !mayShareStop
+          ? boundary
+          : null,
+    );
+  }
 }

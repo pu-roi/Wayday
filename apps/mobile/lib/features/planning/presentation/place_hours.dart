@@ -14,12 +14,14 @@ class PlaceHours extends StatefulWidget {
     required this.place,
     this.compact = false,
     this.now,
+    this.errandId,
     super.key,
   });
   final PlanningController model;
   final PlaceIntent place;
   final bool compact;
   final DateTime Function()? now;
+  final String? errandId;
   @override
   State<PlaceHours> createState() => _PlaceHoursState();
 }
@@ -145,11 +147,18 @@ class _PlaceHoursState extends State<PlaceHours> {
               .where((s) => s.placeKey == placeKey(place))
               .firstOrNull
         : null;
+    final task = stop?.tasks
+        .where((t) => t.errandId == widget.errandId)
+        .firstOrNull;
+    final visitStart = task?.start ?? stop?.tasks.first.start;
+    final visitEnd = task != null ? task.finish + 300 : stop?.departure;
     final retryable = {
       HoursState.failed,
       HoursState.stale,
       HoursState.notRequested,
     }.contains(hours.state);
+    final advisory =
+        widget.errandId != null && model.hoursAreAdvisory(widget.errandId!);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,6 +191,12 @@ class _PlaceHoursState extends State<PlaceHours> {
           ),
         if (status != null) const SizedBox(height: 8),
         Text(summary(), style: context.type.bodyMedium),
+        if (advisory) ...[
+          const SizedBox(height: 6),
+          const Text(
+            'You chose this place. Reported hours are guidance; your scheduled visit is kept.',
+          ),
+        ],
         if (hours.usual) ...[
           const SizedBox(height: 4),
           Text(
@@ -191,14 +206,17 @@ class _PlaceHoursState extends State<PlaceHours> {
             ),
           ),
         ],
-        if (stop != null &&
+        if (visitStart != null &&
+            visitEnd != null &&
             hours.state == HoursState.available &&
             !closedStatus) ...[
           const SizedBox(height: 6),
           Text(
-            hours.fits(stop.tasks.first.start, stop.departure)
+            advisory && !hours.fits(visitStart, visitEnd)
+                ? 'Reported hours do not cover this visit. Confirm access before going.'
+                : hours.fits(visitStart, visitEnd)
                 ? '${hours.usual ? 'Usually' : 'Expected'} open for your planned visit'
-                : hours.openAt(stop.tasks.first.start) == false
+                : hours.openAt(visitStart) == false
                 ? '${hours.usual ? 'Usually closed' : 'Closed'} at your planned visit time'
                 : hours.usual
                 ? 'Usual hours end before your planned visit finishes'

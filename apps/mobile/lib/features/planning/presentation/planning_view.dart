@@ -11,7 +11,7 @@ import '../domain/planning_models.dart';
 import '../domain/clarification.dart';
 import '../domain/trip_departure.dart';
 import '../domain/planning_input_checks.dart';
-import '../domain/review_timing_edit.dart';
+import '../domain/review_errand_edit.dart';
 import 'clarification_sheet.dart';
 import '../../places/data/google_pin_cache.dart';
 import 'planning_controller.dart';
@@ -48,11 +48,17 @@ class _PlanningViewState extends ConsumerState<PlanningView>
   late final DayPlan sourceDay;
   ReviewTripRepository? tripRepository;
   String? tripStorageError;
-  Map<String, ReviewTimingEdit> pendingTimingEdits = {};
+  ReviewTrip? pendingReview;
+  late DayPlan manualDraft;
+  int tripSaveRevision = 0;
+  bool tripSavePending = false;
+  bool tripSaveFailed = false;
+  bool get tripSaveBlocked => tripSavePending || tripSaveFailed;
   bool truckConfirmed = false, saving = false;
   int? selected;
   String? localError;
   Future<void> back() async {
+    if (tripSaveBlocked) return;
     if (model.stage == PreparationStage.understanding) {
       Navigator.pop(context);
       return;
@@ -67,7 +73,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     }
     switch (model.stage) {
       case PreparationStage.failed || PreparationStage.review:
-        if (await model.saveRecommendationDraft() && mounted) {
+        if (await model.saveRecommendationDraft() &&
+            mounted &&
+            !tripSaveBlocked) {
           Navigator.pop(context);
         }
       case PreparationStage.discovery:
@@ -88,6 +96,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     sourceRevision = ref.read(todayProvider).revision;
     sourceDay =
         widget.reusable?.day ?? widget.initial ?? ref.read(todayProvider);
+    manualDraft = sourceDay;
     if (widget.initial == null &&
         widget.history == null &&
         widget.reusable == null) {
@@ -123,11 +132,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       final saved = await tripRepository?.read(sourceDay);
       if (!mounted) return;
       if (saved != null) {
-        saved.apply(
-          model.day,
-        ); // Validate references before starting interpretation.
+        manualDraft = saved.apply(sourceDay);
         model.day = saved.applyTripSettings(model.day);
-        pendingTimingEdits = saved.timingEdits;
+        pendingReview = saved;
       }
     } catch (_) {
       if (!mounted) return;
@@ -138,17 +145,16 @@ class _PlanningViewState extends ConsumerState<PlanningView>
   }
 
   Future<void> understand({bool retry = false, bool savedOnly = false}) async {
-    await model.understand(retry: retry, savedOnly: savedOnly);
+    await model.understand(
+      retry: retry,
+      savedOnly: savedOnly,
+      restoredReview: pendingReview,
+    );
     if (mounted && model.interpretation != null) {
       await model.restoreHistoryAnswers(widget.history);
     }
     if (!mounted || model.stage != PreparationStage.review) return;
-    final edits = pendingTimingEdits;
-    pendingTimingEdits = {};
-    for (final e in model.day.errands) {
-      final edit = edits[e.id];
-      if (edit != null) model.edit(edit.apply(e));
-    }
+    pendingReview = null;
     if (mounted && model.interpretation != null) {
       await model.clarifications.resumeSaved(
         model.reviewErrands.map(model.questionContext),
@@ -161,26 +167,46 @@ class _PlanningViewState extends ConsumerState<PlanningView>
   }
 
   Future<void> saveTripSettings() async {
+    final repository = tripRepository;
+    if (repository == null) return;
+    final revision = ++tripSaveRevision;
+    setState(() => tripSavePending = true);
     try {
-      await tripRepository?.save(
+      await repository.save(
         sourceDay,
-        model.manualReviewDay.copyWith(
-          errands: model.manualReviewDay.errands
-              .where(
-                (e) => sourceDay.errands.any((source) => source.id == e.id),
-              )
-              .toList(),
+        manualDraft.copyWith(
+          date: model.day.date,
+          departure: model.day.departure,
+          deadline: model.day.deadline,
         ),
       );
-      if (mounted) setState(() => tripStorageError = null);
+      if (mounted && revision == tripSaveRevision) {
+        setState(() {
+          tripStorageError = null;
+          tripSaveFailed = false;
+        });
+      }
     } catch (_) {
-      if (mounted) {
-        setState(
-          () => tripStorageError =
-              'Your review changes could not be saved. Retry saving before closing.',
-        );
+      if (mounted && revision == tripSaveRevision) {
+        setState(() {
+          tripSaveFailed = true;
+          tripStorageError =
+              'Your review changes could not be saved. Retry saving before continuing.';
+        });
+      }
+    } finally {
+      if (mounted && revision == tripSaveRevision) {
+        setState(() => tripSavePending = false);
       }
     }
+  }
+
+  void recordManualEdit(String id, ReviewErrandEdit edit) {
+    manualDraft = manualDraft.copyWith(
+      errands: [
+        for (final e in manualDraft.errands) e.id == id ? edit.apply(e) : e,
+      ],
+    );
   }
 
   void changed() {
@@ -246,15 +272,31 @@ class _PlanningViewState extends ConsumerState<PlanningView>
       allowRemoval: false,
     );
     if (!mounted) return;
-    if (result case SavedErrand(:final errand)) {
+    if (result case SavedErrand(:final errand, :final touchedFields)) {
+      final edit = ReviewErrandEdit.between(e, errand, touched: touchedFields);
+      recordManualEdit(errand.id, edit);
       final oldPlace = clarificationHash(
         model.reviewInput(e).placeIntent.toJson(),
       );
-      model.edit(errand);
+      final baseline = model.reviewInput(e);
+      model.edit(
+        edit
+            .apply(baseline)
+            .copyWith(
+              title: errand.title,
+              place: errand.place,
+              placeIntent: errand.placeIntent,
+              confirmedFields: {
+                ...baseline.confirmedFields,
+                ...errand.confirmedFields.difference(e.confirmedFields),
+              },
+            ),
+      );
+      final savingEdits = saveTripSettings();
       if (oldPlace != clarificationHash(errand.placeIntent.toJson())) {
         await model.confirmPlace(errand, errand.placeIntent);
       }
-      await saveTripSettings();
+      await savingEdits;
     }
   }
 
@@ -366,6 +408,14 @@ class _PlanningViewState extends ConsumerState<PlanningView>
             minute: minute,
             confirmedFields: {...e.confirmedFields, 'timing'},
           );
+      recordManualEdit(
+        e.id,
+        ReviewErrandEdit.between(
+          model.reviewInput(e),
+          value,
+          touched: {'timing'},
+        ),
+      );
       model.edit(value);
       await saveTripSettings();
       await model.clarifications.applyStructured(
@@ -387,6 +437,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
     onDefer: (e) => clarify(e, deferOnly: true),
     onLocation: (e) => location(errand: e),
     onChanged: changed,
+    onReadUpdatedNotes: tripSaveBlocked ? null : model.understand,
     tripDetails: ReviewTripDetails(
       day: model.day,
       initiallyExpanded:
@@ -436,7 +487,9 @@ class _PlanningViewState extends ConsumerState<PlanningView>
           notice('Include at least one errand to plan this day.'),
         button(
           'Build recommendations',
-          tripDepartureHasPassed(model.day) ||
+          tripSaveBlocked ||
+                  model.interpretationStale ||
+                  tripDepartureHasPassed(model.day) ||
                   model.reviewOrder.issue != null ||
                   model.inputIssues.isNotEmpty ||
                   model.clarifications.storageError != null
@@ -629,6 +682,7 @@ class _PlanningViewState extends ConsumerState<PlanningView>
                     model.proposalReady &&
                     !model.busy &&
                     !saving &&
+                    !tripSaveBlocked &&
                     model.recommendationStorageError == null &&
                     !model.recommendationSavePending,
                 snapshot: () async {
@@ -638,11 +692,15 @@ class _PlanningViewState extends ConsumerState<PlanningView>
                 },
               ),
             TextButton(
-              onPressed: () async {
-                if (await model.saveRecommendationDraft() && context.mounted) {
-                  Navigator.pop(context);
-                }
-              },
+              onPressed: tripSaveBlocked
+                  ? null
+                  : () async {
+                      if (await model.saveRecommendationDraft() &&
+                          context.mounted &&
+                          !tripSaveBlocked) {
+                        Navigator.pop(context);
+                      }
+                    },
               child: const Text('Close'),
             ),
           ],

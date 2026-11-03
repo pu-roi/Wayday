@@ -13,23 +13,43 @@ import 'helpers/planning_fixtures.dart';
 
 void main() {
   test(
-    'restart restores only manually confirmed source-errand clocks',
+    'restart restores manual source fields including explicit resets',
     () async {
       final dir = await Directory.systemTemp.createTemp('wayday-review-times-');
       final file = File('${dir.path}/times.sqlite');
       var db = WaydayDatabase(NativeDatabase(file));
-      final source = fixture();
+      final base = fixture();
+      final source = base.copyWith(
+        errands: [
+          base.errands.first.copyWith(
+            timing: TimingRule.at,
+            minute: 840,
+            notes: 'Old notes',
+            optional: true,
+            afterErrandIds: ['b'],
+          ),
+          base.errands.last,
+        ],
+      );
       final manual = source.errands.first.copyWith(
-        timing: TimingRule.arriveBy,
-        minute: 840,
-        confirmedFields: {'timing'},
-        notes: 'not retained',
+        timing: TimingRule.anytime,
+        clearTime: true,
+        confirmedFields: {
+          'timing',
+          'notes',
+          'duration',
+          'optional',
+          'dependencies',
+        },
+        notes: '',
+        optional: false,
+        afterErrandIds: [],
         durationMinutes: 99,
       );
       final draft = source.copyWith(
         errands: [
           manual,
-          source.errands.last.copyWith(timing: TimingRule.at, minute: 900),
+          source.errands.last,
           const Errand(
             id: 'extra',
             title: 'Not a source errand',
@@ -45,15 +65,13 @@ void main() {
       try {
         final saved = (await SqliteReviewTripRepository(db).read(source))!;
         final restored = saved.apply(source);
-        expect(restored.errands.first.minute, 840);
-        expect(restored.errands.first.confirmedFields, contains('timing'));
-        expect(restored.errands.first.notes, source.errands.first.notes);
         expect(
-          restored.errands.first.durationMinutes,
-          source.errands.first.durationMinutes,
+          restored.errands.first.toJson()..remove('confirmedFields'),
+          manual.toJson()..remove('confirmedFields'),
         );
+        expect(restored.errands.first.confirmedFields, manual.confirmedFields);
         expect(restored.errands.last.minute, isNull);
-        expect(saved.timingEdits.keys, ['a']);
+        expect(saved.errandEdits.keys, ['a']);
         expect(
           interpretationRequest(saved.applyTripSettings(source)),
           interpretationRequest(source),
@@ -70,7 +88,7 @@ void main() {
         );
         await SqliteReviewTripRepository(db).save(source, source);
         expect(
-          (await SqliteReviewTripRepository(db).read(source))!.timingEdits,
+          (await SqliteReviewTripRepository(db).read(source))!.errandEdits,
           isEmpty,
         );
       } finally {
@@ -96,6 +114,17 @@ void main() {
           throwsFormatException,
         );
       }
+      expect(
+        ReviewTrip.fromJson({
+          'date': '2026-12-01',
+          'departure': 510,
+          'deadline': 1080,
+          'errandTimes': {
+            'a': {'timing': 'at', 'minute': 900},
+          },
+        }).apply(fixture()).errands.first.minute,
+        900,
+      );
       expect(
         ReviewTrip.fromJson({
           'date': '2026-12-01',
