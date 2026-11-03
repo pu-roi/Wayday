@@ -34,11 +34,9 @@ void main() {
       final map = GoogleTripMapPort(controller);
       final segments = [
         for (final latitude in [13.5, 15.6])
-          nav.RouteSegment(
-            destinationLatLng: nav.LatLng(latitude: latitude, longitude: 121.1),
-            latLngs: [nav.LatLng(latitude: latitude, longitude: 121.0)],
-            destinationWaypoint: null,
-          ),
+          NavigationLeg([
+            NavigationCoordinate(latitude: latitude, longitude: 121.0),
+          ]),
       ];
       await map.overview(segments, [
         TripWaypoint(pin, ['a']),

@@ -121,9 +121,15 @@ class _CurrentErrand extends StatelessWidget {
 }
 
 class TripStatus extends StatelessWidget {
-  const TripStatus({required this.model, required this.onResume, super.key});
+  const TripStatus({
+    required this.model,
+    required this.onResume,
+    this.onProviders,
+    super.key,
+  });
   final TripSession model;
   final VoidCallback onResume;
+  final VoidCallback? onProviders;
   @override
   Widget build(BuildContext context) => ConstrainedBox(
     constraints: BoxConstraints(
@@ -138,7 +144,10 @@ class TripStatus extends StatelessWidget {
           Semantics(
             liveRegion: true,
             child: Text(
-              model.error ??
+              (model.switching
+                      ? 'Preparing your selected map and navigation…'
+                      : null) ??
+                  model.error ??
                   (model.gpsLost
                       ? 'Searching for GPS. Your position is uncertain; the route is kept.'
                       : switch (model.stage) {
@@ -156,10 +165,17 @@ class TripStatus extends StatelessWidget {
               padding: EdgeInsets.only(top: 8),
               child: LinearProgressIndicator(),
             ),
-          if (!model.busy && !model.active)
+          if (!model.busy && (!model.active || model.placeDetailsUnavailable))
             TextButton(
               onPressed: onResume,
-              child: const Text('Resume guidance'),
+              child: Text(
+                model.active ? 'Retry place details' : 'Resume guidance',
+              ),
+            ),
+          if (!model.busy && model.error != null && onProviders != null)
+            TextButton(
+              onPressed: onProviders,
+              child: const Text('Map & navigation'),
             ),
         ],
       ),

@@ -14,25 +14,28 @@ class FakeNavigationDriver implements NavigationDriver {
   List<TripWaypoint> points = [];
   int initializations = 0;
   Completer<void>? advancing;
-  Completer<List<nav.RouteSegment>>? pendingSegments;
+  Completer<List<NavigationLeg>>? pendingSegments;
   bool failAdvance = false;
   Completer<nav.NavigationRouteStatus>? pending;
   nav.NavigationRouteStatus status = nav.NavigationRouteStatus.statusOk;
   @override
   Stream<NavigationSignal> get events => signals.stream;
   @override
-  Future<void> initialize(nav.TermsAndConditionsUIParams? colors) async {
+  Future<void> initialize(NavigationAppearance? colors) async {
     initializations++;
   }
 
   @override
-  Future<nav.NavigationRouteStatus> destinations(
+  Future<void> destinations(
     List<TripWaypoint> values,
     TravelProfile profile,
   ) async {
     requests++;
     points = values;
-    return pending == null ? status : await pending!.future;
+    final value = pending == null ? status : await pending!.future;
+    if (value != nav.NavigationRouteStatus.statusOk) {
+      throw TripNavigation.routeFailure(value);
+    }
   }
 
   @override
@@ -48,7 +51,7 @@ class FakeNavigationDriver implements NavigationDriver {
   }
 
   @override
-  Future<List<nav.RouteSegment>> segments() async =>
+  Future<List<NavigationLeg>> segments() async =>
       pendingSegments == null ? [] : await pendingSegments!.future;
   @override
   Future<void> stop() async {

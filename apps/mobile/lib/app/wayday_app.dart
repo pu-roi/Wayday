@@ -8,6 +8,8 @@ import '../core/data/persist_safely.dart';
 import '../core/widgets/shell_tab_activity.dart';
 import 'settings_view.dart';
 import 'theme.dart';
+import '../features/planning/data/navigation_target_resolver.dart';
+import '../features/planning/data/navigation_target_maintenance.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -77,6 +79,9 @@ class WaydayApp extends ConsumerWidget {
   const WaydayApp({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (uiKitNavigationTargetsEnabled) {
+      ref.watch(navigationTargetMaintenanceProvider);
+    }
     return MaterialApp.router(
       title: 'Wayday',
       debugShowCheckedModeBanner: false,

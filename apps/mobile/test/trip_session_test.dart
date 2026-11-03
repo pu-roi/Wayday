@@ -13,14 +13,16 @@ import 'trip_navigation_test.dart' show FakeNavigationDriver;
 
 class FakeTripMap implements TripMapPort {
   int follows = 0, overviews = 0;
-  Completer<nav.LatLng?>? fix;
+  Completer<NavigationCoordinate?>? fix;
   List<TripWaypoint> overviewPoints = [];
   @override
-  Future<nav.LatLng?> location() async => fix == null
-      ? const nav.LatLng(latitude: 14.58, longitude: 121.06)
+  Future<NavigationCoordinate?> location() async => fix == null
+      ? const NavigationCoordinate(latitude: 14.58, longitude: 121.06)
       : await fix!.future;
   @override
   Future<void> enable() async {}
+  @override
+  Future<void> disable() async {}
   @override
   Future<void> follow(TravelProfile profile) async {
     follows++;
@@ -28,7 +30,7 @@ class FakeTripMap implements TripMapPort {
 
   @override
   Future<void> overview(
-    List<nav.RouteSegment> segments,
+    List<NavigationLeg> segments,
     List<TripWaypoint> points,
   ) async {
     overviews++;
@@ -62,7 +64,7 @@ TripSession tripSession(
     driver: driver,
   ),
   acquireLocation: () async =>
-      const nav.LatLng(latitude: 14.58, longitude: 121.06),
+      const NavigationCoordinate(latitude: 14.58, longitude: 121.06),
   save: save ?? (_) async {},
   mapTimeout: timeout ?? const Duration(seconds: 10),
   locationTimeout: timeout ?? const Duration(seconds: 30),
@@ -132,7 +134,7 @@ void main() {
       driver.signals.add(
         const NavigationSignal(
           NavigationSignalKind.arrival,
-          target: nav.LatLng(latitude: 14.58, longitude: 121.06),
+          target: NavigationCoordinate(latitude: 14.58, longitude: 121.06),
         ),
       );
       expect(model.arrived, isTrue);

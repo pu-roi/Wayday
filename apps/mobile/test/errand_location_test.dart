@@ -402,7 +402,8 @@ void main() {
   });
 
   testWidgets('a late address does not replace a newer pin', (tester) async {
-    final adapter = _ReverseAdapter()..pending = Completer();
+    final oldAddress = Completer<List<PlaceSearchResult>>();
+    final adapter = _ReverseAdapter()..pending = oldAddress;
     final search = CombinedPlaceSearch([
       adapter,
     ], QuotaLedger(read: () async => null, write: (_) async {}));
@@ -448,7 +449,10 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Confirm location'));
     await tester.pump();
-    adapter.pending!.complete([
+    // Only the original request receives the old response. The queued request
+    // for the newer pin must not reuse the same completed fixture future.
+    adapter.pending = null;
+    oldAddress.complete([
       const PlaceSearchResult(
         name: 'Old road',
         latitude: 14.5995,
