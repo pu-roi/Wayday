@@ -107,7 +107,11 @@ void main() {
       await tester.ensureVisible(find.text('Save'));
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
-      expect((await trips.read(source))!.timingEdits['a']!.minute, 870);
+      final saved = await trips.read(source);
+      expect(saved, isNotNull);
+      final savedErrand = saved!.apply(source).errands.single;
+      expect(savedErrand.timing, TimingRule.arriveBy);
+      expect(savedErrand.minute, 870);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
       await db.close();
