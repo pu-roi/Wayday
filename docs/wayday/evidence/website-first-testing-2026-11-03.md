@@ -7,3 +7,14 @@ The selected 103401 candidates are the same permanent-signed binaries previously
 Red regressions reproduced rejection of explicitly authorized preview metadata; green checks validate acceptance only with explicit owner approval, exact profile/configuration/certificate and honest pending status. Selected-artifact tests reject mismatched provenance, failed source verification, changed ZIP bytes and unexpected archive paths. Browser checks verify the ordinary button, pending status and absence of qualification claims alongside existing qualified/incomplete states.
 
 Delivery evidence is appended after the main-only selected-artifact action completes. No phone operation, paid provider request, credential/billing change or qualification attestation is part of this work.
+
+
+## Live website delivery
+
+PR 16 passed all five protected checks and merged as 02a23edbf3e73f9ae7318ea0858ffeac21daa4f1. Local verification passed 136 API/release tests with seven existing foundation skips, four website unit tests, the production website build and fourteen browser checks including the preview download state. A later workflow-context regression also passed. No mobile or gateway runtime source changed.
+
+Main-only workflow [41595897357](https://github.com/pu-roi/Wayday/actions/runs/41595897357) verified and published the selected permanent-signed 103401 candidates and deployed Pages. The first attempt created a draft but the subsequent public tag lookup returned 404; the authenticated release listing retained the correct draft. Explicit failed-job retry resumed that draft and succeeded without replacing any immutable artifact or creating another release. A regression reproduced that draft lookup failure and its recovery; publisher lookup is corrected to use the authenticated draft-inclusive listing after creation.
+
+The redundant automatic main build run was explicitly cancelled for this selected-artifact delivery; all five protected checks for the merged tree had already passed before merge. No checks or protections were removed, no publication flags changed, and no new app rebuild/provider request/phone operation was used to publish the chosen candidate.
+
+The live website release-status.json reports version 103401, qualified false, previewApproved true and official-phone-pending. Its compiled button targets the [official 103401 APK](https://github.com/pu-roi/Wayday/releases/download/dev-103401/wayday.apk). The public release is no longer a draft; its source remains the actual APK commit 5992ced220e27c7dc8332e41815f98a43da6b291. GitHub's asset digest and size match the verified APK, the published checksum matches, and a ranged download returned HTTP 206 and the APK ZIP header. The exact official APK SHA-256 remains 0753399abd6a217df10343a55046fd379e3e3b6e7b6927223206eb0a616ec616. The workflow's public Pages smoke check passed. Official app phone results remain pending; the user may now test using the website button as requested.
