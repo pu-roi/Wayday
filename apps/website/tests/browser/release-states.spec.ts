@@ -17,13 +17,17 @@ test("qualified and incomplete release metadata produce honest download states",
     sha256: "a".repeat(64),
     compatibility: "Fixture compatibility, not public qualification",
   };
-  for (const complete of [true, false]) {
-    const folder = resolve(`.qa/${complete ? "available" : "incomplete"}`);
+  for (const state of ["available", "incomplete", "preview"]) {
+    const complete = state !== "incomplete";
+    const preview = state === "preview";
+    const folder = resolve(`.qa/${state}`);
     mkdirSync(folder, { recursive: true });
     const metadata = resolve(folder, "release.json");
     writeFileSync(
       metadata,
-      JSON.stringify({ ...fixture, sha256: complete ? fixture.sha256 : "" }),
+      JSON.stringify({ ...fixture, sha256: complete ? fixture.sha256 : "",
+        ...(preview ? { qualified: false, previewApproved: true,
+          verificationStatus: "official-phone-pending" } : {}) }),
     );
     execFileSync(
       process.execPath,
@@ -71,8 +75,12 @@ test("qualified and incomplete release metadata produce honest download states",
           "is available",
         );
         await expect(page.locator(".download-status")).toHaveText(
-          "Public development release",
+          preview ? "Development preview · phone verification pending" : "Public development release",
         );
+        if (preview) {
+          await expect(page.locator("#download-intro")).toContainText("verification is pending");
+          await expect(page.locator("#faq details p").first()).not.toContainText("qualified Android");
+        }
       } else {
         await expect(page.locator("#release-panel")).toHaveText(
           "Download coming soon",

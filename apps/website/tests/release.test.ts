@@ -20,6 +20,13 @@ test("release is unavailable by default and without explicit qualification", () 
 });
 test("a complete qualified release is available", () =>
   assert.deepEqual(qualifiedRelease(valid), valid));
+test("an authorized preview remains explicitly unqualified", () => {
+  const preview = { ...valid, qualified: false, previewApproved: true,
+    verificationStatus: "official-phone-pending" };
+  assert.deepEqual(qualifiedRelease(preview), preview);
+  assert.equal(qualifiedRelease({ ...preview, previewApproved: false }), null);
+  assert.equal(qualifiedRelease({ ...preview, verificationStatus: "unknown" }), null);
+});
 test("incomplete, malformed and foreign download metadata fails closed", () => {
   for (const patch of [
     { sha256: "invalid" },

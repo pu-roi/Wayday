@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[2]
 REPOSITORY = "pu-roi/Wayday"
 QUALIFICATION = ROOT / "docs/wayday/evidence/public-release-qualification.json"
+PREVIEW_AUTHORIZATION = ROOT / 'docs/wayday/evidence/website-preview-authorization.json'
 PUBLIC_KEYS = (
     "WAYDAY_GATEWAY_URL",
     "GOOGLE_MAPS_ANDROID_API_KEY",
@@ -156,8 +157,40 @@ def qualification(certificate):
     return record
 
 
+def publication_authorization(certificate):
+    if not PREVIEW_AUTHORIZATION.exists():
+        return qualification(certificate)
+    record = json.loads(PREVIEW_AUTHORIZATION.read_text(encoding='utf-8'))
+    if (record.get('mode') != 'website-first-development-preview'
+            or record.get('ownerApproved') is not True
+            or record.get('officialPhoneVerified') is not False
+            or record.get('testAppUserReportedTested') is not True
+            or not record.get('evidence') or not record.get('compatibility')):
+        raise ValueError('Website preview requires explicit owner authorization and honest phone status.')
+    if record.get('releaseProfile') != release_profile():
+        raise ValueError('Preview release profile differs from the approved profile.')
+    if record.get('signingSha256') != certificate_normalized(certificate):
+        raise ValueError('Preview signing certificate differs from the registered identity.')
+    expected = {c: config_fingerprint(public_defines(channel=c)) for c in ('public', 'test')}
+    if record.get('channelConfigFingerprints') != expected:
+        raise ValueError('Preview channel configurations differ from the reviewed configurations.')
+    return record
+
+
+def publication_status(record):
+    if record.get('mode') == 'website-first-development-preview':
+        return {'qualified': False, 'previewApproved': True,
+                'verificationStatus': 'official-phone-pending'}
+    return {'qualified': True}
+
+
 def valid_manifest(value):
-    if not isinstance(value, dict) or value.get("qualified") is not True:
+    if not isinstance(value, dict) or not (
+        value.get('qualified') is True or (
+            value.get('qualified') is False and value.get('previewApproved') is True
+            and value.get('verificationStatus') == 'official-phone-pending'
+        )
+    ):
         return False
     try:
         apk, notes = value["apkUrl"], value["notesUrl"]
@@ -237,11 +270,11 @@ def main():
             )
         )
     elif args.operation == "qualify":
-        qualification(args.certificate)
+        publication_authorization(args.certificate)
     elif args.operation == "latest":
         write(args.output, latest_release())
     else:
-        record = qualification(args.certificate)
+        record = publication_authorization(args.certificate)
         number = args.number or build_number(
             int(os.environ["GITHUB_RUN_NUMBER"]), int(os.environ["GITHUB_RUN_ATTEMPT"])
         )
@@ -251,7 +284,7 @@ def main():
         write(
             args.output,
             {
-                "qualified": True,
+                **publication_status(record),
                 "tag": tag,
                 "version": f"0.1.0+{number}",
                 "versionCode": number,
