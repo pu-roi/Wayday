@@ -8,6 +8,8 @@ Implemented the owner’s request to test official delivery through the website 
 
 The selected 103401 release and Pages deployment are live through workflow 41595897357 after explicit draft recovery. The normal button, metadata, GitHub asset digest, checksum and ranged APK download were verified. Official-phone verification is still explicitly pending. A failing draft-tag regression led to using the authenticated draft-inclusive listing for initial publication too.
 
+The next automatic main release exposed a second immediate-draft lookup failure. Authenticated inspection verified dev-104501 belonged to the correct source and had no uploaded assets. Explicit failed-job retry completed APK and Pages publication in workflow 41599623221 without a rebuild. The permanent fix validates the release creation response directly; stale-list and invalid-response regressions pass alongside all 58 distribution tests. The preview continues to report official-phone verification pending. See the same evidence for exact failure attribution and recovery.
+
 ### [2026-11-03] Coordinated release repair — D77
 
 Restored production errand-v2 compatibility with workflow 41577924437 and explicit traffic promotion while preserving the navigation-test tag and accounting. Shared public/test profile, artifact verification and live contract/capability gates are implemented. Qualification and publication remain distinct from source checks; see [release evidence](evidence/coordinated-release-repair-2026-11-03.md). The completed D78 UI cleanup is now included in this release checkout.

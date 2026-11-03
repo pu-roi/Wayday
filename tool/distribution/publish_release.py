@@ -54,18 +54,19 @@ def publish(directory, *, candidate_commit=None):
     if existing and existing['target_commitish'] != commit:
         raise ValueError('Release tag already belongs to another source commit.')
     if not existing:
-        notes = directory / 'notes.md'
-        notes.write_text('Android development preview. Install each APK as an update to its matching app.\n\n'
+        notes = ('Android development preview. Install each APK as an update to its matching app.\n\n'
                          + 'Source commit: ' + commit + '\n\nWayday and Wayday Test share the same logo, interface and navigation features.\n'
                          + ('\nOwner-approved website testing preview. The owner reports testing Wayday Test; official-app phone verification is pending.\n'
                             if authorization.get('mode') == 'website-first-development-preview' else ''))
-        gh('release', 'create', tag, '--repo', REPOSITORY, '--target', commit, '--draft', '--prerelease',
-           '--title', 'Wayday development ' + str(number), '--notes-file', str(notes))
-        # A new draft may not resolve through the public tag endpoint. The
-        # authenticated release listing includes drafts and supports recovery.
-        releases = json.loads(gh('api', f'repos/{REPOSITORY}/releases?per_page=100'))
-        existing = next((x for x in releases if x['tag_name'] == tag), None)
-        if not existing or existing['target_commitish'] != commit:
+        request = directory / 'release-request.json'
+        write(request, {'tag_name': tag, 'target_commitish': commit, 'draft': True,
+                        'prerelease': True, 'name': 'Wayday development ' + str(number), 'body': notes})
+        # Validate the creation response itself. Immediate tag and list reads
+        # can both omit a newly created draft even though creation succeeded.
+        existing = json.loads(gh('api', f'repos/{REPOSITORY}/releases', '--method', 'POST', '--input', str(request)))
+        if (not isinstance(existing, dict) or type(existing.get('id')) is not int
+                or existing.get('tag_name') != tag or existing.get('target_commitish') != commit
+                or existing.get('draft') is not True or existing.get('assets') != []):
             raise ValueError('New draft release could not be verified against its source.')
     # Never overwrite an uploaded APK. Partial uploads are resumed by checksum.
     for path in files:

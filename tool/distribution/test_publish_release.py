@@ -38,9 +38,9 @@ def test_partial_release_resumes_without_overwriting_and_publishes_only_complete
         if args[0] == 'api':
             if '/releases?' in args[1]: return json.dumps([state['release']] if state['release'] else [])
             if '/releases/tags/' in args[1]: raise RuntimeError('Draft release is not visible through the public tag endpoint')
+            assert args[args.index('--method') + 1] == 'POST'
+            state['release'] = {'id': 42, 'tag_name': 'dev-200000', 'target_commitish': 'a' * 40, 'draft': True, 'assets': []}
             return json.dumps(state['release'])
-        if args[1] == 'create':
-            state['release'] = {'tag_name': args[2], 'target_commitish': 'a' * 40, 'draft': True, 'assets': []}
         elif args[1] == 'upload':
             p = Path(args[3])
             if state['fail'] and len(state['uploads']) == 2:
@@ -80,3 +80,39 @@ def test_failed_readiness_never_creates_or_uploads_release(monkeypatch, tmp_path
         monkeypatch.setattr(publication, 'verify_gateway', reject)
     with pytest.raises(ValueError): publication.publish(directory)
     assert not calls
+
+
+@pytest.mark.parametrize('invalid', [None, 'source', 'tag', 'published', 'identity'])
+def test_new_release_uses_creation_response_even_when_listing_is_stale(monkeypatch, tmp_path, invalid):
+    directory = fixture(monkeypatch, tmp_path)
+    release = {'id': 42, 'tag_name': 'dev-200000', 'target_commitish': 'a' * 40,
+               'draft': True, 'assets': []}
+    if invalid == 'source': release['target_commitish'] = 'c' * 40
+    if invalid == 'tag': release['tag_name'] = 'dev-200001'
+    if invalid == 'published': release['draft'] = False
+    if invalid == 'identity': release.pop('id')
+    uploads = []
+    def gh(*args):
+        if args[0] == 'api' and '--method' not in args:
+            assert '/releases?' in args[1]
+            return '[]'  # Creation has not propagated to the listing yet.
+        if args[:2] == ('release', 'create') or (args[0] == 'api' and '--method' in args):
+            if args[0] == 'api':
+                payload = json.loads(Path(args[args.index('--input') + 1]).read_text())
+                assert payload['tag_name'] == 'dev-200000'
+                assert payload['target_commitish'] == 'a' * 40
+                assert payload['draft'] is True and payload['prerelease'] is True
+            return json.dumps(release)
+        if args[:2] == ('release', 'upload'):
+            uploads.append(Path(args[3]).name)
+        elif args[:2] == ('release', 'edit'):
+            assert len(uploads) == 6
+        else: raise AssertionError(args)
+        return ''
+    monkeypatch.setattr(publication, 'gh', gh)
+    if invalid:
+        with pytest.raises(ValueError): publication.publish(directory)
+        assert not uploads
+    else:
+        publication.publish(directory)
+        assert len(uploads) == 6
