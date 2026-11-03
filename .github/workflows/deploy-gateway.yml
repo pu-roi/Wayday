@@ -1,5 +1,6 @@
-name: Deploy reviewed Wayday gateway
+name: Deploy compatible Wayday gateways
 on:
+  workflow_call:
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,42 +14,41 @@ jobs:
     runs-on: ubuntu-latest
     environment: public-cloud
     env:
-      PROJECT: ${{ vars.WAYDAY_GOOGLE_CLOUD_PROJECT }}
+      WAYDAY_GOOGLE_CLOUD_PROJECT: ${{ vars.WAYDAY_GOOGLE_CLOUD_PROJECT }}
+      WAYDAY_GATEWAY_URL: ${{ vars.WAYDAY_GATEWAY_URL }}
+      WAYDAY_TEST_GATEWAY_URL: ${{ vars.WAYDAY_TEST_GATEWAY_URL }}
+      WAYDAY_TEST_FIREBASE_APP_ID: ${{ vars.WAYDAY_TEST_FIREBASE_APP_ID }}
       REGION: asia-southeast1
-      RUNTIME_ACCOUNT: ${{ vars.WAYDAY_RUNTIME_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
-      - run: pip install -r services/api/requirements-gateway.lock && python -m pytest services/api/tests/test_gateway.py services/api/tests/test_gateway_ledger.py services/api/tests/test_gateway_providers.py -q
+      - run: pip install -r services/api/requirements-gateway.lock && python -m pytest services/api/tests/test_gateway.py services/api/tests/test_gateway_ledger.py services/api/tests/test_gateway_providers.py services/api/tests/test_errand_contracts.py services/api/tests/test_release_capabilities.py services/api/tests/test_alternative_endpoint.py services/api/tests/test_alternative_routing.py tool/distribution/test_release_coordination.py -q
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         with:
           workload_identity_provider: ${{ vars.WAYDAY_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.WAYDAY_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
-      - name: Build and push the dedicated gateway image
+      - name: Build or reuse the immutable source image
         run: |
           set -euo pipefail
           gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
-          image="$REGION-docker.pkg.dev/$PROJECT/wayday/gateway:$GITHUB_SHA"
-          docker build -f services/api/Dockerfile.gateway -t "$image" services/api
-          docker push "$image"
-          echo "GATEWAY_IMAGE=$image" >> "$GITHUB_ENV"
-      - uses: google-github-actions/deploy-cloudrun@2028e2d7d30a78c6910e0632e48dd561b064884d # v3
+          image="$REGION-docker.pkg.dev/$WAYDAY_GOOGLE_CLOUD_PROJECT/wayday/gateway:$GITHUB_SHA"
+          if ! gcloud artifacts docker images describe "$image" --format='value(image_summary.digest)' > "$RUNNER_TEMP/image-digest" 2>/dev/null; then
+            docker build -f services/api/Dockerfile.gateway -t "$image" services/api
+            docker push "$image"
+            gcloud artifacts docker images describe "$image" --format='value(image_summary.digest)' > "$RUNNER_TEMP/image-digest"
+          fi
+          digest=$(cat "$RUNNER_TEMP/image-digest")
+          test -n "$digest"
+          echo "GATEWAY_IMAGE=${image%:*}@$digest" >> "$GITHUB_ENV"
+      - name: Verify candidates and explicitly promote both channels
+        run: python tool/distribution/deploy_gateway.py --image "$GATEWAY_IMAGE" --commit "$GITHUB_SHA" --output "$RUNNER_TEMP/gateway-delivery.json"
+      - name: Retain deployment stages including partial failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          service: wayday-gateway
-          project_id: ${{ env.PROJECT }}
-          region: ${{ env.REGION }}
-          image: ${{ env.GATEWAY_IMAGE }}
-          flags: --min-instances=0 --max-instances=1 --concurrency=4 --cpu=1 --memory=512Mi --timeout=60s --cpu-throttling --allow-unauthenticated --service-account=${{ env.RUNTIME_ACCOUNT }}
-          env_vars: |
-            GOOGLE_CLOUD_PROJECT=${{ env.PROJECT }}
-            WAYDAY_FIREBASE_APP_IDS=${{ vars.WAYDAY_FIREBASE_APP_ID }}
-            WAYDAY_PUBLIC_LEDGER_DOCUMENT=${{ vars.WAYDAY_PUBLIC_LEDGER_DOCUMENT }}
-          env_vars_update_strategy: overwrite
-          secrets: |
-            GEMINI_API_KEY=${{ vars.WAYDAY_GEMINI_SECRET_VERSION }}
-            GOOGLE_ROUTES_SERVER_API_KEY=${{ vars.WAYDAY_ROUTES_SECRET_VERSION }}
-            GEOAPIFY_API_KEY=${{ vars.WAYDAY_GEOAPIFY_SECRET_VERSION }}
-            LOCATIONIQ_API_KEY=${{ vars.WAYDAY_LOCATIONIQ_SECRET_VERSION }}
+          name: gateway-delivery
+          path: ${{ runner.temp }}/gateway-delivery.json
+          overwrite: true
