@@ -1,5 +1,9 @@
 # Plan my day implementation plan
 
+## Temporary trip sharing — D81
+
+Your plan exposes Share beside Close; Your trip exposes Share beside Whole trip. A source-bound two-hour snapshot preserves the exact original route, ordered task identities and selected destinations. Sharing does not change route calculation, task ordering, local completion authority or provider choice. Publish progress after its successful local commit; replacing or finishing the itinerary ends the old share. Reopening a recipient link is read-only and never populates Today. Separate consent controls each latest-only location broadcast. See [sharing implementation and acceptance evidence](evidence/trip-sharing-implementation-2026-11-03.md).
+
 ## Context-aware interpretation and explicit fresh analysis — D76
 
 The owner approved a shared errand-intent-v2 interpretation/clarification policy for English, Filipino and Taglish. Infer ordinary consumer/service intent unless the request binds an existing destination or contains essential ambiguity. Offer at most one relevant optional refinement for any errand family; missing notes, item lists, brands and preferred stores do not block suitable recommendations. Typed focus separates destination preferences, task requirements, target identity, timing and dependencies. Reuse source-compatible typed optional answers across question rephrasing; newer withdrawal records continue to win. Existing fixed points, approved rules, durations and explicit flexibility remain authoritative.

@@ -1,5 +1,9 @@
 # Wayday Project Progress & Activity Log
 
+## Trip sharing source implementation — D81 (2026-11-03)
+
+Replaced the private sample entry with real source-bound sharing, matching browser/Flutter views, visible Your trip sharing, capability-based gateway operations, temporary Firestore storage and independently consented latest-only location sharing. The Android bridge adds verified-link handling, protected state and a foreground service with explicit Stop. Public/test profile and deployment checks require sharing compatibility before APK enablement. [Focused evidence](evidence/trip-sharing-implementation-2026-11-03.md) distinguishes fixture/source checks, actual Cloud configuration and remaining live/physical/release verification. No phone installation or reset was performed.
+
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
 ### [2026-11-03] Website-first official-app testing — D79

@@ -14,6 +14,7 @@ The root `README.md` owns the project overview, documentation index, product req
 | [Plan my day implementation plan](docs/wayday/PLANNING.md) | Owner-requested feature plan, interface flow, implementation sequence, technical gates, and acceptance checks |
 | [Progress](docs/wayday/PROGRESS.md) | Completed work, contributor attribution, and verification evidence |
 | [Development distribution](docs/wayday/DISTRIBUTION.md) | Marketing website, provider gateway, release signing, CI/CD, Cloud setup and qualification gates |
+| [Trip sharing evidence](docs/wayday/evidence/trip-sharing-implementation-2026-11-03.md) | Account-free shared trip views, consent, API, temporary storage and verification status |
 | [Architecture](docs/wayday/ARCHITECTURE.md) | Responsibilities, interfaces, and offline boundaries |
 | [Stack](docs/wayday/STACK.md) | Technology research, dependency inventory, licensing, costs, and limits |
 | [Decisions](docs/wayday/DECISIONS.md) | Why choices were made, what superseded earlier choices, and unresolved assumptions |

@@ -58,4 +58,5 @@ async function appLink(){
   }catch{/* The browser remains usable without app-link configuration. */}
 }
 appLink();
+addEventListener('hashchange',()=>{unavailable();location.reload();});
 if(!parsed)unavailable();else if(location.pathname==='/pair/'){el('status').textContent='Private pairing invitation';el('pair').hidden=false;}else{load();poll=setInterval(load,15000);setInterval(updateLocation,1000);}

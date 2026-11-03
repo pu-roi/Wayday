@@ -11,6 +11,7 @@ def test_effective_profile_requires_both_contracts_and_shared_navigation():
     assert profile['features'] == {
         'WAYDAY_ALTERNATIVE_NAVIGATION': 'true',
         'WAYDAY_UI_KIT_NAVIGATION_TARGETS': 'true',
+        'WAYDAY_SHARING': 'true',
     }
 
 
@@ -18,7 +19,7 @@ def test_gateway_gate_rejects_old_health_wrong_hash_and_disabled_features():
     profile = release.release_profile()
     health = {'status': 'configured', 'providerCalls': False,
               'contracts': profile['contracts'],
-              'capabilities': {'alternativeNavigation': True, 'dailyCeilings': False}}
+              'capabilities': {'alternativeNavigation': True, 'dailyCeilings': False, 'tripSharing': True}}
     release.validate_gateway(health)
     for patch in [
         {'contracts': {}}, {'contracts': {**profile['contracts'], 'errand-v2': 'a' * 64}},

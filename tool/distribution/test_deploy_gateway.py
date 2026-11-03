@@ -5,6 +5,11 @@ import pytest
 import deploy_gateway as deployment
 
 
+@pytest.fixture(autouse=True)
+def browser_configuration(monkeypatch):
+    monkeypatch.setenv('WAYDAY_SHARE_BROWSER_KEY', 'website-restricted-fixture')
+
+
 def base(test=False):
     values = {'GOOGLE_CLOUD_PROJECT': 'fixture', 'WAYDAY_FIREBASE_APP_IDS': 'test-id' if test else 'public-id,test-id',
               'WAYDAY_PUBLIC_LEDGER_DOCUMENT': 'accounting/preserved'}

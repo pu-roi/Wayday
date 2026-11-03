@@ -2,10 +2,12 @@
   "version": 1,
   "features": {
     "WAYDAY_ALTERNATIVE_NAVIGATION": "true",
-    "WAYDAY_UI_KIT_NAVIGATION_TARGETS": "true"
+    "WAYDAY_UI_KIT_NAVIGATION_TARGETS": "true",
+    "WAYDAY_SHARING": "true"
   },
   "capabilities": {
     "alternativeNavigation": true,
-    "dailyCeilings": false
+    "dailyCeilings": false,
+    "tripSharing": true
   }
 }
