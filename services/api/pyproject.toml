@@ -14,7 +14,7 @@ test = ["pytest==9.1.1", "httpx==0.28.1", "PyYAML==6.0.3"]
 gateway = ["httpx==0.28.1", "firebase-admin==7.7.0", "google-cloud-firestore==2.34.1"]
 
 [tool.setuptools.package-data]
-"wayday_api.gateway" = ["contracts.json", "contracts-v2.json"]
+"wayday_api.gateway" = ["contracts.json", "contracts-v2.json", "share_web/*", "share_web/assets/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

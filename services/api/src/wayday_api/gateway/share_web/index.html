@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="strict-origin">
+  <title>Shared trip · Wayday</title>
+  <link rel="stylesheet" href="/share/viewer.css">
+  <script src="/share/viewer.js" defer></script>
+</head>
+<body>
+  <header class="toolbar"><a href="https://pu-roi.github.io/Wayday/" aria-label="Wayday home"><img src="/share/assets/wayday-logo.png" alt="" width="36" height="36"></a><h1>Shared trip</h1><a id="open-app" class="text-action" hidden>Open app</a></header>
+  <main>
+    <div id="status" class="notice" role="status">Opening shared trip…</div>
+    <section id="trip" hidden aria-label="Shared itinerary">
+      <div class="trip-layout">
+        <section class="map-section" aria-label="Planned route">
+          <div id="map" aria-label="Map of the original planned route"></div>
+          <div id="map-error" class="map-error" hidden><p>The map couldn’t load. Your trip details are below.</p><button id="retry-map" class="outlined">Retry map</button></div>
+          <div class="map-caption"><span class="route-key" aria-hidden="true"></span>Planned route <button id="whole-trip" class="text-action">Whole trip</button></div>
+          <p id="location-status" class="supporting" aria-live="polite"></p>
+        </section>
+        <section class="itinerary">
+          <div class="section-heading"><h2>Errands</h2><span id="progress" class="supporting"></span></div>
+          <div id="start" class="endpoint"><span class="endpoint-icon" aria-hidden="true">○</span><div><span class="supporting">From</span><p>Start location</p></div></div>
+          <ol id="stops"></ol>
+          <div class="endpoint"><span class="endpoint-icon" aria-hidden="true">⚑</span><div><span class="supporting">To</span><p>Final destination</p></div></div>
+        </section>
+      </div>
+    </section>
+    <section id="unavailable" hidden><h2>This trip is unavailable</h2><p>The link may have expired or sharing may have ended. Ask the sender for a new link.</p></section>
+    <section id="pair" hidden><h2>Share your location back</h2><p>Open this invitation in Wayday to pair with the sender. You choose whether to turn on live location afterward.</p><p>Invitations expire after five minutes.</p></section>
+    <footer><p>Keep your day in order.</p><a class="primary" href="https://pu-roi.github.io/Wayday/#download" referrerpolicy="no-referrer">Download app</a><p class="supporting">After installing Wayday, open the original link again.</p><p class="supporting"><a href="/share/privacy" referrerpolicy="no-referrer">Privacy</a> · <a href="/share/terms" referrerpolicy="no-referrer">Terms</a></p></footer>
+  </main>
+</body>
+</html>

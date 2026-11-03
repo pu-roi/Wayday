@@ -14,11 +14,23 @@ class Settings:
     alternative_navigation: bool = False
     geoapify_daily_credits: int = 0
     geoapify_testing_limits: bool = True
+    sharing_enabled: bool = False
+    share_origin: str = ""
+    share_browser_key: str = field(default="", repr=False)
+    share_collection: str = "tripShares"
+    share_package: str = ""
+    share_certificate: str = ""
 
     @classmethod
     def environment(cls):
         return cls(
             project_id=os.getenv("GOOGLE_CLOUD_PROJECT", ""),
+            sharing_enabled=os.getenv("WAYDAY_SHARING_ENABLED", "") == "true",
+            share_origin=os.getenv("WAYDAY_SHARE_ORIGIN", ""),
+            share_browser_key=os.getenv("WAYDAY_SHARE_BROWSER_KEY", ""),
+            share_collection=os.getenv("WAYDAY_SHARE_COLLECTION", "tripShares"),
+            share_package=os.getenv("WAYDAY_SHARE_PACKAGE", ""),
+            share_certificate=os.getenv("WAYDAY_SHARE_CERTIFICATE", ""),
             app_ids=tuple(
                 filter(None, os.getenv("WAYDAY_FIREBASE_APP_IDS", "").split(","))
             ),

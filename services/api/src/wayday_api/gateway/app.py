@@ -17,7 +17,7 @@ from .providers import Providers
 from .navigation import route_request, route_response
 
 
-def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
+def create_gateway(settings=None, *, provider=None, verify=None, ledger=None, share_store=None):
     settings = settings or Settings.environment()
     production = provider is None
     provider = provider or Providers(settings)
@@ -140,6 +140,8 @@ def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
             "capabilities": {
                 "alternativeNavigation": settings.alternative_navigation,
                 "dailyCeilings": settings.geoapify_testing_limits,
+                "tripSharing": settings.sharing_enabled and bool(settings.share_browser_key)
+                    and bool(settings.share_package) and bool(settings.share_certificate),
             },
         }
 
@@ -234,6 +236,8 @@ def create_gateway(settings=None, *, provider=None, verify=None, ledger=None):
             )
         return {"status": "ok"}
 
+    from .sharing_routes import install_sharing
+    install_sharing(app, settings, authenticate, share_store)
     return app
 
 
