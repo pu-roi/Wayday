@@ -176,6 +176,15 @@ class AlternativeNavigationBridge(private val activity: Activity, messenger: Bin
                     main.post {
                         if (session == id && running && coreRevision == revision) {
                             if (fresh(fix)) {
+                                if (fix.accuracyMeters != null && fix.timeMilliseconds != null) {
+                                    val sharedFix = android.location.Location("wayday-alternative").apply {
+                                        latitude = fix.latitude; longitude = fix.longitude
+                                        accuracy = fix.accuracyMeters!!; time = fix.timeMilliseconds!!
+                                        elapsedRealtimeNanos = android.os.SystemClock.elapsedRealtimeNanos() -
+                                            (System.currentTimeMillis() - time).coerceAtLeast(0) * 1000000
+                                    }
+                                    SharingLocationHub.publish(sharedFix)
+                                }
                                 lastFix = System.currentTimeMillis()
                                 emit("location", position(fix))
                                 emit("gpsAvailable")
