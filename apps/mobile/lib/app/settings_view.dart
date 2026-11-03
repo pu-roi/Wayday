@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../features/maps/presentation/regional_map.dart';
 import '../features/maps/presentation/map_credits_page.dart';
 import '../core/widgets/section_surface.dart';
 import 'theme.dart';
+import '../core/widgets/build_identity.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -17,7 +19,12 @@ class SettingsView extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Icon(Icons.route_rounded, size: 36, color: context.wayday.link),
+            Image.asset(
+              'assets/branding/wayday-logo.png',
+              width: 72,
+              height: 72,
+              semanticLabel: 'Wayday logo',
+            ),
             const SizedBox(height: 16),
             Text(
               'Wayday',
@@ -38,6 +45,7 @@ class SettingsView extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             Text('About Wayday', style: context.type.titleMedium),
+            const BuildIdentity(),
             const SizedBox(height: 12),
             Text(
               kIsWeb

@@ -136,8 +136,6 @@ main:focus {
 }
 .brand img {
   object-fit: contain;
-  background: white;
-  border-radius: 12px;
 }
 .site-header nav {
   display: flex;
