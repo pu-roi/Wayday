@@ -227,7 +227,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name release-candidates --dir "$RUNNER_TEMP/release"
-      - name: Require current physical qualification and publish complete immutable assets
+      - name: Verify approved publication profile and publish complete immutable assets
         run: python tool/distribution/publish_release.py --directory "$RUNNER_TEMP/release"
 
   publish-website:
