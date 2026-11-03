@@ -1,5 +1,7 @@
 export interface QualifiedRelease {
-  qualified: true;
+  qualified: boolean;
+  previewApproved?: true;
+  verificationStatus?: "official-phone-pending";
   version: string;
   publishedAt: string;
   apkUrl: string;
@@ -16,6 +18,8 @@ export const releasesUrl = `${repository}/releases`;
 export function qualifiedRelease(input: unknown): QualifiedRelease | null {
   if (!input || typeof input !== "object") return null;
   const r = input as Record<string, unknown>;
+  const preview = r.qualified === false && r.previewApproved === true &&
+    r.verificationStatus === "official-phone-pending";
   const text = (v: unknown): v is string =>
     typeof v === "string" && v.trim().length > 0;
   const releaseLink = (value: unknown, prefix: string) => {
@@ -37,7 +41,7 @@ export function qualifiedRelease(input: unknown): QualifiedRelease | null {
     }
   };
   if (
-    r.qualified !== true ||
+    (r.qualified !== true && !preview) ||
     !text(r.version) ||
     !text(r.compatibility) ||
     !text(r.publishedAt) ||
@@ -52,7 +56,9 @@ export function qualifiedRelease(input: unknown): QualifiedRelease | null {
   )
     return null;
   return {
-    qualified: true,
+    qualified: !preview,
+    ...(preview ? { previewApproved: true as const,
+      verificationStatus: "official-phone-pending" as const } : {}),
     version: r.version,
     compatibility: r.compatibility,
     publishedAt: r.publishedAt,

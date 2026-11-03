@@ -2,6 +2,12 @@
 
 The owner approved a public, Android-first development download with no invitation, account sign-in, personal API-key entry, ADB provisioning or reachable laptop. Expected initial use is two to five testers; access is nevertheless public. The first qualified development preview is available through [the website](https://pu-roi.github.io/Wayday/#download) and [GitHub Releases](https://github.com/pu-roi/Wayday/releases/tag/dev-102001). Qualification and its device/flow limits are recorded below; source implementation alone is not readiness evidence.
 
+## Website-first development preview — D79
+
+The owner selected official-app testing through the website button after trying Wayday Test. `website-preview-authorization.json` records that explicit distribution approval, exact current profile/channel fingerprints, permanent certificate and immutable selected candidate. `publication_authorization` supports this bounded preview without rewriting historical physical qualification. New manifests use `qualified: false`, `previewApproved: true` and `verificationStatus: official-phone-pending`; the website displays that status beside its ordinary APK download button. Unknown or incomplete authorization still fails.
+
+The main-only Publish selected website testing preview action reuses the reviewed 103401 artifact, verifies original main source/stages, ZIP digest/contents and actual APKs, verifies both live gateways, publishes all immutable assets, then updates and smoke-checks Pages. Ordinary compatible main releases retain the same gates and current-profile approval. Official app phone results remain pending until reported. The older D77 publication hold below describes the prior policy, superseded by this specific owner direction.
+
 ## Coordinated delivery — D77
 
 Both channels use the same main commit and tool/distribution/release-profile.json, with separate app/Firebase identities and gateway endpoints. Passing reviewed main updates deploy and verify both gateway revisions, explicitly promote traffic, build and verify both signed candidates, gate public publication on current physical qualification, publish immutable assets, then update and smoke-check Pages. Main checks must finish before merge; the separate Cloud approval pause is removed.

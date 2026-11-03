@@ -8,7 +8,7 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 from deploy_gateway import require_current
-from release import ROOT, REPOSITORY, qualification, release_profile, verify_gateway, write, latest_release
+from release import ROOT, REPOSITORY, publication_authorization, release_profile, verify_gateway, write, latest_release
 
 
 def gh(*args):
@@ -18,9 +18,10 @@ def gh(*args):
     return result.stdout
 
 
-def publish(directory):
+def publish(directory, *, candidate_commit=None):
     directory = Path(directory)
-    commit = os.environ['GITHUB_SHA']
+    control_commit = os.environ['GITHUB_SHA']
+    commit = candidate_commit or control_commit
     records = [json.loads((directory / (channel + '-verification.json')).read_text()) for channel in ('public', 'test')]
     if any(x['commit'] != commit or x['releaseProfile'] != release_profile() for x in records):
         raise ValueError('Candidate source or feature profile changed.')
@@ -28,8 +29,8 @@ def publish(directory):
         raise ValueError('Both candidates must belong to the same signed release.')
     number = records[0]['versionCode']
     certificate = records[0]['signingSha256']
-    qualification(certificate)
-    require_current(commit)
+    authorization = publication_authorization(certificate)
+    require_current(control_commit)
     latest = latest_release()
     if latest.get('versionCode', 0) > number or (
             latest.get('versionCode') == number and latest.get('commit') != commit):
@@ -44,7 +45,8 @@ def publish(directory):
             raise ValueError('Candidate APK checksum changed after verification.')
         subprocess.run([os.sys.executable, str(ROOT / 'tool/distribution/release.py'), 'manifest',
                         '--apk', str(apk), '--channel', record['channel'], '--number', str(number),
-                        '--certificate', certificate, '--output', str(directory / manifest)], check=True)
+                        '--certificate', certificate, '--output', str(directory / manifest)], check=True,
+                       env={**os.environ, 'GITHUB_SHA': commit})
         (directory / (name + '.sha256')).write_text(record['sha256'] + '  ' + name + '\n')
         files.extend([apk, directory / manifest, directory / (name + '.sha256')])
     releases = json.loads(gh('api', f'repos/{REPOSITORY}/releases?per_page=100'))
@@ -54,7 +56,9 @@ def publish(directory):
     if not existing:
         notes = directory / 'notes.md'
         notes.write_text('Android development preview. Install each APK as an update to its matching app.\n\n'
-                         + 'Source commit: ' + commit + '\n\nWayday and Wayday Test share the same logo, interface and navigation features.\n')
+                         + 'Source commit: ' + commit + '\n\nWayday and Wayday Test share the same logo, interface and navigation features.\n'
+                         + ('\nOwner-approved website testing preview. The owner reports testing Wayday Test; official-app phone verification is pending.\n'
+                            if authorization.get('mode') == 'website-first-development-preview' else ''))
         gh('release', 'create', tag, '--repo', REPOSITORY, '--target', commit, '--draft', '--prerelease',
            '--title', 'Wayday development ' + str(number), '--notes-file', str(notes))
         existing = json.loads(gh('api', f'repos/{REPOSITORY}/releases/tags/{tag}'))
@@ -78,7 +82,7 @@ def publish(directory):
             if not existing['draft']:
                 raise ValueError('Published release is incomplete; refusing to modify it.')
             gh('release', 'upload', tag, str(path), '--repo', REPOSITORY)
-    require_current(commit)
+    require_current(control_commit)
     if existing['draft']:
         gh('release', 'edit', tag, '--repo', REPOSITORY, '--draft=false')
     write(directory / 'publication.json', {'commit': commit, 'tag': tag, 'complete': True})

@@ -16,7 +16,10 @@ def validate_manifest(data):
     tag = data.get('tag', '')
     url = f'https://github.com/{REPOSITORY}/releases/download/{tag}/wayday-test.apk'
     certificate = json.loads(QUALIFICATION.read_text())['signingSha256']
-    if (data.get('qualified') is not True or data.get('channel') != 'test'
+    approved = data.get('qualified') is True or (
+        data.get('qualified') is False and data.get('previewApproved') is True
+        and data.get('verificationStatus') == 'official-phone-pending')
+    if (not approved or data.get('channel') != 'test'
             or data.get('package') != 'dev.wayday.wayday.publictest'
             or data.get('apkUrl') != url or not re.fullmatch(r'dev-[0-9]+', tag)
             or not re.fullmatch(r'[0-9a-f]{40}', data.get('commit', ''))

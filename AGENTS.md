@@ -1,5 +1,9 @@
 # Wayday agent instructions
 
+## Website-first official-app testing — D79
+
+On 2026-11-03 the owner reported trying Wayday Test, explicitly said the official APK had not been tested, and requested testing the official app through the website Download app button. This supersedes D77’s official-phone-before-publication ordering for the explicitly approved development-preview profile. Publish the verified selected APK through GitHub Releases and the existing Pages button with official-phone verification marked pending. Do not fabricate qualification or infer which test flows passed from the owner’s general report. Retain exact profile/configuration/signature/provenance, source checks, compatible gateways, immutable APK checksums and existing main protections. The original physical qualification record stays historical and unchanged. No phone operation, paid provider call, credential/billing change or new app rebuild is needed to deliver the selected candidate.
+
 ## Recurring, Settings, and credits cleanup — D78
 
 The owner approved Errands and Trips tabs within Recurring, with Errands initially selected and session-only tab/scroll/disclosure retention. Keep existing lists, independent Today copies, saved trips, and reuse behavior. Settings uses the shared page title and Profile-style unavailable-settings placeholder. Remove the offline Pasig/Ortigas preview completely, including its dedicated runtime, assets, packaging tools, and tests, while retaining shared online map support, MapLibre configuration, and the personal-package test-harness guard. Credits retain visible provider attribution and complete selectable notices under expandable rows; presentation formatting must not rewrite bundled source notices. No schema migration, provider requests, deployment, publication, or personal-app operation is implied. See D78 evidence.

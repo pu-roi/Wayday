@@ -2,6 +2,10 @@
 
 This document records the chronological activity history, milestone achievements, contributor attribution, and verification records for the Wayday project.
 
+### [2026-11-03] Website-first official-app testing — D79
+
+Implemented the owner’s request to test official delivery through the website button after trying Wayday Test. The selected verified candidate is authorized for a development preview with official-phone verification pending. Historical qualification is preserved; exact source/profile/config/signature/gateway/artifact guards remain. See [website-first evidence](evidence/website-first-testing-2026-11-03.md) for tests and actual delivery.
+
 ### [2026-11-03] Coordinated release repair — D77
 
 Restored production errand-v2 compatibility with workflow 41577924437 and explicit traffic promotion while preserving the navigation-test tag and accounting. Shared public/test profile, artifact verification and live contract/capability gates are implemented. Qualification and publication remain distinct from source checks; see [release evidence](evidence/coordinated-release-repair-2026-11-03.md). The completed D78 UI cleanup is now included in this release checkout.

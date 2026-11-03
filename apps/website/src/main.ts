@@ -17,7 +17,8 @@ if (release) {
   download.textContent = "Download Android app (.apk)";
   panel.replaceChildren(download);
   document.querySelector(".download-status")!.textContent =
-    "Public development release";
+    release.previewApproved ? "Development preview · phone verification pending" :
+      "Public development release";
   const metadata = document.createElement("p");
   metadata.className = "release-meta";
   metadata.textContent = `${release.version} · ${new Date(release.publishedAt).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", year: "numeric", month: "short", day: "numeric" })} · ${(release.sizeBytes / 1048576).toFixed(1)} MB`;
@@ -37,11 +38,14 @@ if (release) {
   details.append(summary, checksum);
   panel.append(details);
   document.querySelector("#faq details p")!.textContent =
-    "A qualified Android development release is available in the Download section. Wayday remains under development and is not currently offered through Google Play.";
+    release.previewApproved
+      ? "An Android development preview is available in the Download section. Official-app phone verification is pending. Wayday is not currently offered through Google Play."
+      : "A qualified Android development release is available in the Download section. Wayday remains under development and is not currently offered through Google Play.";
   document.querySelector("#availability-summary")!.textContent =
     "A development release is available for Android. Review the release compatibility information below before installing.";
   document.querySelector("#download-intro")!.textContent =
-    "Download the current Android development release.";
+    release.previewApproved ? "Download the development preview to try Wayday. Official-app phone verification is pending." :
+      "Download the current Android development release.";
   document.querySelector(".install-guide h3")!.textContent =
     "How to install Wayday";
 }

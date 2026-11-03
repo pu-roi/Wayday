@@ -12,7 +12,7 @@ def fixture(monkeypatch, tmp_path):
     monkeypatch.setenv('GITHUB_SHA', commit)
     monkeypatch.setenv('WAYDAY_GATEWAY_URL', 'https://production.example')
     monkeypatch.setenv('WAYDAY_TEST_GATEWAY_URL', 'https://test.example')
-    monkeypatch.setattr(publication, 'qualification', lambda _: None)
+    monkeypatch.setattr(publication, 'publication_authorization', lambda _: {})
     monkeypatch.setattr(publication, 'require_current', lambda _: None)
     monkeypatch.setattr(publication, 'verify_gateway', lambda _: None)
     monkeypatch.setattr(publication, 'latest_release', lambda: {'qualified': False})
