@@ -37,6 +37,7 @@ def test_partial_release_resumes_without_overwriting_and_publishes_only_complete
     def gh(*args):
         if args[0] == 'api':
             if '/releases?' in args[1]: return json.dumps([state['release']] if state['release'] else [])
+            if '/releases/tags/' in args[1]: raise RuntimeError('Draft release is not visible through the public tag endpoint')
             return json.dumps(state['release'])
         if args[1] == 'create':
             state['release'] = {'tag_name': args[2], 'target_commitish': 'a' * 40, 'draft': True, 'assets': []}

@@ -61,7 +61,12 @@ def publish(directory, *, candidate_commit=None):
                             if authorization.get('mode') == 'website-first-development-preview' else ''))
         gh('release', 'create', tag, '--repo', REPOSITORY, '--target', commit, '--draft', '--prerelease',
            '--title', 'Wayday development ' + str(number), '--notes-file', str(notes))
-        existing = json.loads(gh('api', f'repos/{REPOSITORY}/releases/tags/{tag}'))
+        # A new draft may not resolve through the public tag endpoint. The
+        # authenticated release listing includes drafts and supports recovery.
+        releases = json.loads(gh('api', f'repos/{REPOSITORY}/releases?per_page=100'))
+        existing = next((x for x in releases if x['tag_name'] == tag), None)
+        if not existing or existing['target_commitish'] != commit:
+            raise ValueError('New draft release could not be verified against its source.')
     # Never overwrite an uploaded APK. Partial uploads are resumed by checksum.
     for path in files:
         remote = next((x for x in existing['assets'] if x['name'] == path.name), None)
