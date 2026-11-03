@@ -62,7 +62,7 @@ def main():
                     or record['configFingerprint'] != config_fingerprint(public_defines(channel=channel))):
                 raise ValueError('Selected APK hash or channel configuration differs from approval.')
         publish(directory, candidate_commit=selected['commit'])
-        write(os.environ['GITHUB_OUTPUT_REPORT'], {'publishedVersion': selected['versionCode'],
+        write(os.environ['WAYDAY_PREVIEW_REPORT'], {'publishedVersion': selected['versionCode'],
               'candidateCommit': selected['commit'], 'officialPhoneVerified': False})
 
 

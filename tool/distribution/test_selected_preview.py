@@ -1,9 +1,22 @@
 import copy
 import hashlib
 import zipfile
+from pathlib import Path
+import yaml
 
 import pytest
 from deliver_website_preview import verify_source, extract
+
+
+def test_preview_workflow_is_main_only_and_uses_runner_context_only_after_runner_assignment():
+    root = Path(__file__).resolve().parents[2]
+    body = yaml.safe_load((root / '.github/workflows/publish-website-preview.yml').read_text())
+    job = body['jobs']['preview']
+    assert job['if'] == "github.ref == 'refs/heads/main'"
+    assert 'runner.' not in str(job.get('env', {}))
+    assert body['jobs']['website']['needs'] == ['preview']
+    scripts = '\n'.join(s.get('run', '') for s in job['steps'])
+    assert 'deliver_website_preview.py' in scripts and 'flutter build' not in scripts
 
 
 def test_selected_artifact_needs_successful_original_verification_and_exact_provenance():
